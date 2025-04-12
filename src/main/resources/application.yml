@@ -1,3 +1,37 @@
+server:
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+      force: true
 spring:
   application:
     name: alter
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_URL}
+      port: ${REDIS_PORT}
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO}
+    show-sql: ${SHOW_SQL}
+kakao:
+  client_id: ${KAKAO_CLIENT_ID}
+  redirect_uri: ${KAKAO_REDIRECT_URI}
+apple:
+  team_id: ${APPLE_TEAM_ID}
+  login_key: ${APPLE_LOGIN_KEY}
+  private_key: ${APPLE_PRIVATE_KEY}
+  client_id: ${APPLE_CLIENT_ID}
+  redirect_uri: ${APPLE_REDIRECT_URI}
+jwt:
+  secret: ${JWT_SECRET}
+  access-token:
+    expiration-time: ${JWT_ACCESS_TOKEN_EXPIRATION_TIME}
+  refresh-token:
+    expiration-time: ${JWT_REFRESH_TOKEN_EXPIRATION_TIME}

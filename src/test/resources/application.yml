@@ -1,3 +1,39 @@
+server:
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+      force: true
 spring:
   application:
     name: alter
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:alter
+    username: sa
+#    password:
+  data:
+    redis:
+      host: mock
+      port: 12345
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    database: postgresql
+kakao:
+  client_id: mockmockmock
+  redirect_uri: mockmockmock
+apple:
+  team_id: mockmockmock
+  login_key: mockmockmock
+  private_key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ2V2WnpMMWdkQUZyODhoYjIKT0YvMk54QXBKQ3pHQ0VEZGZTcDZWUU8zMGh5aFJBTkNBQVFSV3oram42NUJ0T012ZHlIS2N2akJlQlNEWkgycgoxUlR3am1ZU2k5Ui96cEJudVE0RWlNbkNxZk1QV2lacUI0UWRiQWQwRTdvSDUwVnB1WjFQMDg3RwotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0t
+  client_id: mockmockmock
+  redirect_uri: http://localhost:8080/mock/mock/mock
+jwt:
+  secret: mockmockmockmockmockmockmockmockmockmockmockmockmockmockmockmockmockmockmockmockmock
+  access-token:
+    expiration-time: 987654321
+  refresh-token:
+    expiration-time: 987654321
