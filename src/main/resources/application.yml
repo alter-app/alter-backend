@@ -35,3 +35,16 @@ jwt:
     expiration-time: ${JWT_ACCESS_TOKEN_EXPIRATION_TIME}
   refresh-token:
     expiration-time: ${JWT_REFRESH_TOKEN_EXPIRATION_TIME}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+  api-docs:
+    path: /api-docs
+alter:
+  security:
+    allowed-origin-patterns: ${ALLOWED_ORIGIN_PATTERNS}
+    allowed-methods: ${ALLOWED_METHODS}
+    allowed-headers: ${ALLOWED_HEADERS}
+    exposed-headers: ${EXPOSED_HEADERS}
+    allowed-pattern: ${ALLOWED_PATTERN}
+    permit-all-urls: ${PERMIT_ALL_URLS}
