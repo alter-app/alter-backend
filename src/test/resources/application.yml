@@ -37,3 +37,11 @@ jwt:
     expiration-time: 987654321
   refresh-token:
     expiration-time: 987654321
+alter:
+  security:
+    allowed-origin-patterns: "*"
+    allowed-methods: "*"
+    allowed-headers: "*"
+    exposed-headers: "*"
+    allowed-pattern: "*"
+    permit-all-urls: "/**"
