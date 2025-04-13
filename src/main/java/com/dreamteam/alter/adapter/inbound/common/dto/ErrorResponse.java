@@ -1,4 +1,4 @@
-package com.dreamteam.alter.common.dto;
+package com.dreamteam.alter.adapter.inbound.common.dto;
 
 import com.dreamteam.alter.common.exception.ErrorCode;
 import lombok.AccessLevel;
