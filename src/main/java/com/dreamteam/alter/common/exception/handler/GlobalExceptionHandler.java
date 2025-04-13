@@ -1,6 +1,6 @@
 package com.dreamteam.alter.common.exception.handler;
 
-import com.dreamteam.alter.common.dto.ErrorResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
