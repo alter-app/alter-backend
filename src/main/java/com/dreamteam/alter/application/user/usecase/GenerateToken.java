@@ -1,0 +1,61 @@
+package com.dreamteam.alter.application.user.usecase;
+
+import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UserLoginRequestDto;
+import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
+import com.dreamteam.alter.application.auth.service.AuthService;
+import com.dreamteam.alter.domain.auth.exception.SignupRequiredException;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.user.entity.User;
+import com.dreamteam.alter.domain.user.port.inbound.GenerateTokenUseCase;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+@Service("generateToken")
+@RequiredArgsConstructor
+public class GenerateToken implements GenerateTokenUseCase {
+
+    private final AuthService authService;
+    private final StringRedisTemplate redisTemplate;
+    private final UserQueryRepository userQueryRepository;
+    private final SocialAuthenticationManager socialAuthenticationManager;
+
+    @Override
+    public GenerateTokenResponseDto execute(UserLoginRequestDto request) {
+        SocialUserInfo socialUserInfo = authenticateSocialUser(request);
+
+        User user = userQueryRepository.findBySocialId(socialUserInfo.getSocialId());
+
+        if (ObjectUtils.isEmpty(user)) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                String jsonValue = objectMapper.writeValueAsString(socialUserInfo);
+
+                String signupSessionId = UUID.randomUUID().toString();
+
+                String key = "SIGNUP:PENDING:" + signupSessionId;
+                redisTemplate.opsForValue().set(key, jsonValue, 5, TimeUnit.MINUTES);
+
+                throw new SignupRequiredException(signupSessionId);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to serialize user info", e);
+            }
+        }
+
+        return GenerateTokenResponseDto.of(authService.generateAuthorization(user, TokenScope.APP));
+    }
+
+    private SocialUserInfo authenticateSocialUser(UserLoginRequestDto request) {
+        return socialAuthenticationManager.authenticate(request);
+    }
+
+}
