@@ -12,6 +12,7 @@ public enum ErrorCode {
     SIGNUP_REQUIRED(400, "A003", "회원가입이 필요합니다."),
     EMAIL_DUPLICATED(400, "A004", "이미 가입된 이메일입니다."),
     SOCIAL_ID_DUPLICATED(400, "A005", "이미 가입된 소셜 계정입니다."),
+    SIGNUP_SESSION_NOT_EXIST(400, "A006", "회원 가입 세션이 존재하지 않습니다."),
 
     ILLEGAL_ARGUMENT(400, "B001", "잘못된 요청입니다."),
     ;
