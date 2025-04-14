@@ -15,12 +15,12 @@ import lombok.*;
 public class CreateUserRequestDto {
 
     @NotBlank
-    @Size(min = 64, max = 64)
+    @Size(max = 64)
     @Schema(description = "회원가입 세션 ID", example = "UUID")
     private String signupSessionId;
 
     @NotBlank
-    @Size(min = 16, max = 64)
+    @Size(max = 64)
     @Schema(description = "닉네임", example = "유땡땡")
     private String nickname;
 
