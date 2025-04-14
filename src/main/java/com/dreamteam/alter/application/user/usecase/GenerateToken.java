@@ -5,6 +5,8 @@ import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenRespons
 import com.dreamteam.alter.adapter.inbound.general.user.dto.UserLoginRequestDto;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
 import com.dreamteam.alter.application.auth.service.AuthService;
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.exception.SignupRequiredException;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.user.entity.User;
@@ -47,7 +49,7 @@ public class GenerateToken implements GenerateTokenUseCase {
 
                 throw new SignupRequiredException(signupSessionId);
             } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to serialize user info", e);
+                throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
         }
 

@@ -1,6 +1,8 @@
 package com.dreamteam.alter.application.auth.service;
 
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.CustomJwtSubject;
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
 import com.dreamteam.alter.domain.auth.port.outbound.AuthorizationRepository;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
@@ -99,7 +101,7 @@ public class AuthService {
 
             return authorization;
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 

@@ -15,6 +15,8 @@ public enum ErrorCode {
     SIGNUP_SESSION_NOT_EXIST(400, "A006", "회원 가입 세션이 존재하지 않습니다."),
 
     ILLEGAL_ARGUMENT(400, "B001", "잘못된 요청입니다."),
+
+    INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     ;
 
     private final int status;
