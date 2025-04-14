@@ -4,7 +4,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.CreateUserRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.UserLoginRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.LoginUserRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -28,10 +28,14 @@ public interface UserPublicControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "가입되지 않은 사용자",
-                        value = "{\"code\" : \"A003\"}")
+                        value = "{\"code\" : \"A003\"}"),
+                    @ExampleObject(
+                        name = "소셜 토큰 만료 (재 로그인 필요)",
+                        value = "{\"code\" : \"A007\"}"
+                    )
                 }))
     })
-    ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginUser(@Valid UserLoginRequestDto request);
+    ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginUser(@Valid LoginUserRequestDto request);
 
     @Operation(summary = "회원가입을 수행한다")
     @ApiResponses(value = {
@@ -46,7 +50,11 @@ public interface UserPublicControllerSpec {
                         value = "{\"code\" : \"A004\"}"),
                     @ExampleObject(
                         name = "소셜 플랫폼 ID 중복",
-                        value = "{\"code\" : \"A005\"}")
+                        value = "{\"code\" : \"A005\"}"),
+                    @ExampleObject(
+                        name = "소셜 토큰 만료 (재 로그인 필요)",
+                        value = "{\"code\" : \"A007\"}"
+                    )
                 }))
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> createUser(@Valid CreateUserRequestDto request);

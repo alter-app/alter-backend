@@ -2,6 +2,8 @@ package com.dreamteam.alter.adapter.outbound.auth.external;
 
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.port.outbound.KakaoAuthClient;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,6 +15,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @Component("KakaoAuthClient")
@@ -44,17 +47,23 @@ public class KakaoAuthClientImpl implements KakaoAuthClient {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
-        ResponseEntity<String> response = restTemplate.postForEntity(KAKAO_OAUTH_URL, request, String.class);
+        SocialTokenResponseDto socialTokenResponseDto = null;
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(KAKAO_OAUTH_URL, request, String.class);
 
-        if (response.getStatusCode().equals(HttpStatus.OK)) {
-            try {
+            if (response.getStatusCode()
+                .equals(HttpStatus.OK)) {
                 JsonNode jsonNode = objectMapper.readTree(response.getBody());
-                return new SocialTokenResponseDto(jsonNode.get("access_token").asText());
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to parse Kakao Token.");
+                socialTokenResponseDto = new SocialTokenResponseDto(jsonNode.get("access_token")
+                    .asText());
             }
+        } catch (HttpClientErrorException e) {
+            throw new CustomException(ErrorCode.SOCIAL_TOKEN_EXPIRED);
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-        throw new RuntimeException("Failed to get Kakao Token.");
+
+        return socialTokenResponseDto;
     }
 
     @Override
@@ -64,20 +73,20 @@ public class KakaoAuthClientImpl implements KakaoAuthClient {
         headers.setBearerAuth(socialTokens.getAccessToken());
 
         HttpEntity<String> request = new HttpEntity<>(headers);
-        ResponseEntity<String> response =
-            restTemplate.exchange(KAKAO_USER_API_URL, HttpMethod.GET, request, String.class);
-
-        if (response.getStatusCode().equals(HttpStatus.OK)) {
-            try {
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
-                String id = jsonNode.get("id").asText();
-                String email = jsonNode.path("kakao_account").path("email").asText();
-                return new SocialUserInfo(SocialProvider.KAKAO, id, email);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to parse Kakao user info", e);
-            }
+        SocialUserInfo socialUserInfo;
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(KAKAO_USER_API_URL, HttpMethod.GET, request, String.class);
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            String id = jsonNode.get("id").asText();
+            String email = jsonNode.path("kakao_account").path("email").asText();
+            socialUserInfo = new SocialUserInfo(SocialProvider.KAKAO, id, email);
+        } catch (HttpClientErrorException e) {
+            throw new CustomException(ErrorCode.SOCIAL_TOKEN_EXPIRED);
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-        throw new RuntimeException("Failed to get Kakao user info");
+
+        return socialUserInfo;
     }
 
 }
