@@ -2,18 +2,18 @@ package com.dreamteam.alter.application.auth.service;
 
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.UserLoginRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.LoginUserRequestDto;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import org.apache.commons.lang3.ObjectUtils;
 
 public abstract class AbstractSocialAuth {
 
-    public SocialUserInfo authenticate(UserLoginRequestDto request) {
+    public SocialUserInfo authenticate(LoginUserRequestDto request) {
         SocialTokenResponseDto socialTokens = getToken(request);
         return getUserInfo(socialTokens);
     }
 
-    protected SocialTokenResponseDto getToken(UserLoginRequestDto request) {
+    protected SocialTokenResponseDto getToken(LoginUserRequestDto request) {
         if (ObjectUtils.isNotEmpty(request.getAuthorizationCode()))
             return exchangeCodeForToken(request.getAuthorizationCode());
 

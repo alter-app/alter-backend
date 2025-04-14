@@ -2,7 +2,7 @@ package com.dreamteam.alter.application.user.usecase;
 
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.UserLoginRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.LoginUserRequestDto;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
 import com.dreamteam.alter.application.auth.service.AuthService;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -32,7 +32,7 @@ public class GenerateToken implements GenerateTokenUseCase {
     private final SocialAuthenticationManager socialAuthenticationManager;
 
     @Override
-    public GenerateTokenResponseDto execute(UserLoginRequestDto request) {
+    public GenerateTokenResponseDto execute(LoginUserRequestDto request) {
         SocialUserInfo socialUserInfo = authenticateSocialUser(request);
 
         User user = userQueryRepository.findBySocialId(socialUserInfo.getSocialId());
@@ -56,7 +56,7 @@ public class GenerateToken implements GenerateTokenUseCase {
         return GenerateTokenResponseDto.of(authService.generateAuthorization(user, TokenScope.APP));
     }
 
-    private SocialUserInfo authenticateSocialUser(UserLoginRequestDto request) {
+    private SocialUserInfo authenticateSocialUser(LoginUserRequestDto request) {
         return socialAuthenticationManager.authenticate(request);
     }
 

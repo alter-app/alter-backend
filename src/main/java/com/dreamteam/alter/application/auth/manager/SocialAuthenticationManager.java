@@ -1,7 +1,7 @@
 package com.dreamteam.alter.application.auth.manager;
 
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.UserLoginRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.LoginUserRequestDto;
 import com.dreamteam.alter.application.auth.service.AbstractSocialAuth;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,7 +14,7 @@ public class SocialAuthenticationManager {
 
     private final List<AbstractSocialAuth> socialAuthServices;
 
-    public SocialUserInfo authenticate(UserLoginRequestDto request) {
+    public SocialUserInfo authenticate(LoginUserRequestDto request) {
         for (AbstractSocialAuth socialAuth : socialAuthServices) {
             if (socialAuth.supports(request.getProvider())) {
                 return socialAuth.authenticate(request);

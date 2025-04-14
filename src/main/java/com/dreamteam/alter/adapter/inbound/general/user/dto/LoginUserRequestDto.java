@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Schema(description = "소셜 로그인 요청 DTO")
-public class UserLoginRequestDto {
+public class LoginUserRequestDto {
 
     @NotNull
     @Schema(description = "소셜 로그인 플랫폼", example = "KAKAO")
