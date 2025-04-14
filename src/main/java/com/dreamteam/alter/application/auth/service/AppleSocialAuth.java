@@ -2,9 +2,12 @@ package com.dreamteam.alter.application.auth.service;
 
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.port.outbound.AppleAuthClient;
 import com.dreamteam.alter.domain.auth.port.outbound.AppleRefreshTokenRepository;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
@@ -15,7 +18,9 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 
@@ -86,8 +91,8 @@ public class AppleSocialAuth extends AbstractSocialAuth {
                 .verifyWith(publicKey)
                 .build()
                 .parseSignedClaims(identityToken);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to verify Apple identity token", e);
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -101,8 +106,8 @@ public class AppleSocialAuth extends AbstractSocialAuth {
 
             KeyFactory kf = KeyFactory.getInstance("RSA");
             return kf.generatePublic(new RSAPublicKeySpec(modulus, exponent));
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate Apple public key", ex);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 

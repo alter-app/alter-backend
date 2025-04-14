@@ -32,7 +32,7 @@ public class KakaoAuthClientImpl implements KakaoAuthClient {
     private static final String KAKAO_USER_API_URL = "https://kapi.kakao.com/v2/user/me";
 
     private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Override
     public SocialTokenResponseDto exchangeCodeForToken(String authorizationCode) {
@@ -46,24 +46,16 @@ public class KakaoAuthClientImpl implements KakaoAuthClient {
         params.add("code", authorizationCode);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-
-        SocialTokenResponseDto socialTokenResponseDto = null;
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(KAKAO_OAUTH_URL, request, String.class);
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
-            if (response.getStatusCode()
-                .equals(HttpStatus.OK)) {
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
-                socialTokenResponseDto = new SocialTokenResponseDto(jsonNode.get("access_token")
-                    .asText());
-            }
+            return new SocialTokenResponseDto(jsonNode.get("access_token").asText());
         } catch (HttpClientErrorException e) {
             throw new CustomException(ErrorCode.SOCIAL_TOKEN_EXPIRED);
         } catch (JsonProcessingException e) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-
-        return socialTokenResponseDto;
     }
 
     @Override
@@ -73,20 +65,19 @@ public class KakaoAuthClientImpl implements KakaoAuthClient {
         headers.setBearerAuth(socialTokens.getAccessToken());
 
         HttpEntity<String> request = new HttpEntity<>(headers);
-        SocialUserInfo socialUserInfo;
         try {
             ResponseEntity<String> response = restTemplate.exchange(KAKAO_USER_API_URL, HttpMethod.GET, request, String.class);
+
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
             String id = jsonNode.get("id").asText();
             String email = jsonNode.path("kakao_account").path("email").asText();
-            socialUserInfo = new SocialUserInfo(SocialProvider.KAKAO, id, email);
+
+            return new SocialUserInfo(SocialProvider.KAKAO, id, email);
         } catch (HttpClientErrorException e) {
             throw new CustomException(ErrorCode.SOCIAL_TOKEN_EXPIRED);
         } catch (JsonProcessingException e) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-
-        return socialUserInfo;
     }
 
 }

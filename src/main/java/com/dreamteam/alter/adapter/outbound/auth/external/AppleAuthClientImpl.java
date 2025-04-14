@@ -1,6 +1,8 @@
 package com.dreamteam.alter.adapter.outbound.auth.external;
 
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseDto;
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.port.outbound.AppleAuthClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,10 +13,13 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
@@ -38,12 +43,16 @@ public class AppleAuthClientImpl implements AppleAuthClient {
     private static final String APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token";
     private static final String APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys";
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final PrivateKey applePrivateKey;
 
-    public AppleAuthClientImpl(@Value("${apple.private_key}") String encodedPrivateKey,
-                               ObjectMapper objectMapper) {
+    public AppleAuthClientImpl(
+        RestTemplate restTemplate,
+        @Value("${apple.private_key}") String encodedPrivateKey,
+        ObjectMapper objectMapper
+    ) {
+        this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
         this.applePrivateKey = decodePrivateKey(encodedPrivateKey);
     }
@@ -61,21 +70,19 @@ public class AppleAuthClientImpl implements AppleAuthClient {
         params.add("redirect_uri", appleRedirectUri);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-        ResponseEntity<String> response = restTemplate.postForEntity(APPLE_TOKEN_URL, request, String.class);
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(APPLE_TOKEN_URL, request, String.class);
 
-        if (response.getStatusCode()
-            .equals(HttpStatus.OK)) {
-            try {
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
-                return new SocialTokenResponseDto(
-                    jsonNode.get("refresh_token").asText(),
-                    jsonNode.get("id_token").asText()
-                );
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to parse Apple token response", e);
-            }
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            return new SocialTokenResponseDto(
+                jsonNode.get("refresh_token").asText(),
+                jsonNode.get("id_token").asText()
+            );
+        } catch (HttpClientErrorException e) {
+            throw new CustomException(ErrorCode.SOCIAL_TOKEN_EXPIRED);
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-        throw new RuntimeException("Failed to get Apple access tokens");
     }
 
     @Override
@@ -83,8 +90,8 @@ public class AppleAuthClientImpl implements AppleAuthClient {
         try {
             ResponseEntity<String> keyResponse = restTemplate.getForEntity(APPLE_KEYS_URL, String.class);
             return objectMapper.readTree(keyResponse.getBody());
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+        } catch (HttpClientErrorException | JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -102,8 +109,8 @@ public class AppleAuthClientImpl implements AppleAuthClient {
 
             KeyFactory keyFactory = KeyFactory.getInstance("EC");
             return keyFactory.generatePrivate(new PKCS8EncodedKeySpec(keyBytes));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse Apple private key from Base64", e);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 
