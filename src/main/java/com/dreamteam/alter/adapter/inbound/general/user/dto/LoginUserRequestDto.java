@@ -21,7 +21,7 @@ public class LoginUserRequestDto {
     @Schema(description = "OAuth AccessToken", example = "accessToken")
     private String accessToken;
 
-    @Schema(description = "OAuth 인가 코드", example = "refreshToken")
+    @Schema(description = "OAuth 인가 코드", example = "authorizationCode")
     private String authorizationCode;
 
 }
