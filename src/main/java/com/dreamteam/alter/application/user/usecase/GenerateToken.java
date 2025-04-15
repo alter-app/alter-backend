@@ -39,6 +39,10 @@ public class GenerateToken implements GenerateTokenUseCase {
 
         if (ObjectUtils.isEmpty(user)) {
             try {
+                if (ObjectUtils.isNotEmpty(userQueryRepository.findByEmail(socialUserInfo.getEmail()))) {
+                    throw new CustomException(ErrorCode.EMAIL_DUPLICATED);
+                }
+
                 ObjectMapper objectMapper = new ObjectMapper();
                 String jsonValue = objectMapper.writeValueAsString(socialUserInfo);
 
