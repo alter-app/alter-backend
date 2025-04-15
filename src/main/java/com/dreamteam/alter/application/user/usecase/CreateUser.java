@@ -43,13 +43,7 @@ public class CreateUser implements CreateUserUseCase {
         try {
             SocialUserInfo socialUserInfo = objectMapper.readValue(userInfoJson, SocialUserInfo.class);
 
-            if (ObjectUtils.isNotEmpty(userQueryRepository.findBySocialId(socialUserInfo.getSocialId()))) {
-                throw new CustomException(ErrorCode.SOCIAL_ID_DUPLICATED);
-            }
-
-            if (ObjectUtils.isNotEmpty(userQueryRepository.findByEmail(socialUserInfo.getEmail()))) {
-                throw new CustomException(ErrorCode.EMAIL_DUPLICATED);
-            }
+            validateDuplication(socialUserInfo, request);
 
             User user = userRepository.save(User.create(
                 request,
@@ -60,6 +54,18 @@ public class CreateUser implements CreateUserUseCase {
             return GenerateTokenResponseDto.of(authService.generateAuthorization(user, TokenScope.APP));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void validateDuplication(SocialUserInfo socialUserInfo, CreateUserRequestDto request) {
+        checkDuplication(userQueryRepository.findBySocialId(socialUserInfo.getSocialId()), ErrorCode.SOCIAL_ID_DUPLICATED);
+        checkDuplication(userQueryRepository.findByEmail(socialUserInfo.getEmail()), ErrorCode.EMAIL_DUPLICATED);
+        checkDuplication(userQueryRepository.findByNickname(request.getNickname()), ErrorCode.NICKNAME_DUPLICATED);
+    }
+
+    private void checkDuplication(User user, ErrorCode errorCode) {
+        if (ObjectUtils.isNotEmpty(user)) {
+            throw new CustomException(errorCode);
         }
     }
 
