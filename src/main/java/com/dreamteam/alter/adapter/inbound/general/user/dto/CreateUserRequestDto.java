@@ -21,6 +21,11 @@ public class CreateUserRequestDto {
 
     @NotBlank
     @Size(max = 64)
+    @Schema(description = "성명", example = "김철수")
+    private String name;
+
+    @NotBlank
+    @Size(max = 64)
     @Schema(description = "닉네임", example = "유땡땡")
     private String nickname;
 
