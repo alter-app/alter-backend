@@ -1,9 +1,8 @@
 package com.dreamteam.alter.adapter.inbound.general.user.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.CreateUserRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.LoginUserRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
+import com.dreamteam.alter.domain.user.port.inbound.CheckNicknameDuplicationUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.GenerateTokenUseCase;
 import jakarta.annotation.Resource;
@@ -26,6 +25,9 @@ public class UserPublicController implements UserPublicControllerSpec {
     @Resource(name = "createUser")
     private final CreateUserUseCase createUser;
 
+    @Resource(name = "checkNicknameDuplication")
+    private final CheckNicknameDuplicationUseCase checkNicknameDuplication;
+
     @Override
     @PostMapping("/login")
     public ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginUser(@RequestBody @Valid LoginUserRequestDto request) {
@@ -37,6 +39,14 @@ public class UserPublicController implements UserPublicControllerSpec {
     public ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> createUser(@RequestBody @Valid CreateUserRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(CommonApiResponse.of(createUser.execute(request)));
+    }
+
+    @Override
+    @PostMapping("/exists/nickname")
+    public ResponseEntity<CommonApiResponse<CheckNicknameDuplicationResponseDto>> checkNicknameDuplication(
+        @RequestBody @Valid CheckNicknameDuplicationRequestDto request
+    ) {
+        return ResponseEntity.ok(CommonApiResponse.of(checkNicknameDuplication.execute(request)));
     }
 
 }
