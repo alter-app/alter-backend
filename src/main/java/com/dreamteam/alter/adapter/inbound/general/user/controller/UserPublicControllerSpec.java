@@ -26,11 +26,16 @@ public interface UserPublicControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "가입되지 않은 사용자",
-                        value = "{\"code\" : \"A003\"}"),
+                        value = "{\"code\" : \"A003\"}"
+                    ),
                     @ExampleObject(
                         name = "소셜 토큰 만료 (재 로그인 필요)",
                         value = "{\"code\" : \"A007\"}"
-                    )
+                    ),
+                    @ExampleObject(
+                        name = "가입 되지 않은 사용자 - 사용자 Email 중복 (다른 소셜 계정으로 로그인 유도)",
+                        value = "{\"code\" : \"A004\"}"
+                    ),
                 }))
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginUser(@Valid LoginUserRequestDto request);
@@ -45,10 +50,16 @@ public interface UserPublicControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "이메일 중복",
-                        value = "{\"code\" : \"A004\"}"),
+                        value = "{\"code\" : \"A004\"}"
+                    ),
                     @ExampleObject(
                         name = "소셜 플랫폼 ID 중복",
-                        value = "{\"code\" : \"A005\"}"),
+                        value = "{\"code\" : \"A005\"}"
+                    ),
+                    @ExampleObject(
+                        name = "사용자 닉네임 중복",
+                        value = "{\"code\" : \"A008\"}"
+                    ),
                     @ExampleObject(
                         name = "소셜 토큰 만료 (재 로그인 필요)",
                         value = "{\"code\" : \"A007\"}"
