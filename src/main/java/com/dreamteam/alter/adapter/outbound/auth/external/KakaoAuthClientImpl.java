@@ -31,6 +31,21 @@ public class KakaoAuthClientImpl implements KakaoAuthClient {
     private static final String KAKAO_OAUTH_URL = "https://kauth.kakao.com/oauth/token";
     private static final String KAKAO_USER_API_URL = "https://kapi.kakao.com/v2/user/me";
 
+    private static final String KEY_GRANT_TYPE = "grant_type";
+    private static final String VALUE_AUTHORIZATION_CODE = "authorization_code";
+    private static final String KEY_CLIENT_ID = "client_id";
+    private static final String KEY_REDIRECT_URI = "redirect_uri";
+    private static final String KEY_CODE = "code";
+    private static final String KEY_ACCESS_TOKEN = "access_token";
+
+    private static final String KEY_ID = "id";
+    private static final String KEY_KAKAO_ACCOUNT = "kakao_account";
+    private static final String KEY_EMAIL = "email";
+    private static final String KEY_NAME = "name";
+    private static final String KEY_BIRTHYEAR = "birthyear";
+    private static final String KEY_BIRTHDAY = "birthday";
+    private static final String KEY_GENDER = "gender";
+
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
 
@@ -40,17 +55,17 @@ public class KakaoAuthClientImpl implements KakaoAuthClient {
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "authorization_code");
-        params.add("client_id", kakaoClientId);
-        params.add("redirect_uri", kakaoRedirectUri);
-        params.add("code", authorizationCode);
+        params.add(KEY_GRANT_TYPE, VALUE_AUTHORIZATION_CODE);
+        params.add(KEY_CLIENT_ID, kakaoClientId);
+        params.add(KEY_REDIRECT_URI, kakaoRedirectUri);
+        params.add(KEY_CODE, authorizationCode);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(KAKAO_OAUTH_URL, request, String.class);
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
-            return new SocialTokenResponseDto(jsonNode.get("access_token").asText());
+            return new SocialTokenResponseDto(jsonNode.get(KEY_ACCESS_TOKEN).asText());
         } catch (HttpClientErrorException e) {
             throw new CustomException(ErrorCode.SOCIAL_TOKEN_EXPIRED);
         } catch (JsonProcessingException e) {
@@ -69,10 +84,24 @@ public class KakaoAuthClientImpl implements KakaoAuthClient {
             ResponseEntity<String> response = restTemplate.exchange(KAKAO_USER_API_URL, HttpMethod.GET, request, String.class);
 
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            String id = jsonNode.get("id").asText();
-            String email = jsonNode.path("kakao_account").path("email").asText();
+            String socialId = jsonNode.get(KEY_ID).asText();
 
-            return new SocialUserInfo(SocialProvider.KAKAO, id, email);
+            JsonNode accountNode = jsonNode.path(KEY_KAKAO_ACCOUNT);
+            String email = accountNode.path(KEY_EMAIL).asText();
+            String name = accountNode.has(KEY_NAME) ? accountNode.path(KEY_NAME).asText() : null;
+            String birthyear = accountNode.has(KEY_BIRTHYEAR) ? accountNode.path(KEY_BIRTHYEAR).asText() : null;
+            String birthday = accountNode.has(KEY_BIRTHDAY) ? accountNode.path(KEY_BIRTHDAY).asText() : null;
+            String gender = accountNode.has(KEY_GENDER) ? accountNode.path(KEY_GENDER).asText() : null;
+
+            return SocialUserInfo.of(
+                SocialProvider.KAKAO,
+                socialId,
+                email,
+                name,
+                birthyear,
+                birthday,
+                gender
+            );
         } catch (HttpClientErrorException e) {
             throw new CustomException(ErrorCode.SOCIAL_TOKEN_EXPIRED);
         } catch (JsonProcessingException e) {

@@ -14,6 +14,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -27,6 +28,14 @@ import java.util.Base64;
 @Component
 @RequiredArgsConstructor
 public class AppleSocialAuth extends AbstractSocialAuth {
+
+    private static final String KEY_EMAIL = "email";
+    private static final String JWT_DELIMITER_REGEX = "\\.";
+    private static final String KEY_KID = "kid";
+    private static final String KEYS_PREFIX = "keys";
+    private static final String KEY_N = "n";
+    private static final String KEY_E = "e";
+    private static final String RSA_ALGORITHM = "RSA";
 
     private final AppleAuthClient appleAuthClient;
     private final AppleRefreshTokenRepository appleRefreshTokenEntityRepository;
@@ -42,12 +51,12 @@ public class AppleSocialAuth extends AbstractSocialAuth {
         Jws<Claims> claimsJws = verifyIdentityToken(socialTokens.getIdentityToken());
         Claims claims = claimsJws.getPayload();
         String id = claims.getSubject();
-        String email = claims.get("email", String.class);
+        String email = claims.get(KEY_EMAIL, String.class);
 
         // RefreshToken 저장
         saveOrUpdateRefreshToken(id, socialTokens.getRefreshToken());
 
-        return new SocialUserInfo(SocialProvider.APPLE, id, email);
+        return SocialUserInfo.of(SocialProvider.APPLE, id, email);
     }
 
     @Override
@@ -58,33 +67,33 @@ public class AppleSocialAuth extends AbstractSocialAuth {
     private Jws<Claims> verifyIdentityToken(String identityToken) {
         try {
             // 1. JWT 토큰 헤더에서 kid 값 추출
-            String[] jwtParts = identityToken.split("\\.");
+            String[] jwtParts = identityToken.split(JWT_DELIMITER_REGEX);
             if (jwtParts.length < 2) {
-                throw new IllegalArgumentException("유효한 JWT 형식이 아닙니다");
+                throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
             String headerJson = new String(Base64.getUrlDecoder().decode(jwtParts[0]));
             JsonNode headerNode = objectMapper.readTree(headerJson);
-            String tokenKid = headerNode.get("kid").asText();
+            String tokenKid = headerNode.get(KEY_KID).asText();
 
             // 2. Apple에서 공개 키 목록 조회
             JsonNode keysNode = appleAuthClient.fetchPublicKeys();
 
             // 3. kid와 일치하는 키 찾기
             JsonNode matchingKey = null;
-            for (JsonNode key : keysNode.get("keys")) {
-                if (key.has("kid") && key.get("kid").asText().equals(tokenKid)) {
+            for (JsonNode key : keysNode.get(KEYS_PREFIX)) {
+                if (key.has(KEY_KID) && key.get(KEY_KID).asText().equals(tokenKid)) {
                     matchingKey = key;
                     break;
                 }
             }
 
-            if (matchingKey == null) {
-                throw new RuntimeException("토큰의 kid와 일치하는 Apple 공개 키를 찾을 수 없습니다: " + tokenKid);
+            if (ObjectUtils.isEmpty(matchingKey)) {
+                throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
-            String n = matchingKey.get("n").asText();
-            String e = matchingKey.get("e").asText();
+            String n = matchingKey.get(KEY_N).asText();
+            String e = matchingKey.get(KEY_E).asText();
             PublicKey publicKey = generatePublicKey(n, e);
 
             return Jwts.parser()
@@ -104,7 +113,7 @@ public class AppleSocialAuth extends AbstractSocialAuth {
             BigInteger modulus = new BigInteger(1, modulusBytes);
             BigInteger exponent = new BigInteger(1, exponentBytes);
 
-            KeyFactory kf = KeyFactory.getInstance("RSA");
+            KeyFactory kf = KeyFactory.getInstance(RSA_ALGORITHM);
             return kf.generatePublic(new RSAPublicKeySpec(modulus, exponent));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);

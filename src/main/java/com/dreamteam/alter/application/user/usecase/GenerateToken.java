@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.user.usecase;
 
+import com.dreamteam.alter.adapter.inbound.general.auth.dto.SignupSessionResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.LoginUserRequestDto;
@@ -39,6 +40,10 @@ public class GenerateToken implements GenerateTokenUseCase {
 
         if (ObjectUtils.isEmpty(user)) {
             try {
+                if (ObjectUtils.isNotEmpty(userQueryRepository.findByEmail(socialUserInfo.getEmail()))) {
+                    throw new CustomException(ErrorCode.EMAIL_DUPLICATED);
+                }
+
                 ObjectMapper objectMapper = new ObjectMapper();
                 String jsonValue = objectMapper.writeValueAsString(socialUserInfo);
 
@@ -47,7 +52,7 @@ public class GenerateToken implements GenerateTokenUseCase {
                 String key = "SIGNUP:PENDING:" + signupSessionId;
                 redisTemplate.opsForValue().set(key, jsonValue, 5, TimeUnit.MINUTES);
 
-                throw new SignupRequiredException(signupSessionId);
+                throw new SignupRequiredException(SignupSessionResponseDto.of(signupSessionId, socialUserInfo));
             } catch (JsonProcessingException e) {
                 throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
             }

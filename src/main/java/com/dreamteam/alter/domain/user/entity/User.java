@@ -31,7 +31,10 @@ public class User {
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "nickname", nullable = false)
+    @Column(name = "name", nullable = false)
+    private String name;
+
+    @Column(name = "nickname", nullable = false, unique = true)
     private String nickname;
 
     @Column(name = "contact", nullable = false)
@@ -72,6 +75,7 @@ public class User {
     ) {
         return User.builder()
             .email(socialUserInfo.getEmail())
+            .name(request.getName())
             .nickname(request.getNickname())
             .contact(request.getContact())
             .birthday(request.getBirthday())

@@ -2,9 +2,7 @@ package com.dreamteam.alter.adapter.inbound.general.user.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.CreateUserRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.LoginUserRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -28,11 +26,16 @@ public interface UserPublicControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "가입되지 않은 사용자",
-                        value = "{\"code\" : \"A003\"}"),
+                        value = "{\"code\": \"A003\", \"data\": {\"signupSessionId\": \"UUID\", \"name\": \"김철수\", \"gender\": \"GENDER_MALE\", \"birthday\": \"YYYYMMDD\"}}"
+                    ),
                     @ExampleObject(
                         name = "소셜 토큰 만료 (재 로그인 필요)",
                         value = "{\"code\" : \"A007\"}"
-                    )
+                    ),
+                    @ExampleObject(
+                        name = "가입 되지 않은 사용자 - 사용자 Email 중복 (다른 소셜 계정으로 로그인 유도)",
+                        value = "{\"code\" : \"A004\"}"
+                    ),
                 }))
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginUser(@Valid LoginUserRequestDto request);
@@ -47,10 +50,16 @@ public interface UserPublicControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "이메일 중복",
-                        value = "{\"code\" : \"A004\"}"),
+                        value = "{\"code\" : \"A004\"}"
+                    ),
                     @ExampleObject(
                         name = "소셜 플랫폼 ID 중복",
-                        value = "{\"code\" : \"A005\"}"),
+                        value = "{\"code\" : \"A005\"}"
+                    ),
+                    @ExampleObject(
+                        name = "사용자 닉네임 중복",
+                        value = "{\"code\" : \"A008\"}"
+                    ),
                     @ExampleObject(
                         name = "소셜 토큰 만료 (재 로그인 필요)",
                         value = "{\"code\" : \"A007\"}"
@@ -58,5 +67,11 @@ public interface UserPublicControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> createUser(@Valid CreateUserRequestDto request);
+
+    @Operation(summary = "사용자 닉네임 중복 체크")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "닉네임 중복 체크 성공")
+    })
+    ResponseEntity<CommonApiResponse<CheckNicknameDuplicationResponseDto>> checkNicknameDuplication(@Valid CheckNicknameDuplicationRequestDto request);
 
 }

@@ -1,6 +1,7 @@
 package com.dreamteam.alter.common.exception.handler;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
+import com.dreamteam.alter.adapter.inbound.general.auth.dto.SignupSessionResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.exception.SignupRequiredException;
@@ -19,9 +20,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(SignupRequiredException.class)
-    public ResponseEntity<ErrorResponse<String>> handleSignupRequiredException(SignupRequiredException e) {
+    public ResponseEntity<ErrorResponse<SignupSessionResponseDto>> handleSignupRequiredException(SignupRequiredException e) {
         return ResponseEntity.status(e.getErrorCode().getStatus())
-            .body(ErrorResponse.of(e.getErrorCode(), e.getSignupSessionId()));
+            .body(ErrorResponse.of(e.getErrorCode(), e.getSignupSessionResponseDto()));
     }
 
     @ExceptionHandler(CustomException.class)

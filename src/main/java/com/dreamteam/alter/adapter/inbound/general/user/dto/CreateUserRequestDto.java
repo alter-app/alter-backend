@@ -21,6 +21,11 @@ public class CreateUserRequestDto {
 
     @NotBlank
     @Size(max = 64)
+    @Schema(description = "성명", example = "김철수")
+    private String name;
+
+    @NotBlank
+    @Size(max = 64)
     @Schema(description = "닉네임", example = "유땡땡")
     private String nickname;
 
@@ -34,8 +39,8 @@ public class CreateUserRequestDto {
     private UserGender gender;
 
     @NotBlank
-    @Size(min = 10, max = 10)
-    @Schema(description = "생년월일", example = "YYYY-MM-DD")
+    @Size(min = 8, max = 8)
+    @Schema(description = "생년월일", example = "YYYYMMDD")
     private String birthday;
 
 }

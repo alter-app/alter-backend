@@ -1,6 +1,5 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
-import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
 import com.dreamteam.alter.domain.user.entity.QUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -34,6 +33,18 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
             .selectFrom(user)
             .where(
                 user.email.eq(email),
+                user.status.eq(UserStatus.ACTIVE)
+            )
+            .fetchOne();
+    }
+
+    @Override
+    public User findByNickname(String nickname) {
+        QUser user = QUser.user;
+        return queryFactory
+            .selectFrom(user)
+            .where(
+                user.nickname.eq(nickname),
                 user.status.eq(UserStatus.ACTIVE)
             )
             .fetchOne();
