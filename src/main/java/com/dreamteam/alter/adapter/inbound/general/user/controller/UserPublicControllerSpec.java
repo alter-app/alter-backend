@@ -26,7 +26,7 @@ public interface UserPublicControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "가입되지 않은 사용자",
-                        value = "{\"code\" : \"A003\"}"
+                        value = "{\"code\": \"A003\", \"data\": {\"signupSessionId\": \"UUID\", \"name\": \"김철수\", \"gender\": \"GENDER_MALE\", \"birthday\": \"YYYYMMDD\"}}"
                     ),
                     @ExampleObject(
                         name = "소셜 토큰 만료 (재 로그인 필요)",
