@@ -43,6 +43,27 @@ public class AppleAuthClientImpl implements AppleAuthClient {
     private static final String APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token";
     private static final String APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys";
 
+    private static final String KEY_GRANT_TYPE = "grant_type";
+    private static final String VALUE_AUTHORIZATION_CODE = "authorization_code";
+    private static final String KEY_CLIENT_ID = "client_id";
+    private static final String KEY_CLIENT_SECRET = "client_secret";
+    private static final String KEY_CODE = "code";
+    private static final String KEY_REDIRECT_URI = "redirect_uri";
+    private static final String KEY_REFRESH_TOKEN = "refresh_token";
+    private static final String KEY_ID_TOKEN = "id_token";
+
+    private static final String BEGIN_PRIVATE_KEY_PREFIX = "-----BEGIN PRIVATE KEY-----";
+    private static final String END_PRIVATE_KEY_PREFIX = "-----END PRIVATE KEY-----";
+    private static final String KEY_KID = "kid";
+    private static final String KEY_ALG = "alg";
+    private static final String VALUE_ALG = "ES256";
+    private static final String APPLE_AUDIENCE = "https://appleid.apple.com";
+    private static final long CLIENT_SECRET_EXPIRATION_TIME = 15552000;
+
+    private static final String KF_ALGORITHM = "EC";
+    private static final String SPACING_REGEX = "\\s";
+    private static final String EMPTY_STRING = "";
+
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final PrivateKey applePrivateKey;
@@ -63,11 +84,11 @@ public class AppleAuthClientImpl implements AppleAuthClient {
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "authorization_code");
-        params.add("client_id", appleTeamId);
-        params.add("client_secret", generateClientSecret());
-        params.add("code", authorizationCode);
-        params.add("redirect_uri", appleRedirectUri);
+        params.add(KEY_GRANT_TYPE, VALUE_AUTHORIZATION_CODE);
+        params.add(KEY_CLIENT_ID, appleTeamId);
+        params.add(KEY_CLIENT_SECRET, generateClientSecret());
+        params.add(KEY_CODE, authorizationCode);
+        params.add(KEY_REDIRECT_URI, appleRedirectUri);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
         try {
@@ -75,8 +96,8 @@ public class AppleAuthClientImpl implements AppleAuthClient {
 
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
             return new SocialTokenResponseDto(
-                jsonNode.get("refresh_token").asText(),
-                jsonNode.get("id_token").asText()
+                jsonNode.get(KEY_REFRESH_TOKEN).asText(),
+                jsonNode.get(KEY_ID_TOKEN).asText()
             );
         } catch (HttpClientErrorException e) {
             throw new CustomException(ErrorCode.SOCIAL_TOKEN_EXPIRED);
@@ -101,13 +122,13 @@ public class AppleAuthClientImpl implements AppleAuthClient {
             String originalP8Content = new String(fileBytes);
 
             String keyContent = originalP8Content
-                .replaceAll("-----BEGIN PRIVATE KEY-----", "")
-                .replaceAll("-----END PRIVATE KEY-----", "")
-                .replaceAll("\\s", "");
+                .replaceAll(BEGIN_PRIVATE_KEY_PREFIX, EMPTY_STRING)
+                .replaceAll(END_PRIVATE_KEY_PREFIX, EMPTY_STRING)
+                .replaceAll(SPACING_REGEX, EMPTY_STRING);
 
             byte[] keyBytes = Base64.getDecoder().decode(keyContent);
 
-            KeyFactory keyFactory = KeyFactory.getInstance("EC");
+            KeyFactory keyFactory = KeyFactory.getInstance(KF_ALGORITHM);
             return keyFactory.generatePrivate(new PKCS8EncodedKeySpec(keyBytes));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
@@ -117,13 +138,13 @@ public class AppleAuthClientImpl implements AppleAuthClient {
     private String generateClientSecret() {
         return Jwts.builder()
             .header()
-            .add("kid", appleLoginKey)
-            .add("alg", "ES256")
+            .add(KEY_KID, appleLoginKey)
+            .add(KEY_ALG, VALUE_ALG)
             .and()
             .issuer(appleTeamId)
             .issuedAt(Date.from(Instant.now()))
-            .expiration(Date.from(Instant.now().plusSeconds(15552000)))
-            .audience().add("https://appleid.apple.com").and()
+            .expiration(Date.from(Instant.now().plusSeconds(CLIENT_SECRET_EXPIRATION_TIME)))
+            .audience().add(APPLE_AUDIENCE).and()
             .subject(appleClientId)
             .signWith(applePrivateKey, Jwts.SIG.ES256)
             .compact();
