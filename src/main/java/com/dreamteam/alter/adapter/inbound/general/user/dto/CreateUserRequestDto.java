@@ -39,8 +39,8 @@ public class CreateUserRequestDto {
     private UserGender gender;
 
     @NotBlank
-    @Size(min = 10, max = 10)
-    @Schema(description = "생년월일", example = "YYYY-MM-DD")
+    @Size(min = 8, max = 8)
+    @Schema(description = "생년월일", example = "YYYYMMDD")
     private String birthday;
 
 }
