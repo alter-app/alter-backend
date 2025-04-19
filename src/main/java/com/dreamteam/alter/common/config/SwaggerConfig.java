@@ -5,14 +5,20 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import jakarta.servlet.ServletContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
 
     @Bean
-    public OpenAPI customOpenApi() {
+    public OpenAPI customOpenApi(ServletContext servletContext) {
+        Server servers = new Server().url(servletContext.getContextPath());
+
         SecurityScheme jwtAuthScheme = new SecurityScheme()
             .name("Authorization")
             .type(SecurityScheme.Type.HTTP)
@@ -27,6 +33,7 @@ public class SwaggerConfig {
                 .version("v1.0.0"))
             .components(new Components()
                 .addSecuritySchemes("bearerAuth", jwtAuthScheme))
+            .servers(List.of(servers))
             .addSecurityItem(securityRequirement);
     }
 
