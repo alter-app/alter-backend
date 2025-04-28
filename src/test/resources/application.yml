@@ -17,7 +17,7 @@ spring:
       host: mock
       port: 12345
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create
     show-sql: true
