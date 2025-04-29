@@ -15,13 +15,13 @@ public class CustomJwtSubject {
 
     private TokenType type;
 
-    private String userId;
+    private Long userId;
 
     public static CustomJwtSubject of(
         String authorizationId,
         TokenScope scope,
         TokenType type,
-        String userId
+        Long userId
     ) {
         return new CustomJwtSubject(authorizationId, scope, type, userId);
     }
