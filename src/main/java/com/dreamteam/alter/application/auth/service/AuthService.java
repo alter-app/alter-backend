@@ -72,7 +72,7 @@ public class AuthService {
                     authorizationId,
                     scope,
                     TokenType.ACCESS,
-                    String.valueOf(user.getId())
+                    user.getId()
                 ),
                 accessTokenExpiredAt
             );
@@ -82,7 +82,7 @@ public class AuthService {
                     authorizationId,
                     scope,
                     TokenType.REFRESH,
-                    String.valueOf(user.getId())
+                    user.getId()
                 ),
                 refreshTokenExpiredAt
             );
@@ -106,7 +106,11 @@ public class AuthService {
     }
 
     private void saveAuthorization(Authorization authorization) throws JsonProcessingException {
-        String key = buildKey(authorization);
+        String key = buildKey(
+            authorization.getScope(),
+            authorization.getUser().getId(),
+            authorization.getId()
+        );
 
         // Redis
         redisTemplate.opsForValue().set(
@@ -120,12 +124,12 @@ public class AuthService {
         authorizationRepository.save(authorization);
     }
 
-    private String buildKey(Authorization authorization) {
+    public String buildKey(TokenScope scope, Long userId, String authorizationId) {
         return String.join(":",
             AUTHORIZATION_PREFIX,
-            String.valueOf(authorization.getScope()),
-            String.valueOf(authorization.getUser().getId()),
-            authorization.getId()
+            String.valueOf(scope),
+            String.valueOf(userId),
+            authorizationId
         );
     }
 
