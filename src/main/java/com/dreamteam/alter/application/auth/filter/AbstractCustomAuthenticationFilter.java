@@ -1,7 +1,5 @@
 package com.dreamteam.alter.application.auth.filter;
 
-import com.dreamteam.alter.domain.auth.exception.ForbiddenAccessException;
-import com.dreamteam.alter.domain.auth.exception.InternalAuthException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -10,11 +8,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
@@ -73,12 +69,7 @@ public abstract class AbstractCustomAuthenticationFilter extends AbstractAuthent
             successfulAuthentication(request, response, chain, authentication);
         } catch (InternalAuthenticationServiceException ex) {
             unsuccessfulAuthentication(request, response, ex);
-        } catch (AuthenticationException ex) {
-            throw new InternalAuthException();
-        } catch (AccessDeniedException ex) {
-            throw new ForbiddenAccessException();
         }
-
     }
 
 }
