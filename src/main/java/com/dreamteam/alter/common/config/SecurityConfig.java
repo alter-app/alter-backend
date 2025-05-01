@@ -23,7 +23,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -106,7 +106,7 @@ public class SecurityConfig {
                 .authenticationEntryPoint(customAuthenticationEntryPoint)
                 .accessDeniedHandler(customAccessDeniedHandler)
             )
-            .addFilterBefore(accessTokenAuthenticationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(accessTokenAuthenticationFilter(authenticationManager), ExceptionTranslationFilter.class)
             .addFilterAfter(refreshTokenAuthenticationFilter(authenticationManager), AccessTokenAuthenticationFilter.class)
             .addFilterAfter(anonymousAuthenticationFilter(authenticationManager), RefreshTokenAuthenticationFilter.class)
             .build();
