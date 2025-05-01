@@ -17,6 +17,9 @@ public enum ErrorCode {
     NICKNAME_DUPLICATED(400, "A008", "이미 사용중인 닉네임입니다."),
 
     ILLEGAL_ARGUMENT(400, "B001", "잘못된 요청입니다."),
+    REFRESH_TOKEN_REQUIRED(400, "B002", "RefreshToken을 통해 요청해야 합니다."),
+    SUSPENDED_USER(400, "B003", "이용이 정지된 사용자입니다."),
+    DELETED_USER(400, "B004", "탈퇴한 사용자입니다."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     ;
