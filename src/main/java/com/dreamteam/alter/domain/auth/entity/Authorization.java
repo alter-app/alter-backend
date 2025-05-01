@@ -25,7 +25,7 @@ public class Authorization {
     @Column(name = "id")
     private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -76,6 +76,10 @@ public class Authorization {
             .refreshTokenExpiredAt(refreshTokenExpiredAt)
             .status(AuthorizationStatus.ACTIVE)
             .build();
+    }
+
+    public void expire() {
+        this.status = AuthorizationStatus.EXPIRED;
     }
 
 }
