@@ -105,7 +105,7 @@ public class AuthService {
         }
     }
 
-    private void saveAuthorization(Authorization authorization) throws JsonProcessingException {
+    public void saveAuthorization(Authorization authorization) throws JsonProcessingException {
         String key = buildKey(
             authorization.getScope(),
             authorization.getUser().getId(),
