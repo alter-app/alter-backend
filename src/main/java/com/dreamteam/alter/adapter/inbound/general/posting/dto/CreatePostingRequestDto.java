@@ -33,10 +33,10 @@ public class CreatePostingRequestDto {
 
     @Schema(description = "공고 스케줄", example = "[" +
             "{" +
-                "\"dayOfWeek\": \"MONDAY\", \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"positionsNeeded\": 3, \"position\": 3" +
+                "\"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"positionsNeeded\": 3, \"position\": 3" +
             "}," +
             "{" +
-                "\"dayOfWeek\": \"TUESDAY\", \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"positionsNeeded\": 1, \"position\": 2" +
+                "\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"positionsNeeded\": 1, \"position\": 2" +
             "}" +
         "]")
     private List<PostingScheduleDto> schedules;
