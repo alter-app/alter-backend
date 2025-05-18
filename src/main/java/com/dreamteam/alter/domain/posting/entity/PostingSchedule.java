@@ -1,8 +1,10 @@
 package com.dreamteam.alter.domain.posting.entity;
 
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingScheduleDto;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Type;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -10,6 +12,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -29,9 +32,9 @@ public class PostingSchedule {
     @JoinColumn(name = "posting_id", nullable = false)
     private Posting posting;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "day_of_week", nullable = false)
-    private DayOfWeek dayOfWeek;
+    @Type(JsonBinaryType.class)
+    @Column(name = "working_days", nullable = false, columnDefinition = "jsonb")
+    private List<DayOfWeek> workingDays;
 
     @Column(name = "start_time", nullable = false)
     private LocalTime startTime;
@@ -56,7 +59,7 @@ public class PostingSchedule {
     public static PostingSchedule create(PostingScheduleDto request, Posting posting) {
         return PostingSchedule.builder()
             .posting(posting)
-            .dayOfWeek(request.getDayOfWeek())
+            .workingDays(request.getWorkingDays())
             .startTime(request.getStartTime())
             .endTime(request.getEndTime())
             .positions_needed(request.getPositionsNeeded())
