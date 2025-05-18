@@ -11,7 +11,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -57,10 +56,10 @@ public class Posting {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "posting", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostingSchedule> schedules = new ArrayList<>();
+    private List<PostingSchedule> schedules;
 
     @OneToMany(mappedBy = "posting", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostingKeyword> keywords = new ArrayList<>();
+    private List<PostingKeyword> keywords;
 
     public static Posting create(CreatePostingRequestDto request) {
         Posting posting = Posting.builder()
