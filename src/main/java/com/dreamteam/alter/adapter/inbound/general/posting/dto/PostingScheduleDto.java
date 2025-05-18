@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -13,8 +14,8 @@ import java.time.LocalTime;
 @Schema(description = "공고 스케줄 DTO")
 public class PostingScheduleDto {
 
-    @Schema(description = "요일", example = "MONDAY")
-    private DayOfWeek dayOfWeek;
+    @Schema(description = "근무 요일", example = "['MONDAY', 'WEDNESDAY']")
+    private List<DayOfWeek> workingDays;
 
     @Schema(description = "시작 시간", example = "09:00")
     private LocalTime startTime;
