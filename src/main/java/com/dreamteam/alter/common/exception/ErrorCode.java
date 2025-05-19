@@ -20,6 +20,8 @@ public enum ErrorCode {
     REFRESH_TOKEN_REQUIRED(400, "B002", "RefreshToken을 통해 요청해야 합니다."),
     SUSPENDED_USER(400, "B003", "이용이 정지된 사용자입니다."),
     DELETED_USER(400, "B004", "탈퇴한 사용자입니다."),
+    INVALID_CURSOR(400, "B005", "잘못된 커서 페이징 요청입니다."),
+    INVALID_KEYWORD(400, "B006", "잘못된 키워드 요청입니다."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     ;
