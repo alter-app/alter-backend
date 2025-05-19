@@ -39,6 +39,6 @@ public class CreatePostingRequestDto {
                 "\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"positionsNeeded\": 1, \"position\": 2" +
             "}" +
         "]")
-    private List<PostingScheduleDto> schedules;
+    private List<CreatePostingScheduleRequestDto> schedules;
 
 }

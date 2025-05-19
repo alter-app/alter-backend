@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.general.posting.dto;
 
+import com.dreamteam.alter.domain.posting.entity.PostingSchedule;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -11,8 +12,8 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-@Schema(description = "공고 스케줄 DTO")
-public class PostingScheduleDto {
+@Schema(description = "공고 스케줄 응답 DTO")
+public class PostingScheduleResponseDto {
 
     @Schema(description = "근무 요일", example = "['MONDAY', 'WEDNESDAY']")
     private List<DayOfWeek> workingDays;
@@ -26,7 +27,17 @@ public class PostingScheduleDto {
     @Schema(description = "필요 인원", example = "3")
     private int positionsNeeded;
 
-    @Schema(description = "직무 id", example = "3")
-    private Long position;
+    @Schema(description = "아르바이트 포지션", example = "홀서빙")
+    private String position;
+
+    public static PostingScheduleResponseDto from(PostingSchedule entity) {
+        return PostingScheduleResponseDto.builder()
+                .workingDays(entity.getWorkingDays())
+                .startTime(entity.getStartTime())
+                .endTime(entity.getEndTime())
+                .positionsNeeded(entity.getPositionsNeeded())
+                .position(entity.getPosition())
+                .build();
+    }
 
 }

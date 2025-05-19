@@ -1,0 +1,110 @@
+package com.dreamteam.alter.adapter.outbound.posting.persistence;
+
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
+import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingListResponse;
+import com.dreamteam.alter.domain.posting.entity.*;
+import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
+import com.dreamteam.alter.domain.posting.type.PostingStatus;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+@Repository
+@RequiredArgsConstructor
+public class PostingQueryRepositoryImpl implements PostingQueryRepository {
+
+    private final JPAQueryFactory queryFactory;
+
+    @Override
+    public long getCountOfPostings() {
+        QPosting qPosting = QPosting.posting;
+
+        Long count = queryFactory
+            .select(qPosting.count())
+            .from(qPosting)
+            .where(qPosting.status.eq(PostingStatus.OPEN))
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
+    @Override
+    public List<PostingListResponse> getPostingsWithCursor(CursorPageRequest<CursorDto> request) {
+        QPosting qPosting = QPosting.posting;
+        QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
+        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
+        QKeyword qKeyword = QKeyword.keyword;
+
+        List<Long> postingIds = queryFactory
+            .select(qPosting.id)
+            .from(qPosting)
+            .where(
+                qPosting.status.eq(PostingStatus.OPEN),
+                cursorConditions(qPosting, request.cursor())
+            )
+            .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
+            .limit(request.pageSize())
+            .fetch();
+
+        if (ObjectUtils.isEmpty(postingIds)) {
+            return Collections.emptyList();
+        }
+
+        List<Posting> postings = queryFactory
+            .selectFrom(qPosting)
+            .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .where(qPosting.id.in(postingIds))
+            .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
+            .distinct()
+            .fetch();
+
+        List<PostingKeywordMap> keywordMaps = queryFactory
+            .selectFrom(qPostingKeywordMap)
+            .leftJoin(qPostingKeywordMap.keyword, qKeyword).fetchJoin()
+            .where(qPostingKeywordMap.posting.id.in(postingIds))
+            .fetch();
+
+        Map<Long, List<Keyword>> postingIdToKeywords = keywordMaps.stream()
+            .collect(
+                java.util.stream.Collectors.groupingBy(
+                    pkMap -> pkMap.getPosting().getId(),
+                    java.util.stream.Collectors.mapping(PostingKeywordMap::getKeyword, java.util.stream.Collectors.toList())
+                )
+            );
+
+        return postings.stream()
+            .map(
+                posting -> PostingListResponse.of(posting, postingIdToKeywords)
+            )
+            .toList();
+    }
+
+    private BooleanExpression cursorConditions(QPosting qPosting, CursorDto cursor) {
+        return ObjectUtils.isEmpty(cursor)
+            ? null
+            : ltCreatedAt(qPosting, cursor.getCreatedAt())
+                .or(eqCreatedAt(qPosting, cursor.getCreatedAt())
+                    .and(ltPostingId(qPosting, cursor.getId())));
+    }
+
+    private BooleanExpression ltCreatedAt(QPosting qPosting, LocalDateTime createdAt) {
+        return createdAt != null ? qPosting.createdAt.lt(createdAt) : null;
+    }
+
+    private BooleanExpression eqCreatedAt(QPosting qPosting, LocalDateTime createdAt) {
+        return createdAt != null ? qPosting.createdAt.eq(createdAt) : null;
+    }
+
+    private BooleanExpression ltPostingId(QPosting qPosting, Long postingId) {
+        return postingId != null ? qPosting.id.lt(postingId) : null;
+    }
+
+}
