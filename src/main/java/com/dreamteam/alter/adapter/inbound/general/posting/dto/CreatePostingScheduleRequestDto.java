@@ -11,8 +11,8 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-@Schema(description = "공고 스케줄 DTO")
-public class PostingScheduleDto {
+@Schema(description = "공고 스케줄 생성 요청 DTO")
+public class CreatePostingScheduleRequestDto {
 
     @Schema(description = "근무 요일", example = "['MONDAY', 'WEDNESDAY']")
     private List<DayOfWeek> workingDays;
@@ -26,7 +26,7 @@ public class PostingScheduleDto {
     @Schema(description = "필요 인원", example = "3")
     private int positionsNeeded;
 
-    @Schema(description = "직무 id", example = "3")
-    private Long position;
+    @Schema(description = "아르바이트 포지션", example = "홀서빙")
+    private String position;
 
 }
