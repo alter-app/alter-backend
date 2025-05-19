@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.outbound.posting.persistence;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
+import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingDetailResponse;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingListResponse;
 import com.dreamteam.alter.domain.posting.entity.*;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
@@ -85,6 +86,33 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 posting -> PostingListResponse.of(posting, postingIdToKeywords)
             )
             .toList();
+    }
+
+    @Override
+    public PostingDetailResponse getPostingDetail(Long postingId) {
+        QPosting qPosting = QPosting.posting;
+        QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
+        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
+        QKeyword qKeyword = QKeyword.keyword;
+
+        Posting posting = queryFactory
+            .selectFrom(qPosting)
+            .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .where(qPosting.id.eq(postingId))
+            .fetchOne();
+
+        if (ObjectUtils.isEmpty(posting)) {
+            return null;
+        }
+
+        List<Keyword> keywords = queryFactory
+            .select(qKeyword)
+            .from(qPostingKeywordMap)
+            .leftJoin(qPostingKeywordMap.keyword, qKeyword)
+            .where(qPostingKeywordMap.posting.id.eq(postingId))
+            .fetch();
+
+        return PostingDetailResponse.of(posting, keywords);
     }
 
     private BooleanExpression cursorConditions(QPosting qPosting, CursorDto cursor) {
