@@ -1,8 +1,11 @@
 package com.dreamteam.alter.adapter.inbound.general.posting.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingListResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -32,5 +35,25 @@ public interface PostingControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> createPosting(@Valid @RequestBody CreatePostingRequestDto request);
+
+    @Operation(summary = "공고 리스트 조회 (커서 페이징)", description = "")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "공고 리스트 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "등록되지 않은 키워드로 요청",
+                        value = "{\"code\" : \"B006\"}"
+                    ),
+                    @ExampleObject(
+                        name = "요청에 키워드가 포함되지 않은 경우",
+                        value = "{\"code\" : \"B001\"}"
+                    )
+                }))
+    })
+    ResponseEntity<CursorPaginatedApiResponse<PostingListResponseDto>> getPostingsWithCursor(CursorPageRequestDto request);
 
 }
