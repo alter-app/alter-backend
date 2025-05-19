@@ -59,9 +59,9 @@ public class Posting {
     private List<PostingSchedule> schedules;
 
     @OneToMany(mappedBy = "posting", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostingKeyword> keywords;
+    private List<PostingKeywordMap> keywords;
 
-    public static Posting create(CreatePostingRequestDto request) {
+    public static Posting create(CreatePostingRequestDto request, List<Keyword> keywords) {
         Posting posting = Posting.builder()
             .workspace(request.getWorkspaceId())
             .title(request.getTitle())
@@ -78,10 +78,10 @@ public class Posting {
                 .toList();
         }
 
-        if (ObjectUtils.isNotEmpty(request.getKeywords())) {
-            posting.keywords = request.getKeywords()
+        if (ObjectUtils.isNotEmpty(keywords)) {
+            posting.keywords = keywords
                 .stream()
-                .map(keyword -> PostingKeyword.create(keyword, posting))
+                .map(keyword -> PostingKeywordMap.create(keyword, posting))
                 .toList();
         }
 
