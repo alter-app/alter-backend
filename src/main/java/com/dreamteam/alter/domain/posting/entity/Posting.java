@@ -28,7 +28,7 @@ public class Posting {
     private Long id;
 
     @Column(name = "workspace_id", nullable = false)
-    private Long workspace;
+    private Long workspace; // TODO: 실제 연관관계 설정 필요
 
     @Column(name = "title", nullable = false)
     private String title;
