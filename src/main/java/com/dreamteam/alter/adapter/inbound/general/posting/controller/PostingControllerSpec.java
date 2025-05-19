@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingDetailResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingListResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -55,5 +56,21 @@ public interface PostingControllerSpec {
                 }))
     })
     ResponseEntity<CursorPaginatedApiResponse<PostingListResponseDto>> getPostingsWithCursor(CursorPageRequestDto request);
+
+    @Operation(summary = "공고 상세 조회", description = "")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "공고 리스트 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "존재하지 않는 공고",
+                        value = "{\"code\" : \"B007\"}"
+                    ),
+                }))
+    })
+    ResponseEntity<CommonApiResponse<PostingDetailResponseDto>> getPostingDetail(Long postingId);
 
 }
