@@ -43,6 +43,7 @@ public class Workspace {
     @Column(name = "description", length = Integer.MAX_VALUE, nullable = true)
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
     private WorkspaceStatus status;
 
