@@ -26,4 +26,13 @@ public class PostingKeywordQueryRepositoryImpl implements PostingKeywordQueryRep
             .fetch();
     }
 
+    @Override
+    public List<PostingKeyword> findAll() {
+        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
+
+        return queryFactory
+            .selectFrom(qPostingKeyword)
+            .fetch();
+    }
+
 }

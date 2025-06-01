@@ -24,6 +24,7 @@ public enum ErrorCode {
     INVALID_KEYWORD(400, "B006", "잘못된 키워드 요청입니다."),
     POSTING_NOT_FOUND(400, "B007", "존재하지 않는 공고입니다."),
     WORKSPACE_NOT_FOUND(400, "B008", "존재하지 않는 업장입니다."),
+    POSTING_KEYWORDS_NOT_FOUND(400, "B009", "키워드 목록을 찾을 수 없습니다."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     ;

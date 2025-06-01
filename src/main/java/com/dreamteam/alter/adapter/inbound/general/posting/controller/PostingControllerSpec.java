@@ -6,6 +6,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingDetailResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingKeywordListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingListResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,6 +18,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 @Tag(name = "App - 공고 API")
 public interface PostingControllerSpec {
@@ -72,5 +75,21 @@ public interface PostingControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<PostingDetailResponseDto>> getPostingDetail(Long postingId);
+
+    @Operation(summary = "등록 가능한 공고 키워드 조회", description = "")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "공고 키워드 리스트 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "키워드 리스트 찾을 수 없음",
+                        value = "{\"code\" : \"B009\"}"
+                    ),
+                }))
+    })
+    ResponseEntity<CommonApiResponse<List<PostingKeywordListResponseDto>>> getAvailablePostingKeywords();
 
 }
