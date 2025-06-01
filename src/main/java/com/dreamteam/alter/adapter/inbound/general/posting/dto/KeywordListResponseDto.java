@@ -1,6 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.general.posting.dto;
 
-import com.dreamteam.alter.domain.posting.entity.Keyword;
+import com.dreamteam.alter.domain.posting.entity.PostingKeyword;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -19,10 +19,10 @@ public class KeywordListResponseDto {
     @Schema(title = "키워드 이름", example = "홀서빙")
     private String name;
 
-    public static KeywordListResponseDto from(Keyword keyword) {
+    public static KeywordListResponseDto from(PostingKeyword postingKeyword) {
         return new KeywordListResponseDto(
-            keyword.getId(),
-            keyword.getName()
+            postingKeyword.getId(),
+            postingKeyword.getName()
         );
     }
 

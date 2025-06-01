@@ -30,7 +30,7 @@ public class Authorization {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "scope", nullable = false)
+    @Column(name = "scope", length = 20, nullable = false)
     private TokenScope scope;
 
     @Column(name = "access_token", length = Integer.MAX_VALUE, nullable = false)
@@ -46,7 +46,7 @@ public class Authorization {
     private Instant refreshTokenExpiredAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 20, nullable = false)
     private AuthorizationStatus status;
 
     @CreatedDate

@@ -1,4 +1,4 @@
-package com.dreamteam.alter.domain.auth.entity;
+package com.dreamteam.alter.domain.posting.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,36 +10,37 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Table(name = "apple_refresh_tokens")
+@Table(name = "posting_keywords")
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @EntityListeners(AuditingEntityListener.class)
-public class AppleRefreshToken {
+public class PostingKeyword {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "social_id", nullable = false, unique = true)
-    private String socialId;
+    @Column(name = "name", length = 128, nullable = false, unique = true)
+    private String name;
 
-    @Column(name = "refresh_token", nullable = false)
-    private String refreshToken;
+    @Column(name = "description", length = 255, nullable = true)
+    private String description;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public static AppleRefreshToken create(String socialId, String refreshToken) {
-        return AppleRefreshToken.builder()
-            .socialId(socialId)
-            .refreshToken(refreshToken)
+    public static PostingKeyword create(String name, String description) {
+        return PostingKeyword.builder()
+            .name(name)
+            .description(description)
             .build();
-    }
-
-    public void update(String refreshToken) {
-        this.refreshToken = refreshToken;
     }
 
 }

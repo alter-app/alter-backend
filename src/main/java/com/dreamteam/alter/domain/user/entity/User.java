@@ -28,37 +28,37 @@ public class User {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", length = 255, nullable = false, unique = true)
     private String email;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", length = 12, nullable = false)
     private String name;
 
-    @Column(name = "nickname", nullable = false, unique = true)
+    @Column(name = "nickname", length = 64, nullable = false, unique = true)
     private String nickname;
 
-    @Column(name = "contact", nullable = false)
+    @Column(name = "contact", length = 13, nullable = false)
     private String contact;
 
-    @Column(name = "birthday", nullable = false)
+    @Column(name = "birthday", length = 8, nullable = false)
     private String birthday;
 
     @Column(name = "gender", nullable = false)
     private UserGender gender;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "social_provider", nullable = false)
+    @Column(name = "social_provider", length = 12, nullable = false)
     private SocialProvider provider;
 
-    @Column(name = "social_id", nullable = false, unique = true)
+    @Column(name = "social_id", length = Integer.MAX_VALUE, nullable = false, unique = true)
     private String socialId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @Column(name = "role", length = 20, nullable = false)
     private UserRole role;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 20, nullable = false)
     private UserStatus status;
 
     @CreatedDate

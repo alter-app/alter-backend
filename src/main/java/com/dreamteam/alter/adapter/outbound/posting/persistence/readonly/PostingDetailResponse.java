@@ -1,9 +1,10 @@
 package com.dreamteam.alter.adapter.outbound.posting.persistence.readonly;
 
-import com.dreamteam.alter.domain.posting.entity.Keyword;
+import com.dreamteam.alter.domain.posting.entity.PostingKeyword;
 import com.dreamteam.alter.domain.posting.entity.Posting;
 import com.dreamteam.alter.domain.posting.entity.PostingSchedule;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
+import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ public class PostingDetailResponse {
 
     private Long id;
 
-    private Long workspace;
+    private Workspace workspace;
 
     private String title;
 
@@ -28,11 +29,11 @@ public class PostingDetailResponse {
 
     private LocalDateTime createdAt;
 
-    private List<Keyword> keywords;
+    private List<PostingKeyword> postingKeywords;
 
     private List<PostingSchedule> schedules;
 
-    public static PostingDetailResponse of(Posting posting, List<Keyword> keywords) {
+    public static PostingDetailResponse of(Posting posting, List<PostingKeyword> postingKeywords) {
         return new PostingDetailResponse(
             posting.getId(),
             posting.getWorkspace(),
@@ -41,7 +42,7 @@ public class PostingDetailResponse {
             posting.getPayAmount(),
             posting.getPaymentType(),
             posting.getCreatedAt(),
-            keywords,
+            postingKeywords,
             posting.getSchedules()
         );
     }

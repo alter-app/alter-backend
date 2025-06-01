@@ -20,7 +20,7 @@ public class CreateUserRequestDto {
     private String signupSessionId;
 
     @NotBlank
-    @Size(max = 64)
+    @Size(max = 12)
     @Schema(description = "성명", example = "김철수")
     private String name;
 

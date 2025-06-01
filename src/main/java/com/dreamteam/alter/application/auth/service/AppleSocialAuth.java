@@ -5,7 +5,7 @@ import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.port.outbound.AppleAuthClient;
-import com.dreamteam.alter.domain.auth.port.outbound.AppleRefreshTokenRepository;
+import com.dreamteam.alter.domain.auth.port.outbound.SocialRefreshTokenRepository;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -38,7 +38,7 @@ public class AppleSocialAuth extends AbstractSocialAuth {
     private static final String RSA_ALGORITHM = "RSA";
 
     private final AppleAuthClient appleAuthClient;
-    private final AppleRefreshTokenRepository appleRefreshTokenEntityRepository;
+    private final SocialRefreshTokenRepository socialRefreshTokenRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -121,7 +121,7 @@ public class AppleSocialAuth extends AbstractSocialAuth {
     }
 
     private void saveOrUpdateRefreshToken(String socialId, String refreshToken) {
-        appleRefreshTokenEntityRepository.saveOrUpdate(socialId, refreshToken);
+        socialRefreshTokenRepository.saveOrUpdate(socialId, refreshToken);
     }
 
 }

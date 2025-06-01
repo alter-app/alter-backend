@@ -3,11 +3,13 @@ package com.dreamteam.alter.application.posting;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.posting.entity.Keyword;
+import com.dreamteam.alter.domain.posting.entity.PostingKeyword;
 import com.dreamteam.alter.domain.posting.entity.Posting;
 import com.dreamteam.alter.domain.posting.port.inbound.CreatePostingUseCase;
-import com.dreamteam.alter.domain.posting.port.outbound.KeywordQueryRepository;
+import com.dreamteam.alter.domain.posting.port.outbound.PostingKeywordQueryRepository;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingRepository;
+import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -22,7 +24,8 @@ import java.util.List;
 public class CreatePosting implements CreatePostingUseCase {
 
     private final PostingRepository postingRepository;
-    private final KeywordQueryRepository keywordQueryRepository;
+    private final PostingKeywordQueryRepository postingKeywordQueryRepository;
+    private final WorkspaceQueryRepository workspaceQueryRepository;
 
     @Override
     public void execute(CreatePostingRequestDto request) {
@@ -30,12 +33,15 @@ public class CreatePosting implements CreatePostingUseCase {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT);
         }
 
-        List<Keyword> keywords = keywordQueryRepository.findByIds(request.getKeywords());
-        if (BooleanUtils.isFalse(keywords.size() == request.getKeywords().size())) {
+        List<PostingKeyword> postingKeywords = postingKeywordQueryRepository.findByIds(request.getKeywords());
+        if (BooleanUtils.isFalse(postingKeywords.size() == request.getKeywords().size())) {
             throw new CustomException(ErrorCode.INVALID_KEYWORD);
         }
 
-        Posting posting = Posting.create(request, keywords);
+        Workspace workspace = workspaceQueryRepository.findById(request.getWorkspaceId())
+            .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+
+        Posting posting = Posting.create(request, workspace, postingKeywords);
         postingRepository.save(posting);
     }
 

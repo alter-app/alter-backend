@@ -5,7 +5,15 @@ import lombok.*;
 
 @Entity
 @Getter
-@Table(name = "posting_keyword_map")
+@Table(
+    name = "posting_keyword_map",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "UK_posting_keyword_map",
+            columnNames = {"posting_id", "keyword_id"}
+        )
+    }
+)
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -22,12 +30,12 @@ public class PostingKeywordMap {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "keyword_id", nullable = false)
-    private Keyword keyword;
+    private PostingKeyword postingKeyword;
 
-    public static PostingKeywordMap create(Keyword keyword, Posting posting) {
+    public static PostingKeywordMap create(PostingKeyword postingKeyword, Posting posting) {
         return PostingKeywordMap.builder()
             .posting(posting)
-            .keyword(keyword)
+            .postingKeyword(postingKeyword)
             .build();
     }
 
