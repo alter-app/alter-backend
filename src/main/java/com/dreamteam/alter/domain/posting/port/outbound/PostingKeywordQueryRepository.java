@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface PostingKeywordQueryRepository {
     List<PostingKeyword> findByIds(List<Long> keywordIds);
+    List<PostingKeyword> findAll();
 }

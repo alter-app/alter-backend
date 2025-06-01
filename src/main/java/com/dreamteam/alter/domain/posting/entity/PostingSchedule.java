@@ -46,6 +46,9 @@ public class PostingSchedule {
     @Column(name = "positions_needed", nullable = false)
     private int positionsNeeded;
 
+    @Column(name = "positions_available", nullable = false)
+    private int positionsAvailable;
+
     @Column(name = "position", length = 128, nullable = false)
     private String position;
 
@@ -68,6 +71,7 @@ public class PostingSchedule {
             .startTime(request.getStartTime())
             .endTime(request.getEndTime())
             .positionsNeeded(request.getPositionsNeeded())
+            .positionsAvailable(request.getPositionsNeeded())
             .position(request.getPosition())
             .status(PostingStatus.OPEN)
             .build();
