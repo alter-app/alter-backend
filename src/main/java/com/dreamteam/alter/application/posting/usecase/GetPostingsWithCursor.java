@@ -1,4 +1,4 @@
-package com.dreamteam.alter.application.posting;
+package com.dreamteam.alter.application.posting.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.*;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingListResponseDto;
