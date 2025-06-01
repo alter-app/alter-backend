@@ -53,7 +53,7 @@ public class PostingListResponseDto {
             .schedules(entity.getSchedules().stream()
                 .map(PostingScheduleResponseDto::from)
                 .toList())
-            .keywords(entity.getKeywords().stream()
+            .keywords(entity.getPostingKeywords().stream()
                 .map(KeywordListResponseDto::from)
                 .toList())
             .build();

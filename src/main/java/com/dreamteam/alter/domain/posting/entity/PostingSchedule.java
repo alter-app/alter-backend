@@ -1,6 +1,7 @@
 package com.dreamteam.alter.domain.posting.entity;
 
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingScheduleRequestDto;
+import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -45,8 +46,12 @@ public class PostingSchedule {
     @Column(name = "positions_needed", nullable = false)
     private int positionsNeeded;
 
-    @Column(name = "position", nullable = false)
+    @Column(name = "position", length = 128, nullable = false)
     private String position;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private PostingStatus status;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false)
@@ -64,6 +69,7 @@ public class PostingSchedule {
             .endTime(request.getEndTime())
             .positionsNeeded(request.getPositionsNeeded())
             .position(request.getPosition())
+            .status(PostingStatus.OPEN)
             .build();
     }
 

@@ -42,7 +42,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
         QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
-        QKeyword qKeyword = QKeyword.keyword;
+        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
 
         List<Long> postingIds = queryFactory
             .select(qPosting.id)
@@ -69,15 +69,15 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
 
         List<PostingKeywordMap> keywordMaps = queryFactory
             .selectFrom(qPostingKeywordMap)
-            .leftJoin(qPostingKeywordMap.keyword, qKeyword).fetchJoin()
+            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword).fetchJoin()
             .where(qPostingKeywordMap.posting.id.in(postingIds))
             .fetch();
 
-        Map<Long, List<Keyword>> postingIdToKeywords = keywordMaps.stream()
+        Map<Long, List<PostingKeyword>> postingIdToKeywords = keywordMaps.stream()
             .collect(
                 java.util.stream.Collectors.groupingBy(
                     pkMap -> pkMap.getPosting().getId(),
-                    java.util.stream.Collectors.mapping(PostingKeywordMap::getKeyword, java.util.stream.Collectors.toList())
+                    java.util.stream.Collectors.mapping(PostingKeywordMap::getPostingKeyword, java.util.stream.Collectors.toList())
                 )
             );
 
@@ -93,7 +93,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
         QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
-        QKeyword qKeyword = QKeyword.keyword;
+        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
 
         Posting posting = queryFactory
             .selectFrom(qPosting)
@@ -105,14 +105,14 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             return null;
         }
 
-        List<Keyword> keywords = queryFactory
-            .select(qKeyword)
+        List<PostingKeyword> postingKeywords = queryFactory
+            .select(qPostingKeyword)
             .from(qPostingKeywordMap)
-            .leftJoin(qPostingKeywordMap.keyword, qKeyword)
+            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword)
             .where(qPostingKeywordMap.posting.id.eq(postingId))
             .fetch();
 
-        return PostingDetailResponse.of(posting, keywords);
+        return PostingDetailResponse.of(posting, postingKeywords);
     }
 
     private BooleanExpression cursorConditions(QPosting qPosting, CursorDto cursor) {

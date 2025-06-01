@@ -3,6 +3,7 @@ package com.dreamteam.alter.domain.posting.entity;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
+import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import jakarta.persistence.*;
 import lombok.*;
 import org.apache.commons.lang3.ObjectUtils;
@@ -27,24 +28,25 @@ public class Posting {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "workspace_id", nullable = false)
-    private Long workspace; // TODO: 실제 연관관계 설정 필요
+    @JoinColumn(name = "workspace_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private Workspace workspace;
 
-    @Column(name = "title", nullable = false)
+    @Column(name = "title", length = 128, nullable = false)
     private String title;
 
-    @Column(name = "description", nullable = false)
+    @Column(name = "description", length = Integer.MAX_VALUE, nullable = false)
     private String description;
 
     @Column(name = "pay_amount", nullable = false)
     private int payAmount;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "pay_type", nullable = false)
+    @Column(name = "pay_type", length = 20, nullable = false)
     private PaymentType paymentType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 20, nullable = false)
     private PostingStatus status;
 
     @CreatedDate
@@ -61,9 +63,9 @@ public class Posting {
     @OneToMany(mappedBy = "posting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostingKeywordMap> keywords;
 
-    public static Posting create(CreatePostingRequestDto request, List<Keyword> keywords) {
+    public static Posting create(CreatePostingRequestDto request, Workspace workspace, List<PostingKeyword> postingKeywords) {
         Posting posting = Posting.builder()
-            .workspace(request.getWorkspaceId())
+            .workspace(workspace)
             .title(request.getTitle())
             .description(request.getDescription())
             .payAmount(request.getPayAmount())
@@ -78,8 +80,8 @@ public class Posting {
                 .toList();
         }
 
-        if (ObjectUtils.isNotEmpty(keywords)) {
-            posting.keywords = keywords
+        if (ObjectUtils.isNotEmpty(postingKeywords)) {
+            posting.keywords = postingKeywords
                 .stream()
                 .map(keyword -> PostingKeywordMap.create(keyword, posting))
                 .toList();

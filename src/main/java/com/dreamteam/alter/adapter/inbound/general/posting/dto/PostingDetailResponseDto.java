@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.inbound.general.posting.dto;
 
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingDetailResponse;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
+import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import lombok.*;
@@ -20,7 +21,7 @@ public class PostingDetailResponseDto {
     private Long id;
 
     @Column(name = "workspace_id", nullable = false)
-    private Long workspace;
+    private Workspace workspace;
 
     @Schema(description = "공고 제목", example = "홀서빙 구합니다")
     private String title;
@@ -62,7 +63,7 @@ public class PostingDetailResponseDto {
             .schedules(entity.getSchedules().stream()
                 .map(PostingScheduleResponseDto::from)
                 .toList())
-            .keywords(entity.getKeywords().stream()
+            .keywords(entity.getPostingKeywords().stream()
                 .map(KeywordListResponseDto::from)
                 .toList())
             .build();
