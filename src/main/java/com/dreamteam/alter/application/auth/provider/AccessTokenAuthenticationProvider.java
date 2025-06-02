@@ -77,6 +77,7 @@ public class AccessTokenAuthenticationProvider extends AbstractJwtAuthentication
                 throw new RevokedAuthException();
             }
 
+            dbAuthorization.expire();
             return authentication;
         }
 
@@ -95,10 +96,15 @@ public class AccessTokenAuthenticationProvider extends AbstractJwtAuthentication
     }
 
     private Authorization getAuthorization(CustomJwtSubject subject) {
-        String key = authService.buildKey(subject.getScope(), subject.getUserId(), subject.getAuthorizationId());
+        String value = redisTemplate.opsForValue()
+            .get(authService.buildKey(subject.getScope(), subject.getUserId(), subject.getAuthorizationId()));
+        if (ObjectUtils.isEmpty(value)) {
+            return null;
+        }
+
         try {
             return objectMapper.readValue(
-                redisTemplate.opsForValue().get(key),
+                value,
                 Authorization.class
             );
         } catch (JsonProcessingException e) {
