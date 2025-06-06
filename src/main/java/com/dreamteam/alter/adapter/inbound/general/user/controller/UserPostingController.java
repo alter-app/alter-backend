@@ -10,7 +10,6 @@ import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.port.inbound.GetUserPostingApplicationListUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.UpdateUserPostingApplicationStatusUseCase;
 import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -42,7 +41,7 @@ public class UserPostingController implements UserPostingControllerSpec {
     @PatchMapping("/{applicationId}/status")
     public ResponseEntity<CommonApiResponse<Void>> updateMyPostingApplicationStatus(
         @PathVariable Long applicationId,
-        @RequestBody @Valid UpdateUserPostingApplicationStatusRequestDto request
+        UpdateUserPostingApplicationStatusRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
