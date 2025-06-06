@@ -3,14 +3,10 @@ package com.dreamteam.alter.adapter.inbound.general.posting.controller;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingDetailResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingKeywordListResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingListResponseDto;
-import com.dreamteam.alter.domain.posting.port.inbound.CreatePostingUseCase;
-import com.dreamteam.alter.domain.posting.port.inbound.GetPostingDetailUseCase;
-import com.dreamteam.alter.domain.posting.port.inbound.GetPostingKeywordListUseCase;
-import com.dreamteam.alter.domain.posting.port.inbound.GetPostingsWithCursorUseCase;
+import com.dreamteam.alter.adapter.inbound.general.posting.dto.*;
+import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.domain.posting.port.inbound.*;
+import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +34,9 @@ public class PostingController implements PostingControllerSpec {
 
     @Resource(name = "getPostingKeywordList")
     private final GetPostingKeywordListUseCase getPostingKeywordList;
+
+    @Resource(name = "createPostingApplication")
+    private final CreatePostingApplicationUseCase createPostingApplication;
 
     @Override
     @PostMapping
@@ -68,6 +67,18 @@ public class PostingController implements PostingControllerSpec {
     @GetMapping("/available-keywords")
     public ResponseEntity<CommonApiResponse<List<PostingKeywordListResponseDto>>> getAvailablePostingKeywords() {
         return ResponseEntity.ok(CommonApiResponse.of(getPostingKeywordList.execute()));
+    }
+
+    @Override
+    @PostMapping("/apply/{postingId}")
+    public ResponseEntity<CommonApiResponse<Void>> applyIntoPosting(
+        @PathVariable Long postingId,
+        CreatePostingApplicationRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        createPostingApplication.execute(actor, postingId, request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
 }

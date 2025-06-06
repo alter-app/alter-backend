@@ -25,6 +25,10 @@ public enum ErrorCode {
     POSTING_NOT_FOUND(400, "B007", "존재하지 않는 공고입니다."),
     WORKSPACE_NOT_FOUND(400, "B008", "존재하지 않는 업장입니다."),
     POSTING_KEYWORDS_NOT_FOUND(400, "B009", "키워드 목록을 찾을 수 없습니다."),
+    POSTING_SCHEDULE_NOT_FOUND(400, "B010", "존재하지 않는 공고 일정입니다."),
+    USER_NOT_FOUND(400, "B011", "존재하지 않는 사용자입니다."),
+    POSTING_APPLICATION_NOT_FOUND(400, "B012", "존재하지 않는 공고 지원서입니다."),
+    POSTING_APPLICATION_ALREADY_CANCELLED(400, "B013", "이미 취소 처리된 공고 지원서입니다."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     ;
