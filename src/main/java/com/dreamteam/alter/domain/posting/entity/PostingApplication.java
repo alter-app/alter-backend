@@ -4,6 +4,7 @@ import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
 import com.dreamteam.alter.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -35,6 +36,7 @@ public class PostingApplication {
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @SQLRestriction("status != 'DELETED'")
     @Column(name = "status", nullable = false)
     private PostingApplicationStatus status;
 
@@ -49,15 +51,18 @@ public class PostingApplication {
     public static PostingApplication create(
         PostingSchedule postingSchedule,
         User user,
-        String description,
-        PostingApplicationStatus status
+        String description
     ) {
         return PostingApplication.builder()
             .postingSchedule(postingSchedule)
             .user(user)
             .description(description)
-            .status(status)
+            .status(PostingApplicationStatus.SUBMITTED)
             .build();
+    }
+
+    public void updateStatus(PostingApplicationStatus status) {
+        this.status = status;
     }
 
 }
