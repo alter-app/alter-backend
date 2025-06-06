@@ -23,7 +23,7 @@ public class ManagerUser {
     private Long id;
 
     @JoinColumn(name = "user_id", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     private User user;
 
     @Enumerated(EnumType.STRING)
