@@ -14,7 +14,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "APP - 사용자 지원한 공고 관련 API")
 public interface UserPostingControllerSpec {
@@ -47,6 +50,9 @@ public interface UserPostingControllerSpec {
                     )
                 }))
     })
-    ResponseEntity<CommonApiResponse<Void>> updateMyPostingApplicationStatus(Long applicationId, @Valid UpdateUserPostingApplicationStatusRequestDto request);
+    ResponseEntity<CommonApiResponse<Void>> updateMyPostingApplicationStatus(
+        @PathVariable @Min(1) Long applicationId,
+        @RequestBody @Valid UpdateUserPostingApplicationStatusRequestDto request
+    );
 
 }
