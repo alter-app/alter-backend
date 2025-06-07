@@ -8,11 +8,13 @@ import com.dreamteam.alter.domain.user.type.UserRole;
 import com.dreamteam.alter.domain.user.type.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -59,6 +61,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
+    @SQLRestriction("status != 'DELETED'")
     private UserStatus status;
 
     @CreatedDate
@@ -68,6 +71,11 @@ public class User {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id DESC")
+    @SQLRestriction("status != 'DELETED'")
+    private List<UserCertificate> certificates;
 
     public static User create(
         CreateUserRequestDto request,
@@ -85,6 +93,10 @@ public class User {
             .role(UserRole.ROLE_USER)
             .status(UserStatus.ACTIVE)
             .build();
+    }
+
+    public void addCertificate(UserCertificate userCertificate) {
+        certificates.add(userCertificate);
     }
 
 }

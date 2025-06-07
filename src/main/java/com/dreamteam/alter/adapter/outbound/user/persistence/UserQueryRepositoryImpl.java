@@ -1,9 +1,11 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
+import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.UserSelfInfoResponse;
 import com.dreamteam.alter.domain.user.entity.QUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.user.type.UserStatus;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -65,6 +67,29 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
                 user.status.eq(UserStatus.ACTIVE)
             )
             .fetchOne();
+    }
+
+    @Override
+    public Optional<UserSelfInfoResponse> getUserSelfInfoSummary(Long id) {
+        QUser qUser = QUser.user;
+
+        UserSelfInfoResponse userSelf = queryFactory.select(
+                Projections.fields(
+                    UserSelfInfoResponse.class,
+                    qUser.id,
+                    qUser.name,
+                    qUser.nickname,
+                    qUser.createdAt
+                )
+            )
+            .from(qUser)
+            .where(
+                qUser.id.eq(id),
+                qUser.status.eq(UserStatus.ACTIVE)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(userSelf) ? Optional.empty() : Optional.of(userSelf);
     }
 
 }
