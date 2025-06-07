@@ -8,6 +8,7 @@ import com.dreamteam.alter.domain.user.type.UserRole;
 import com.dreamteam.alter.domain.user.type.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -59,6 +60,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
+    @SQLRestriction("status != 'DELETED'")
     private UserStatus status;
 
     @CreatedDate
