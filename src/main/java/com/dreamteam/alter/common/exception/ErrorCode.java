@@ -29,6 +29,7 @@ public enum ErrorCode {
     USER_NOT_FOUND(400, "B011", "존재하지 않는 사용자입니다."),
     POSTING_APPLICATION_NOT_FOUND(400, "B012", "존재하지 않는 공고 지원서입니다."),
     POSTING_APPLICATION_ALREADY_CANCELLED(400, "B013", "이미 취소 처리된 공고 지원서입니다."),
+    USER_CERTIFICATE_NOT_FOUND(400, "B014", "존재하지 않는 사용자 자격 정보입니다."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     ;
