@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -113,6 +114,22 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .fetch();
 
         return PostingDetailResponse.of(posting, postingKeywords);
+    }
+
+    @Override
+    public Optional<Posting> findById(Long postingId) {
+        QPosting qPosting = QPosting.posting;
+
+        Posting posting = queryFactory
+            .select(qPosting)
+            .from(qPosting)
+            .where(
+                qPosting.id.eq(postingId),
+                qPosting.status.eq(PostingStatus.OPEN)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(posting) ? Optional.empty() : Optional.of(posting);
     }
 
     private BooleanExpression cursorConditions(QPosting qPosting, CursorDto cursor) {
