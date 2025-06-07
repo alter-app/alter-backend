@@ -12,11 +12,13 @@ import com.dreamteam.alter.domain.user.port.inbound.UpdateUserPostingApplication
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/app/users/me/postings/applications")
+@PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')") // TODO: 권한 세부 설정
 @RequiredArgsConstructor
 @Validated
 public class UserPostingController implements UserPostingControllerSpec {
