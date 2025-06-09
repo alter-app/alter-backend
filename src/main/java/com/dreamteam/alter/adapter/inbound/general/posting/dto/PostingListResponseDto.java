@@ -52,6 +52,14 @@ public class PostingListResponseDto {
         "]")
     private List<PostingScheduleResponseDto> schedules;
 
+    @NotNull
+    @Schema(description = "업장 정보")
+    private PostingListWorkspaceResponseDto workspace;
+
+    @NotNull
+    @Schema(description = "스크랩 여부", example = "true")
+    private boolean scrapped;
+
     public static PostingListResponseDto from(PostingListResponse entity) {
         return PostingListResponseDto.builder()
             .id(entity.getId())
@@ -65,6 +73,8 @@ public class PostingListResponseDto {
             .keywords(entity.getPostingKeywords().stream()
                 .map(PostingKeywordListResponseDto::from)
                 .toList())
+            .workspace(PostingListWorkspaceResponseDto.from(entity.getWorkspace()))
+            .scrapped(entity.isScrapped())
             .build();
     }
 

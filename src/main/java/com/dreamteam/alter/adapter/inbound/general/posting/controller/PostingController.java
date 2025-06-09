@@ -52,7 +52,9 @@ public class PostingController implements PostingControllerSpec {
     public ResponseEntity<CursorPaginatedApiResponse<PostingListResponseDto>> getPostingsWithCursor(
         CursorPageRequestDto request
     ) {
-        return ResponseEntity.ok(getPostingsWithCursor.execute(request));
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        return ResponseEntity.ok(getPostingsWithCursor.execute(request, actor));
     }
 
     @Override
@@ -60,7 +62,9 @@ public class PostingController implements PostingControllerSpec {
     public ResponseEntity<CommonApiResponse<PostingDetailResponseDto>> getPostingDetail(
         @PathVariable Long postingId
     ) {
-        return ResponseEntity.ok(CommonApiResponse.of(getPostingDetail.execute(postingId)));
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        return ResponseEntity.ok(CommonApiResponse.of(getPostingDetail.execute(postingId, actor)));
     }
 
     @Override

@@ -23,7 +23,7 @@ public class PostingDetailResponseDto {
     private Long id;
 
     @NotNull
-    @Schema(description = "업장 정보", example = "1")
+    @Schema(description = "업장 정보")
     private PostingDetailWorkspaceResponseDto workspace;
 
     @NotBlank
@@ -51,15 +51,12 @@ public class PostingDetailResponseDto {
     private List<PostingKeywordListResponseDto> keywords;
 
     @NotNull
-    @Schema(description = "공고 스케줄", example = "[" +
-        "{" +
-        "\"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"positionsNeeded\": 3, \"position\": 3" +
-        "}," +
-        "{" +
-        "\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"positionsNeeded\": 1, \"position\": 2" +
-        "}" +
-        "]")
+    @Schema(description = "공고 스케줄", example = "[{\"id\":1,\"workingDays\":[\"MONDAY\",\"WEDNESDAY\"],\"startTime\":\"09:00\",\"endTime\":\"18:00\",\"positionsNeeded\":3,\"positionsAvailable\":2,\"position\":\"홀서빙\"}]")
     private List<PostingScheduleResponseDto> schedules;
+
+    @NotNull
+    @Schema(description = "스크랩 여부", example = "true")
+    private boolean scrapped;
 
     public static PostingDetailResponseDto from(PostingDetailResponse entity) {
         return PostingDetailResponseDto.builder()
@@ -76,6 +73,7 @@ public class PostingDetailResponseDto {
             .keywords(entity.getPostingKeywords().stream()
                 .map(PostingKeywordListResponseDto::from)
                 .toList())
+            .scrapped(entity.isScrapped())
             .build();
     }
 
