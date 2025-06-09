@@ -4,6 +4,7 @@ import com.dreamteam.alter.domain.posting.entity.PostingKeyword;
 import com.dreamteam.alter.domain.posting.entity.Posting;
 import com.dreamteam.alter.domain.posting.entity.PostingSchedule;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
+import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -30,7 +31,11 @@ public class PostingListResponse {
 
     private List<PostingSchedule> schedules;
 
-    public static PostingListResponse of(Posting posting, Map<Long, List<PostingKeyword>> keywordsMap) {
+    private Workspace workspace;
+
+    private boolean scrapped;
+
+    public static PostingListResponse of(Posting posting, Map<Long, List<PostingKeyword>> keywordsMap, boolean scrapped) {
         return PostingListResponse.builder()
             .id(posting.getId())
             .title(posting.getTitle())
@@ -39,6 +44,8 @@ public class PostingListResponse {
             .createdAt(posting.getCreatedAt())
             .schedules(posting.getSchedules())
             .postingKeywords(keywordsMap.get(posting.getId()))
+            .workspace(posting.getWorkspace())
+            .scrapped(scrapped)
             .build();
     }
 

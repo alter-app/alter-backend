@@ -7,6 +7,9 @@ import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.Posting
 import com.dreamteam.alter.domain.posting.entity.*;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
+import com.dreamteam.alter.domain.user.entity.QUserFavoritePosting;
+import com.dreamteam.alter.domain.user.entity.User;
+import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -14,10 +17,8 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -39,11 +40,13 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     }
 
     @Override
-    public List<PostingListResponse> getPostingsWithCursor(CursorPageRequest<CursorDto> request) {
+    public List<PostingListResponse> getPostingsWithCursor(CursorPageRequest<CursorDto> request, User user) {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
         QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
         QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        QUserFavoritePosting qUserFavoritePosting = QUserFavoritePosting.userFavoritePosting;
 
         List<Long> postingIds = queryFactory
             .select(qPosting.id)
@@ -63,10 +66,20 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         List<Posting> postings = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .where(qPosting.id.in(postingIds))
             .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
             .distinct()
             .fetch();
+
+        Set<Long> scrappedPostingIds =
+            new HashSet<>(queryFactory.select(qUserFavoritePosting.posting.id)
+                .from(qUserFavoritePosting)
+                .where(
+                    qUserFavoritePosting.user.eq(user),
+                    qUserFavoritePosting.posting.id.in(postingIds)
+                )
+                .fetch());
 
         List<PostingKeywordMap> keywordMaps = queryFactory
             .selectFrom(qPostingKeywordMap)
@@ -76,7 +89,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
 
         Map<Long, List<PostingKeyword>> postingIdToKeywords = keywordMaps.stream()
             .collect(
-                java.util.stream.Collectors.groupingBy(
+                Collectors.groupingBy(
                     pkMap -> pkMap.getPosting().getId(),
                     java.util.stream.Collectors.mapping(PostingKeywordMap::getPostingKeyword, java.util.stream.Collectors.toList())
                 )
@@ -84,21 +97,28 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
 
         return postings.stream()
             .map(
-                posting -> PostingListResponse.of(posting, postingIdToKeywords)
+                posting -> PostingListResponse.of(
+                    posting,
+                    postingIdToKeywords,
+                    scrappedPostingIds.contains(posting.getId())
+                )
             )
             .toList();
     }
 
     @Override
-    public PostingDetailResponse getPostingDetail(Long postingId) {
+    public PostingDetailResponse getPostingDetail(Long postingId, User user) {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
         QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
         QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        QUserFavoritePosting qUserFavoritePosting = QUserFavoritePosting.userFavoritePosting;
 
         Posting posting = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .where(qPosting.id.eq(postingId))
             .fetchOne();
 
@@ -113,7 +133,18 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .where(qPostingKeywordMap.posting.id.eq(postingId))
             .fetch();
 
-        return PostingDetailResponse.of(posting, postingKeywords);
+        boolean scrapped = ObjectUtils.isNotEmpty(
+            queryFactory
+                .selectOne()
+                .from(qUserFavoritePosting)
+                .where(
+                    qUserFavoritePosting.user.eq(user),
+                    qUserFavoritePosting.posting.id.eq(postingId)
+                )
+                .fetchFirst()
+        );
+
+        return PostingDetailResponse.of(posting, postingKeywords, scrapped);
     }
 
     @Override

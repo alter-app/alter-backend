@@ -6,6 +6,7 @@ import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.Posting
 import com.dreamteam.alter.common.util.CursorUtil;
 import com.dreamteam.alter.domain.posting.port.inbound.GetPostingsWithCursorUseCase;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
+import com.dreamteam.alter.domain.user.context.AppActor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -23,7 +24,7 @@ public class GetPostingsWithCursor implements GetPostingsWithCursorUseCase {
     private final ObjectMapper objectMapper;
 
     @Override
-    public CursorPaginatedApiResponse<PostingListResponseDto> execute(CursorPageRequestDto request) {
+    public CursorPaginatedApiResponse<PostingListResponseDto> execute(CursorPageRequestDto request, AppActor actor) {
         CursorDto cursorDto = null;
         if (ObjectUtils.isNotEmpty(request.cursor())) {
             cursorDto = CursorUtil.decodeCursor(request.cursor(), CursorDto.class, objectMapper);
@@ -35,7 +36,7 @@ public class GetPostingsWithCursor implements GetPostingsWithCursorUseCase {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(request.pageSize(), (int) count));
         }
 
-        List<PostingListResponse> postings = postingQueryRepository.getPostingsWithCursor(pageRequest);
+        List<PostingListResponse> postings = postingQueryRepository.getPostingsWithCursor(pageRequest, actor.getUser());
         if (ObjectUtils.isEmpty(postings)) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(request.pageSize(), (int) count));
         }

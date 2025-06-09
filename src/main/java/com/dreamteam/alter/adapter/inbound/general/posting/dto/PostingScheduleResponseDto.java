@@ -18,6 +18,10 @@ import java.util.List;
 public class PostingScheduleResponseDto {
 
     @NotNull
+    @Schema(description = "공고 스케줄 ID", example = "1")
+    private Long id;
+
+    @NotNull
     @Schema(description = "근무 요일", example = "['MONDAY', 'WEDNESDAY']")
     private List<DayOfWeek> workingDays;
 
@@ -43,13 +47,14 @@ public class PostingScheduleResponseDto {
 
     public static PostingScheduleResponseDto from(PostingSchedule entity) {
         return PostingScheduleResponseDto.builder()
-                .workingDays(entity.getWorkingDays())
-                .startTime(entity.getStartTime())
-                .endTime(entity.getEndTime())
-                .positionsNeeded(entity.getPositionsNeeded())
-                .positionsAvailable(entity.getPositionsAvailable())
-                .position(entity.getPosition())
-                .build();
+            .id(entity.getId())
+            .workingDays(entity.getWorkingDays())
+            .startTime(entity.getStartTime())
+            .endTime(entity.getEndTime())
+            .positionsNeeded(entity.getPositionsNeeded())
+            .positionsAvailable(entity.getPositionsAvailable())
+            .position(entity.getPosition())
+            .build();
     }
 
 }

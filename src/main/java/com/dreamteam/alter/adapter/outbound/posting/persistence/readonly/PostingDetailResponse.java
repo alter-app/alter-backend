@@ -33,7 +33,13 @@ public class PostingDetailResponse {
 
     private List<PostingSchedule> schedules;
 
-    public static PostingDetailResponse of(Posting posting, List<PostingKeyword> postingKeywords) {
+    private boolean scrapped;
+
+    public static PostingDetailResponse of(
+        Posting posting,
+        List<PostingKeyword> postingKeywords,
+        boolean scrapped
+    ) {
         return new PostingDetailResponse(
             posting.getId(),
             posting.getWorkspace(),
@@ -43,7 +49,8 @@ public class PostingDetailResponse {
             posting.getPaymentType(),
             posting.getCreatedAt(),
             postingKeywords,
-            posting.getSchedules()
+            posting.getSchedules(),
+            scrapped
         );
     }
 
