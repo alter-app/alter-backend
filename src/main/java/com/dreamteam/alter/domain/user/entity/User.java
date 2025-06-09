@@ -6,6 +6,7 @@ import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.dreamteam.alter.domain.user.type.UserGender;
 import com.dreamteam.alter.domain.user.type.UserRole;
 import com.dreamteam.alter.domain.user.type.UserStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
@@ -72,7 +73,8 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("id DESC")
     @SQLRestriction("status != 'DELETED'")
     private List<UserCertificate> certificates;
