@@ -12,5 +12,5 @@ import java.util.Optional;
 public interface UserFavoritePostingQueryRepository {
     long getCountByUser(User user);
     List<UserFavoritePostingListResponse> findUserFavoritePostingListWithCursor(User user, CursorPageRequest<CursorDto> request);
-    Optional<UserFavoritePosting> findByIdAndUser(Long favoritePostingId, User user);
+    Optional<UserFavoritePosting> findByPostingIdAndUser(Long favoritePostingId, User user);
 }

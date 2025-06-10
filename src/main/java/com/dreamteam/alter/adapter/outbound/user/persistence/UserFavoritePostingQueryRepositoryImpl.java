@@ -69,7 +69,7 @@ public class UserFavoritePostingQueryRepositoryImpl implements UserFavoritePosti
     }
 
     @Override
-    public Optional<UserFavoritePosting> findByIdAndUser(Long favoritePostingId, User user) {
+    public Optional<UserFavoritePosting> findByPostingIdAndUser(Long postingId, User user) {
         QUserFavoritePosting qUserFavoritePosting = QUserFavoritePosting.userFavoritePosting;
 
         return Optional.ofNullable(
@@ -77,7 +77,7 @@ public class UserFavoritePostingQueryRepositoryImpl implements UserFavoritePosti
                 .select(qUserFavoritePosting)
                 .from(qUserFavoritePosting)
                 .where(
-                    qUserFavoritePosting.id.eq(favoritePostingId),
+                    qUserFavoritePosting.posting.id.eq(postingId),
                     qUserFavoritePosting.user.eq(user)
                 )
                 .fetchOne()

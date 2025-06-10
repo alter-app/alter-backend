@@ -78,11 +78,11 @@ public class UserPostingController implements UserPostingControllerSpec {
     }
 
     @Override
-    @DeleteMapping("/favorites/{favoritePostingId}")
-    public ResponseEntity<CommonApiResponse<Void>> deleteUserFavoritePosting(@PathVariable Long favoritePostingId) {
+    @DeleteMapping("/favorites/{postingId}")
+    public ResponseEntity<CommonApiResponse<Void>> deleteUserFavoritePosting(@PathVariable Long postingId) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        deleteUserFavoritePosting.execute(actor, favoritePostingId);
+        deleteUserFavoritePosting.execute(actor, postingId);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

@@ -96,7 +96,7 @@ public interface UserPostingControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> deleteUserFavoritePosting(
-        @PathVariable @Min(1) Long favoritePostingId
+        @PathVariable @Min(1) Long postingId
     );
 
 }

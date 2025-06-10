@@ -3,5 +3,5 @@ package com.dreamteam.alter.domain.user.port.inbound;
 import com.dreamteam.alter.domain.user.context.AppActor;
 
 public interface DeleteUserFavoritePostingUseCase {
-    void execute(AppActor actor, Long userFavoritePostingId);
+    void execute(AppActor actor, Long postingId);
 }

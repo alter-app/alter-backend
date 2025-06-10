@@ -19,9 +19,9 @@ public class DeleteUserFavoritePosting implements DeleteUserFavoritePostingUseCa
     private final UserFavoritePostingRepository userFavoritePostingRepository;
 
     @Override
-    public void execute(AppActor actor, Long favoritePostingId) {
+    public void execute(AppActor actor, Long postingId) {
         userFavoritePostingRepository.delete(
-            userFavoritePostingQueryRepository.findByIdAndUser(favoritePostingId, actor.getUser())
+            userFavoritePostingQueryRepository.findByPostingIdAndUser(postingId, actor.getUser())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_FAVORITE_POSTING_NOT_FOUND)));
     }
 
