@@ -1,5 +1,6 @@
 package com.dreamteam.alter.domain.reputation.entity;
 
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationRequestDto;
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestStatus;
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
@@ -7,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -16,6 +18,7 @@ import java.time.LocalDateTime;
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@EntityListeners(AuditingEntityListener.class)
 public class ReputationRequest {
 
     @Id
@@ -44,23 +47,30 @@ public class ReputationRequest {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "expired_at", nullable = false, updatable = false)
+    private LocalDateTime expiredAt;
+
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     public static ReputationRequest create(
-        Workspace workspace,
-        ReputationRequestType requesterType,
+        Workspace workspace, // nullable
         Long requesterId,
-        Long targetId
+        CreateReputationRequestDto request
     ) {
         return ReputationRequest.builder()
             .workspace(workspace)
-            .requestType(requesterType)
+            .requestType(request.getRequestType())
             .requesterId(requesterId)
-            .targetId(targetId)
+            .targetId(request.getTargetId())
             .status(ReputationRequestStatus.REQUESTED)
+            .expiredAt(LocalDateTime.now().plusDays(7))
             .build();
+    }
+
+    public void expire() {
+        this.status = ReputationRequestStatus.EXPIRED;
     }
 
 }
