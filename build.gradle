@@ -36,6 +36,8 @@ dependencies {
 	implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
 	implementation 'com.vladmihalcea:hibernate-types-60:2.21.1'
+	implementation 'net.javacrumbs.shedlock:shedlock-spring:6.8.0'
+	implementation 'net.javacrumbs.shedlock:shedlock-provider-redis-spring:6.8.0'
 
 	compileOnly 'org.projectlombok:lombok'
 
