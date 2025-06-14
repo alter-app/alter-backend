@@ -42,10 +42,6 @@ public class PostingApplicationResponseApplicantSummaryDto {
     @Schema(description = "성별", example = "GENDER_MALE")
     private UserGender gender;
 
-    @NotNull
-    @Schema(description = "지원일자", example = "2023-10-01T12:00:00")
-    private LocalDateTime createdAt;
-
     @Nullable
     @Schema(description = "지원자 자격증 목록")
     List<PostingApplicationResponseUserCertificateDto> userCertificates;
@@ -58,7 +54,6 @@ public class PostingApplicationResponseApplicantSummaryDto {
             .contact(entity.getContact())
             .birthday(entity.getBirthday())
             .gender(entity.getGender())
-            .createdAt(entity.getCreatedAt())
             .userCertificates(entity.getCertificates()
                 .stream()
                 .map(PostingApplicationResponseUserCertificateDto::from)
