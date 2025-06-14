@@ -13,6 +13,7 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.GenerateTokenUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
+import com.dreamteam.alter.domain.user.type.UserRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +59,13 @@ public class GenerateToken implements GenerateTokenUseCase {
             }
         }
 
-        return GenerateTokenResponseDto.of(authService.generateAuthorization(user, TokenScope.APP));
+        TokenScope tokenScope = switch (user.getRole()) {
+            case UserRole.ROLE_USER -> TokenScope.APP;
+            case UserRole.ROLE_MANAGER -> TokenScope.MANAGER;
+            case UserRole.ROLE_ADMIN -> TokenScope.ADMIN;
+        };
+
+        return GenerateTokenResponseDto.of(authService.generateAuthorization(user, tokenScope));
     }
 
     private SocialUserInfo authenticateSocialUser(LoginUserRequestDto request) {

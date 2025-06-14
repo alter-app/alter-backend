@@ -10,6 +10,7 @@ import com.dreamteam.alter.domain.auth.port.outbound.AuthorizationRepository;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.ReissueTokenUseCase;
+import com.dreamteam.alter.domain.user.type.UserRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
@@ -23,8 +24,6 @@ public class ReissueToken implements ReissueTokenUseCase {
     private final AuthorizationRepository authorizationRepository;
 
     private final AuthService authService;
-
-    private final TokenScope scope = TokenScope.APP;
 
     @Override
     public GenerateTokenResponseDto execute(Authentication authentication) {
@@ -43,9 +42,15 @@ public class ReissueToken implements ReissueTokenUseCase {
         authorization.expire();
         authorizationRepository.save(authorization); // 영속성으로 관리되지 않으므로 직접 저장
 
+        TokenScope tokenScope = switch (user.getRole()) {
+            case UserRole.ROLE_USER -> TokenScope.APP;
+            case UserRole.ROLE_MANAGER -> TokenScope.MANAGER;
+            case UserRole.ROLE_ADMIN -> TokenScope.ADMIN;
+        };
+
         Authorization newAuthorization;
         try {
-            newAuthorization = authService.generateAuthorization(user, scope);
+            newAuthorization = authService.generateAuthorization(user, tokenScope);
             authService.saveAuthorization(newAuthorization);
         } catch (JsonProcessingException e) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
