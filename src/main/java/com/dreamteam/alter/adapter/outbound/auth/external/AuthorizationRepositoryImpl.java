@@ -16,8 +16,8 @@ public class AuthorizationRepositoryImpl implements AuthorizationRepository {
     private final AuthorizationJpaRepository authorizationJpaRepository;
 
     @Override
-    public void save(Authorization authorization) {
-        authorizationJpaRepository.save(authorization);
+    public Authorization save(Authorization authorization) {
+        return authorizationJpaRepository.save(authorization);
     }
 
     @Override
