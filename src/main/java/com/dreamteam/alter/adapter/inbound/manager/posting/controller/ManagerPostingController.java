@@ -36,7 +36,7 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
     private final ManagerUpdatePostingApplicationStatusUseCase managerUpdatePostingApplicationStatus;
 
     @Override
-    @GetMapping
+    @GetMapping("/applications")
     public ResponseEntity<CursorPaginatedApiResponse<PostingApplicationListResponseDto>> getPostingApplicationListWithCursor(
         CursorPageRequestDto request,
         PostingApplicationListFilterDto filter
@@ -47,7 +47,7 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
     }
 
     @Override
-    @GetMapping("/{postingApplicationId}")
+    @GetMapping("/applications/{postingApplicationId}")
     public ResponseEntity<CommonApiResponse<PostingApplicationResponseDto>> getPostingApplicationDetail(
         @PathVariable Long postingApplicationId
     ) {
@@ -57,7 +57,7 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
     }
 
     @Override
-    @PatchMapping("/{postingApplicationId}/status")
+    @PatchMapping("/applications/{postingApplicationId}/status")
     public ResponseEntity<CommonApiResponse<Void>> updatePostingApplicationStatus(
         @PathVariable Long postingApplicationId,
         UpdatePostingApplicationStatusRequestDto request
