@@ -42,15 +42,9 @@ public class ReissueToken implements ReissueTokenUseCase {
         authorization.expire();
         authorizationRepository.save(authorization); // 영속성으로 관리되지 않으므로 직접 저장
 
-        TokenScope tokenScope = switch (user.getRole()) {
-            case UserRole.ROLE_USER -> TokenScope.APP;
-            case UserRole.ROLE_MANAGER -> TokenScope.MANAGER;
-            case UserRole.ROLE_ADMIN -> TokenScope.ADMIN;
-        };
-
         Authorization newAuthorization;
         try {
-            newAuthorization = authService.generateAuthorization(user, tokenScope);
+            newAuthorization = authService.generateAuthorization(user, authorization.getScope());
             authService.saveAuthorization(newAuthorization);
         } catch (JsonProcessingException e) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);

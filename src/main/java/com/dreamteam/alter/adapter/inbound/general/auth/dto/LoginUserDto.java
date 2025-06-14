@@ -20,21 +20,12 @@ public class LoginUserDto {
 
     private UserRole role;
 
-    public static LoginUserDto of(TokenScope scope, User user) {
-        return LoginUserDto.builder()
-            .scope(scope)
-            .id(user.getId())
-            .email(user.getEmail())
-            .role(user.getRole())
-            .build();
-    }
-
-    public static LoginUserDto of(Authorization authorization) {
+    public static LoginUserDto of(Authorization authorization, UserRole role) {
         return LoginUserDto.builder()
             .scope(authorization.getScope())
             .id(authorization.getUser().getId())
             .email(authorization.getUser().getEmail())
-            .role(authorization.getUser().getRole())
+            .role(role)
             .build();
     }
 

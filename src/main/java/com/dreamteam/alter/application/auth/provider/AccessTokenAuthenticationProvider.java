@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.general.auth.dto.LoginUserDto;
 import com.dreamteam.alter.adapter.outbound.auth.external.AuthorizationRepositoryImpl;
 import com.dreamteam.alter.application.auth.service.AuthService;
 import com.dreamteam.alter.application.auth.token.AccessTokenAuthentication;
+import com.dreamteam.alter.common.util.UserRoleUtil;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
 import com.dreamteam.alter.domain.auth.exception.ExpiredAuthException;
 import com.dreamteam.alter.domain.auth.exception.InternalAuthException;
@@ -85,13 +86,14 @@ public class AccessTokenAuthenticationProvider extends AbstractJwtAuthentication
             throw new ExpiredAuthException();
         }
 
-        LoginUserDto userDetail = LoginUserDto.of(authorization);
+        LoginUserDto userDetail = LoginUserDto.of(
+            authorization,
+            UserRoleUtil.getRoleForScope(authorization)
+        );
         return new AccessTokenAuthentication(
             accessToken,
             userDetail,
-            Collections.singletonList(new SimpleGrantedAuthority(authorization.getUser()
-                .getRole()
-                .toString()))
+            Collections.singletonList(new SimpleGrantedAuthority(userDetail.getRole().toString()))
         );
     }
 

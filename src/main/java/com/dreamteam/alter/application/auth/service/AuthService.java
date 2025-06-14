@@ -106,6 +106,9 @@ public class AuthService {
     }
 
     public void saveAuthorization(Authorization authorization) throws JsonProcessingException {
+        // DB
+        Authorization savedAuthorization = authorizationRepository.save(authorization);
+
         String key = buildKey(
             authorization.getScope(),
             authorization.getUser().getId(),
@@ -115,13 +118,10 @@ public class AuthService {
         // Redis
         redisTemplate.opsForValue().set(
             key,
-            objectMapper.writeValueAsString(authorization),
+            objectMapper.writeValueAsString(savedAuthorization),
             accessTokenExpirationTime,
             TimeUnit.MILLISECONDS
         );
-
-        // DB
-        authorizationRepository.save(authorization);
     }
 
     public String buildKey(TokenScope scope, Long userId, String authorizationId) {
