@@ -1,6 +1,8 @@
 package com.dreamteam.alter.application.auth.token;
 
+import com.dreamteam.alter.common.util.UserRoleUtil;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
+import com.dreamteam.alter.domain.user.type.UserRole;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -50,7 +52,8 @@ public class RefreshTokenAuthentication extends AbstractAuthenticationToken {
     }
 
     private static SimpleGrantedAuthority getAuthority(Authorization authorization) {
-        return new SimpleGrantedAuthority(authorization.getUser().getRole().toString());
+        UserRole role = UserRoleUtil.getRoleForScope(authorization);
+        return new SimpleGrantedAuthority(role.toString());
     }
 
 }

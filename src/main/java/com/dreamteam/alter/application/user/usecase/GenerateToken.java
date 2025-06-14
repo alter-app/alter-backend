@@ -59,13 +59,11 @@ public class GenerateToken implements GenerateTokenUseCase {
             }
         }
 
-        TokenScope tokenScope = switch (user.getRole()) {
-            case UserRole.ROLE_USER -> TokenScope.APP;
-            case UserRole.ROLE_MANAGER -> TokenScope.MANAGER;
-            case UserRole.ROLE_ADMIN -> TokenScope.ADMIN;
-        };
+        if (!user.getRoles().contains(UserRole.ROLE_USER)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
 
-        return GenerateTokenResponseDto.of(authService.generateAuthorization(user, tokenScope));
+        return GenerateTokenResponseDto.of(authService.generateAuthorization(user, TokenScope.APP));
     }
 
     private SocialUserInfo authenticateSocialUser(LoginUserRequestDto request) {
