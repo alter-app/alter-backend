@@ -20,6 +20,8 @@ public class ManagerPostingApplicationDetailResponse {
 
     private PostingSchedule schedule;
 
+    private String description;
+
     private PostingApplicationStatus status;
 
     private User user;

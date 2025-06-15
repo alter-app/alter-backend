@@ -28,6 +28,10 @@ public class PostingApplicationResponseDto {
     @NotNull
     private PostingApplicationResponsePostingScheduleSummaryDto schedule;
 
+    @Schema(description = "지원 내용", example = "안녕하세요, 세븐일레븐에서 일하고 싶습니다.")
+    @NotBlank
+    private String description;
+
     @Schema(description = "지원 상태", example = "ACCEPTED")
     @NotNull
     private PostingApplicationStatus status;
@@ -42,13 +46,14 @@ public class PostingApplicationResponseDto {
 
     public static PostingApplicationResponseDto from(ManagerPostingApplicationDetailResponse entity) {
         return PostingApplicationResponseDto.builder()
-                .id(entity.getId())
-                .workspaceName(entity.getWorkspaceName())
-                .schedule(PostingApplicationResponsePostingScheduleSummaryDto.from(entity.getSchedule()))
-                .status(entity.getStatus())
-                .applicant(PostingApplicationResponseApplicantSummaryDto.from(entity.getUser()))
-                .createdAt(entity.getCreatedAt())
-                .build();
+            .id(entity.getId())
+            .workspaceName(entity.getWorkspaceName())
+            .schedule(PostingApplicationResponsePostingScheduleSummaryDto.from(entity.getSchedule()))
+            .description(entity.getDescription())
+            .status(entity.getStatus())
+            .applicant(PostingApplicationResponseApplicantSummaryDto.from(entity.getUser()))
+            .createdAt(entity.getCreatedAt())
+            .build();
     }
 
 }

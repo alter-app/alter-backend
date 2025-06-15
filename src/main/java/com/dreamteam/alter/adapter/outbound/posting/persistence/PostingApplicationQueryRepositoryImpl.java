@@ -189,6 +189,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
                 qPostingApplication.id,
                 qWorkspace.businessName,
                 qPostingSchedule,
+                qPostingApplication.description,
                 qPostingApplication.status,
                 qPostingApplication.user,
                 qPostingApplication.createdAt
