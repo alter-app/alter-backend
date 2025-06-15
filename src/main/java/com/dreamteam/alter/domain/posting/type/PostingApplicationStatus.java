@@ -4,6 +4,7 @@ public enum PostingApplicationStatus {
     SUBMITTED,
     SHORTLISTED,
     ACCEPTED,
+    REJECTED,
     CANCELLED,
     EXPIRED,
     DELETED

@@ -26,10 +26,10 @@ public class ManagerUpdatePostingApplicationStatus implements ManagerUpdatePosti
         UpdatePostingApplicationStatusRequestDto request,
         ManagerActor actor
     ) {
-        // SHORTLISTED, ACCEPTED 상태로만 변경 가능
-        if (!request.getStatus().equals(PostingApplicationStatus.SHORTLISTED) &&
-            !request.getStatus().equals(PostingApplicationStatus.ACCEPTED)) {
-            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT);
+        // SHORTLISTED, ACCEPTED, REJECTED 상태로만 변경 가능
+        switch (request.getStatus()) {
+            case SHORTLISTED, ACCEPTED, REJECTED -> {}
+            default -> throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT);
         }
 
         ManagerUser managerUser = actor.getManagerUser();
@@ -38,12 +38,11 @@ public class ManagerUpdatePostingApplicationStatus implements ManagerUpdatePosti
             postingApplicationQueryRepository.getByManagerAndId(managerUser, postingApplicationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POSTING_APPLICATION_NOT_FOUND));
 
-        // 이미 ACCEPTED 상태인 경우, 취소됐거나 만료된 경우 상태 변경 불가
-        PostingApplicationStatus status = postingApplication.getStatus();
-        if (status.equals(PostingApplicationStatus.ACCEPTED) ||
-            status.equals(PostingApplicationStatus.CANCELLED) ||
-            status.equals(PostingApplicationStatus.EXPIRED)) {
-            throw new CustomException(ErrorCode.POSTING_APPLICATION_STATUS_NOT_UPDATABLE);
+        // ACCEPTED, CANCELLED, REJECTED, EXPIRED 상태의 지원서는 상태 변경 불가
+        switch (postingApplication.getStatus()) {
+            case ACCEPTED, CANCELLED, REJECTED, EXPIRED ->
+                throw new CustomException(ErrorCode.POSTING_APPLICATION_STATUS_NOT_UPDATABLE);
+            default -> {}
         }
 
         postingApplication.updateStatus(request.getStatus());

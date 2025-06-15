@@ -58,7 +58,7 @@ public interface ManagerPostingControllerSpec {
                 schema = @Schema(implementation = ErrorResponse.class),
                 examples = {
                     @ExampleObject(
-                        name = "SHORTLISTED, ACCEPTED 상태로만 변경 요청 가능",
+                        name = "SHORTLISTED, ACCEPTED, REJECTED 상태로만 변경 요청 가능",
                         value = "{\"code\" : \"B001\"}"
                     ),
                     @ExampleObject(
@@ -66,7 +66,7 @@ public interface ManagerPostingControllerSpec {
                         value = "{\"code\" : \"B012\"}"
                     ),
                     @ExampleObject(
-                        name = "이미 ACCEPTED 상태인 경우, 취소됐거나 만료된 경우 상태 변경 불가",
+                        name = "ACCEPTED, CANCELLED, REJECTED, EXPIRED 상태의 지원서는 상태 변경 불가",
                         value = "{\"code\" : \"B017\"}"
                     ),
                 }))
