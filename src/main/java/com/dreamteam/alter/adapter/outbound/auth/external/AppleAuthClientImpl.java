@@ -85,7 +85,7 @@ public class AppleAuthClientImpl implements AppleAuthClient {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add(KEY_GRANT_TYPE, VALUE_AUTHORIZATION_CODE);
-        params.add(KEY_CLIENT_ID, appleTeamId);
+        params.add(KEY_CLIENT_ID, appleClientId);
         params.add(KEY_CLIENT_SECRET, generateClientSecret());
         params.add(KEY_CODE, authorizationCode);
         params.add(KEY_REDIRECT_URI, appleRedirectUri);
@@ -138,8 +138,8 @@ public class AppleAuthClientImpl implements AppleAuthClient {
     private String generateClientSecret() {
         return Jwts.builder()
             .header()
-            .add(KEY_KID, appleLoginKey)
-            .add(KEY_ALG, VALUE_ALG)
+                .add(KEY_KID, appleLoginKey)
+                .add(KEY_ALG, VALUE_ALG)
             .and()
             .issuer(appleTeamId)
             .issuedAt(Date.from(Instant.now()))
