@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +25,6 @@ import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 
 @Component
-@RequiredArgsConstructor
 public class AppleSocialAuth extends AbstractSocialAuth {
 
     private static final String KEY_EMAIL = "email";
@@ -38,8 +36,17 @@ public class AppleSocialAuth extends AbstractSocialAuth {
     private static final String RSA_ALGORITHM = "RSA";
 
     private final AppleAuthClient appleAuthClient;
-    private final SocialRefreshTokenRepository socialRefreshTokenRepository;
     private final ObjectMapper objectMapper;
+
+    public AppleSocialAuth(
+        SocialRefreshTokenRepository socialRefreshTokenRepository,
+        AppleAuthClient appleAuthClient,
+        ObjectMapper objectMapper
+    ) {
+        super(socialRefreshTokenRepository);
+        this.appleAuthClient = appleAuthClient;
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     protected SocialTokenResponseDto exchangeCodeForToken(String authorizationCode) {
@@ -54,7 +61,7 @@ public class AppleSocialAuth extends AbstractSocialAuth {
         String email = claims.get(KEY_EMAIL, String.class);
 
         // RefreshToken 저장
-        saveOrUpdateRefreshToken(id, socialTokens.getRefreshToken());
+        saveOrUpdateRefreshToken(SocialProvider.APPLE, id, socialTokens.getRefreshToken());
 
         return SocialUserInfo.of(SocialProvider.APPLE, id, email);
     }
@@ -118,10 +125,6 @@ public class AppleSocialAuth extends AbstractSocialAuth {
         } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private void saveOrUpdateRefreshToken(String socialId, String refreshToken) {
-        socialRefreshTokenRepository.saveOrUpdate(socialId, refreshToken);
     }
 
 }
