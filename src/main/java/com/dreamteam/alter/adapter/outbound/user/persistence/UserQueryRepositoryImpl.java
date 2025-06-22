@@ -70,6 +70,18 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
     }
 
     @Override
+    public User findByContact(String contact) {
+        QUser qUser = QUser.user;
+        return queryFactory
+            .selectFrom(qUser)
+            .where(
+                qUser.contact.eq(contact),
+                qUser.status.eq(UserStatus.ACTIVE)
+            )
+            .fetchOne();
+    }
+
+    @Override
     public Optional<UserSelfInfoResponse> getUserSelfInfoSummary(Long id) {
         QUser qUser = QUser.user;
 

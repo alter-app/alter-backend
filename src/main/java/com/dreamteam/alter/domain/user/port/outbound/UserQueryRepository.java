@@ -10,5 +10,6 @@ public interface UserQueryRepository {
     User findBySocialId(String socialId);
     User findByEmail(String email);
     User findByNickname(String nickname);
+    User findByContact(String contact);
     Optional<UserSelfInfoResponse> getUserSelfInfoSummary(Long id);
 }
