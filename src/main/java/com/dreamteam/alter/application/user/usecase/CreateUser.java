@@ -40,6 +40,11 @@ public class CreateUser implements CreateUserUseCase {
             throw new CustomException(ErrorCode.SIGNUP_SESSION_NOT_EXIST);
         }
 
+        if (ObjectUtils.isNotEmpty(userQueryRepository.findByContact(request.getContact()))) {
+            redisTemplate.delete(sessionIdKey);
+            throw new CustomException(ErrorCode.USER_CONTACT_DUPLICATED);
+        }
+
         try {
             SocialUserInfo socialUserInfo = objectMapper.readValue(userInfoJson, SocialUserInfo.class);
 
