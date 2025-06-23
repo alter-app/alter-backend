@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.inbound.general.user.dto;
 import com.dreamteam.alter.domain.user.type.PlatformType;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -19,6 +20,7 @@ public class LoginUserRequestDto {
     @Schema(description = "소셜 로그인 플랫폼", example = "KAKAO")
     private SocialProvider provider;
 
+    @Valid
     @Schema(description = "OAuth 토큰")
     private OauthLoginTokenDto oauthToken;
 

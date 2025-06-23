@@ -91,7 +91,7 @@ public class AppleAuthClientImpl implements AppleAuthClient {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add(KEY_GRANT_TYPE, VALUE_AUTHORIZATION_CODE);
-        params.add(KEY_CLIENT_SECRET, generateClientSecret());
+        params.add(KEY_CLIENT_SECRET, generateClientSecret(platformType));
         params.add(KEY_CODE, authorizationCode);
 
         switch (platformType) {
@@ -158,7 +158,7 @@ public class AppleAuthClientImpl implements AppleAuthClient {
         }
     }
 
-    private String generateClientSecret() {
+    private String generateClientSecret(PlatformType platformType) {
         return Jwts.builder()
             .header()
                 .add(KEY_KID, appleLoginKey)
@@ -167,8 +167,10 @@ public class AppleAuthClientImpl implements AppleAuthClient {
             .issuer(appleTeamId)
             .issuedAt(Date.from(Instant.now()))
             .expiration(Date.from(Instant.now().plusSeconds(CLIENT_SECRET_EXPIRATION_TIME)))
-            .audience().add(APPLE_AUDIENCE).and()
-            .subject(appleClientId)
+            .audience()
+                .add(APPLE_AUDIENCE)
+            .and()
+            .subject(platformType.equals(PlatformType.WEB) ? appleServiceId : appleClientId)
             .signWith(applePrivateKey, Jwts.SIG.ES256)
             .compact();
     }
