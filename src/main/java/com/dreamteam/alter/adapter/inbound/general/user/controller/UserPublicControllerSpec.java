@@ -63,6 +63,14 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(
                         name = "소셜 토큰 만료 (재 로그인 필요)",
                         value = "{\"code\" : \"A007\"}"
+                    ),
+                    @ExampleObject(
+                        name = "회원 가입 세션이 존재하지 않음",
+                        value = "{\"code\" : \"A006\"}"
+                    ),
+                    @ExampleObject(
+                        name = "사용자 휴대폰 번호 중복",
+                        value = "{\"code\" : \"A009\"}"
                     )
                 }))
     })
@@ -73,5 +81,11 @@ public interface UserPublicControllerSpec {
         @ApiResponse(responseCode = "200", description = "닉네임 중복 체크 성공")
     })
     ResponseEntity<CommonApiResponse<CheckNicknameDuplicationResponseDto>> checkNicknameDuplication(@Valid CheckNicknameDuplicationRequestDto request);
+
+    @Operation(summary = "사용자 휴대폰 번호 중복 체크")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "휴대폰 번호 중복 체크 성공")
+    })
+    ResponseEntity<CommonApiResponse<CheckContactDuplicationResponseDto>> checkContactDuplication(@Valid CheckContactDuplicationRequestDto request);
 
 }

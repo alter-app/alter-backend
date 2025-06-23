@@ -15,6 +15,7 @@ public enum ErrorCode {
     SIGNUP_SESSION_NOT_EXIST(400, "A006", "회원 가입 세션이 존재하지 않습니다."),
     SOCIAL_TOKEN_EXPIRED(400, "A007", "소셜 토큰이 만료되었습니다."),
     NICKNAME_DUPLICATED(400, "A008", "이미 사용중인 닉네임입니다."),
+    USER_CONTACT_DUPLICATED(400, "A009", "이미 사용중인 휴대폰 번호입니다."),
 
     ILLEGAL_ARGUMENT(400, "B001", "잘못된 요청입니다."),
     REFRESH_TOKEN_REQUIRED(400, "B002", "RefreshToken을 통해 요청해야 합니다."),

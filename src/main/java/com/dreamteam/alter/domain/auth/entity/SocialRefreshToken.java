@@ -35,8 +35,9 @@ public class SocialRefreshToken {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public static SocialRefreshToken create(String socialId, String refreshToken) {
+    public static SocialRefreshToken create(SocialProvider provider, String socialId, String refreshToken) {
         return SocialRefreshToken.builder()
+            .socialProvider(provider)
             .socialId(socialId)
             .refreshToken(refreshToken)
             .build();

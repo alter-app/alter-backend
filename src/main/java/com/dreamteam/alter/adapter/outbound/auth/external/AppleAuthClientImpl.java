@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseD
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.port.outbound.AppleAuthClient;
+import com.dreamteam.alter.domain.user.type.PlatformType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +31,9 @@ public class AppleAuthClientImpl implements AppleAuthClient {
 
     @Value("${apple.client_id}")
     private String appleClientId;
+
+    @Value("${apple.service_id}")
+    private String appleServiceId;
 
     @Value("${apple.team_id}")
     private String appleTeamId;
@@ -79,23 +83,39 @@ public class AppleAuthClientImpl implements AppleAuthClient {
     }
 
     @Override
-    public SocialTokenResponseDto exchangeCodeForToken(String authorizationCode) {
+    public SocialTokenResponseDto exchangeCodeForToken(String authorizationCode, PlatformType platformType) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add(KEY_GRANT_TYPE, VALUE_AUTHORIZATION_CODE);
-        params.add(KEY_CLIENT_ID, appleClientId);
         params.add(KEY_CLIENT_SECRET, generateClientSecret());
         params.add(KEY_CODE, authorizationCode);
-        params.add(KEY_REDIRECT_URI, appleRedirectUri);
+
+        switch (platformType) {
+            case WEB -> {
+                // 웹 로그인 환경
+                // client_id: Services ID
+                params.add(KEY_CLIENT_ID, appleServiceId);
+                params.add(KEY_REDIRECT_URI, appleRedirectUri);
+            }
+            case NATIVE -> {
+                // 앱 환경
+                // client_id: 앱 Bundle ID
+                params.add(KEY_CLIENT_ID, appleClientId);
+            }
+            default -> {
+                // Failsafe
+                throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT);
+            }
+        }
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(APPLE_TOKEN_URL, request, String.class);
 
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            return new SocialTokenResponseDto(
+            return SocialTokenResponseDto.withRefreshAndIdentity(
                 jsonNode.get(KEY_REFRESH_TOKEN).asText(),
                 jsonNode.get(KEY_ID_TOKEN).asText()
             );

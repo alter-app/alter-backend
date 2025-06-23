@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.inbound.general.user.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
+import com.dreamteam.alter.domain.user.port.inbound.CheckContactDuplicationUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckNicknameDuplicationUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.GenerateTokenUseCase;
@@ -28,6 +29,9 @@ public class UserPublicController implements UserPublicControllerSpec {
     @Resource(name = "checkNicknameDuplication")
     private final CheckNicknameDuplicationUseCase checkNicknameDuplication;
 
+    @Resource(name = "checkContactDuplication")
+    private final CheckContactDuplicationUseCase checkContactDuplication;
+
     @Override
     @PostMapping("/login")
     public ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginUser(@RequestBody @Valid LoginUserRequestDto request) {
@@ -47,6 +51,14 @@ public class UserPublicController implements UserPublicControllerSpec {
         @RequestBody @Valid CheckNicknameDuplicationRequestDto request
     ) {
         return ResponseEntity.ok(CommonApiResponse.of(checkNicknameDuplication.execute(request)));
+    }
+
+    @Override
+    @PostMapping("/exists/contact")
+    public ResponseEntity<CommonApiResponse<CheckContactDuplicationResponseDto>> checkContactDuplication(
+        @RequestBody @Valid CheckContactDuplicationRequestDto request
+    ) {
+        return ResponseEntity.ok(CommonApiResponse.of(checkContactDuplication.execute(request)));
     }
 
 }
