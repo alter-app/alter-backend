@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.port.outbound.KakaoAuthClient;
+import com.dreamteam.alter.domain.user.type.PlatformType;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,6 +38,7 @@ public class KakaoAuthClientImpl implements KakaoAuthClient {
     private static final String KEY_REDIRECT_URI = "redirect_uri";
     private static final String KEY_CODE = "code";
     private static final String KEY_ACCESS_TOKEN = "access_token";
+    private static final String KEY_REFRESH_TOKEN = "refresh_token";
 
     private static final String KEY_ID = "id";
     private static final String KEY_KAKAO_ACCOUNT = "kakao_account";
@@ -50,22 +52,27 @@ public class KakaoAuthClientImpl implements KakaoAuthClient {
     private final RestTemplate restTemplate;
 
     @Override
-    public SocialTokenResponseDto exchangeCodeForToken(String authorizationCode) {
+    public SocialTokenResponseDto exchangeCodeForToken(String authorizationCode, PlatformType platformType) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add(KEY_GRANT_TYPE, VALUE_AUTHORIZATION_CODE);
         params.add(KEY_CLIENT_ID, kakaoClientId);
-        params.add(KEY_REDIRECT_URI, kakaoRedirectUri);
         params.add(KEY_CODE, authorizationCode);
+        if (platformType.equals(PlatformType.WEB)) {
+            params.add(KEY_REDIRECT_URI, kakaoRedirectUri);
+        }
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(KAKAO_OAUTH_URL, request, String.class);
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
-            return new SocialTokenResponseDto(jsonNode.get(KEY_ACCESS_TOKEN).asText());
+            return SocialTokenResponseDto.withAccessAndRefresh(
+                jsonNode.get(KEY_ACCESS_TOKEN).asText(),
+                jsonNode.get(KEY_REFRESH_TOKEN).asText()
+            );
         } catch (HttpClientErrorException e) {
             throw new CustomException(ErrorCode.SOCIAL_TOKEN_EXPIRED);
         } catch (JsonProcessingException e) {

@@ -6,6 +6,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.port.outbound.AppleAuthClient;
 import com.dreamteam.alter.domain.auth.port.outbound.SocialRefreshTokenRepository;
+import com.dreamteam.alter.domain.user.type.PlatformType;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -49,8 +50,8 @@ public class AppleSocialAuth extends AbstractSocialAuth {
     }
 
     @Override
-    protected SocialTokenResponseDto exchangeCodeForToken(String authorizationCode) {
-        return appleAuthClient.exchangeCodeForToken(authorizationCode);
+    protected SocialTokenResponseDto exchangeCodeForToken(String authorizationCode, PlatformType platformType) {
+        return appleAuthClient.exchangeCodeForToken(authorizationCode, platformType);
     }
 
     @Override

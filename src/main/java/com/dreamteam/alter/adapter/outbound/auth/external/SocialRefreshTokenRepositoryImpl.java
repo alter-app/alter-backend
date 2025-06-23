@@ -16,7 +16,7 @@ public class SocialRefreshTokenRepositoryImpl implements SocialRefreshTokenRepos
 
     @Override
     public void saveOrUpdate(SocialProvider provider, String socialId, String refreshToken) {
-        socialRefreshTokenJpaRepository.findBySocialId(socialId)
+        socialRefreshTokenJpaRepository.findBySocialProviderAndSocialId(provider, socialId)
             .ifPresentOrElse(
                 socialRefreshToken -> socialRefreshToken.update(refreshToken),
                 () -> socialRefreshTokenJpaRepository.save(SocialRefreshToken.create(provider, socialId, refreshToken))

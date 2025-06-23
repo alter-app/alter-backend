@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseD
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.LoginUserRequestDto;
 import com.dreamteam.alter.domain.auth.port.outbound.SocialRefreshTokenRepository;
+import com.dreamteam.alter.domain.user.type.PlatformType;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import org.apache.commons.lang3.ObjectUtils;
 
@@ -22,15 +23,18 @@ public abstract class AbstractSocialAuth {
 
     protected SocialTokenResponseDto getToken(LoginUserRequestDto request) {
         if (ObjectUtils.isNotEmpty(request.getAuthorizationCode()))
-            return exchangeCodeForToken(request.getAuthorizationCode());
+            return exchangeCodeForToken(request.getAuthorizationCode(), request.getPlatformType());
 
-        if (ObjectUtils.isNotEmpty(request.getAccessToken()))
-            return new SocialTokenResponseDto(request.getAccessToken());
+        if (ObjectUtils.isNotEmpty(request.getOauthToken()))
+            return SocialTokenResponseDto.withAccessAndRefresh(
+                request.getOauthToken().getAccessToken(),
+                request.getOauthToken().getRefreshToken()
+            );
 
         throw new IllegalArgumentException("Required fields are missing for provider: " + request.getProvider());
     }
 
-    protected abstract SocialTokenResponseDto exchangeCodeForToken(String authorizationCode);
+    protected abstract SocialTokenResponseDto exchangeCodeForToken(String authorizationCode, PlatformType platformType);
 
     protected abstract SocialUserInfo getUserInfo(SocialTokenResponseDto socialTokens);
 

@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseD
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
 import com.dreamteam.alter.domain.auth.port.outbound.KakaoAuthClient;
 import com.dreamteam.alter.domain.auth.port.outbound.SocialRefreshTokenRepository;
+import com.dreamteam.alter.domain.user.type.PlatformType;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import org.springframework.stereotype.Component;
 
@@ -21,8 +22,8 @@ public class KakaoSocialAuth extends AbstractSocialAuth {
     }
 
     @Override
-    protected SocialTokenResponseDto exchangeCodeForToken(String authorizationCode) {
-        return kakaoAuthClient.exchangeCodeForToken(authorizationCode);
+    protected SocialTokenResponseDto exchangeCodeForToken(String authorizationCode, PlatformType platformType) {
+        return kakaoAuthClient.exchangeCodeForToken(authorizationCode, platformType);
     }
 
     @Override
