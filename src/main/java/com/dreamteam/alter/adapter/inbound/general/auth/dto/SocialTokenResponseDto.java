@@ -1,12 +1,13 @@
 package com.dreamteam.alter.adapter.inbound.general.auth.dto;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class SocialTokenResponseDto {
 
     private String accessToken;
@@ -15,13 +16,12 @@ public class SocialTokenResponseDto {
 
     private String identityToken;
 
-    public SocialTokenResponseDto(String accessToken) {
-        this.accessToken = accessToken;
+    public static SocialTokenResponseDto withAccessAndRefresh(String accessToken, String refreshToken) {
+        return new SocialTokenResponseDto(accessToken, refreshToken, null);
     }
 
-    public SocialTokenResponseDto(String refreshToken, String identityToken) {
-        this.refreshToken = refreshToken;
-        this.identityToken = identityToken;
+    public static SocialTokenResponseDto withRefreshAndIdentity(String refreshToken, String identityToken) {
+        return new SocialTokenResponseDto(null, refreshToken, identityToken);
     }
 
 }
