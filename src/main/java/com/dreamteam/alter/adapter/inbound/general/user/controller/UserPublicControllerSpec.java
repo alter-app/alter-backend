@@ -33,6 +33,10 @@ public interface UserPublicControllerSpec {
                         value = "{\"code\" : \"A007\"}"
                     ),
                     @ExampleObject(
+                        name = "소셜 인가 코드 만료",
+                        value = "{\"code\" : \"A010\"}"
+                    ),
+                    @ExampleObject(
                         name = "가입 되지 않은 사용자 - 사용자 Email 중복 (다른 소셜 계정으로 로그인 유도)",
                         value = "{\"code\" : \"A004\"}"
                     ),

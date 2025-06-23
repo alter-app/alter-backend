@@ -16,6 +16,7 @@ public enum ErrorCode {
     SOCIAL_TOKEN_EXPIRED(400, "A007", "소셜 토큰이 만료되었습니다."),
     NICKNAME_DUPLICATED(400, "A008", "이미 사용중인 닉네임입니다."),
     USER_CONTACT_DUPLICATED(400, "A009", "이미 사용중인 휴대폰 번호입니다."),
+    SOCIAL_AUTH_CODE_EXPIRED(400, "A010", "소셜 인가 코드가 만료되었습니다."),
 
     ILLEGAL_ARGUMENT(400, "B001", "잘못된 요청입니다."),
     REFRESH_TOKEN_REQUIRED(400, "B002", "RefreshToken을 통해 요청해야 합니다."),

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,7 @@ import java.util.Base64;
 import java.util.Date;
 
 @Component
+@Slf4j // TODO: 디버깅 후 제거
 public class AppleAuthClientImpl implements AppleAuthClient {
 
     @Value("${apple.client_id}")
@@ -120,7 +122,8 @@ public class AppleAuthClientImpl implements AppleAuthClient {
                 jsonNode.get(KEY_ID_TOKEN).asText()
             );
         } catch (HttpClientErrorException e) {
-            throw new CustomException(ErrorCode.SOCIAL_TOKEN_EXPIRED);
+            log.info(e.getMessage());
+            throw new CustomException(ErrorCode.SOCIAL_AUTH_CODE_EXPIRED);
         } catch (JsonProcessingException e) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
