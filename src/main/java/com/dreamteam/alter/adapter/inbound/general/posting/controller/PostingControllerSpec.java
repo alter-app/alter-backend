@@ -103,6 +103,10 @@ public interface PostingControllerSpec {
                         name = "지원하고자 하는 공고 일정 찾을 수 없음",
                         value = "{\"code\" : \"B010\"}"
                     ),
+                    @ExampleObject(
+                        name = "이미 근무중인 사용자입니다.",
+                        value = "{\"code\" : \"B018\"}"
+                    )
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> applyIntoPosting(
