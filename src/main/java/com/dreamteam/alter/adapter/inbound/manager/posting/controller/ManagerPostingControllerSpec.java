@@ -69,6 +69,10 @@ public interface ManagerPostingControllerSpec {
                         name = "ACCEPTED, CANCELLED, REJECTED, EXPIRED 상태의 지원서는 상태 변경 불가",
                         value = "{\"code\" : \"B017\"}"
                     ),
+                    @ExampleObject(
+                        name = "이미 근무중인 사용자입니다.",
+                        value = "{\"code\" : \"B018\"}"
+                    )
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> updatePostingApplicationStatus(

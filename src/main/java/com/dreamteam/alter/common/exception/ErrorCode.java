@@ -35,6 +35,7 @@ public enum ErrorCode {
     USER_FAVORITE_POSTING_NOT_FOUND(400, "B015", "존재하지 않는 사용자 스크랩 공고입니다."),
     USER_FAVORITE_POSTING_DUPLICATED(400, "B016", "이미 스크랩한 공고입니다."),
     POSTING_APPLICATION_STATUS_NOT_UPDATABLE(400, "B017", "해당 공고 지원서는 상태 변경이 불가능합니다."),
+    WORKSPACE_WORKER_ALREADY_EXISTS(400, "B018", "이미 근무중인 사용자입니다."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     ;

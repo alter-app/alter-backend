@@ -20,9 +20,9 @@ public class PostingApplicationResponseDto {
     @NotNull
     private Long id;
 
-    @Schema(description = "업장 이름", example = "세븐일레븐 동양공대점")
+    @Schema(description = "업장 정보")
     @NotBlank
-    private String workspaceName;
+    private PostingApplicationWorkspaceResponseDto workspace;
 
     @Schema(description = "공고 스케줄 요약 정보")
     @NotNull
@@ -47,7 +47,7 @@ public class PostingApplicationResponseDto {
     public static PostingApplicationResponseDto from(ManagerPostingApplicationDetailResponse entity) {
         return PostingApplicationResponseDto.builder()
             .id(entity.getId())
-            .workspaceName(entity.getWorkspaceName())
+            .workspace(PostingApplicationWorkspaceResponseDto.from(entity.getWorkspace()))
             .schedule(PostingApplicationResponsePostingScheduleSummaryDto.from(entity.getSchedule()))
             .description(entity.getDescription())
             .status(entity.getStatus())

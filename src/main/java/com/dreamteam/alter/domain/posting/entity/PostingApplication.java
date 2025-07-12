@@ -24,6 +24,10 @@ public class PostingApplication {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JoinColumn(name = "posting_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private Posting posting;
+
     @JoinColumn(name = "posting_schedule_id", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private PostingSchedule postingSchedule;
@@ -54,6 +58,7 @@ public class PostingApplication {
         String description
     ) {
         return PostingApplication.builder()
+            .posting(postingSchedule.getPosting())
             .postingSchedule(postingSchedule)
             .user(user)
             .description(description)

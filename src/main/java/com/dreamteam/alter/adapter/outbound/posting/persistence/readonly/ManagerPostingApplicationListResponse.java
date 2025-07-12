@@ -15,7 +15,7 @@ public class ManagerPostingApplicationListResponse {
 
     private Long id;
 
-    private String workspaceName;
+    private PostingApplicationWorkspaceResponse workspace;
 
     private PostingSchedule schedule;
 

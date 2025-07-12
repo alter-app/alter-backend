@@ -3,7 +3,6 @@ package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingApplicationListResponse;
 import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -20,9 +19,9 @@ public class PostingApplicationListResponseDto {
     @NotNull
     private Long id;
 
-    @Schema(description = "업장 이름", example = "세븐일레븐 동양공대점")
-    @NotBlank
-    private String workspaceName;
+    @Schema(description = "업장 정보")
+    @NotNull
+    private PostingApplicationWorkspaceResponseDto workspace;
 
     @Schema(description = "공고 스케줄 요약 정보")
     @NotNull
@@ -39,7 +38,7 @@ public class PostingApplicationListResponseDto {
     public static PostingApplicationListResponseDto from(ManagerPostingApplicationListResponse entity) {
         return PostingApplicationListResponseDto.builder()
                 .id(entity.getId())
-                .workspaceName(entity.getWorkspaceName())
+                .workspace(PostingApplicationWorkspaceResponseDto.from(entity.getWorkspace()))
                 .schedule(PostingApplicationResponsePostingScheduleSummaryDto.from(entity.getSchedule()))
                 .status(entity.getStatus())
                 .createdAt(entity.getCreatedAt())
