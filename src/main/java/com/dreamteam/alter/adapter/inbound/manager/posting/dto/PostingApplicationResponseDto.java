@@ -21,7 +21,7 @@ public class PostingApplicationResponseDto {
     private Long id;
 
     @Schema(description = "업장 정보")
-    @NotBlank
+    @NotNull
     private PostingApplicationWorkspaceResponseDto workspace;
 
     @Schema(description = "공고 스케줄 요약 정보")
