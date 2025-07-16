@@ -8,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-@Schema(description = "업장 관리자 공고 지원 목록 응답 DTO")
+@Schema(description = "공고 지원 목록 업장 간략 정보 응답 DTO")
 public class PostingApplicationWorkspaceResponseDto {
 
     @Schema(description = "업장 ID", example = "1")
