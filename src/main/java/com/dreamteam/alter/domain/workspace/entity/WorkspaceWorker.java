@@ -5,8 +5,10 @@ import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -34,12 +36,19 @@ public class WorkspaceWorker {
     @Column(name = "status", nullable = false)
     private WorkspaceWorkerStatus status;
 
-    @CreatedDate
-    @Column(name = "employed_at", nullable = false, updatable = false)
-    private LocalDateTime employedAt;
+    @Column(name = "employed_at", nullable = false)
+    private LocalDate employedAt;
 
     @Column(name = "resigned_at")
-    private LocalDateTime resignedAt;
+    private LocalDate resignedAt;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     public static WorkspaceWorker create(
         Workspace workspace,
@@ -54,7 +63,7 @@ public class WorkspaceWorker {
 
     public void resign() {
         this.status = WorkspaceWorkerStatus.RESIGNED;
-        this.resignedAt = LocalDateTime.now();
+        this.resignedAt = LocalDate.now();
     }
 
 }
