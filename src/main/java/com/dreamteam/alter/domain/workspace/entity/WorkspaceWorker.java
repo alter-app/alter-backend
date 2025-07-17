@@ -58,6 +58,7 @@ public class WorkspaceWorker {
             .workspace(workspace)
             .user(user)
             .status(WorkspaceWorkerStatus.ACTIVATED)
+            .employedAt(LocalDate.now())
             .build();
     }
 
