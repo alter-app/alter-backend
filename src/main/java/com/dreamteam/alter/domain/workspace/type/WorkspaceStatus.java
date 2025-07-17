@@ -4,6 +4,7 @@ public enum WorkspaceStatus {
     PENDING,
     ACTIVATED,
     CLOSED,
-    REVOKED
+    REVOKED,
+    DELETED
     ;
 }

@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicationListFilterDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingApplicationDetailResponse;
+import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingApplicationWorkspaceResponse;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.UserPostingApplicationListResponse;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingApplicationListResponse;
 import com.dreamteam.alter.domain.posting.entity.PostingApplication;
@@ -148,7 +149,11 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .select(Projections.constructor(
                 ManagerPostingApplicationListResponse.class,
                 qPostingApplication.id,
-                qWorkspace.businessName,
+                Projections.constructor(
+                    PostingApplicationWorkspaceResponse.class,
+                    qWorkspace.id,
+                    qWorkspace.businessName
+                ),
                 qPostingSchedule,
                 qPostingApplication.status,
                 qPostingApplication.createdAt
@@ -187,7 +192,11 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .select(Projections.constructor(
                 ManagerPostingApplicationDetailResponse.class,
                 qPostingApplication.id,
-                qWorkspace.businessName,
+                Projections.constructor(
+                    PostingApplicationWorkspaceResponse.class,
+                    qWorkspace.id,
+                    qWorkspace.businessName
+                ),
                 qPostingSchedule,
                 qPostingApplication.description,
                 qPostingApplication.status,

@@ -9,6 +9,8 @@ import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationQueryR
 import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
+import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceWorkerUseCase;
+import jakarta.annotation.Resource;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,9 @@ import org.springframework.stereotype.Service;
 public class ManagerUpdatePostingApplicationStatus implements ManagerUpdatePostingApplicationStatusUseCase {
 
     private final PostingApplicationQueryRepository postingApplicationQueryRepository;
+
+    @Resource(name = "createWorkspaceWorker")
+    private final CreateWorkspaceWorkerUseCase createWorkspaceWorker;
 
     @Override
     public void execute(
@@ -46,6 +51,13 @@ public class ManagerUpdatePostingApplicationStatus implements ManagerUpdatePosti
         }
 
         postingApplication.updateStatus(request.getStatus());
+
+        if (request.getStatus().equals(PostingApplicationStatus.ACCEPTED)) {
+            createWorkspaceWorker.execute(
+                postingApplication.getPosting().getWorkspace(),
+                postingApplication.getUser()
+            );
+        }
     }
 
 }
