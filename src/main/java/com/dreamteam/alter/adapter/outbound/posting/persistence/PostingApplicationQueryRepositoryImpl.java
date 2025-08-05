@@ -144,6 +144,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         QPosting qPosting = QPosting.posting;
         QWorkspace qWorkspace = QWorkspace.workspace;
         QManagerUser qManagerUser = QManagerUser.managerUser;
+        QUser qUser = QUser.user;
 
         return queryFactory
             .select(Projections.constructor(
@@ -156,6 +157,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
                 ),
                 qPostingSchedule,
                 qPostingApplication.status,
+                qPostingApplication.user,
                 qPostingApplication.createdAt
             ))
             .from(qPostingApplication)
@@ -163,6 +165,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .join(qPostingSchedule.posting, qPosting)
             .join(qPosting.workspace, qWorkspace)
             .join(qWorkspace.managerUser, qManagerUser)
+            .join(qPostingApplication.user, qUser)
             .where(
                 qManagerUser.eq(managerUser),
                 eqWorkspaceId(qWorkspace, filter.getWorkspaceId()),

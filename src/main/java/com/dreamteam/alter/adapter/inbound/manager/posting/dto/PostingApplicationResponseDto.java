@@ -38,7 +38,7 @@ public class PostingApplicationResponseDto {
 
     @Schema(description = "지원자 요약 정보")
     @NotNull
-    private PostingApplicationResponseApplicantSummaryDto applicant;
+    private PostingApplicationResponseApplicantDetailDto applicant;
 
     @Schema(description = "지원 일자", example = "2023-10-01T12:00:00")
     @NotNull
@@ -51,7 +51,7 @@ public class PostingApplicationResponseDto {
             .schedule(PostingApplicationResponsePostingScheduleSummaryDto.from(entity.getSchedule()))
             .description(entity.getDescription())
             .status(entity.getStatus())
-            .applicant(PostingApplicationResponseApplicantSummaryDto.from(entity.getUser()))
+            .applicant(PostingApplicationResponseApplicantDetailDto.from(entity.getUser()))
             .createdAt(entity.getCreatedAt())
             .build();
     }

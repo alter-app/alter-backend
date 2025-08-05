@@ -31,18 +31,23 @@ public class PostingApplicationListResponseDto {
     @NotNull
     private PostingApplicationStatus status;
 
+    @Schema(description = "지원자 요약 정보")
+    @NotNull
+    private PostingApplicationResponseApplicantSummaryDto applicant;
+
     @Schema(description = "지원 일자", example = "2023-10-01T12:00:00")
     @NotNull
     private LocalDateTime createdAt;
 
     public static PostingApplicationListResponseDto from(ManagerPostingApplicationListResponse entity) {
         return PostingApplicationListResponseDto.builder()
-                .id(entity.getId())
-                .workspace(PostingApplicationWorkspaceResponseDto.from(entity.getWorkspace()))
-                .schedule(PostingApplicationResponsePostingScheduleSummaryDto.from(entity.getSchedule()))
-                .status(entity.getStatus())
-                .createdAt(entity.getCreatedAt())
-                .build();
+            .id(entity.getId())
+            .workspace(PostingApplicationWorkspaceResponseDto.from(entity.getWorkspace()))
+            .schedule(PostingApplicationResponsePostingScheduleSummaryDto.from(entity.getSchedule()))
+            .status(entity.getStatus())
+            .applicant(PostingApplicationResponseApplicantSummaryDto.from(entity.getUser()))
+            .createdAt(entity.getCreatedAt())
+            .build();
     }
 
 }
