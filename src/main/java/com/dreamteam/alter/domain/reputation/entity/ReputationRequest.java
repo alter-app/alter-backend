@@ -1,6 +1,5 @@
 package com.dreamteam.alter.domain.reputation.entity;
 
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationRequestDto;
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestStatus;
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
@@ -57,13 +56,14 @@ public class ReputationRequest {
     public static ReputationRequest create(
         Workspace workspace, // nullable
         Long requesterId,
-        CreateReputationRequestDto request
+        ReputationRequestType requestType,
+        Long targetId
     ) {
         return ReputationRequest.builder()
             .workspace(workspace)
-            .requestType(request.getRequestType())
+            .requestType(requestType)
             .requesterId(requesterId)
-            .targetId(request.getTargetId())
+            .targetId(targetId)
             .status(ReputationRequestStatus.REQUESTED)
             .expiredAt(LocalDateTime.now().plusDays(7))
             .build();
