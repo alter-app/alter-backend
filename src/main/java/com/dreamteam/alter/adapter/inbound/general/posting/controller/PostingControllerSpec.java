@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@Tag(name = "App - 공고 API")
+@Tag(name = "APP - 공고 API")
 public interface PostingControllerSpec {
 
     @Operation(summary = "공고 등록", description = "")

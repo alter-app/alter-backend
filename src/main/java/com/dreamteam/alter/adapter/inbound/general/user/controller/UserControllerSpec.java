@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
-@Tag(name = "App - 사용자")
+@Tag(name = "APP - 사용자")
 public interface UserControllerSpec {
 
     @Operation(summary = "사용자 토큰 재발급", description = "헤더에 RefreshToken을 담아 요청")
