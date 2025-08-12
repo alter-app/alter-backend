@@ -1,10 +1,14 @@
 package com.dreamteam.alter.adapter.inbound.general.reputation.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.UserCreateReputationRequestDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.reputation.port.inbound.UserCreateReputationUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.GetAvailableReputationKeywordListUseCase;
+import com.dreamteam.alter.domain.reputation.type.ReputationKeywordType;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +23,17 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class UserReputationController implements UserReputationControllerSpec {
 
+    @Resource(name = "getAvailableReputationKeywordList")
+    private final GetAvailableReputationKeywordListUseCase getAvailableReputationKeywordList;
+
+    @Resource(name = "userCreateReputation")
     private final UserCreateReputationUseCase userCreateReputationUseCase;
+
+    @Override
+    @GetMapping("/keywords")
+    public ResponseEntity<CommonApiResponse<AvailableReputationKeywordResponseDto>> getReputationKeywords() {
+        return ResponseEntity.ok(CommonApiResponse.of(getAvailableReputationKeywordList.execute(ReputationKeywordType.REPU_TO_WORK)));
+    }
 
     @Override
     @PostMapping
