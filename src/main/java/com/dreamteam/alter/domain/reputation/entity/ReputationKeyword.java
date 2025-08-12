@@ -1,13 +1,11 @@
 package com.dreamteam.alter.domain.reputation.entity;
 
+import com.dreamteam.alter.domain.reputation.type.ReputationCategoryType;
+import com.dreamteam.alter.domain.reputation.type.ReputationKeywordStatus;
 import com.dreamteam.alter.domain.reputation.type.ReputationKeywordType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -19,33 +17,28 @@ import java.time.LocalDateTime;
 public class ReputationKeyword {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "id", length = 8, nullable = false)
+    private String id;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "keyword_type", length = 16, nullable = false)
     private ReputationKeywordType type;
 
-    @Column(name = "name", length = 128, nullable = false, unique = true)
-    private String name;
+    @Column(name = "emoji", length = 16, nullable = false)
+    private String emoji;
 
-    @Column(name = "description", length = 255, nullable = true)
+    @Column(name = "description", length = 128, nullable = false)
     private String description;
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", length = 64, nullable = false)
+    private ReputationCategoryType category;
 
-    @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(name = "sort_order", nullable = false)
+    private int sortOrder;
 
-    public static ReputationKeyword create(String name, String description, ReputationKeywordType type) {
-        return ReputationKeyword.builder()
-            .name(name)
-            .description(description)
-            .type(type)
-            .build();
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 16, nullable = false)
+    private ReputationKeywordStatus status;
 
 }
