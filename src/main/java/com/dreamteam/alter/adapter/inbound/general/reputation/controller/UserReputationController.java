@@ -10,10 +10,7 @@ import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputati
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListRequestDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
-import com.dreamteam.alter.domain.reputation.port.inbound.AppCreateReputationToUserUseCase;
-import com.dreamteam.alter.domain.reputation.port.inbound.AppCreateReputationToWorkspaceUseCase;
-import com.dreamteam.alter.domain.reputation.port.inbound.GetAvailableReputationKeywordListUseCase;
-import com.dreamteam.alter.domain.reputation.port.inbound.GetReputationRequestListUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.*;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
@@ -37,10 +34,14 @@ public class UserReputationController implements UserReputationControllerSpec {
     @Resource(name = "userCreateReputation")
     private final AppCreateReputationToUserUseCase appCreateReputationToUserUseCase;
 
+    @Resource(name = "appCreateReputationToWorkspace")
     private final AppCreateReputationToWorkspaceUseCase appCreateReputationToWorkspace;
 
     @Resource(name = "getReputationRequestList")
     private final GetReputationRequestListUseCase getReputationRequestListUseCase;
+
+    @Resource(name = "appDeclineReputationRequest")
+    private final AppDeclineReputationRequestUseCase appDeclineReputationRequest;
 
     @Override
     @GetMapping("/keywords")
@@ -72,6 +73,7 @@ public class UserReputationController implements UserReputationControllerSpec {
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
+    @Override
     @GetMapping("/requests")
     public ResponseEntity<CursorPaginatedApiResponse<ReputationRequestListResponseDto>> getReputationRequestList(
         CursorPageRequestDto pageRequest
@@ -86,8 +88,13 @@ public class UserReputationController implements UserReputationControllerSpec {
         return ResponseEntity.ok(getReputationRequestListUseCase.execute(requestDto, pageRequest));
     }
 
-    // 평판 요청 취소 (요청자)
+    @Override
+    @PatchMapping("/requests/{requestId}/decline")
+    public ResponseEntity<CommonApiResponse<Void>> declineReputationRequest(@PathVariable Long requestId) {
+        AppActor actor = AppActionContext.getInstance().getActor();
 
-    // 평판 요청 승인/거절 (요청받은 사람)
+        appDeclineReputationRequest.execute(actor, requestId);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
 
 }

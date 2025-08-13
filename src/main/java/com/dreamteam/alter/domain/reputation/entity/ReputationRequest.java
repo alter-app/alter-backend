@@ -4,6 +4,7 @@ import com.dreamteam.alter.domain.reputation.type.ReputationRequestStatus;
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestType;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -11,6 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -62,6 +64,10 @@ public class ReputationRequest {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "reputationRequest", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Reputation> reputations;
+
     public static ReputationRequest create(
         Workspace workspace, // nullable
         ReputationType requesterType,
@@ -84,6 +90,10 @@ public class ReputationRequest {
 
     public void expire() {
         this.status = ReputationRequestStatus.EXPIRED;
+    }
+
+    public void decline() {
+        this.status = ReputationRequestStatus.DECLINED;
     }
 
 }

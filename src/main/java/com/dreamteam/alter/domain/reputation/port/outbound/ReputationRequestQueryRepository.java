@@ -13,6 +13,8 @@ import java.util.List;
 public interface ReputationRequestQueryRepository {
     List<ReputationRequest> findAllByStatusAndExpiredAtBefore(ReputationRequestStatus status, LocalDateTime now);
 
+    ReputationRequest findByTargetAndId(ReputationType targetType, Long targetId, Long requestId);
+
     long getCountOfReputationRequestsByTarget(ReputationType targetType, Long targetId);
 
     List<ReputationRequestListResponse> getReputationRequestsWithCursor(
