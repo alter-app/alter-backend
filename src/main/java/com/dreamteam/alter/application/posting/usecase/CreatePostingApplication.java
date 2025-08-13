@@ -9,7 +9,7 @@ import com.dreamteam.alter.domain.posting.port.inbound.CreatePostingApplicationU
 import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationRepository;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingScheduleQueryRepository;
 import com.dreamteam.alter.domain.user.context.AppActor;
-import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerReadOnlyRepository;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,7 @@ public class CreatePostingApplication implements CreatePostingApplicationUseCase
 
     private final PostingScheduleQueryRepository postingScheduleQueryRepository;
     private final PostingApplicationRepository postingApplicationRepository;
-    private final WorkspaceWorkerReadOnlyRepository workspaceWorkerReadOnlyRepository;
+    private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
 
     @Override
     public void execute(AppActor actor, Long postingId, CreatePostingApplicationRequestDto request) {
@@ -29,7 +29,7 @@ public class CreatePostingApplication implements CreatePostingApplicationUseCase
             postingScheduleQueryRepository.findByIdAndPostingId(postingId, request.getPostingScheduleId())
                 .orElseThrow(() -> new CustomException(ErrorCode.POSTING_SCHEDULE_NOT_FOUND));
 
-        if (workspaceWorkerReadOnlyRepository.findActiveWorkerByWorkspaceAndUser(
+        if (workspaceWorkerQueryRepository.findActiveWorkerByWorkspaceAndUser(
                 postingSchedule.getPosting().getWorkspace(),
                 actor.getUser()
             )

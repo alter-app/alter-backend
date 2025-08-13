@@ -4,7 +4,7 @@ import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
-import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerReadOnlyRepository;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class WorkspaceWorkerReadOnlyRepositoryImpl implements WorkspaceWorkerReadOnlyRepository {
+public class WorkspaceWorkerQueryRepositoryImpl implements WorkspaceWorkerQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
