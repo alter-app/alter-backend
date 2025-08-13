@@ -9,11 +9,10 @@ public enum ReputationRequestType {
     WORKSPACE_TO_USER
     ;
 
-    public static Set<ReputationRequestType> userAvailableTypes() {
+    public static Set<ReputationRequestType> toUserAvailableTypes() {
         return Set.of(
             USER_TO_USER_INTERNAL,
-            USER_TO_USER_EXTERNAL,
-            USER_TO_WORKSPACE
+            USER_TO_USER_EXTERNAL
         );
     }
 
