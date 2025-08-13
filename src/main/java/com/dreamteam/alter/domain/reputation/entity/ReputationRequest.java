@@ -55,8 +55,8 @@ public class ReputationRequest {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "expired_at", nullable = false, updatable = false)
-    private LocalDateTime expiredAt;
+    @Column(name = "expires_at", nullable = false, updatable = false)
+    private LocalDateTime expiresAt;
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
@@ -78,7 +78,7 @@ public class ReputationRequest {
             .targetType(targetType)
             .targetId(targetId)
             .status(ReputationRequestStatus.REQUESTED)
-            .expiredAt(LocalDateTime.now().plusDays(7))
+            .expiresAt(LocalDateTime.now().plusDays(7))
             .build();
     }
 
