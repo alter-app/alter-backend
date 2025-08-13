@@ -1,13 +1,19 @@
 package com.dreamteam.alter.domain.reputation.entity;
 
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationKeywordMapDto;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Getter
@@ -51,6 +57,10 @@ public class Reputation {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "reputation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<ReputationKeywordMap> reputationKeywordMaps;
+
     public static Reputation create(ReputationRequest reputationRequest, ReputationType writerType, Long writerId, ReputationType targetType, Long targetId, Long workspaceId) {
         return Reputation.builder()
             .reputationRequest(reputationRequest)
@@ -61,4 +71,25 @@ public class Reputation {
             .workspaceId(workspaceId)
             .build();
     }
+
+    public void addReputationKeywordMap(
+        Set<ReputationKeywordMapDto> keywords,
+        Map<String, ReputationKeyword> keywordMap
+    ) {
+        if (ObjectUtils.isEmpty(this.reputationKeywordMaps)) {
+            this.reputationKeywordMaps = Set.of();
+        }
+
+        this.reputationKeywordMaps = keywords.stream()
+            .map(
+                keyword ->
+                    ReputationKeywordMap.create(
+                        this,
+                        keywordMap.get(keyword.getKeywordId()),
+                        keyword.getDescription()
+                    )
+            )
+            .collect(Collectors.toSet());
+    }
+
 }
