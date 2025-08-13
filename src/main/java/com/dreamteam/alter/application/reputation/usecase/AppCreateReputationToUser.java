@@ -93,7 +93,7 @@ public class AppCreateReputationToUser extends AbstractCreateReputation implemen
             actor.getUserId(),
             ReputationType.USER,
             targetUser.getId(),
-            ReputationRequestType.USER_TO_USER_INTERNAL.equals(requestType) ? workspace.getId() : null,
+            ReputationRequestType.USER_TO_USER_INTERNAL.equals(requestType) ? workspace : null,
             keywords,
             keywordMap
         );

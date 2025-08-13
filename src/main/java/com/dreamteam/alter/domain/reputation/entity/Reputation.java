@@ -2,6 +2,7 @@ package com.dreamteam.alter.domain.reputation.entity;
 
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationKeywordMapDto;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
+import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -46,8 +47,9 @@ public class Reputation {
     @Column(name = "target_id", nullable = false)
     private Long targetId;
 
-    @Column(name = "workspace_id")
-    private Long workspaceId;
+    @JoinColumn(name = "workspace_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Workspace workspace;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -61,14 +63,14 @@ public class Reputation {
     @OneToMany(mappedBy = "reputation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ReputationKeywordMap> reputationKeywordMaps;
 
-    public static Reputation create(ReputationRequest reputationRequest, ReputationType writerType, Long writerId, ReputationType targetType, Long targetId, Long workspaceId) {
+    public static Reputation create(ReputationRequest reputationRequest, ReputationType writerType, Long writerId, ReputationType targetType, Long targetId, Workspace workspace) {
         return Reputation.builder()
             .reputationRequest(reputationRequest)
             .writerType(writerType)
             .writerId(writerId)
             .targetType(targetType)
             .targetId(targetId)
-            .workspaceId(workspaceId)
+            .workspace(workspace)
             .build();
     }
 

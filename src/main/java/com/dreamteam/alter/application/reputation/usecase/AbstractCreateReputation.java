@@ -10,6 +10,7 @@ import com.dreamteam.alter.domain.reputation.port.outbound.ReputationKeywordQuer
 import com.dreamteam.alter.domain.reputation.port.outbound.ReputationRepository;
 import com.dreamteam.alter.domain.reputation.port.outbound.ReputationRequestRepository;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
+import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,7 +49,7 @@ public abstract class AbstractCreateReputation {
         Long fromId,
         ReputationType toType,
         Long toId,
-        Long workspaceId,
+        Workspace workspace,
         Set<ReputationKeywordMapDto> keywords,
         Map<String, ReputationKeyword> keywordMap
     ) {
@@ -60,7 +61,7 @@ public abstract class AbstractCreateReputation {
                 fromId,
                 toType,
                 toId,
-                workspaceId
+                workspace
             )
         );
 
