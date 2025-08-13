@@ -58,8 +58,10 @@ public class AppCreateReputationToWorkspace extends AbstractCreateReputation imp
         ReputationRequest reputationRequest = reputationRequestRepository.save(
             ReputationRequest.create(
                 targetWorkspace,
+                ReputationType.USER,
                 actor.getUserId(),
                 ReputationRequestType.USER_TO_WORKSPACE,
+                ReputationType.WORKSPACE,
                 targetWorkspace.getId()
             )
         );

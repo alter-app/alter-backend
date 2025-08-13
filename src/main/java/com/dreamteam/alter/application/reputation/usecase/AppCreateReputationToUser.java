@@ -81,8 +81,10 @@ public class AppCreateReputationToUser extends AbstractCreateReputation implemen
         ReputationRequest reputationRequest = reputationRequestRepository.save(
             ReputationRequest.create(
                 requestType.equals(ReputationRequestType.USER_TO_USER_EXTERNAL) ? null : workspace,
+                ReputationType.USER,
                 actor.getUserId(),
                 requestType,
+                ReputationType.USER,
                 targetUser.getId()
             )
         );

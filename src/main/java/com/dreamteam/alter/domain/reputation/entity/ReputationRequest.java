@@ -2,6 +2,7 @@ package com.dreamteam.alter.domain.reputation.entity;
 
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestStatus;
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestType;
+import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,7 +25,7 @@ public class ReputationRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JoinColumn(name = "workspace_id", nullable = false)
+    @JoinColumn(name = "workspace_id")
     @ManyToOne(fetch = FetchType.LAZY)
     private Workspace workspace;
 
@@ -32,8 +33,16 @@ public class ReputationRequest {
     @Column(name = "request_type", length = 20, nullable = false)
     private ReputationRequestType requestType;
 
+    @Column(name = "requester_type", length = 20, nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ReputationType requesterType;
+
     @Column(name = "requester_id", nullable = false)
     private Long requesterId;
+
+    @Column(name = "target_type", length = 20, nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ReputationType targetType;
 
     @Column(name = "target_id", nullable = false)
     private Long targetId;
@@ -55,14 +64,18 @@ public class ReputationRequest {
 
     public static ReputationRequest create(
         Workspace workspace, // nullable
+        ReputationType requesterType,
         Long requesterId,
         ReputationRequestType requestType,
+        ReputationType targetType,
         Long targetId
     ) {
         return ReputationRequest.builder()
             .workspace(workspace)
             .requestType(requestType)
+            .requesterType(requesterType)
             .requesterId(requesterId)
+            .targetType(targetType)
             .targetId(targetId)
             .status(ReputationRequestStatus.REQUESTED)
             .expiredAt(LocalDateTime.now().plusDays(7))
