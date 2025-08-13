@@ -1,6 +1,7 @@
 package com.dreamteam.alter.domain.reputation.entity;
 
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationKeywordMapDto;
+import com.dreamteam.alter.domain.reputation.type.ReputationStatus;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -51,6 +52,10 @@ public class Reputation {
     @ManyToOne(fetch = FetchType.LAZY)
     private Workspace workspace;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private ReputationStatus status;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -71,6 +76,7 @@ public class Reputation {
             .targetType(targetType)
             .targetId(targetId)
             .workspace(workspace)
+            .status(ReputationStatus.REQUESTED)
             .build();
     }
 
@@ -92,6 +98,10 @@ public class Reputation {
                     )
             )
             .collect(Collectors.toSet());
+    }
+
+    public void decline() {
+        this.status = ReputationStatus.DECLINED;
     }
 
 }
