@@ -1,12 +1,14 @@
 package com.dreamteam.alter.adapter.inbound.general.reputation.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.UserCreateReputationRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToWorkspaceRequestDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
-import com.dreamteam.alter.domain.reputation.port.inbound.UserCreateReputationUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.AppCreateReputationToUserUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.AppCreateReputationToWorkspaceUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.GetAvailableReputationKeywordListUseCase;
-import com.dreamteam.alter.domain.reputation.type.ReputationKeywordType;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -27,22 +29,37 @@ public class UserReputationController implements UserReputationControllerSpec {
     private final GetAvailableReputationKeywordListUseCase getAvailableReputationKeywordList;
 
     @Resource(name = "userCreateReputation")
-    private final UserCreateReputationUseCase userCreateReputationUseCase;
+    private final AppCreateReputationToUserUseCase appCreateReputationToUserUseCase;
+
+    private final AppCreateReputationToWorkspaceUseCase appCreateReputationToWorkspace;
 
     @Override
     @GetMapping("/keywords")
-    public ResponseEntity<CommonApiResponse<AvailableReputationKeywordResponseDto>> getReputationKeywords() {
-        return ResponseEntity.ok(CommonApiResponse.of(getAvailableReputationKeywordList.execute(ReputationKeywordType.REPU_TO_WORK)));
+    public ResponseEntity<CommonApiResponse<AvailableReputationKeywordResponseDto>> getReputationKeywords(
+        AvailableReputationKeywordRequestDto keywordRequestDto
+    ) {
+        return ResponseEntity.ok(CommonApiResponse.of(getAvailableReputationKeywordList.execute(keywordRequestDto)));
     }
 
     @Override
-    @PostMapping
-    public ResponseEntity<CommonApiResponse<Void>> createReputation(
-        @Valid @RequestBody UserCreateReputationRequestDto request
+    @PostMapping("/requests/users")
+    public ResponseEntity<CommonApiResponse<Void>> createReputationToUser(
+        @Valid @RequestBody CreateReputationToUserRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        userCreateReputationUseCase.execute(actor, request);
+        appCreateReputationToUserUseCase.execute(actor, request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PostMapping("/requests/workspaces")
+    public ResponseEntity<CommonApiResponse<Void>> createReputationToWorkspace(
+        @Valid @RequestBody CreateReputationToWorkspaceRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        appCreateReputationToWorkspace.execute(actor, request);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

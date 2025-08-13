@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,4 +30,15 @@ public class ReputationKeywordQueryRepositoryImpl implements ReputationKeywordQu
             .fetch();
     }
 
+    @Override
+    public List<ReputationKeyword> findByIdList(Set<String> keywordIds) {
+        QReputationKeyword qReputationKeyword = QReputationKeyword.reputationKeyword;
+
+        return queryFactory.selectFrom(qReputationKeyword)
+            .where(
+                qReputationKeyword.id.in(keywordIds),
+                qReputationKeyword.status.eq(ReputationKeywordStatus.ACTIVATED)
+            )
+            .fetch();
+    }
 }
