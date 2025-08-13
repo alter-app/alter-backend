@@ -1,12 +1,18 @@
 package com.dreamteam.alter.adapter.inbound.general.reputation.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListRequestDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.reputation.port.inbound.GetAvailableReputationKeywordListUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.GetReputationRequestListUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceCreateReputationToUserUseCase;
+import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -29,6 +35,9 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
     @Resource(name = "workspaceCreateReputationToUser")
     private final WorkspaceCreateReputationToUserUseCase workspaceCreateReputationToUser;
 
+    @Resource(name = "getReputationRequestList")
+    private final GetReputationRequestListUseCase getReputationRequestListUseCase;
+
     @Override
     @GetMapping("/keywords")
     public ResponseEntity<CommonApiResponse<AvailableReputationKeywordResponseDto>> getReputationKeywords(
@@ -45,6 +54,19 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
 
         workspaceCreateReputationToUser.execute(actor, request);
         return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @GetMapping("/requests/{workspaceId}")
+    public ResponseEntity<CursorPaginatedApiResponse<ReputationRequestListResponseDto>> getReputationRequestList(
+        @PathVariable Long workspaceId,
+        CursorPageRequestDto request
+    ) {
+        ReputationRequestListRequestDto requestDto = ReputationRequestListRequestDto.of(
+            ReputationType.WORKSPACE,
+            workspaceId
+        );
+
+        return ResponseEntity.ok(getReputationRequestListUseCase.execute(requestDto, request));
     }
 
 }

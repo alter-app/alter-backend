@@ -1,14 +1,20 @@
 package com.dreamteam.alter.adapter.inbound.general.reputation.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToWorkspaceRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListRequestDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.reputation.port.inbound.AppCreateReputationToUserUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.AppCreateReputationToWorkspaceUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.GetAvailableReputationKeywordListUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.GetReputationRequestListUseCase;
+import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -32,6 +38,9 @@ public class UserReputationController implements UserReputationControllerSpec {
     private final AppCreateReputationToUserUseCase appCreateReputationToUserUseCase;
 
     private final AppCreateReputationToWorkspaceUseCase appCreateReputationToWorkspace;
+
+    @Resource(name = "getReputationRequestList")
+    private final GetReputationRequestListUseCase getReputationRequestListUseCase;
 
     @Override
     @GetMapping("/keywords")
@@ -63,7 +72,19 @@ public class UserReputationController implements UserReputationControllerSpec {
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
-    // 자신에게 온 평판 작성 요청 목록 조회 (사용자)
+    @GetMapping("/requests")
+    public ResponseEntity<CursorPaginatedApiResponse<ReputationRequestListResponseDto>> getReputationRequestList(
+        CursorPageRequestDto pageRequest
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        ReputationRequestListRequestDto requestDto = ReputationRequestListRequestDto.of(
+            ReputationType.USER,
+            actor.getUserId()
+        );
+
+        return ResponseEntity.ok(getReputationRequestListUseCase.execute(requestDto, pageRequest));
+    }
 
     // 평판 요청 취소 (요청자)
 
