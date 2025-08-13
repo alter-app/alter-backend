@@ -40,6 +40,17 @@ public class ReputationRequestQueryRepositoryImpl implements ReputationRequestQu
     }
 
     @Override
+    public ReputationRequest findById(Long requestId) {
+        QReputationRequest qReputationRequest = QReputationRequest.reputationRequest;
+
+        return queryFactory.selectFrom(qReputationRequest)
+            .where(qReputationRequest.id.eq(requestId)
+                .and(qReputationRequest.status.eq(ReputationRequestStatus.REQUESTED))
+            )
+            .fetchOne();
+    }
+
+    @Override
     public ReputationRequest findByTargetAndId(ReputationType targetType, Long targetId, Long requestId) {
         QReputationRequest qReputationRequest = QReputationRequest.reputationRequest;
 

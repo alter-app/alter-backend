@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.general.reputation.controller;
+package com.dreamteam.alter.adapter.inbound.manager.reputation.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
@@ -12,6 +12,7 @@ import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.reputation.port.inbound.GetAvailableReputationKeywordListUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.GetReputationRequestListUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceCreateReputationToUserUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceDeclineReputationRequestUseCase;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import jakarta.annotation.Resource;
@@ -38,6 +39,9 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
     @Resource(name = "getReputationRequestList")
     private final GetReputationRequestListUseCase getReputationRequestListUseCase;
 
+    @Resource(name = "workspaceDeclineReputationRequest")
+    private final WorkspaceDeclineReputationRequestUseCase workspaceDeclineReputationRequest;
+
     @Override
     @GetMapping("/keywords")
     public ResponseEntity<CommonApiResponse<AvailableReputationKeywordResponseDto>> getReputationKeywords(
@@ -56,6 +60,7 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
+    @Override
     @GetMapping("/requests/{workspaceId}")
     public ResponseEntity<CursorPaginatedApiResponse<ReputationRequestListResponseDto>> getReputationRequestList(
         @PathVariable Long workspaceId,
@@ -67,6 +72,15 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
         );
 
         return ResponseEntity.ok(getReputationRequestListUseCase.execute(requestDto, request));
+    }
+
+    @Override
+    @PatchMapping("/requests/{requestId}/decline")
+    public ResponseEntity<CommonApiResponse<Void>> declineReputationRequest(@PathVariable Long requestId) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+
+        workspaceDeclineReputationRequest.execute(actor, requestId);
+        return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
 }

@@ -2,11 +2,13 @@ package com.dreamteam.alter.domain.reputation.entity;
 
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestStatus;
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestType;
+import com.dreamteam.alter.domain.reputation.type.ReputationStatus;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -94,6 +96,14 @@ public class ReputationRequest {
 
     public void decline() {
         this.status = ReputationRequestStatus.DECLINED;
+
+        if (ObjectUtils.isNotEmpty(this.reputations)) {
+            for (Reputation reputation : this.reputations) {
+                if (ReputationStatus.REQUESTED.equals(reputation.getStatus())) {
+                    reputation.decline();
+                }
+            }
+        }
     }
 
 }
