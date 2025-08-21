@@ -2,6 +2,7 @@ package com.dreamteam.alter.domain.reputation.port.outbound;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestFilterDto;
 import com.dreamteam.alter.adapter.outbound.reputation.persistence.readonly.ReputationRequestListResponse;
 import com.dreamteam.alter.domain.reputation.entity.ReputationRequest;
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestStatus;
@@ -17,11 +18,19 @@ public interface ReputationRequestQueryRepository {
 
     ReputationRequest findByTargetAndId(ReputationType targetType, Long targetId, Long requestId);
 
-    long getCountOfReputationRequestsByTarget(ReputationType targetType, Long targetId);
+    long getCountOfReputationRequestsByUser(Long userId, ReputationRequestStatus status);
 
-    List<ReputationRequestListResponse> getReputationRequestsWithCursor(
+    List<ReputationRequestListResponse> getReputationRequestsWithCursorByUser(
         CursorPageRequest<CursorDto> pageRequest,
-        ReputationType targetType,
-        Long targetId
+        Long userId,
+        ReputationRequestStatus status
+    );
+
+    long getCountOfReputationRequestsByWorkspace(List<Long> workspaceIds, ReputationRequestFilterDto filter);
+
+    List<ReputationRequestListResponse> getReputationRequestsWithCursorByWorkspace(
+        CursorPageRequest<CursorDto> pageRequest,
+        List<Long> workspaceIds,
+        ReputationRequestFilterDto filter
     );
 }

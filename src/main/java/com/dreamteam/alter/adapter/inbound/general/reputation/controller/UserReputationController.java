@@ -8,10 +8,9 @@ import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReput
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToWorkspaceRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.UserReputationRequestFilterDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.reputation.port.inbound.*;
-import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -37,8 +36,8 @@ public class UserReputationController implements UserReputationControllerSpec {
     @Resource(name = "appCreateReputationToWorkspace")
     private final AppCreateReputationToWorkspaceUseCase appCreateReputationToWorkspace;
 
-    @Resource(name = "getReputationRequestList")
-    private final GetReputationRequestListUseCase getReputationRequestListUseCase;
+    @Resource(name = "userGetReputationRequestList")
+    private final UserGetReputationRequestListUseCase userGetReputationRequestList;
 
     @Resource(name = "appDeclineReputationRequest")
     private final AppDeclineReputationRequestUseCase appDeclineReputationRequest;
@@ -76,16 +75,12 @@ public class UserReputationController implements UserReputationControllerSpec {
     @Override
     @GetMapping("/requests")
     public ResponseEntity<CursorPaginatedApiResponse<ReputationRequestListResponseDto>> getReputationRequestList(
-        CursorPageRequestDto pageRequest
+        UserReputationRequestFilterDto filter,
+        CursorPageRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        ReputationRequestListRequestDto requestDto = ReputationRequestListRequestDto.of(
-            ReputationType.USER,
-            actor.getUserId()
-        );
-
-        return ResponseEntity.ok(getReputationRequestListUseCase.execute(requestDto, pageRequest));
+        return ResponseEntity.ok(userGetReputationRequestList.execute(actor, filter, request));
     }
 
     @Override

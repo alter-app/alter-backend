@@ -7,13 +7,13 @@ import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReput
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestFilterDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
+import com.dreamteam.alter.application.reputation.usecase.WorkspaceGetReputationRequestList;
 import com.dreamteam.alter.domain.reputation.port.inbound.GetAvailableReputationKeywordListUseCase;
-import com.dreamteam.alter.domain.reputation.port.inbound.GetReputationRequestListUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceCreateReputationToUserUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceDeclineReputationRequestUseCase;
-import com.dreamteam.alter.domain.reputation.type.ReputationType;
+import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceGetReputationRequestListUseCase;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -36,8 +36,8 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
     @Resource(name = "workspaceCreateReputationToUser")
     private final WorkspaceCreateReputationToUserUseCase workspaceCreateReputationToUser;
 
-    @Resource(name = "getReputationRequestList")
-    private final GetReputationRequestListUseCase getReputationRequestListUseCase;
+    @Resource(name = "workspaceGetReputationRequestList")
+    private final WorkspaceGetReputationRequestListUseCase workspaceGetReputationRequestList;
 
     @Resource(name = "workspaceDeclineReputationRequest")
     private final WorkspaceDeclineReputationRequestUseCase workspaceDeclineReputationRequest;
@@ -61,17 +61,14 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
     }
 
     @Override
-    @GetMapping("/requests/{workspaceId}")
+    @GetMapping("/requests")
     public ResponseEntity<CursorPaginatedApiResponse<ReputationRequestListResponseDto>> getReputationRequestList(
-        @PathVariable Long workspaceId,
-        CursorPageRequestDto request
+        ReputationRequestFilterDto filter,
+        CursorPageRequestDto pageRequest
     ) {
-        ReputationRequestListRequestDto requestDto = ReputationRequestListRequestDto.of(
-            ReputationType.WORKSPACE,
-            workspaceId
-        );
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
 
-        return ResponseEntity.ok(getReputationRequestListUseCase.execute(requestDto, request));
+        return ResponseEntity.ok(workspaceGetReputationRequestList.execute(actor, filter, pageRequest));
     }
 
     @Override

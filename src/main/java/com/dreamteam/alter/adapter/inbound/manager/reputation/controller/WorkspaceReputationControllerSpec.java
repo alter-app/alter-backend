@@ -7,6 +7,7 @@ import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReput
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestFilterDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,8 +28,8 @@ public interface WorkspaceReputationControllerSpec {
 
     @Operation(summary = "업장 평판 요청 목록 조회", description = "업장에 대한 평판 요청 목록을 조회합니다.")
     ResponseEntity<CursorPaginatedApiResponse<ReputationRequestListResponseDto>> getReputationRequestList(
-        @PathVariable Long workspaceId,
-        CursorPageRequestDto request
+        ReputationRequestFilterDto filter,
+        CursorPageRequestDto pageRequest
     );
 
     @Operation(summary = "업장 평판 요청 거절", description = "업장에 대한 평판 요청을 거절합니다.")

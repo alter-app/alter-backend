@@ -26,6 +26,7 @@ public interface UserReputationControllerSpec {
 
     @Operation(summary = "평판 요청 목록 조회", description = "사용자의 평판 요청 목록을 조회합니다.")
     ResponseEntity<CursorPaginatedApiResponse<ReputationRequestListResponseDto>> getReputationRequestList(
+        UserReputationRequestFilterDto filter,
         CursorPageRequestDto pageRequest
     );
 
