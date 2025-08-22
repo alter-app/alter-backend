@@ -37,8 +37,8 @@ public class GenerateReputationSummary implements GenerateReputationSummaryUseCa
         Map<Long, List<KeywordFrequency>> keywordFrequenciesMap = reputationSummaryQueryRepository
             .getKeywordFrequencies(targetType, targetIds);
 
-        Map<Long, ReputationSummaryData> summaryDataMap = reputationSummaryQueryRepository
-            .getReputationSummaryData(targetType, targetIds);
+        Map<Long, Integer> reputationCountsMap = reputationSummaryQueryRepository
+            .getReputationCounts(targetType, targetIds);
 
         Map<Long, ReputationSummary> existingSummariesMap = reputationSummaryQueryRepository
             .findExistingSummaries(targetType, targetIds);
@@ -48,31 +48,40 @@ public class GenerateReputationSummary implements GenerateReputationSummaryUseCa
 
         for (Long targetId : targetIds) {
             List<KeywordFrequency> keywordFrequencies = keywordFrequenciesMap.get(targetId);
-            ReputationSummaryData summaryData = summaryDataMap.get(targetId);
+            Integer totalReputationCount = reputationCountsMap.getOrDefault(targetId, 0);
 
             if (keywordFrequencies == null || keywordFrequencies.isEmpty()) {
                 log.info("평판 데이터 없음 - 타입: {}, 대상: {}", targetType, targetId);
                 continue;
             }
 
-            // 총 평판 개수 계산
-            Integer totalCount = keywordFrequencies.stream()
-                .mapToInt(KeywordFrequency::getCount)
-                .sum();
+            // 키워드별 퍼센티지 계산
+            List<KeywordFrequency> keywordFrequenciesWithPercentage = keywordFrequencies.stream()
+                .map(kf -> {
+                    Double percentage = totalReputationCount > 0 ? (kf.getCount() * 100.0 / totalReputationCount) : 0.0;
+                    return KeywordFrequency.of(
+                        kf.getKeywordId(),
+                        kf.getKeywordName(),
+                        kf.getKeywordDescription(),
+                        kf.getCount(),
+                        percentage,
+                        kf.getUserDescriptions()
+                    );
+                })
+                .toList();
 
             // AI 요약을 위한 입력 데이터 구성
             ReputationSummaryData aiInputData = ReputationSummaryData.of(
                 targetType,
-                totalCount,
-                keywordFrequencies,
-                summaryData != null ? summaryData.getWriterTypeDistribution() : null
+                totalReputationCount,
+                keywordFrequenciesWithPercentage
             );
 
             // AI를 통한 요약 생성 (임시로 null)
             String aiGeneratedSummary = null;
 
             // KeywordSummaryDto 리스트 생성
-            List<KeywordSummaryDto> topKeywords = keywordFrequencies.stream()
+            List<KeywordSummaryDto> topKeywords = keywordFrequenciesWithPercentage.stream()
                 .map(kf -> KeywordSummaryDto.of(
                     kf.getKeywordId(),
                     kf.getKeywordName(),
@@ -84,12 +93,12 @@ public class GenerateReputationSummary implements GenerateReputationSummaryUseCa
             ReputationSummary existingSummary = existingSummariesMap.get(targetId);
             if (existingSummary != null) {
                 // 기존 요약 업데이트
-                existingSummary.updateSummary(totalCount, topKeywords, aiGeneratedSummary);
+                existingSummary.updateSummary(totalReputationCount, topKeywords, aiGeneratedSummary);
                 summariesToUpdate.add(existingSummary);
             } else {
                 // 새 요약 생성
                 ReputationSummary newSummary = ReputationSummary.create(
-                    targetType, targetId, totalCount, topKeywords, aiGeneratedSummary
+                    targetType, targetId, totalReputationCount, topKeywords, aiGeneratedSummary
                 );
                 summariesToSave.add(newSummary);
             }

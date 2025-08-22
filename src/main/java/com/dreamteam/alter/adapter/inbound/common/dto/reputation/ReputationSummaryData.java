@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -32,24 +31,17 @@ public class ReputationSummaryData {
     private List<KeywordFrequency> topKeywords;
     
     /**
-     * 평판 작성자들의 타입 분포 (USER, WORKSPACE 등)
-     */
-    private Map<ReputationType, Integer> writerTypeDistribution;
-    
-    /**
      * AI 요약을 위한 팩토리 메서드
      */
     public static ReputationSummaryData of(
         ReputationType targetType,
         Integer totalReputationCount,
-        List<KeywordFrequency> topKeywords,
-        Map<ReputationType, Integer> writerTypeDistribution
+        List<KeywordFrequency> topKeywords
     ) {
         return ReputationSummaryData.builder()
             .targetType(targetType)
             .totalReputationCount(totalReputationCount)
             .topKeywords(topKeywords)
-            .writerTypeDistribution(writerTypeDistribution)
             .build();
     }
 }

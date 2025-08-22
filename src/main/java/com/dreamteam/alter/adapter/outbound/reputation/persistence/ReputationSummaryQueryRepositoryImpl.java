@@ -87,28 +87,6 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
 
         LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
 
-        // 모든 대상의 총 평판 개수 조회
-        List<Tuple> totalCounts = queryFactory
-            .select(
-                reputation.targetId,
-                reputation.count().intValue()
-            )
-            .from(reputation)
-            .where(
-                reputation.targetType.eq(targetType),
-                reputation.targetId.in(targetIds),
-                reputation.status.eq(ReputationStatus.COMPLETED),
-                reputation.createdAt.goe(oneYearAgo)
-            )
-            .groupBy(reputation.targetId)
-            .fetch();
-
-        Map<Long, Integer> targetTotalCountMap = totalCounts.stream()
-            .collect(Collectors.toMap(
-                tuple -> tuple.get(reputation.targetId),
-                tuple -> tuple.get(1, Integer.class)
-            ));
-
         // 모든 대상의 상위 키워드와 빈도수 조회
         List<Tuple> allKeywordsWithCount = queryFactory
             .select(
@@ -185,14 +163,12 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
                 .limit(5)
                 .toList();
 
-            Integer totalCount = targetTotalCountMap.getOrDefault(targetId, 0);
             Map<String, List<String>> keywordDescriptions = targetDescriptionsMap.getOrDefault(targetId, Map.of());
 
             List<KeywordFrequency> keywordFrequencies = top5Keywords.stream()
                 .map(tuple -> {
                     String keywordId = tuple.get(reputationKeyword.id);
                     Integer count = tuple.get(4, Integer.class);
-                    Double percentage = totalCount > 0 ? (count * 100.0 / totalCount) : 0.0;
                     List<String> userDescriptions = keywordDescriptions.getOrDefault(keywordId, List.of());
 
                     return KeywordFrequency.of(
@@ -200,7 +176,7 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
                         tuple.get(reputationKeyword.emoji),
                         tuple.get(reputationKeyword.description),
                         count,
-                        percentage,
+                        0.0, // percentage는 별도 계산
                         userDescriptions
                     );
                 })
@@ -213,7 +189,7 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
     }
 
     @Override
-    public Map<Long, ReputationSummaryData> getReputationSummaryData(ReputationType targetType, List<Long> targetIds) {
+    public Map<Long, Integer> getReputationCounts(ReputationType targetType, List<Long> targetIds) {
         if (targetIds.isEmpty()) {
             return Map.of();
         }
@@ -236,53 +212,11 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
             .groupBy(reputation.targetId)
             .fetch();
 
-        // 모든 대상의 작성자 타입 분포 조회
-        List<Tuple> writerTypeResults = queryFactory
-            .select(
-                reputation.targetId,
-                reputation.writerType,
-                reputation.count().intValue()
-            )
-            .from(reputation)
-            .where(
-                reputation.targetType.eq(targetType),
-                reputation.targetId.in(targetIds),
-                reputation.status.eq(ReputationStatus.COMPLETED),
-                reputation.createdAt.goe(oneYearAgo)
-            )
-            .groupBy(reputation.targetId, reputation.writerType)
-            .fetch();
-
-        // 결과 구성
-        Map<Long, ReputationSummaryData> result = new java.util.HashMap<>();
-        Map<Long, Integer> totalCountMap = totalCounts.stream()
+        return totalCounts.stream()
             .collect(Collectors.toMap(
                 tuple -> tuple.get(reputation.targetId),
                 tuple -> tuple.get(1, Integer.class)
             ));
-
-        Map<Long, Map<ReputationType, Integer>> writerTypeDistributionMap = writerTypeResults.stream()
-            .collect(Collectors.groupingBy(
-                tuple -> tuple.get(reputation.targetId),
-                Collectors.toMap(
-                    tuple -> tuple.get(reputation.writerType),
-                    tuple -> tuple.get(2, Integer.class)
-                )
-            ));
-
-        for (Long targetId : targetIds) {
-            Integer totalCount = totalCountMap.getOrDefault(targetId, 0);
-            Map<ReputationType, Integer> writerTypeDistribution = writerTypeDistributionMap.getOrDefault(targetId, Map.of());
-
-            result.put(targetId, ReputationSummaryData.of(
-                targetType,
-                totalCount,
-                null, // topKeywords는 별도로 처리
-                writerTypeDistribution
-            ));
-        }
-
-        return result;
     }
 
     @Override

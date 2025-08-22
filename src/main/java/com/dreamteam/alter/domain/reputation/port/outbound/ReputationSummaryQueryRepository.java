@@ -1,7 +1,6 @@
 package com.dreamteam.alter.domain.reputation.port.outbound;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.reputation.KeywordFrequency;
-import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationSummaryData;
 import com.dreamteam.alter.domain.reputation.entity.ReputationSummary;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 
@@ -30,9 +29,9 @@ public interface ReputationSummaryQueryRepository {
     Map<Long, List<KeywordFrequency>> getKeywordFrequencies(ReputationType targetType, List<Long> targetIds);
 
     /**
-     * 배치 처리를 위한 모든 대상의 평판 요약 데이터 조회
+     * 배치 처리를 위한 모든 대상의 평판 개수 조회
      */
-    Map<Long, ReputationSummaryData> getReputationSummaryData(ReputationType targetType, List<Long> targetIds);
+    Map<Long, Integer> getReputationCounts(ReputationType targetType, List<Long> targetIds);
 
     /**
      * 배치 처리를 위한 기존 평판 요약 조회
