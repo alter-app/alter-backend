@@ -5,7 +5,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestListResponseDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationRequestListResponseDto;
 import com.dreamteam.alter.adapter.outbound.reputation.persistence.readonly.ReputationRequestListResponse;
 import com.dreamteam.alter.common.util.CursorUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;

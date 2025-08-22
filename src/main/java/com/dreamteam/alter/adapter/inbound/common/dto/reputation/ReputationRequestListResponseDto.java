@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.general.reputation.dto;
+package com.dreamteam.alter.adapter.inbound.common.dto.reputation;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.outbound.reputation.persistence.readonly.ReputationRequestListResponse;
