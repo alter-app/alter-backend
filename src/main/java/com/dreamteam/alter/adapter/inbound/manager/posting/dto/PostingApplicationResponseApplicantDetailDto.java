@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationSummaryDto;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.type.UserGender;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,6 +44,9 @@ public class PostingApplicationResponseApplicantDetailDto {
     @Schema(description = "지원자 자격증 목록")
     List<PostingApplicationResponseUserCertificateDto> userCertificates;
 
+    @Schema(description = "지원자 평판 요약 정보")
+    private ReputationSummaryDto reputationSummary;
+
     public static PostingApplicationResponseApplicantDetailDto from(User entity) {
         return PostingApplicationResponseApplicantDetailDto.builder()
             .id(entity.getId())
@@ -55,6 +59,22 @@ public class PostingApplicationResponseApplicantDetailDto {
                 .stream()
                 .map(PostingApplicationResponseUserCertificateDto::from)
                 .toList())
+            .build();
+    }
+
+    public static PostingApplicationResponseApplicantDetailDto from(User entity, ReputationSummaryDto reputationSummary) {
+        return PostingApplicationResponseApplicantDetailDto.builder()
+            .id(entity.getId())
+            .name(entity.getName())
+            .email(entity.getEmail())
+            .contact(entity.getContact())
+            .birthday(entity.getBirthday())
+            .gender(entity.getGender())
+            .userCertificates(entity.getCertificates()
+                .stream()
+                .map(PostingApplicationResponseUserCertificateDto::from)
+                .toList())
+            .reputationSummary(reputationSummary)
             .build();
     }
 
