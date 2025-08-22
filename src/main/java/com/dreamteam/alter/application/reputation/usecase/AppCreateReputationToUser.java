@@ -71,7 +71,7 @@ public class AppCreateReputationToUser extends AbstractCreateReputation implemen
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
             // TODO: 근무를 종료한 사용자에게도 요청이 가능해야함
-            if (ObjectUtils.isNotEmpty(
+            if (ObjectUtils.isEmpty(
                 workspaceWorkerQueryRepository.findActiveWorkerByWorkspaceAndUser(workspace, targetUser))
             ) {
                 throw new CustomException(ErrorCode.NOT_FOUND, "해당 업장에서 근무중인 사용자가 아닙니다.");
