@@ -12,8 +12,8 @@ public class ReputationRequestRepositoryImpl implements ReputationRequestReposit
     private final ReputationRequestJpaRepository reputationRequestJpaRepository;
 
     @Override
-    public void save(ReputationRequest request) {
-        reputationRequestJpaRepository.save(request);
+    public ReputationRequest save(ReputationRequest request) {
+        return reputationRequestJpaRepository.save(request);
     }
 
 }

@@ -6,6 +6,6 @@ import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 
 import java.util.Optional;
 
-public interface WorkspaceWorkerReadOnlyRepository {
+public interface WorkspaceWorkerQueryRepository {
     Optional<WorkspaceWorker> findActiveWorkerByWorkspaceAndUser(Workspace workspace, User user);
 }

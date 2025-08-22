@@ -2,20 +2,20 @@ package com.dreamteam.alter.adapter.inbound.general.reputation.dto;
 
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "평판 작성 요청 생성 DTO")
-public class CreateReputationRequestDto {
+@Schema(description = "사용자 평판 생성 요청 DTO")
+public class CreateReputationToUserRequestDto {
 
-    @Nullable
-    @Schema(description = "업장 ID (null일 경우 외부 근무 이력에 대한 사용자 간 평판 요청)", example = "12345")
+    @Schema(description = "업장 ID (null일 경우 외부 근무 이력에 대한 사용자 간 평판)", example = "12345")
     private Long workspaceId;
 
     @NotNull
@@ -24,6 +24,10 @@ public class CreateReputationRequestDto {
 
     @NotNull
     @Schema(description = "대상자 ID", example = "67890")
-    private Long targetId;
+    private Long targetUserId;
+
+    @NotNull
+    @Schema(description = "선택된 키워드 및 키워드별 설명")
+    private Set<ReputationKeywordMapDto> keywords;
 
 }
