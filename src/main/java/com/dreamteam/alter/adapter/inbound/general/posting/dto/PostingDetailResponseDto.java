@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.general.posting.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationSummaryDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.PostingDetailWorkspaceResponseDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingDetailResponse;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
@@ -58,10 +59,13 @@ public class PostingDetailResponseDto {
     @Schema(description = "스크랩 여부", example = "true")
     private boolean scrapped;
 
-    public static PostingDetailResponseDto from(PostingDetailResponse entity) {
+    public static PostingDetailResponseDto from(
+        PostingDetailResponse entity, 
+        ReputationSummaryDto workspaceReputationSummary
+    ) {
         return PostingDetailResponseDto.builder()
             .id(entity.getId())
-            .workspace(PostingDetailWorkspaceResponseDto.from(entity.getWorkspace()))
+            .workspace(PostingDetailWorkspaceResponseDto.from(entity.getWorkspace(), workspaceReputationSummary))
             .title(entity.getTitle())
             .description(entity.getDescription())
             .payAmount(entity.getPayAmount())
