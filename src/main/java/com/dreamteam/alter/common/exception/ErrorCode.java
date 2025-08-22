@@ -37,7 +37,7 @@ public enum ErrorCode {
     POSTING_APPLICATION_STATUS_NOT_UPDATABLE(400, "B017", "해당 공고 지원서는 상태 변경이 불가능합니다."),
     WORKSPACE_WORKER_ALREADY_EXISTS(400, "B018", "이미 근무중인 사용자입니다."),
     NOT_FOUND(404, "B019", "요청한 리소스를 찾을 수 없습니다."),
-    UNMODIFIABLE_STATUS(400, "B020", "변경할 수 없는 상태입니다."),
+    UNMODIFIABLE_STATUS(409, "B020", "변경할 수 없는 상태입니다."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     ;

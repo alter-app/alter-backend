@@ -106,4 +106,16 @@ public class ReputationRequest {
         }
     }
 
+    public void accept() {
+        this.status = ReputationRequestStatus.COMPLETED;
+
+        if (ObjectUtils.isNotEmpty(this.reputations)) {
+            for (Reputation reputation : this.reputations) {
+                if (ReputationStatus.REQUESTED.equals(reputation.getStatus())) {
+                    reputation.complete();
+                }
+            }
+        }
+    }
+
 }

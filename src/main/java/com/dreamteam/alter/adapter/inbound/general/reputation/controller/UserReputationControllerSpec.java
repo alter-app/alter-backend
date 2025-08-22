@@ -8,6 +8,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationReque
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AcceptReputationRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToWorkspaceRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.UserReputationRequestFilterDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -119,5 +120,32 @@ public interface UserReputationControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> declineReputationRequest(@PathVariable Long requestId);
+
+    @Operation(summary = "평판 요청 수락", description = "평판 요청을 수락하고 상대방에 대한 평판을 작성합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "평판 요청 수락 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "요청한 리소스를 찾을 수 없음 (평판 요청)",
+                        value = "{\"code\" : \"B019\"}"
+                    ),
+                    @ExampleObject(
+                        name = "잘못된 요청 (평판 키워드 개수 등)",
+                        value = "{\"code\" : \"B001\"}"
+                    ),
+                    @ExampleObject(
+                        name = "요청한 리소스를 찾을 수 없음 (평판 키워드)",
+                        value = "{\"code\" : \"B019\"}"
+                    ),
+                }))
+    })
+    ResponseEntity<CommonApiResponse<Void>> acceptReputationRequest(
+        @PathVariable Long requestId,
+        @Valid @RequestBody AcceptReputationRequestDto request
+    );
 
 }

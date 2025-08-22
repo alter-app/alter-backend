@@ -3,13 +3,11 @@ package com.dreamteam.alter.adapter.inbound.manager.reputation.controller;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.*;
 import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationRequestListResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestFilterDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.reputation.port.inbound.GetAvailableReputationKeywordListUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceAcceptReputationRequestUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceCreateReputationToUserUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceDeclineReputationRequestUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceGetReputationRequestListUseCase;
@@ -40,6 +38,9 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
 
     @Resource(name = "workspaceDeclineReputationRequest")
     private final WorkspaceDeclineReputationRequestUseCase workspaceDeclineReputationRequest;
+
+    @Resource(name = "workspaceAcceptReputationRequest")
+    private final WorkspaceAcceptReputationRequestUseCase workspaceAcceptReputationRequest;
 
     @Override
     @GetMapping("/keywords")
@@ -76,6 +77,18 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
 
         workspaceDeclineReputationRequest.execute(actor, requestId);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PatchMapping("/requests/{requestId}/accept")
+    public ResponseEntity<CommonApiResponse<Void>> acceptReputationRequest(
+        @PathVariable Long requestId,
+        @Valid @RequestBody AcceptReputationRequestDto request
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+
+        workspaceAcceptReputationRequest.execute(actor, requestId, request);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

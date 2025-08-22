@@ -5,6 +5,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.reputation.entity.ReputationRequest;
 import com.dreamteam.alter.domain.reputation.port.inbound.AppDeclineReputationRequestUseCase;
 import com.dreamteam.alter.domain.reputation.port.outbound.ReputationRequestQueryRepository;
+import com.dreamteam.alter.domain.reputation.port.outbound.ReputationRequestRepository;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AppDeclineReputationRequest implements AppDeclineReputationRequestUseCase {
 
     private final ReputationRequestQueryRepository reputationRequestQueryRepository;
+    private final ReputationRequestRepository reputationRequestRepository;
 
     @Override
     public void execute(AppActor actor, Long requestId) {
@@ -29,6 +31,7 @@ public class AppDeclineReputationRequest implements AppDeclineReputationRequestU
         }
 
         reputationRequest.decline();
+        reputationRequestRepository.save(reputationRequest);
     }
 
 }

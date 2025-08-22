@@ -3,14 +3,15 @@ package com.dreamteam.alter.adapter.inbound.general.reputation.controller;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToWorkspaceRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.*;
 import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationRequestListResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.reputation.dto.UserReputationRequestFilterDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
-import com.dreamteam.alter.domain.reputation.port.inbound.*;
+import com.dreamteam.alter.domain.reputation.port.inbound.AppAcceptReputationRequestUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.AppCreateReputationToUserUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.AppCreateReputationToWorkspaceUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.AppDeclineReputationRequestUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.GetAvailableReputationKeywordListUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.UserGetReputationRequestListUseCase;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -41,6 +42,9 @@ public class UserReputationController implements UserReputationControllerSpec {
 
     @Resource(name = "appDeclineReputationRequest")
     private final AppDeclineReputationRequestUseCase appDeclineReputationRequest;
+
+    @Resource(name = "appAcceptReputationRequest")
+    private final AppAcceptReputationRequestUseCase appAcceptReputationRequest;
 
     @Override
     @GetMapping("/keywords")
@@ -89,6 +93,18 @@ public class UserReputationController implements UserReputationControllerSpec {
         AppActor actor = AppActionContext.getInstance().getActor();
 
         appDeclineReputationRequest.execute(actor, requestId);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PatchMapping("/requests/{requestId}/accept")
+    public ResponseEntity<CommonApiResponse<Void>> acceptReputationRequest(
+        @PathVariable Long requestId,
+        @Valid @RequestBody AcceptReputationRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        appAcceptReputationRequest.execute(actor, requestId, request);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

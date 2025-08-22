@@ -104,4 +104,8 @@ public class Reputation {
         this.status = ReputationStatus.DECLINED;
     }
 
+    public void complete() {
+        this.status = ReputationStatus.COMPLETED;
+    }
+
 }

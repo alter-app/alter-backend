@@ -5,6 +5,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.reputation.entity.ReputationRequest;
 import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceDeclineReputationRequestUseCase;
 import com.dreamteam.alter.domain.reputation.port.outbound.ReputationRequestQueryRepository;
+import com.dreamteam.alter.domain.reputation.port.outbound.ReputationRequestRepository;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class WorkspaceDeclineReputationRequest implements WorkspaceDeclineReputationRequestUseCase {
 
     private final ReputationRequestQueryRepository reputationRequestQueryRepository;
+    private final ReputationRequestRepository reputationRequestRepository;
     private final WorkspaceQueryRepository workspaceQueryRepository;
 
     @Override
@@ -43,6 +45,7 @@ public class WorkspaceDeclineReputationRequest implements WorkspaceDeclineReputa
         }
 
         reputationRequest.decline();
+        reputationRequestRepository.save(reputationRequest);
     }
 
 }

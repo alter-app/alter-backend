@@ -7,6 +7,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationRequestListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AvailableReputationKeywordResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.reputation.dto.AcceptReputationRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationRequestFilterDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -110,5 +111,54 @@ public interface WorkspaceReputationControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> declineReputationRequest(@PathVariable Long requestId);
+
+    @Operation(summary = "업장 평판 요청 수락", description = "업장에 대한 평판 요청을 수락하고 상대방에 대한 평판을 작성합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "평판 요청 수락 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "요청한 리소스를 찾을 수 없음 (평판 요청)",
+                        value = "{\"code\" : \"B019\"}"
+                    ),
+                    @ExampleObject(
+                        name = "잘못된 요청 (평판 요청의 대상이 업장이 아님)",
+                        value = "{\"code\" : \"B001\"}"
+                    ),
+                    @ExampleObject(
+                        name = "존재하지 않는 업장",
+                        value = "{\"code\" : \"B008\"}"
+                    ),
+                    @ExampleObject(
+                        name = "접근 권한이 없음 (해당 업장에 대한 관리 권한 없음)",
+                        value = "{\"code\" : \"A002\"}"
+                    ),
+                    @ExampleObject(
+                        name = "잘못된 요청 (평판 키워드 개수 등)",
+                        value = "{\"code\" : \"B001\"}"
+                    ),
+                    @ExampleObject(
+                        name = "요청한 리소스를 찾을 수 없음 (평판 키워드)",
+                        value = "{\"code\" : \"B019\"}"
+                    ),
+                })),
+        @ApiResponse(responseCode = "409", description = "상태 충돌",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "변경할 수 없는 상태 (이미 처리된 평판 요청)",
+                        value = "{\"code\" : \"B020\"}"
+                    ),
+                }))
+    })
+    ResponseEntity<CommonApiResponse<Void>> acceptReputationRequest(
+        @PathVariable Long requestId,
+        @Valid @RequestBody AcceptReputationRequestDto request
+    );
 
 }
