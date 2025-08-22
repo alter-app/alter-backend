@@ -2,7 +2,6 @@ package com.dreamteam.alter.application.reputation.usecase;
 
 import com.dreamteam.alter.domain.reputation.port.inbound.GenerateReputationSummaryUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.UpdateAllReputationSummariesUseCase;
-
 import com.dreamteam.alter.domain.reputation.port.outbound.ReputationSummaryQueryRepository;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import lombok.RequiredArgsConstructor;
@@ -10,15 +9,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.scheduling.annotation.Async;
+import com.dreamteam.alter.common.config.AsyncConfig.BatchConfig;
+
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service("updateAllReputationSummaries")
 @RequiredArgsConstructor
 @Transactional
 public class UpdateAllReputationSummaries implements UpdateAllReputationSummariesUseCase {
-
 
     private final ReputationSummaryQueryRepository reputationSummaryQueryRepository;
     private final GenerateReputationSummaryUseCase generateReputationSummaryUseCase;
@@ -28,50 +32,160 @@ public class UpdateAllReputationSummaries implements UpdateAllReputationSummarie
 
     @Override
     public void execute() {
-        log.info("Starting batch update for all reputation summaries");
+        log.info("평판 요약 배치 업데이트 시작");
 
         // 사용자 평판 요약 갱신
-        updateUserReputationSummaries();
+        CompletableFuture<Integer> userFuture = updateUserReputationSummariesAsync();
 
         // 업장 평판 요약 갱신
-        updateWorkspaceReputationSummaries();
+        CompletableFuture<Integer> workspaceFuture = updateWorkspaceReputationSummariesAsync();
 
-        log.info("Completed batch update for all reputation summaries");
+        // 모든 비동기 작업 완료 대기
+        CompletableFuture.allOf(userFuture, workspaceFuture).join();
+
+        // 결과 수집
+        int userCount = userFuture.getNow(0);
+        int workspaceCount = workspaceFuture.getNow(0);
+
+        log.info("평판 요약 배치 업데이트 완료 - 사용자: {}, 업장: {}", userCount, workspaceCount);
     }
 
     /**
      * 사용자 평판 요약 갱신 (최근 1일간 평판을 받은 사용자만)
      */
-    private void updateUserReputationSummaries() {
+    @Async("batchTaskExecutor")
+    public CompletableFuture<Integer> updateUserReputationSummariesAsync() {
         List<Long> recentActiveUserIds = reputationSummaryQueryRepository.getActiveReputationTargets(
-            ReputationType.USER, 
-            LocalDateTime.now().minusDays(RECENT_ACTIVITY_DAYS)
+            ReputationType.USER,
+            LocalDateTime.now()
+                .minusDays(RECENT_ACTIVITY_DAYS)
         );
-        
-        log.info("Found {} users with recent reputation activity (last {} days) for summary update", 
-            recentActiveUserIds.size(), RECENT_ACTIVITY_DAYS);
-        
-        for (Long userId : recentActiveUserIds) {
-            generateReputationSummaryUseCase.execute(ReputationType.USER, userId);
-            log.debug("Updated reputation summary for recently active user: {}", userId);
+
+        if (recentActiveUserIds.isEmpty()) {
+            return CompletableFuture.completedFuture(0);
         }
+
+        // 배치 크기로 분할하여 처리
+        List<List<Long>> batches = splitIntoBatches(recentActiveUserIds, BatchConfig.BATCH_SIZE);
+
+        // 배치별로 비동기 처리
+        List<CompletableFuture<Integer>> batchFutures = batches.stream()
+            .map(this::processUserBatch)
+            .toList();
+
+        // 모든 배치 처리 완료 대기
+        CompletableFuture.allOf(batchFutures.toArray(new CompletableFuture[0]))
+            .join();
+
+        // 총 처리된 수 계산
+        int totalProcessed = batchFutures.stream()
+            .mapToInt(future -> future.getNow(0))
+            .sum();
+
+        return CompletableFuture.completedFuture(totalProcessed);
     }
 
     /**
      * 업장 평판 요약 갱신 (최근 1일간 평판을 받은 업장만)
      */
-    private void updateWorkspaceReputationSummaries() {
+    @Async("batchTaskExecutor")
+    public CompletableFuture<Integer> updateWorkspaceReputationSummariesAsync() {
         List<Long> recentActiveWorkspaceIds = reputationSummaryQueryRepository.getActiveReputationTargets(
-            ReputationType.WORKSPACE, 
-            LocalDateTime.now().minusDays(RECENT_ACTIVITY_DAYS)
+            ReputationType.WORKSPACE,
+            LocalDateTime.now()
+                .minusDays(RECENT_ACTIVITY_DAYS)
         );
-        
-        log.info("Found {} workspaces with recent reputation activity (last {} days) for summary update", 
-            recentActiveWorkspaceIds.size(), RECENT_ACTIVITY_DAYS);
-        
-        for (Long workspaceId : recentActiveWorkspaceIds) {
-            generateReputationSummaryUseCase.execute(ReputationType.WORKSPACE, workspaceId);
-            log.debug("Updated reputation summary for recently active workspace: {}", workspaceId);
+
+        if (recentActiveWorkspaceIds.isEmpty()) {
+            return CompletableFuture.completedFuture(0);
         }
+
+        // 배치 크기로 분할하여 처리
+        List<List<Long>> batches = splitIntoBatches(recentActiveWorkspaceIds, BatchConfig.BATCH_SIZE);
+
+        // 배치별로 비동기 처리
+        List<CompletableFuture<Integer>> batchFutures = batches.stream()
+            .map(this::processWorkspaceBatch)
+            .toList();
+
+        // 모든 배치 처리 완료 대기
+        CompletableFuture.allOf(batchFutures.toArray(new CompletableFuture[0]))
+            .join();
+
+        // 총 처리된 수 계산
+        int totalProcessed = batchFutures.stream()
+            .mapToInt(future -> future.getNow(0))
+            .sum();
+
+        return CompletableFuture.completedFuture(totalProcessed);
+    }
+
+    /**
+     * 리스트를 배치 크기로 분할
+     */
+    private <T> List<List<T>> splitIntoBatches(List<T> list, int batchSize) {
+        return list.stream()
+            .collect(Collectors.groupingBy(item -> list.indexOf(item) / batchSize))
+            .values()
+            .stream()
+            .toList();
+    }
+
+    /**
+     * 사용자 배치 처리
+     */
+    private CompletableFuture<Integer> processUserBatch(List<Long> userIds) {
+        return CompletableFuture.supplyAsync(() -> {
+            AtomicInteger processedCount = new AtomicInteger(0);
+            AtomicInteger errorCount = new AtomicInteger(0);
+
+            userIds.forEach(userId -> {
+                try {
+                    generateReputationSummaryUseCase.execute(ReputationType.USER, userId);
+                    processedCount.incrementAndGet();
+                } catch (Exception e) {
+                    errorCount.incrementAndGet();
+                    log.error("사용자 평판 요약 갱신 실패 - 사용자 ID: {}", userId, e);
+                }
+            });
+
+            if (errorCount.get() > 0) {
+                log.warn(
+                    "사용자 배치 처리 완료 - 전체: {}, 성공: {}, 실패: {}",
+                    userIds.size(), processedCount.get(), errorCount.get()
+                );
+            }
+
+            return processedCount.get();
+        });
+    }
+
+    /**
+     * 업장 배치 처리
+     */
+    private CompletableFuture<Integer> processWorkspaceBatch(List<Long> workspaceIds) {
+        return CompletableFuture.supplyAsync(() -> {
+            AtomicInteger processedCount = new AtomicInteger(0);
+            AtomicInteger errorCount = new AtomicInteger(0);
+
+            workspaceIds.forEach(workspaceId -> {
+                try {
+                    generateReputationSummaryUseCase.execute(ReputationType.WORKSPACE, workspaceId);
+                    processedCount.incrementAndGet();
+                } catch (Exception e) {
+                    errorCount.incrementAndGet();
+                    log.error("업장 평판 요약 갱신 실패 - 업장 ID: {}", workspaceId, e);
+                }
+            });
+
+            if (errorCount.get() > 0) {
+                log.warn(
+                    "업장 배치 처리 완료 - 전체: {}, 성공: {}, 실패: {}",
+                    workspaceIds.size(), processedCount.get(), errorCount.get()
+                );
+            }
+
+            return processedCount.get();
+        });
     }
 }
