@@ -7,7 +7,7 @@ import com.dreamteam.alter.domain.reputation.type.ReputationType;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+import java.util.Map;
 import java.util.Optional;
 
 public interface ReputationSummaryQueryRepository {
@@ -23,14 +23,19 @@ public interface ReputationSummaryQueryRepository {
      * 특정 시점 이후에 평판을 받은 활성 대상 ID 목록 조회
      */
     List<Long> getActiveReputationTargets(ReputationType targetType, LocalDateTime since);
-    
+
     /**
-     * AI 요약을 위한 키워드 상세 정보 조회
+     * 배치 처리를 위한 모든 대상의 키워드 빈도 데이터 조회
      */
-    List<KeywordFrequency> getKeywordFrequenciesForAi(ReputationType targetType, Long targetId);
-    
+    Map<Long, List<KeywordFrequency>> getKeywordFrequencies(ReputationType targetType, List<Long> targetIds);
+
     /**
-     * AI 요약을 위한 상세 평판 데이터 조회
+     * 배치 처리를 위한 모든 대상의 평판 요약 데이터 조회
      */
-    ReputationSummaryData getReputationSummaryData(ReputationType targetType, Long targetId);
+    Map<Long, ReputationSummaryData> getReputationSummaryData(ReputationType targetType, List<Long> targetIds);
+
+    /**
+     * 배치 처리를 위한 기존 평판 요약 조회
+     */
+    Map<Long, ReputationSummary> findExistingSummaries(ReputationType targetType, List<Long> targetIds);
 }

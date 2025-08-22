@@ -12,8 +12,13 @@ public class ReputationSummaryRepositoryImpl implements ReputationSummaryReposit
     private final ReputationSummaryJpaRepository reputationSummaryJpaRepository;
     
     @Override
-    public ReputationSummary save(ReputationSummary reputationSummary) {
-        return reputationSummaryJpaRepository.save(reputationSummary);
+    public void save(ReputationSummary reputationSummary) {
+        reputationSummaryJpaRepository.save(reputationSummary);
+    }
+
+    @Override
+    public void saveAll(Iterable<ReputationSummary> reputationSummaries) {
+        reputationSummaryJpaRepository.saveAll(reputationSummaries);
     }
 
     @Override

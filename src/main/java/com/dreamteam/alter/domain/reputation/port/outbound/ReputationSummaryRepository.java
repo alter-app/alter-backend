@@ -4,8 +4,10 @@ import com.dreamteam.alter.domain.reputation.entity.ReputationSummary;
 
 public interface ReputationSummaryRepository {
     
-    ReputationSummary save(ReputationSummary reputationSummary);
-    
+    void save(ReputationSummary reputationSummary);
+
+    void saveAll(Iterable<ReputationSummary> reputationSummaries);
+
     void delete(ReputationSummary reputationSummary);
     
 }

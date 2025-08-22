@@ -15,7 +15,6 @@ import com.dreamteam.alter.common.config.AsyncConfig.BatchConfig;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -136,27 +135,14 @@ public class UpdateAllReputationSummaries implements UpdateAllReputationSummarie
      */
     private CompletableFuture<Integer> processUserBatch(List<Long> userIds) {
         return CompletableFuture.supplyAsync(() -> {
-            AtomicInteger processedCount = new AtomicInteger(0);
-            AtomicInteger errorCount = new AtomicInteger(0);
-
-            userIds.forEach(userId -> {
-                try {
-                    generateReputationSummaryUseCase.execute(ReputationType.USER, userId);
-                    processedCount.incrementAndGet();
-                } catch (Exception e) {
-                    errorCount.incrementAndGet();
-                    log.error("사용자 평판 요약 갱신 실패 - 사용자 ID: {}", userId, e);
-                }
-            });
-
-            if (errorCount.get() > 0) {
-                log.warn(
-                    "사용자 배치 처리 완료 - 전체: {}, 성공: {}, 실패: {}",
-                    userIds.size(), processedCount.get(), errorCount.get()
-                );
+            try {
+                generateReputationSummaryUseCase.execute(ReputationType.USER, userIds);
+                log.info("사용자 배치 처리 완료 - 대상 수: {}", userIds.size());
+                return userIds.size();
+            } catch (Exception e) {
+                log.error("사용자 배치 처리 실패 - 대상 수: {}", userIds.size(), e);
+                return 0;
             }
-
-            return processedCount.get();
         });
     }
 
@@ -165,27 +151,14 @@ public class UpdateAllReputationSummaries implements UpdateAllReputationSummarie
      */
     private CompletableFuture<Integer> processWorkspaceBatch(List<Long> workspaceIds) {
         return CompletableFuture.supplyAsync(() -> {
-            AtomicInteger processedCount = new AtomicInteger(0);
-            AtomicInteger errorCount = new AtomicInteger(0);
-
-            workspaceIds.forEach(workspaceId -> {
-                try {
-                    generateReputationSummaryUseCase.execute(ReputationType.WORKSPACE, workspaceId);
-                    processedCount.incrementAndGet();
-                } catch (Exception e) {
-                    errorCount.incrementAndGet();
-                    log.error("업장 평판 요약 갱신 실패 - 업장 ID: {}", workspaceId, e);
-                }
-            });
-
-            if (errorCount.get() > 0) {
-                log.warn(
-                    "업장 배치 처리 완료 - 전체: {}, 성공: {}, 실패: {}",
-                    workspaceIds.size(), processedCount.get(), errorCount.get()
-                );
+            try {
+                generateReputationSummaryUseCase.execute(ReputationType.WORKSPACE, workspaceIds);
+                log.info("업장 배치 처리 완료 - 대상 수: {}", workspaceIds.size());
+                return workspaceIds.size();
+            } catch (Exception e) {
+                log.error("업장 배치 처리 실패 - 대상 수: {}", workspaceIds.size(), e);
+                return 0;
             }
-
-            return processedCount.get();
         });
     }
 }
