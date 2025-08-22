@@ -68,8 +68,8 @@ public abstract class AbstractAcceptReputationRequest<A> {
     protected abstract ReputationInfo getReputationInfo(ReputationRequest reputationRequest, A actor);
 
     protected final Map<String, ReputationKeyword> validateAndGetKeywords(Set<ReputationKeywordMapDto> keywords) {
-        if (keywords.size() < 2 || keywords.size() > 6) {
-            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "평판 키워드는 2개 이상 6개 미만으로 선택해야 합니다.");
+        if (keywords.size() < 2 || keywords.size() > 5) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "평판 키워드는 2개 이상 5개 이하로 선택해야 합니다.");
         }
 
         Map<String, ReputationKeyword> keywordMap =

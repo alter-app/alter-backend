@@ -19,7 +19,7 @@ public class AcceptReputationRequestDto {
     @NotNull
     @NotEmpty
     @Valid
-    @Schema(description = "평판 키워드 목록 (2개 이상 6개 미만)")
+    @Schema(description = "평판 키워드 목록 (2개 이상 5개 이하)")
     private Set<ReputationKeywordMapDto> keywords;
 
 }
