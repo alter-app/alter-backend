@@ -14,9 +14,9 @@ public class AsyncConfig {
     @Bean(name = "batchTaskExecutor")
     public Executor batchTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);    // 기본 스레드 수: 10개
-        executor.setMaxPoolSize(4);     // 최대 스레드 수: 20개
-        executor.setQueueCapacity(50);  // 대기 큐 크기: 100개
+        executor.setCorePoolSize(2);    // 기본 스레드 수: 2개
+        executor.setMaxPoolSize(4);     // 최대 스레드 수: 4개
+        executor.setQueueCapacity(50);  // 대기 큐 크기: 50개
         executor.setThreadNamePrefix("batch-"); // 스레드 이름 접두사
         executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
         executor.setKeepAliveSeconds(60); // 유휴 스레드 유지 시간: 60초

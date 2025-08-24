@@ -168,7 +168,7 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
             List<KeywordFrequency> keywordFrequencies = top5Keywords.stream()
                 .map(tuple -> {
                     String keywordId = tuple.get(reputationKeyword.id);
-                    Integer count = tuple.get(4, Integer.class);
+                    Integer count = tuple.get(reputationKeywordMap.count()).intValue();
                     List<String> userDescriptions = keywordDescriptions.getOrDefault(keywordId, List.of());
 
                     return KeywordFrequency.of(
@@ -215,7 +215,7 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
         return totalCounts.stream()
             .collect(Collectors.toMap(
                 tuple -> tuple.get(reputation.targetId),
-                tuple -> tuple.get(1, Integer.class)
+                tuple -> tuple.get(reputation.count()).intValue()
             ));
     }
 
