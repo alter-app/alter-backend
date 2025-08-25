@@ -11,13 +11,13 @@ import com.dreamteam.alter.domain.reputation.port.outbound.ReputationSummaryQuer
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service("managerGetPostingApplicationDetail")
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class ManagerGetPostingApplicationDetail implements ManagerGetPostingApplicationDetailUseCase {
 
     private final PostingApplicationQueryRepository postingApplicationQueryRepository;
