@@ -29,6 +29,15 @@ public record ErrorResponse<T>(
         );
     }
 
+    public static <T> ErrorResponse<T> of(ErrorCode errorCode, String message) {
+        return new ErrorResponse<>(
+            String.valueOf(LocalDateTime.now()),
+            errorCode.getCode(),
+            message,
+            null
+        );
+    }
+
     public static <T> ErrorResponse<T> of(ErrorCode errorCode, T data) {
         return new ErrorResponse<>(
             String.valueOf(LocalDateTime.now()),
