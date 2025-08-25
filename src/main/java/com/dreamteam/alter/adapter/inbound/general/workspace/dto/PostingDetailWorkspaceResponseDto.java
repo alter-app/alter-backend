@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.general.workspace.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationSummaryDto;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -47,6 +48,9 @@ public class PostingDetailWorkspaceResponseDto {
     @Schema(description = "업장 경도", example = "126.9780")
     private BigDecimal longitude;
 
+    @Schema(description = "업장 평판 요약 정보")
+    private ReputationSummaryDto reputationSummary;
+
     public static PostingDetailWorkspaceResponseDto from(Workspace workspace) {
         return PostingDetailWorkspaceResponseDto.builder()
             .id(workspace.getId())
@@ -57,6 +61,20 @@ public class PostingDetailWorkspaceResponseDto {
             .town(workspace.getTown())
             .latitude(workspace.getLatitude())
             .longitude(workspace.getLongitude())
+            .build();
+    }
+
+    public static PostingDetailWorkspaceResponseDto from(Workspace workspace, ReputationSummaryDto reputationSummary) {
+        return PostingDetailWorkspaceResponseDto.builder()
+            .id(workspace.getId())
+            .name(workspace.getBusinessName())
+            .fullAddress(workspace.getFullAddress())
+            .province(workspace.getProvince())
+            .district(workspace.getDistrict())
+            .town(workspace.getTown())
+            .latitude(workspace.getLatitude())
+            .longitude(workspace.getLongitude())
+            .reputationSummary(reputationSummary)
             .build();
     }
 

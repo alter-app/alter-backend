@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationSummaryDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingApplicationDetailResponse;
 import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -52,6 +53,21 @@ public class PostingApplicationResponseDto {
             .description(entity.getDescription())
             .status(entity.getStatus())
             .applicant(PostingApplicationResponseApplicantDetailDto.from(entity.getUser()))
+            .createdAt(entity.getCreatedAt())
+            .build();
+    }
+
+    public static PostingApplicationResponseDto fromWithReputationSummary(
+        ManagerPostingApplicationDetailResponse entity, 
+        ReputationSummaryDto applicantReputationSummary
+    ) {
+        return PostingApplicationResponseDto.builder()
+            .id(entity.getId())
+            .workspace(PostingApplicationWorkspaceResponseDto.from(entity.getWorkspace()))
+            .schedule(PostingApplicationResponsePostingScheduleSummaryDto.from(entity.getSchedule()))
+            .description(entity.getDescription())
+            .status(entity.getStatus())
+            .applicant(PostingApplicationResponseApplicantDetailDto.from(entity.getUser(), applicantReputationSummary))
             .createdAt(entity.getCreatedAt())
             .build();
     }

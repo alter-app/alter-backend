@@ -22,6 +22,9 @@ spring:
       ddl-auto: create
     show-sql: true
     database: postgresql
+  ai:
+    openai:
+      api-key: mockmockmock
 kakao:
   client_id: mockmockmock
   redirect_uri: mockmockmock
