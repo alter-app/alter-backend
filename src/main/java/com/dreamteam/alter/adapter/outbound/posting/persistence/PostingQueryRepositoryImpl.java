@@ -2,12 +2,16 @@ package com.dreamteam.alter.adapter.outbound.posting.persistence;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
+import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingListResponse;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingDetailResponse;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingListResponse;
+import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListFilterDto;
+import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingDetailResponse;
 import com.dreamteam.alter.domain.posting.entity.*;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.user.entity.QUserFavoritePosting;
+import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -163,6 +167,90 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         return ObjectUtils.isEmpty(posting) ? Optional.empty() : Optional.of(posting);
     }
 
+    @Override
+    public long getManagerPostingCount(ManagerUser managerUser, ManagerPostingListFilterDto filter) {
+        QPosting qPosting = QPosting.posting;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
+        Long count = queryFactory
+            .select(qPosting.count())
+            .from(qPosting)
+            .join(qPosting.workspace, qWorkspace)
+            .where(
+                qWorkspace.managerUser.eq(managerUser),
+                eqWorkspaceId(qWorkspace, filter.getWorkspaceId()),
+                eqPostingStatus(qPosting, filter.getStatus()),
+                qPosting.status.ne(PostingStatus.DELETED)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
+    @Override
+    public List<ManagerPostingListResponse> getManagerPostingsWithCursor(
+        CursorPageRequest<CursorDto> request,
+        ManagerUser managerUser,
+        ManagerPostingListFilterDto filter
+    ) {
+        QPosting qPosting = QPosting.posting;
+        QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
+        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
+        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
+        List<Long> postingIds = queryFactory
+            .select(qPosting.id)
+            .from(qPosting)
+            .join(qPosting.workspace, qWorkspace)
+            .where(
+                qWorkspace.managerUser.eq(managerUser),
+                eqWorkspaceId(qWorkspace, filter.getWorkspaceId()),
+                eqPostingStatus(qPosting, filter.getStatus()),
+                cursorConditions(qPosting, request.cursor()),
+                qPosting.status.ne(PostingStatus.DELETED)
+            )
+            .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
+            .limit(request.pageSize())
+            .fetch();
+
+        if (ObjectUtils.isEmpty(postingIds)) {
+            return Collections.emptyList();
+        }
+
+        List<Posting> postings = queryFactory
+            .selectFrom(qPosting)
+            .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
+            .where(qPosting.id.in(postingIds))
+            .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
+            .distinct()
+            .fetch();
+
+        List<PostingKeywordMap> keywordMaps = queryFactory
+            .selectFrom(qPostingKeywordMap)
+            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword).fetchJoin()
+            .where(qPostingKeywordMap.posting.id.in(postingIds))
+            .fetch();
+
+        Map<Long, List<PostingKeyword>> postingIdToKeywords = keywordMaps.stream()
+            .collect(
+                Collectors.groupingBy(
+                    pkMap -> pkMap.getPosting().getId(),
+                    Collectors.mapping(PostingKeywordMap::getPostingKeyword, Collectors.toList())
+                )
+            );
+
+        return postings.stream()
+            .map(
+                posting -> ManagerPostingListResponse.of(
+                    posting,
+                    postingIdToKeywords
+                )
+            )
+            .toList();
+    }
+
     private BooleanExpression cursorConditions(QPosting qPosting, CursorDto cursor) {
         return ObjectUtils.isEmpty(cursor)
             ? null
@@ -181,6 +269,46 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
 
     private BooleanExpression ltPostingId(QPosting qPosting, Long postingId) {
         return postingId != null ? qPosting.id.lt(postingId) : null;
+    }
+
+    private BooleanExpression eqWorkspaceId(QWorkspace qWorkspace, Long workspaceId) {
+        return workspaceId != null ? qWorkspace.id.eq(workspaceId) : null;
+    }
+
+    private BooleanExpression eqPostingStatus(QPosting qPosting, PostingStatus status) {
+        return status != null ? qPosting.status.eq(status) : null;
+    }
+
+    @Override
+    public Optional<ManagerPostingDetailResponse> getManagerPostingDetail(Long postingId, ManagerUser managerUser) {
+        QPosting qPosting = QPosting.posting;
+        QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
+        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
+        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
+        Posting posting = queryFactory
+            .selectFrom(qPosting)
+            .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
+            .where(
+                qPosting.id.eq(postingId),
+                qWorkspace.managerUser.eq(managerUser)
+            )
+            .fetchOne();
+
+        if (ObjectUtils.isEmpty(posting)) {
+            return Optional.empty();
+        }
+
+        List<PostingKeyword> postingKeywords = queryFactory
+            .select(qPostingKeyword)
+            .from(qPostingKeywordMap)
+            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword)
+            .where(qPostingKeywordMap.posting.id.eq(postingId))
+            .fetch();
+
+        return Optional.of(ManagerPostingDetailResponse.of(posting, postingKeywords));
     }
 
 }
