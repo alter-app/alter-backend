@@ -7,6 +7,7 @@ import com.dreamteam.alter.domain.reputation.port.outbound.ReputationSummaryQuer
 import com.dreamteam.alter.domain.reputation.type.ReputationStatus;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -132,7 +133,7 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
         List<Tuple> totalCounts = queryFactory
             .select(
                 reputation.targetId,
-                reputation.count().intValue()
+                Expressions.numberTemplate(Long.class, "count({0})", reputation.id)
             )
             .from(reputation)
             .where(
@@ -155,9 +156,11 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
 
         // 데이터 그룹화
         Map<Long, List<Tuple>> targetKeywordsMap = allKeywordsWithCount.stream()
+            .filter(tuple -> ObjectUtils.isNotEmpty(tuple.get(reputation.targetId)))
             .collect(Collectors.groupingBy(tuple -> tuple.get(reputation.targetId)));
 
         Map<Long, Map<String, List<String>>> targetDescriptionsMap = allUserDescriptions.stream()
+            .filter(tuple -> ObjectUtils.isNotEmpty(tuple.get(reputation.targetId)) && ObjectUtils.isNotEmpty(tuple.get(reputationKeyword.id)))
             .collect(Collectors.groupingBy(
                 tuple -> tuple.get(reputation.targetId),
                 Collectors.groupingBy(
@@ -165,7 +168,7 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
                     Collectors.mapping(
                         tuple -> tuple.get(reputationKeywordMap.description),
                         Collectors.filtering(
-                            desc -> desc != null && !desc.trim().isEmpty(),
+                            desc -> ObjectUtils.isNotEmpty(desc) && !desc.trim().isEmpty(),
                             Collectors.toList()
                         )
                     )
@@ -173,9 +176,10 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
             ));
 
         Map<Long, Integer> targetCountsMap = totalCounts.stream()
+            .filter(tuple -> ObjectUtils.isNotEmpty(tuple.get(reputation.targetId)))
             .collect(Collectors.toMap(
                 tuple -> tuple.get(reputation.targetId),
-                tuple -> tuple.get(reputation.count()).intValue()
+                tuple -> ObjectUtils.defaultIfNull(tuple.get(1, Long.class), 0L).intValue()
             ));
 
         Map<Long, ReputationSummary> existingSummariesMap = existingSummaries.stream()
@@ -198,16 +202,17 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
                     Map<String, List<String>> keywordDescriptions = targetDescriptionsMap.getOrDefault(targetId, Map.of());
 
                     keywordFrequencies = top5Keywords.stream()
+                        .filter(tuple -> ObjectUtils.isNotEmpty(tuple.get(reputationKeyword.id)))
                         .map(tuple -> {
                             String keywordId = tuple.get(reputationKeyword.id);
-                            Integer count = tuple.get(reputationKeywordMap.count()).intValue();
+                            Integer countValue = ObjectUtils.defaultIfNull(tuple.get(reputationKeywordMap.count()), 0L).intValue();
                             List<String> userDescriptions = keywordDescriptions.getOrDefault(keywordId, List.of());
 
                             return KeywordFrequency.of(
                                 keywordId,
                                 tuple.get(reputationKeyword.emoji),
                                 tuple.get(reputationKeyword.description),
-                                count,
+                                countValue,
                                 0.0, // percentage는 별도 계산
                                 userDescriptions
                             );
