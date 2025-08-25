@@ -1,7 +1,7 @@
 package com.dreamteam.alter.adapter.outbound.reputation.persistence;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.reputation.KeywordFrequency;
-import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationSummaryData;
+import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationSummaryBatchData;
 import com.dreamteam.alter.domain.reputation.entity.ReputationSummary;
 import com.dreamteam.alter.domain.reputation.port.outbound.ReputationSummaryQueryRepository;
 import com.dreamteam.alter.domain.reputation.type.ReputationStatus;
@@ -80,9 +80,9 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
     }
 
     @Override
-    public Map<Long, List<KeywordFrequency>> getKeywordFrequencies(ReputationType targetType, List<Long> targetIds) {
+    public List<ReputationSummaryBatchData> getReputationSummaryBatchData(ReputationType targetType, List<Long> targetIds) {
         if (targetIds.isEmpty()) {
-            return Map.of();
+            return List.of();
         }
 
         LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
@@ -128,74 +128,6 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
             )
             .fetch();
 
-        // 대상별로 키워드 데이터 구성
-        Map<Long, List<KeywordFrequency>> result = new java.util.HashMap<>();
-        
-        // 대상별로 키워드 그룹화
-        Map<Long, List<Tuple>> targetKeywordsMap = allKeywordsWithCount.stream()
-            .collect(Collectors.groupingBy(tuple -> tuple.get(reputation.targetId)));
-
-        // 대상별로 사용자 설명 그룹화
-        Map<Long, Map<String, List<String>>> targetDescriptionsMap = allUserDescriptions.stream()
-            .collect(Collectors.groupingBy(
-                tuple -> tuple.get(reputation.targetId),
-                Collectors.groupingBy(
-                    tuple -> tuple.get(reputationKeyword.id),
-                    Collectors.mapping(
-                        tuple -> tuple.get(reputationKeywordMap.description),
-                        Collectors.filtering(
-                            desc -> desc != null && !desc.trim().isEmpty(),
-                            Collectors.toList()
-                        )
-                    )
-                )
-            ));
-
-        for (Long targetId : targetIds) {
-            List<Tuple> keywords = targetKeywordsMap.get(targetId);
-            if (keywords == null || keywords.isEmpty()) {
-                result.put(targetId, List.of());
-                continue;
-            }
-
-            // 상위 5개만 선택
-            List<Tuple> top5Keywords = keywords.stream()
-                .limit(5)
-                .toList();
-
-            Map<String, List<String>> keywordDescriptions = targetDescriptionsMap.getOrDefault(targetId, Map.of());
-
-            List<KeywordFrequency> keywordFrequencies = top5Keywords.stream()
-                .map(tuple -> {
-                    String keywordId = tuple.get(reputationKeyword.id);
-                    Integer count = tuple.get(reputationKeywordMap.count()).intValue();
-                    List<String> userDescriptions = keywordDescriptions.getOrDefault(keywordId, List.of());
-
-                    return KeywordFrequency.of(
-                        keywordId,
-                        tuple.get(reputationKeyword.emoji),
-                        tuple.get(reputationKeyword.description),
-                        count,
-                        0.0, // percentage는 별도 계산
-                        userDescriptions
-                    );
-                })
-                .toList();
-
-            result.put(targetId, keywordFrequencies);
-        }
-
-        return result;
-    }
-
-    @Override
-    public Map<Long, Integer> getReputationCounts(ReputationType targetType, List<Long> targetIds) {
-        if (targetIds.isEmpty()) {
-            return Map.of();
-        }
-
-        LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
-
         // 모든 대상의 총 평판 개수 조회
         List<Tuple> totalCounts = queryFactory
             .select(
@@ -212,20 +144,8 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
             .groupBy(reputation.targetId)
             .fetch();
 
-        return totalCounts.stream()
-            .collect(Collectors.toMap(
-                tuple -> tuple.get(reputation.targetId),
-                tuple -> tuple.get(reputation.count()).intValue()
-            ));
-    }
-
-    @Override
-    public Map<Long, ReputationSummary> findExistingSummaries(ReputationType targetType, List<Long> targetIds) {
-        if (targetIds.isEmpty()) {
-            return Map.of();
-        }
-
-        List<ReputationSummary> summaries = queryFactory
+        // 기존 평판 요약 조회
+        List<ReputationSummary> existingSummaries = queryFactory
             .selectFrom(reputationSummary)
             .where(
                 reputationSummary.targetType.eq(targetType),
@@ -233,10 +153,78 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
             )
             .fetch();
 
-        return summaries.stream()
+        // 데이터 그룹화
+        Map<Long, List<Tuple>> targetKeywordsMap = allKeywordsWithCount.stream()
+            .collect(Collectors.groupingBy(tuple -> tuple.get(reputation.targetId)));
+
+        Map<Long, Map<String, List<String>>> targetDescriptionsMap = allUserDescriptions.stream()
+            .collect(Collectors.groupingBy(
+                tuple -> tuple.get(reputation.targetId),
+                Collectors.groupingBy(
+                    tuple -> tuple.get(reputationKeyword.id),
+                    Collectors.mapping(
+                        tuple -> tuple.get(reputationKeywordMap.description),
+                        Collectors.filtering(
+                            desc -> desc != null && !desc.trim().isEmpty(),
+                            Collectors.toList()
+                        )
+                    )
+                )
+            ));
+
+        Map<Long, Integer> targetCountsMap = totalCounts.stream()
+            .collect(Collectors.toMap(
+                tuple -> tuple.get(reputation.targetId),
+                tuple -> tuple.get(reputation.count()).intValue()
+            ));
+
+        Map<Long, ReputationSummary> existingSummariesMap = existingSummaries.stream()
             .collect(Collectors.toMap(
                 ReputationSummary::getTargetId,
                 summary -> summary
             ));
+
+        // 배치 데이터 구성
+        return targetIds.stream()
+            .map(targetId -> {
+                List<Tuple> keywords = targetKeywordsMap.get(targetId);
+                List<KeywordFrequency> keywordFrequencies = List.of();
+                
+                if (keywords != null && !keywords.isEmpty()) {
+                    List<Tuple> top5Keywords = keywords.stream()
+                        .limit(5)
+                        .toList();
+
+                    Map<String, List<String>> keywordDescriptions = targetDescriptionsMap.getOrDefault(targetId, Map.of());
+
+                    keywordFrequencies = top5Keywords.stream()
+                        .map(tuple -> {
+                            String keywordId = tuple.get(reputationKeyword.id);
+                            Integer count = tuple.get(reputationKeywordMap.count()).intValue();
+                            List<String> userDescriptions = keywordDescriptions.getOrDefault(keywordId, List.of());
+
+                            return KeywordFrequency.of(
+                                keywordId,
+                                tuple.get(reputationKeyword.emoji),
+                                tuple.get(reputationKeyword.description),
+                                count,
+                                0.0, // percentage는 별도 계산
+                                userDescriptions
+                            );
+                        })
+                        .toList();
+                }
+
+                Integer totalReputationCount = targetCountsMap.getOrDefault(targetId, 0);
+                ReputationSummary existingSummary = existingSummariesMap.get(targetId);
+
+                return ReputationSummaryBatchData.of(
+                    targetId,
+                    keywordFrequencies,
+                    totalReputationCount,
+                    existingSummary
+                );
+            })
+            .toList();
     }
 }

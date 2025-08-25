@@ -2,6 +2,7 @@ package com.dreamteam.alter.application.reputation.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.reputation.KeywordFrequency;
 import com.dreamteam.alter.adapter.inbound.common.dto.reputation.KeywordSummaryDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationSummaryBatchData;
 import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationSummaryData;
 import com.dreamteam.alter.domain.reputation.entity.ReputationSummary;
 import com.dreamteam.alter.domain.reputation.port.inbound.GenerateReputationSummaryUseCase;
@@ -15,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service("generateReputationSummary")
@@ -34,31 +34,23 @@ public class GenerateReputationSummary implements GenerateReputationSummaryUseCa
 
         log.info("평판 요약 생성 시작 - 타입: {}, 대상 수: {}", targetType, targetIds.size());
 
-        Map<Long, List<KeywordFrequency>> keywordFrequenciesMap = reputationSummaryQueryRepository
-            .getKeywordFrequencies(targetType, targetIds);
-
-        Map<Long, Integer> reputationCountsMap = reputationSummaryQueryRepository
-            .getReputationCounts(targetType, targetIds);
-
-        Map<Long, ReputationSummary> existingSummariesMap = reputationSummaryQueryRepository
-            .findExistingSummaries(targetType, targetIds);
+        List<ReputationSummaryBatchData> batchDataList = reputationSummaryQueryRepository
+            .getReputationSummaryBatchData(targetType, targetIds);
 
         List<ReputationSummary> summariesToSave = new ArrayList<>();
         List<ReputationSummary> summariesToUpdate = new ArrayList<>();
 
-        for (Long targetId : targetIds) {
-            List<KeywordFrequency> keywordFrequencies = keywordFrequenciesMap.get(targetId);
-            Integer totalReputationCount = reputationCountsMap.getOrDefault(targetId, 0);
-
-            if (keywordFrequencies == null || keywordFrequencies.isEmpty()) {
-                log.info("평판 데이터 없음 - 타입: {}, 대상: {}", targetType, targetId);
+        for (ReputationSummaryBatchData batchData : batchDataList) {
+            if (!batchData.hasKeywordData()) {
+                log.info("평판 데이터 없음 - 타입: {}, 대상: {}", targetType, batchData.getTargetId());
                 continue;
             }
 
             // 키워드별 퍼센티지 계산
-            List<KeywordFrequency> keywordFrequenciesWithPercentage = keywordFrequencies.stream()
+            List<KeywordFrequency> keywordFrequenciesWithPercentage = batchData.getKeywordFrequencies().stream()
                 .map(kf -> {
-                    Double percentage = totalReputationCount > 0 ? (kf.getCount() * 100.0 / totalReputationCount) : 0.0;
+                    Double percentage = batchData.getTotalReputationCount() > 0 ? 
+                        (kf.getCount() * 100.0 / batchData.getTotalReputationCount()) : 0.0;
                     return KeywordFrequency.of(
                         kf.getKeywordId(),
                         kf.getKeywordName(),
@@ -73,7 +65,7 @@ public class GenerateReputationSummary implements GenerateReputationSummaryUseCa
             // AI 요약을 위한 입력 데이터 구성
             ReputationSummaryData aiInputData = ReputationSummaryData.of(
                 targetType,
-                totalReputationCount,
+                batchData.getTotalReputationCount(),
                 keywordFrequenciesWithPercentage
             );
 
@@ -90,15 +82,22 @@ public class GenerateReputationSummary implements GenerateReputationSummaryUseCa
                 ))
                 .toList();
 
-            ReputationSummary existingSummary = existingSummariesMap.get(targetId);
-            if (existingSummary != null) {
+            if (batchData.hasExistingSummary()) {
                 // 기존 요약 업데이트
-                existingSummary.updateSummary(totalReputationCount, topKeywords, aiGeneratedSummary);
-                summariesToUpdate.add(existingSummary);
+                batchData.getExistingSummary().updateSummary(
+                    batchData.getTotalReputationCount(), 
+                    topKeywords, 
+                    aiGeneratedSummary
+                );
+                summariesToUpdate.add(batchData.getExistingSummary());
             } else {
                 // 새 요약 생성
                 ReputationSummary newSummary = ReputationSummary.create(
-                    targetType, targetId, totalReputationCount, topKeywords, aiGeneratedSummary
+                    targetType, 
+                    batchData.getTargetId(), 
+                    batchData.getTotalReputationCount(), 
+                    topKeywords, 
+                    aiGeneratedSummary
                 );
                 summariesToSave.add(newSummary);
             }

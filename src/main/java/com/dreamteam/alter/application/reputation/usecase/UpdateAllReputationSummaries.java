@@ -15,7 +15,7 @@ import com.dreamteam.alter.common.config.AsyncConfig.BatchConfig;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service("updateAllReputationSummaries")
@@ -123,10 +123,12 @@ public class UpdateAllReputationSummaries implements UpdateAllReputationSummarie
      * 리스트를 배치 크기로 분할
      */
     private <T> List<List<T>> splitIntoBatches(List<T> list, int batchSize) {
-        return list.stream()
-            .collect(Collectors.groupingBy(item -> list.indexOf(item) / batchSize))
-            .values()
-            .stream()
+        return IntStream.range(0, (list.size() + batchSize - 1) / batchSize)
+            .mapToObj(i -> {
+                int start = i * batchSize;
+                int end = Math.min(start + batchSize, list.size());
+                return list.subList(start, end);
+            })
             .toList();
     }
 
