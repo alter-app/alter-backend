@@ -23,22 +23,6 @@ import java.util.List;
 @Tag(name = "APP - 공고 API")
 public interface PostingControllerSpec {
 
-    @Operation(summary = "공고 등록", description = "")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "공고 등록 성공"),
-        @ApiResponse(responseCode = "400", description = "실패 케이스",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = ErrorResponse.class),
-                examples = {
-                    @ExampleObject(
-                        name = "서버 내부 오류",
-                        value = "{\"code\" : \"C001\"}"
-                    ),
-                }))
-    })
-    ResponseEntity<CommonApiResponse<Void>> createPosting(@Valid @RequestBody CreatePostingRequestDto request);
-
     @Operation(summary = "공고 리스트 조회 (커서 페이징)", description = "")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "공고 리스트 조회 성공"),
@@ -74,22 +58,6 @@ public interface PostingControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<PostingDetailResponseDto>> getPostingDetail(@PathVariable @Min(1) Long postingId);
-
-    @Operation(summary = "등록 가능한 공고 키워드 조회", description = "")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "공고 키워드 리스트 조회 성공"),
-        @ApiResponse(responseCode = "400", description = "실패 케이스",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = ErrorResponse.class),
-                examples = {
-                    @ExampleObject(
-                        name = "키워드 리스트 찾을 수 없음",
-                        value = "{\"code\" : \"B009\"}"
-                    ),
-                }))
-    })
-    ResponseEntity<CommonApiResponse<List<PostingKeywordListResponseDto>>> getAvailablePostingKeywords();
 
     @Operation(summary = "등록 지원", description = "")
     @ApiResponses(value = {
