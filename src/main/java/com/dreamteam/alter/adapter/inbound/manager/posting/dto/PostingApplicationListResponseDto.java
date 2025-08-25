@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingApplicationListResponse;
 import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -27,9 +28,9 @@ public class PostingApplicationListResponseDto {
     @NotNull
     private PostingApplicationResponsePostingScheduleSummaryDto schedule;
 
-    @Schema(description = "지원 상태", example = "ACCEPTED")
+    @Schema(description = "지원 상태")
     @NotNull
-    private PostingApplicationStatus status;
+    private DescribedEnumDto<PostingApplicationStatus> status;
 
     @Schema(description = "지원자 요약 정보")
     @NotNull
@@ -44,8 +45,11 @@ public class PostingApplicationListResponseDto {
             .id(entity.getId())
             .workspace(PostingApplicationWorkspaceResponseDto.from(entity.getWorkspace()))
             .schedule(PostingApplicationResponsePostingScheduleSummaryDto.from(entity.getSchedule()))
-            .status(entity.getStatus())
-            .applicant(PostingApplicationResponseApplicantSummaryDto.from(entity.getUser()))
+            .status(DescribedEnumDto.of(entity.getStatus(), PostingApplicationStatus.describe()))
+            .applicant(PostingApplicationResponseApplicantSummaryDto.from(
+                entity.getUser(),
+                entity.getReputationSummary()
+            ))
             .createdAt(entity.getCreatedAt())
             .build();
     }
