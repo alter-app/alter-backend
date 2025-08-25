@@ -38,7 +38,9 @@ dependencies {
 	implementation 'com.vladmihalcea:hibernate-types-60:2.21.1'
 	implementation 'net.javacrumbs.shedlock:shedlock-spring:6.8.0'
 	implementation 'net.javacrumbs.shedlock:shedlock-provider-redis-spring:6.8.0'
-    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+    implementation('org.springframework.ai:spring-ai-starter-model-openai') {
+        exclude group: 'io.swagger.core.v3', module: 'swagger-annotations'
+    }
 
 	compileOnly 'org.projectlombok:lombok'
 
