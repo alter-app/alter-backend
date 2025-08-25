@@ -95,7 +95,7 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
                 reputationKeyword.id,
                 reputationKeyword.emoji,
                 reputationKeyword.description,
-                reputationKeywordMap.count().intValue()
+                Expressions.numberTemplate(Long.class, "count({0})", reputationKeywordMap.id)
             )
             .from(reputationKeywordMap)
             .join(reputationKeywordMap.reputation, reputation)
@@ -107,7 +107,7 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
                 reputation.createdAt.goe(oneYearAgo)
             )
             .groupBy(reputation.targetId, reputationKeyword.id, reputationKeyword.emoji, reputationKeyword.description)
-            .orderBy(reputation.targetId.asc(), reputationKeywordMap.count().desc())
+            .orderBy(reputation.targetId.asc(), Expressions.numberTemplate(Long.class, "count({0})", reputationKeywordMap.id).desc())
             .fetch();
 
         // 모든 대상의 사용자 설명 조회
@@ -205,7 +205,8 @@ public class ReputationSummaryQueryRepositoryImpl implements ReputationSummaryQu
                         .filter(tuple -> ObjectUtils.isNotEmpty(tuple.get(reputationKeyword.id)))
                         .map(tuple -> {
                             String keywordId = tuple.get(reputationKeyword.id);
-                            Integer countValue = ObjectUtils.defaultIfNull(tuple.get(reputationKeywordMap.count()), 0L).intValue();
+                            Long count = tuple.get(4, Long.class);
+                            Integer countValue = ObjectUtils.defaultIfNull(count, 0L).intValue();
                             List<String> userDescriptions = keywordDescriptions.getOrDefault(keywordId, List.of());
 
                             return KeywordFrequency.of(
