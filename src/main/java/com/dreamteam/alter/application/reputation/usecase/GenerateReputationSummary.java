@@ -7,6 +7,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationSumma
 import com.dreamteam.alter.domain.reputation.entity.ReputationSummary;
 import com.dreamteam.alter.domain.reputation.port.inbound.GenerateReputationSummaryUseCase;
 import com.dreamteam.alter.domain.reputation.port.outbound.ReputationSummaryQueryRepository;
+import com.dreamteam.alter.domain.reputation.port.inbound.UpdateReputationSummaryDescriptionAsyncUseCase;
 import com.dreamteam.alter.domain.reputation.port.outbound.ReputationSummaryRepository;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class GenerateReputationSummary implements GenerateReputationSummaryUseCa
 
     private final ReputationSummaryQueryRepository reputationSummaryQueryRepository;
     private final ReputationSummaryRepository reputationSummaryRepository;
+    private final UpdateReputationSummaryDescriptionAsyncUseCase updateReputationSummaryDescriptionAsync;
 
     @Override
     public void execute(ReputationType targetType, List<Long> targetIds) {
@@ -42,7 +44,7 @@ public class GenerateReputationSummary implements GenerateReputationSummaryUseCa
 
         for (ReputationSummaryBatchData batchData : batchDataList) {
             if (!batchData.hasKeywordData()) {
-                log.info("평판 데이터 없음 - 타입: {}, 대상: {}", targetType, batchData.getTargetId());
+                log.info("평판 데이터 없음 - 타입: {}, ID: {}", targetType, batchData.getTargetId());
                 continue;
             }
 
@@ -69,9 +71,6 @@ public class GenerateReputationSummary implements GenerateReputationSummaryUseCa
                 keywordFrequenciesWithPercentage
             );
 
-            // AI를 통한 요약 생성 (임시로 null)
-            String aiGeneratedSummary = null;
-
             // KeywordSummaryDto 리스트 생성
             List<KeywordSummaryDto> topKeywords = keywordFrequenciesWithPercentage.stream()
                 .map(kf -> KeywordSummaryDto.of(
@@ -82,25 +81,27 @@ public class GenerateReputationSummary implements GenerateReputationSummaryUseCa
                 ))
                 .toList();
 
+            ReputationSummary reputationSummary;
             if (batchData.hasExistingSummary()) {
                 // 기존 요약 업데이트
                 batchData.getExistingSummary().updateSummary(
                     batchData.getTotalReputationCount(), 
-                    topKeywords, 
-                    aiGeneratedSummary
+                    topKeywords
                 );
-                summariesToUpdate.add(batchData.getExistingSummary());
+                reputationSummary = batchData.getExistingSummary();
+                summariesToUpdate.add(reputationSummary);
             } else {
-                // 새 요약 생성
-                ReputationSummary newSummary = ReputationSummary.create(
+                reputationSummary = ReputationSummary.create(
                     targetType, 
                     batchData.getTargetId(), 
                     batchData.getTotalReputationCount(), 
-                    topKeywords, 
-                    aiGeneratedSummary
+                    topKeywords
                 );
-                summariesToSave.add(newSummary);
+                summariesToSave.add(reputationSummary);
             }
+
+            // 비동기로 AI 요약 생성 요청
+            updateReputationSummaryDescriptionAsync.execute(reputationSummary, aiInputData);
         }
 
         // 배치 저장/업데이트

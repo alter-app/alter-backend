@@ -68,25 +68,26 @@ public class ReputationSummary {
         ReputationType targetType,
         Long targetId,
         Integer totalReputationCount,
-        List<KeywordSummaryDto> topKeywords,
-        String summaryDescription
+        List<KeywordSummaryDto> topKeywords
     ) {
         return ReputationSummary.builder()
             .targetType(targetType)
             .targetId(targetId)
             .totalReputationCount(totalReputationCount)
             .topKeywords(topKeywords)
-            .summaryDescription(summaryDescription)
             .build();
     }
 
     public void updateSummary(
         Integer totalReputationCount,
-        List<KeywordSummaryDto> topKeywords,
-        String summaryDescription
+        List<KeywordSummaryDto> topKeywords
     ) {
         this.totalReputationCount = totalReputationCount;
         this.topKeywords = topKeywords;
+    }
+
+    public void updateSummaryDescription(String summaryDescription) {
         this.summaryDescription = summaryDescription;
     }
+
 }
