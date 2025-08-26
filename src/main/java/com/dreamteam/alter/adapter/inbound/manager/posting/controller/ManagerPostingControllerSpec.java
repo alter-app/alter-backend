@@ -13,6 +13,8 @@ import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicatio
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicationListResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicationResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingApplicationStatusRequestDto;
+import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingRequestDto;
+import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingStatusRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -145,6 +147,56 @@ public interface ManagerPostingControllerSpec {
     ResponseEntity<CommonApiResponse<Void>> updatePostingApplicationStatus(
         @PathVariable Long postingApplicationId,
         @RequestBody UpdatePostingApplicationStatusRequestDto request
+    );
+
+    @Operation(summary = "매니저 - 내가 등록한 공고 상태 변경", description = "")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "공고 상태 변경 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "존재하지 않는 공고",
+                        value = "{\"code\" : \"B007\"}"
+                    ),
+                    @ExampleObject(
+                        name = "DELETED 상태의 공고는 상태 변경 불가",
+                        value = "{\"code\" : \"B020\"}"
+                    ),
+                }))
+    })
+    ResponseEntity<CommonApiResponse<Void>> updatePostingStatus(
+        @PathVariable Long postingId,
+        @RequestBody UpdatePostingStatusRequestDto request
+    );
+
+    @Operation(summary = "매니저 - 내가 등록한 공고 내용 수정", description = "")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "공고 내용 수정 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "존재하지 않는 공고",
+                        value = "{\"code\" : \"B007\"}"
+                    ),
+                    @ExampleObject(
+                        name = "등록되지 않은 키워드로 요청",
+                        value = "{\"code\" : \"B006\"}"
+                    ),
+                    @ExampleObject(
+                        name = "요청에 키워드가 포함되지 않은 경우",
+                        value = "{\"code\" : \"B001\"}"
+                    ),
+                }))
+    })
+    ResponseEntity<CommonApiResponse<Void>> updatePosting(
+        @PathVariable Long postingId,
+        @RequestBody UpdatePostingRequestDto request
     );
 
 }

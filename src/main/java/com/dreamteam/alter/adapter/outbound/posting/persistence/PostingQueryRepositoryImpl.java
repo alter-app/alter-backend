@@ -311,4 +311,21 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         return Optional.of(ManagerPostingDetailResponse.of(posting, postingKeywords));
     }
 
+    @Override
+    public Optional<Posting> findByManagerAndId(Long postingId, ManagerUser managerUser) {
+        QPosting qPosting = QPosting.posting;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
+        Posting posting = queryFactory
+            .selectFrom(qPosting)
+            .join(qPosting.workspace, qWorkspace)
+            .where(
+                qPosting.id.eq(postingId),
+                qWorkspace.managerUser.eq(managerUser)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(posting) ? Optional.empty() : Optional.of(posting);
+    }
+
 }

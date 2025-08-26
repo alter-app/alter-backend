@@ -23,4 +23,5 @@ public interface PostingQueryRepository {
     long getManagerPostingCount(ManagerUser managerUser, ManagerPostingListFilterDto filter);
     List<ManagerPostingListResponse> getManagerPostingsWithCursor(CursorPageRequest<CursorDto> request, ManagerUser managerUser, ManagerPostingListFilterDto filter);
     Optional<ManagerPostingDetailResponse> getManagerPostingDetail(Long postingId, ManagerUser managerUser);
+    Optional<Posting> findByManagerAndId(Long postingId, ManagerUser managerUser);
 }

@@ -1,9 +1,14 @@
 package com.dreamteam.alter.domain.posting.entity;
 
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingScheduleRequestDto;
+import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingScheduleDto;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
+
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import jakarta.persistence.*;
 import lombok.*;
 import org.apache.commons.lang3.ObjectUtils;
@@ -76,7 +81,14 @@ public class Posting {
         if (ObjectUtils.isNotEmpty(request.getSchedules())) {
             posting.schedules = request.getSchedules()
                 .stream()
-                .map(scheduleDto -> PostingSchedule.create(scheduleDto, posting))
+                .map(scheduleDto -> PostingSchedule.create(
+                    scheduleDto.getWorkingDays(),
+                    scheduleDto.getStartTime(),
+                    scheduleDto.getEndTime(),
+                    scheduleDto.getPositionsNeeded(),
+                    scheduleDto.getPosition(),
+                    posting
+                ))
                 .toList();
         }
 
@@ -90,4 +102,79 @@ public class Posting {
         return posting;
     }
 
+    public void updateStatus(PostingStatus status) {
+        this.status = status;
+    }
+
+    public void updateContent(
+        String title,
+        String description,
+        int payAmount,
+        PaymentType paymentType,
+        List<PostingKeyword> postingKeywords,
+        List<CreatePostingScheduleRequestDto> createSchedules,
+        List<UpdatePostingScheduleDto> updateSchedules,
+        List<Long> deleteScheduleIds
+    ) {
+        this.title = title;
+        this.description = description;
+        this.payAmount = payAmount;
+        this.paymentType = paymentType;
+
+        // 키워드 업데이트
+        this.keywords.clear();
+        if (ObjectUtils.isNotEmpty(postingKeywords)) {
+            this.keywords = postingKeywords
+                .stream()
+                .map(keyword -> PostingKeywordMap.create(keyword, this))
+                .toList();
+        }
+
+        // 스케줄 삭제 처리
+        if (ObjectUtils.isNotEmpty(deleteScheduleIds)) {
+            for (Long scheduleId : deleteScheduleIds) {
+                PostingSchedule existingSchedule = this.schedules.stream()
+                    .filter(schedule -> schedule.getId().equals(scheduleId))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("삭제할 스케줄을 찾을 수 없습니다: " + scheduleId));
+                
+                existingSchedule.updateStatus(PostingStatus.DELETED);
+            }
+        }
+
+        // 스케줄 수정 처리
+        if (ObjectUtils.isNotEmpty(updateSchedules)) {
+            for (UpdatePostingScheduleDto updateDto : updateSchedules) {
+                PostingSchedule existingSchedule = this.schedules.stream()
+                    .filter(schedule -> schedule.getId().equals(updateDto.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("수정할 스케줄을 찾을 수 없습니다: " + updateDto.getId()));
+                
+                existingSchedule.update(
+                    updateDto.getWorkingDays().stream()
+                        .map(DayOfWeek::valueOf)
+                        .toList(),
+                    LocalTime.parse(updateDto.getStartTime()),
+                    LocalTime.parse(updateDto.getEndTime()),
+                    updateDto.getPositionsNeeded(),
+                    updateDto.getPosition()
+                );
+            }
+        }
+
+        // 스케줄 추가 처리
+        if (ObjectUtils.isNotEmpty(createSchedules)) {
+            for (CreatePostingScheduleRequestDto createDto : createSchedules) {
+                PostingSchedule newSchedule = PostingSchedule.create(
+                    createDto.getWorkingDays(),
+                    createDto.getStartTime(),
+                    createDto.getEndTime(),
+                    createDto.getPositionsNeeded(),
+                    createDto.getPosition(),
+                    this
+                );
+                this.schedules.add(newSchedule);
+            }
+        }
+    }
 }

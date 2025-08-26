@@ -12,6 +12,8 @@ import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicatio
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicationListResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicationResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingApplicationStatusRequestDto;
+import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingRequestDto;
+import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingStatusRequestDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.posting.port.inbound.*;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
@@ -51,6 +53,12 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
 
     @Resource(name = "managerGetPostingDetail")
     private final ManagerGetPostingDetailUseCase managerGetPostingDetail;
+
+    @Resource(name = "managerUpdatePostingStatus")
+    private final ManagerUpdatePostingStatusUseCase managerUpdatePostingStatus;
+
+    @Resource(name = "managerUpdatePosting")
+    private final ManagerUpdatePostingUseCase managerUpdatePosting;
 
     @Override
     @PostMapping
@@ -118,6 +126,30 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
 
         managerUpdatePostingApplicationStatus.execute(postingApplicationId, request, actor);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PatchMapping("/{postingId}/status")
+    public ResponseEntity<CommonApiResponse<Void>> updatePostingStatus(
+        @PathVariable Long postingId,
+        UpdatePostingStatusRequestDto request
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+
+        managerUpdatePostingStatus.execute(postingId, request, actor);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PutMapping("/{postingId}")
+    public ResponseEntity<CommonApiResponse<Void>> updatePosting(
+        @PathVariable Long postingId,
+        UpdatePostingRequestDto request
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+
+        managerUpdatePosting.execute(postingId, request, actor);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
