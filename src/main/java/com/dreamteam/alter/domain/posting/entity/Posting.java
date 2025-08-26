@@ -123,12 +123,10 @@ public class Posting {
 
         // 키워드 업데이트
         this.keywords.clear();
-        if (ObjectUtils.isNotEmpty(postingKeywords)) {
-            this.keywords = postingKeywords
-                .stream()
-                .map(keyword -> PostingKeywordMap.create(keyword, this))
-                .toList();
-        }
+        this.keywords.addAll(postingKeywords
+            .stream()
+            .map(keyword -> PostingKeywordMap.create(keyword, this))
+            .toList());
 
         // 스케줄 삭제 처리
         if (ObjectUtils.isNotEmpty(deleteScheduleIds)) {
