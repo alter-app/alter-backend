@@ -1,6 +1,5 @@
 package com.dreamteam.alter.domain.posting.entity;
 
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingScheduleRequestDto;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
@@ -64,17 +63,47 @@ public class PostingSchedule {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public static PostingSchedule create(CreatePostingScheduleRequestDto request, Posting posting) {
+    public static PostingSchedule create(
+        List<DayOfWeek> workingDays,
+        LocalTime startTime,
+        LocalTime endTime,
+        int positionsNeeded,
+        String position,
+        Posting posting
+    ) {
         return PostingSchedule.builder()
             .posting(posting)
-            .workingDays(request.getWorkingDays())
-            .startTime(request.getStartTime())
-            .endTime(request.getEndTime())
-            .positionsNeeded(request.getPositionsNeeded())
-            .positionsAvailable(request.getPositionsNeeded())
-            .position(request.getPosition())
+            .workingDays(workingDays)
+            .startTime(startTime)
+            .endTime(endTime)
+            .positionsNeeded(positionsNeeded)
+            .positionsAvailable(positionsNeeded)
+            .position(position)
             .status(PostingStatus.OPEN)
             .build();
+    }
+
+    public void update(
+        List<DayOfWeek> workingDays,
+        LocalTime startTime,
+        LocalTime endTime,
+        int positionsNeeded,
+        String position
+    ) {
+        this.workingDays = workingDays;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        
+        // 기존 positionsNeeded와 새로운 positionsNeeded의 차이를 계산
+        int difference = positionsNeeded - this.positionsNeeded;
+        this.positionsAvailable = Math.max(0, this.positionsAvailable + difference);
+        
+        this.positionsNeeded = positionsNeeded;
+        this.position = position;
+    }
+
+    public void updateStatus(PostingStatus status) {
+        this.status = status;
     }
 
 }

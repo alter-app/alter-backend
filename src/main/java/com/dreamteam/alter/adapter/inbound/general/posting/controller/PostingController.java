@@ -14,17 +14,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/app/postings")
-@PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')") // TODO: 권한 세부 설정
+@PreAuthorize("hasAnyRole('USER')")
 @RequiredArgsConstructor
 @Validated
 public class PostingController implements PostingControllerSpec {
-
-    @Resource(name = "createPosting")
-    private final CreatePostingUseCase createPosting;
 
     @Resource(name = "getPostingsWithCursor")
     private final GetPostingsWithCursorUseCase getPostingsWithCursor;
@@ -32,20 +27,8 @@ public class PostingController implements PostingControllerSpec {
     @Resource(name = "getPostingDetail")
     private final GetPostingDetailUseCase getPostingDetail;
 
-    @Resource(name = "getPostingKeywordList")
-    private final GetPostingKeywordListUseCase getPostingKeywordList;
-
     @Resource(name = "createPostingApplication")
     private final CreatePostingApplicationUseCase createPostingApplication;
-
-    @Override
-    @PostMapping
-    public ResponseEntity<CommonApiResponse<Void>> createPosting(
-        CreatePostingRequestDto request
-    ) {
-        createPosting.execute(request);
-        return ResponseEntity.ok(CommonApiResponse.empty());
-    }
 
     @Override
     @GetMapping
@@ -65,12 +48,6 @@ public class PostingController implements PostingControllerSpec {
         AppActor actor = AppActionContext.getInstance().getActor();
 
         return ResponseEntity.ok(CommonApiResponse.of(getPostingDetail.execute(postingId, actor)));
-    }
-
-    @Override
-    @GetMapping("/available-keywords")
-    public ResponseEntity<CommonApiResponse<List<PostingKeywordListResponseDto>>> getAvailablePostingKeywords() {
-        return ResponseEntity.ok(CommonApiResponse.of(getPostingKeywordList.execute()));
     }
 
     @Override
