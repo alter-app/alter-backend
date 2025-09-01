@@ -10,16 +10,16 @@ import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationQueryR
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service("managerGetPostingApplicationListWithCursor")
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class ManagerGetPostingApplicationListWithCursor implements ManagerGetPostingApplicationListWithCursorUseCase {
 
     private final PostingApplicationQueryRepository postingApplicationQueryRepository;

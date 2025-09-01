@@ -26,6 +26,8 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.dreamteam.alter.domain.reputation.entity.QReputationSummary;
+import com.dreamteam.alter.domain.reputation.type.ReputationType;
 
 @Repository
 @RequiredArgsConstructor
@@ -121,12 +123,10 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .join(qPostingApplication.postingSchedule, qSchedule)
             .join(qSchedule.posting, qPosting)
             .join(qPosting.workspace, qWorkspace)
-            .join(qWorkspace.managerUser, QManagerUser.managerUser)
+            .join(qWorkspace.managerUser, qManagerUser)
             .where(
-                qManagerUser.eq(managerUser),
-                eqWorkspaceId(qWorkspace, filter.getWorkspaceId()),
-                eqApplicationStatus(qPostingApplication, filter.getStatus()),
-                qPostingApplication.status.ne(PostingApplicationStatus.DELETED)
+                getManagerPostingApplicationBaseConditions(qManagerUser, managerUser, qWorkspace, filter),
+                eqApplicationStatusOrDefault(qPostingApplication, filter.getStatus())
             )
             .fetchOne();
 
@@ -145,6 +145,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         QWorkspace qWorkspace = QWorkspace.workspace;
         QManagerUser qManagerUser = QManagerUser.managerUser;
         QUser qUser = QUser.user;
+        QReputationSummary qReputationSummary = QReputationSummary.reputationSummary;
 
         return queryFactory
             .select(Projections.constructor(
@@ -158,7 +159,8 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
                 qPostingSchedule,
                 qPostingApplication.status,
                 qPostingApplication.user,
-                qPostingApplication.createdAt
+                qPostingApplication.createdAt,
+                qReputationSummary
             ))
             .from(qPostingApplication)
             .join(qPostingApplication.postingSchedule, qPostingSchedule)
@@ -166,12 +168,15 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .join(qPosting.workspace, qWorkspace)
             .join(qWorkspace.managerUser, qManagerUser)
             .join(qPostingApplication.user, qUser)
+            .leftJoin(qReputationSummary)
+            .on(
+                qReputationSummary.targetType.eq(ReputationType.USER),
+                qReputationSummary.targetId.eq(qUser.id)
+            )
             .where(
-                qManagerUser.eq(managerUser),
-                eqWorkspaceId(qWorkspace, filter.getWorkspaceId()),
-                eqApplicationStatus(qPostingApplication, filter.getStatus()),
-                cursorConditions(qPostingApplication, request.cursor()),
-                qPostingApplication.status.ne(PostingApplicationStatus.DELETED)
+                getManagerPostingApplicationBaseConditions(qManagerUser, managerUser, qWorkspace, filter),
+                eqApplicationStatusOrDefault(qPostingApplication, filter.getStatus()),
+                cursorConditions(qPostingApplication, request.cursor())
             )
             .orderBy(qPostingApplication.createdAt.desc(), qPostingApplication.id.desc())
             .limit(request.pageSize())
@@ -250,10 +255,6 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         return workspaceId != null ? qWorkspace.id.eq(workspaceId) : null;
     }
 
-    private BooleanExpression eqApplicationStatus(QPostingApplication qPostingApplication, PostingApplicationStatus status) {
-        return status != null ? qPostingApplication.status.eq(status) : null;
-    }
-
     private BooleanExpression cursorConditions(QPostingApplication qPostingApplication, CursorDto cursor) {
         if (ObjectUtils.isEmpty(cursor)) {
             return null;
@@ -264,6 +265,33 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             ? qPostingApplication.createdAt.lt(createdAt)
                 .or(qPostingApplication.createdAt.eq(createdAt).and(qPostingApplication.id.lt(id)))
             : null;
+    }
+
+    private BooleanExpression eqApplicationStatusOrDefault(QPostingApplication qPostingApplication, PostingApplicationStatus status) {
+        BooleanExpression statusCondition;
+        if (ObjectUtils.isNotEmpty(status)) {
+            statusCondition = qPostingApplication.status.eq(status);
+        } else {
+            statusCondition = qPostingApplication.status.in(PostingApplicationStatus.defaultInquirableStatuses());
+        }
+        
+        // DELETED 상태는 항상 제외
+        return statusCondition.and(qPostingApplication.status.ne(PostingApplicationStatus.DELETED));
+    }
+
+    private BooleanExpression getManagerPostingApplicationBaseConditions(
+        QManagerUser qManagerUser,
+        ManagerUser managerUser,
+        QWorkspace qWorkspace,
+        PostingApplicationListFilterDto filter
+    ) {
+        BooleanExpression managerCondition = qManagerUser.eq(managerUser);
+        BooleanExpression workspaceCondition = eqWorkspaceId(qWorkspace, filter.getWorkspaceId());
+        
+        if (ObjectUtils.isNotEmpty(workspaceCondition)) {
+            return managerCondition.and(workspaceCondition);
+        }
+        return managerCondition;
     }
 
 }

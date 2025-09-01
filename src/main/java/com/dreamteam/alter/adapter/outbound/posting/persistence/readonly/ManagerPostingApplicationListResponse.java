@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.outbound.posting.persistence.readonly;
 
 import com.dreamteam.alter.domain.posting.entity.PostingSchedule;
 import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
+import com.dreamteam.alter.domain.reputation.entity.ReputationSummary;
 import com.dreamteam.alter.domain.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,5 +26,7 @@ public class ManagerPostingApplicationListResponse {
     private User user;
 
     private LocalDateTime createdAt;
+
+    private ReputationSummary reputationSummary;
 
 }
