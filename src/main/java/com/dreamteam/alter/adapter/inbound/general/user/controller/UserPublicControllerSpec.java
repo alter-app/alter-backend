@@ -16,6 +16,28 @@ import org.springframework.http.ResponseEntity;
 @Tag(name = "Public - 사용자")
 public interface UserPublicControllerSpec {
 
+    @Operation(summary = "회원가입 세션 생성")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "회원가입 세션 생성 성공")
+    })
+    ResponseEntity<CommonApiResponse<CreateSignupSessionResponseDto>> createSignupSession(@Valid CreateSignupSessionRequestDto request);
+
+    @Operation(summary = "사용자 ID/PW 로그인")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "로그인 성공 (JWT 응답)"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "이메일 또는 비밀번호가 올바르지 않을 경우",
+                        value = "{\"code\" : \"A011\", \"message\" : \"로그인 정보가 올바르지 않습니다\"}"
+                    )
+                }))
+    })
+    ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginWithPassword(@Valid LoginWithPasswordRequestDto request);
+
     @Operation(summary = "사용자 소셜 로그인")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "로그인 성공 (JWT 응답)"),
@@ -25,24 +47,12 @@ public interface UserPublicControllerSpec {
                 schema = @Schema(implementation = ErrorResponse.class),
                 examples = {
                     @ExampleObject(
-                        name = "가입되지 않은 사용자",
-                        value = "{\"code\": \"A003\", \"data\": {\"signupSessionId\": \"UUID\", \"name\": \"김철수\", \"gender\": \"GENDER_MALE\", \"birthday\": \"YYYYMMDD\"}}"
-                    ),
-                    @ExampleObject(
-                        name = "소셜 토큰 만료 (재 로그인 필요)",
-                        value = "{\"code\" : \"A007\"}"
-                    ),
-                    @ExampleObject(
-                        name = "소셜 인가 코드 만료",
-                        value = "{\"code\" : \"A010\"}"
-                    ),
-                    @ExampleObject(
-                        name = "가입 되지 않은 사용자 - 사용자 Email 중복 (다른 소셜 계정으로 로그인 유도)",
-                        value = "{\"code\" : \"A004\"}"
+                        name = "존재하지 않는 사용자 계정",
+                        value = "{\"code\" : \"B011\"}"
                     ),
                 }))
     })
-    ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginUser(@Valid LoginUserRequestDto request);
+    ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginWithSocial(@Valid SocialLoginRequestDto request);
 
     @Operation(summary = "회원가입을 수행한다")
     @ApiResponses(value = {

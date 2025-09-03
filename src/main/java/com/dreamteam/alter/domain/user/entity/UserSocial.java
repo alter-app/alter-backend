@@ -1,4 +1,4 @@
-package com.dreamteam.alter.domain.auth.entity;
+package com.dreamteam.alter.domain.user.entity;
 
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import jakarta.persistence.*;
@@ -10,16 +10,20 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Table(name = "social_refresh_tokens")
+@Table(name = "user_socials")
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @EntityListeners(AuditingEntityListener.class)
-public class SocialRefreshToken {
+public class UserSocial {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "social_provider", length = 20, nullable = false)
@@ -35,16 +39,16 @@ public class SocialRefreshToken {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public static SocialRefreshToken create(SocialProvider provider, String socialId, String refreshToken) {
-        return SocialRefreshToken.builder()
+    public static UserSocial create(User user, SocialProvider provider, String socialId, String refreshToken) {
+        return UserSocial.builder()
+            .user(user)
             .socialProvider(provider)
             .socialId(socialId)
             .refreshToken(refreshToken)
             .build();
     }
 
-    public void update(String refreshToken) {
+    public void updateRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
     }
-
 }

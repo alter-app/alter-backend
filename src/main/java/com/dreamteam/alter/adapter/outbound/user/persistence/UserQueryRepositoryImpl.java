@@ -8,7 +8,6 @@ import com.dreamteam.alter.domain.user.type.UserStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -30,55 +29,49 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
             )
             .fetchOne();
 
-        return ObjectUtils.isEmpty(user) ? Optional.empty() : Optional.of(user);
+        return Optional.ofNullable(user);
     }
 
     @Override
-    public User findBySocialId(String socialId) {
+    public Optional<User> findByEmail(String email) {
         QUser user = QUser.user;
-        return queryFactory
-            .selectFrom(user)
-            .where(
-                user.socialId.eq(socialId),
-                user.status.eq(UserStatus.ACTIVE)
-            )
-            .fetchOne();
-    }
-
-    @Override
-    public User findByEmail(String email) {
-        QUser user = QUser.user;
-        return queryFactory
+        User foundUser = queryFactory
             .selectFrom(user)
             .where(
                 user.email.eq(email),
                 user.status.eq(UserStatus.ACTIVE)
             )
             .fetchOne();
+
+        return Optional.ofNullable(foundUser);
     }
 
     @Override
-    public User findByNickname(String nickname) {
+    public Optional<User> findByNickname(String nickname) {
         QUser user = QUser.user;
-        return queryFactory
+        User foundUser = queryFactory
             .selectFrom(user)
             .where(
                 user.nickname.eq(nickname),
                 user.status.eq(UserStatus.ACTIVE)
             )
             .fetchOne();
+
+        return Optional.ofNullable(foundUser);
     }
 
     @Override
-    public User findByContact(String contact) {
+    public Optional<User> findByContact(String contact) {
         QUser qUser = QUser.user;
-        return queryFactory
+        User foundUser = queryFactory
             .selectFrom(qUser)
             .where(
                 qUser.contact.eq(contact),
                 qUser.status.eq(UserStatus.ACTIVE)
             )
             .fetchOne();
+
+        return Optional.ofNullable(foundUser);
     }
 
     @Override
@@ -101,7 +94,6 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
             )
             .fetchOne();
 
-        return ObjectUtils.isEmpty(userSelf) ? Optional.empty() : Optional.of(userSelf);
+        return Optional.ofNullable(userSelf);
     }
-
 }

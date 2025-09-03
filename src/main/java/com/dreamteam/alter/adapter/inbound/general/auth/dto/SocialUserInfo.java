@@ -23,6 +23,8 @@ public class SocialUserInfo {
 
     private UserGender gender;
 
+    private String refreshToken;
+
     public static SocialUserInfo of(
         SocialProvider provider,
         String socialId,
@@ -59,6 +61,20 @@ public class SocialUserInfo {
             .provider(provider)
             .socialId(socialId)
             .email(email)
+            .build();
+    }
+
+    public static SocialUserInfo of(
+        SocialProvider provider,
+        String socialId,
+        String email,
+        String refreshToken
+    ) {
+        return SocialUserInfo.builder()
+            .provider(provider)
+            .socialId(socialId)
+            .email(email)
+            .refreshToken(refreshToken)
             .build();
     }
 
