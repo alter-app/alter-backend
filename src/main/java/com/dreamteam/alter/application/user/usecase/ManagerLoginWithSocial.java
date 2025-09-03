@@ -1,6 +1,6 @@
 package com.dreamteam.alter.application.user.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
+import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialAuthInfo;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.SocialLoginRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
@@ -15,9 +15,11 @@ import com.dreamteam.alter.domain.user.type.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.dreamteam.alter.domain.user.entity.UserSocial;
 
 @Service("managerLoginWithSocial")
 @RequiredArgsConstructor
+@Transactional
 public class ManagerLoginWithSocial implements ManagerLoginWithSocialUseCase {
 
     private final AuthService authService;
@@ -25,17 +27,21 @@ public class ManagerLoginWithSocial implements ManagerLoginWithSocialUseCase {
     private final SocialAuthenticationManager socialAuthenticationManager;
 
     @Override
-    @Transactional(readOnly = true)
     public GenerateTokenResponseDto execute(SocialLoginRequestDto request) {
-        SocialUserInfo socialUserInfo = socialAuthenticationManager.authenticate(request);
+        SocialAuthInfo socialAuthInfo = socialAuthenticationManager.authenticate(request);
 
-        User user = userSocialQueryRepository.findBySocialProviderAndSocialId(socialUserInfo.getProvider(), socialUserInfo.getSocialId())
-            .map(userSocial -> userSocial.getUser())
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        UserSocial userSocial = userSocialQueryRepository.findBySocialProviderAndSocialId(
+            socialAuthInfo.getProvider(),
+            socialAuthInfo.getSocialId()
+        ).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        User user = userSocial.getUser();
 
         if (!user.getRoles().contains(UserRole.ROLE_MANAGER)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
+
+        userSocial.updateRefreshToken(socialAuthInfo.getRefreshToken());
 
         return GenerateTokenResponseDto.of(authService.generateAuthorization(user, TokenScope.MANAGER));
     }
