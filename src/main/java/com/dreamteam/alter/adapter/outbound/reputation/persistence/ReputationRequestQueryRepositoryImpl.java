@@ -200,9 +200,11 @@ public class ReputationRequestQueryRepositoryImpl implements ReputationRequestQu
             condition = condition.and(qReputationRequest.targetId.in(workspaceIds));
         }
 
-        // status 필터링
+        // 조회 시 기본적으로 REQUESTED 상태인 항목만 조회
         if (filter != null && filter.getStatus() != null) {
             condition = condition.and(qReputationRequest.status.eq(filter.getStatus()));
+        } else {
+            condition = condition.and(qReputationRequest.status.eq(ReputationRequestStatus.REQUESTED));
         }
 
         Long count = queryFactory
@@ -235,9 +237,11 @@ public class ReputationRequestQueryRepositoryImpl implements ReputationRequestQu
             condition = condition.and(qReputationRequest.targetId.in(workspaceIds));
         }
 
-        // status 필터링
+        // 조회 시 기본적으로 REQUESTED 상태인 항목만 조회
         if (filter != null && filter.getStatus() != null) {
             condition = condition.and(qReputationRequest.status.eq(filter.getStatus()));
+        } else {
+            condition = condition.and(qReputationRequest.status.eq(ReputationRequestStatus.REQUESTED));
         }
 
         return queryFactory
