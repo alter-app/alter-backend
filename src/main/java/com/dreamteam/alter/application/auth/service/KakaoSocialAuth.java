@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.auth.service;
 
+import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialAuthInfo;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
 import com.dreamteam.alter.domain.auth.port.outbound.KakaoAuthClient;
@@ -22,11 +23,10 @@ public class KakaoSocialAuth extends AbstractSocialAuth {
     }
 
     @Override
-    protected SocialUserInfo getUserInfo(SocialTokenResponseDto socialTokens) {
+    protected SocialAuthInfo getUserInfo(SocialTokenResponseDto socialTokens) {
         SocialUserInfo userInfo = kakaoAuthClient.getUserInfo(socialTokens);
 
-        // refreshToken을 포함한 SocialUserInfo 반환
-        return SocialUserInfo.of(
+        return SocialAuthInfo.of(
             userInfo.getProvider(),
             userInfo.getSocialId(),
             userInfo.getEmail(),

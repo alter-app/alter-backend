@@ -1,7 +1,7 @@
 package com.dreamteam.alter.application.auth.service;
 
+import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialAuthInfo;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.port.outbound.AppleAuthClient;
@@ -49,14 +49,18 @@ public class AppleSocialAuth extends AbstractSocialAuth {
     }
 
     @Override
-    protected SocialUserInfo getUserInfo(SocialTokenResponseDto socialTokens) {
+    protected SocialAuthInfo getUserInfo(SocialTokenResponseDto socialTokens) {
         Jws<Claims> claimsJws = verifyIdentityToken(socialTokens.getIdentityToken());
         Claims claims = claimsJws.getPayload();
         String id = claims.getSubject();
         String email = claims.get(KEY_EMAIL, String.class);
 
-        // refreshToken을 포함한 SocialUserInfo 반환
-        return SocialUserInfo.of(SocialProvider.APPLE, id, email, socialTokens.getRefreshToken());
+        return SocialAuthInfo.of(
+            SocialProvider.APPLE,
+            id,
+            email,
+            socialTokens.getRefreshToken()
+        );
     }
 
     @Override

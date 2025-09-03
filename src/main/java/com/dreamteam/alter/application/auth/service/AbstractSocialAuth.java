@@ -1,7 +1,7 @@
 package com.dreamteam.alter.application.auth.service;
 
+import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialAuthInfo;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.SocialLoginRequestDto;
 import com.dreamteam.alter.domain.user.type.PlatformType;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
@@ -9,7 +9,7 @@ import org.apache.commons.lang3.ObjectUtils;
 
 public abstract class AbstractSocialAuth {
 
-    public SocialUserInfo authenticate(SocialLoginRequestDto request) {
+    public SocialAuthInfo authenticate(SocialLoginRequestDto request) {
         SocialTokenResponseDto socialTokens = getToken(request);
         return getUserInfo(socialTokens);
     }
@@ -29,7 +29,7 @@ public abstract class AbstractSocialAuth {
 
     protected abstract SocialTokenResponseDto exchangeCodeForToken(String authorizationCode, PlatformType platformType);
 
-    protected abstract SocialUserInfo getUserInfo(SocialTokenResponseDto socialTokens);
+    protected abstract SocialAuthInfo getUserInfo(SocialTokenResponseDto socialTokens);
 
     public abstract boolean supports(SocialProvider provider);
 }
