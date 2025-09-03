@@ -4,7 +4,6 @@ import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.dreamteam.alter.domain.user.type.PlatformType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,16 +15,16 @@ import lombok.NoArgsConstructor;
 public class SocialLoginRequestDto {
 
     @NotNull
-    @Schema(description = "소셜 플랫폼 제공자", example = "KAKAO")
+    @Schema(description = "소셜 플랫폼 플랫폼", example = "KAKAO")
     private SocialProvider provider;
 
-    @Schema(description = "OAuth 토큰 (accessToken, refreshToken 포함)")
+    @Schema(description = "OAuth 토큰")
     private OauthLoginTokenDto oauthToken;
 
-    @Schema(description = "인증 코드", example = "authorization_code_here")
+    @Schema(description = "OAuth 인가 코드", example = "authorizationCode")
     private String authorizationCode;
 
     @NotNull
-    @Schema(description = "플랫폼 타입", example = "IOS")
+    @Schema(description = "플랫폼 타입", example = "WEB / NATIVE")
     private PlatformType platformType;
 }

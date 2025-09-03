@@ -29,4 +29,5 @@ public class LinkSocialAccountRequestDto {
     @NotNull
     @Schema(description = "플랫폼 타입", example = "WEB / NATIVE")
     private PlatformType platformType;
+
 }
