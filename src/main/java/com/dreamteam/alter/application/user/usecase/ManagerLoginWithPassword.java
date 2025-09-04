@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service("managerLoginWithPassword")
 @RequiredArgsConstructor
+@Transactional
 public class ManagerLoginWithPassword implements ManagerLoginWithPasswordUseCase {
 
     private final UserQueryRepository userQueryRepository;
@@ -24,7 +25,6 @@ public class ManagerLoginWithPassword implements ManagerLoginWithPasswordUseCase
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    @Transactional(readOnly = true)
     public GenerateTokenResponseDto execute(LoginWithPasswordRequestDto request) {
         User user = userQueryRepository.findByEmail(request.getEmail())
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_LOGIN_INFO));

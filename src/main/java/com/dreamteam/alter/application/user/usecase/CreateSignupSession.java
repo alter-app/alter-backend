@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service("createSignupSession")
 @RequiredArgsConstructor
+@Transactional
 public class CreateSignupSession implements CreateSignupSessionUseCase {
 
     private static final String KEY_PREFIX = "SIGNUP:PENDING:";
@@ -28,7 +29,6 @@ public class CreateSignupSession implements CreateSignupSessionUseCase {
     private final ObjectMapper objectMapper;
 
     @Override
-    @Transactional(readOnly = true)
     public CreateSignupSessionResponseDto execute(CreateSignupSessionRequestDto request) {
         // 휴대폰 번호 중복 확인
         if (userQueryRepository.findByContact(request.getContact()).isPresent()) {

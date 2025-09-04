@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service("createUser")
 @RequiredArgsConstructor
+@Transactional
 public class CreateUser implements CreateUserUseCase {
 
     private static final String KEY_PREFIX = "SIGNUP:PENDING:";
@@ -34,7 +35,6 @@ public class CreateUser implements CreateUserUseCase {
     private final ObjectMapper objectMapper;
 
     @Override
-    @Transactional
     public GenerateTokenResponseDto execute(CreateUserRequestDto request) {
         // Redis 세션에서 휴대폰 인증 정보 확인
         String sessionIdKey = KEY_PREFIX + request.getSignupSessionId();
@@ -82,6 +82,12 @@ public class CreateUser implements CreateUserUseCase {
         if (userQueryRepository.findByEmail(request.getEmail()).isPresent()) {
             redisTemplate.delete(sessionIdKey);
             throw new CustomException(ErrorCode.EMAIL_DUPLICATED);
+        }
+
+        // 닉네임 중복 확인
+        if (userQueryRepository.findByNickname(request.getNickname()).isPresent()) {
+            redisTemplate.delete(sessionIdKey);
+            throw new CustomException(ErrorCode.NICKNAME_DUPLICATED);
         }
 
         // 연락처 중복 확인
