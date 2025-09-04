@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceResponse;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -42,8 +43,8 @@ public class ManagerWorkspaceResponseDto {
     private String description;
 
     @NotNull
-    @Schema(description = "업장 등록 상태", example = "ACTIVE")
-    private WorkspaceStatus status;
+    @Schema(description = "업장 등록 상태")
+    private DescribedEnumDto<WorkspaceStatus> status;
 
     @NotBlank
     @Schema(description = "업장 전체 주소", example = "서울특별시 강남구 테헤란로 123")
@@ -69,7 +70,7 @@ public class ManagerWorkspaceResponseDto {
             .businessType(entity.getBusinessType())
             .contact(entity.getContact())
             .description(entity.getDescription())
-            .status(entity.getStatus())
+            .status(DescribedEnumDto.of(entity.getStatus(), WorkspaceStatus.describe()))
             .fullAddress(entity.getFullAddress())
             .latitude(entity.getLatitude())
             .longitude(entity.getLongitude())

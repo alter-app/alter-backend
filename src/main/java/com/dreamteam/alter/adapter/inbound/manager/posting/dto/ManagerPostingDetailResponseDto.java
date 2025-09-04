@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingKeywordListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.PostingDetailWorkspaceResponseDto;
@@ -46,8 +47,8 @@ public class ManagerPostingDetailResponseDto {
     private PaymentType paymentType;
 
     @NotNull
-    @Schema(description = "공고 상태", example = "OPEN")
-    private PostingStatus status;
+    @Schema(description = "공고 상태")
+    private DescribedEnumDto<PostingStatus> status;
 
     @NotNull
     @Schema(description = "생성일", example = "2023-10-01T12:00:00")
@@ -73,7 +74,7 @@ public class ManagerPostingDetailResponseDto {
             .description(entity.getDescription())
             .payAmount(entity.getPayAmount())
             .paymentType(entity.getPaymentType())
-            .status(entity.getStatus())
+            .status(DescribedEnumDto.of(entity.getStatus(), PostingStatus.describe()))
             .createdAt(entity.getCreatedAt())
             .updatedAt(entity.getUpdatedAt())
             .schedules(entity.getSchedules().stream()

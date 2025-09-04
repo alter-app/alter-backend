@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceWorkerListResponse;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,8 +25,8 @@ public class ManagerWorkspaceWorkerListResponseDto {
     private WorkspaceWorkerUserResponseDto user;
 
     @NotNull
-    @Schema(description = "근무자 상태", example = "ACTIVATED")
-    private WorkspaceWorkerStatus status;
+    @Schema(description = "근무자 상태")
+    private DescribedEnumDto<WorkspaceWorkerStatus> status;
 
     @NotNull
     @Schema(description = "채용일자", example = "2023-10-01T12:00:00")
@@ -39,7 +40,7 @@ public class ManagerWorkspaceWorkerListResponseDto {
         return ManagerWorkspaceWorkerListResponseDto.builder()
             .id(entity.getId())
             .user(WorkspaceWorkerUserResponseDto.of(entity.getUser()))
-            .status(entity.getStatus())
+            .status(DescribedEnumDto.of(entity.getStatus(), WorkspaceWorkerStatus.describe()))
             .employedAt(entity.getEmployedAt())
             .resignedAt(entity.getResignedAt())
             .build();

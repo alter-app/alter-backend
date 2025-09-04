@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceListResponse;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -34,7 +35,7 @@ public class ManagerWorkspaceListResponseDto {
 
     @NotNull
     @Schema(description = "업장 상태")
-    private WorkspaceStatus status;
+    private DescribedEnumDto<WorkspaceStatus> status;
 
     public static ManagerWorkspaceListResponseDto of(ManagerWorkspaceListResponse entity) {
         return ManagerWorkspaceListResponseDto.builder()
@@ -42,7 +43,7 @@ public class ManagerWorkspaceListResponseDto {
                 .businessName(entity.getBusinessName())
                 .fullAddress(entity.getFullAddress())
                 .createdAt(entity.getCreatedAt())
-                .status(entity.getStatus())
+                .status(DescribedEnumDto.of(entity.getStatus(), WorkspaceStatus.describe()))
                 .build();
     }
 
