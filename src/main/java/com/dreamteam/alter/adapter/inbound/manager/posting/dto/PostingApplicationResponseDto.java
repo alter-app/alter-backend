@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationSummaryDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingApplicationDetailResponse;
 import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
@@ -33,9 +34,9 @@ public class PostingApplicationResponseDto {
     @NotBlank
     private String description;
 
-    @Schema(description = "지원 상태", example = "ACCEPTED")
+    @Schema(description = "지원 상태")
     @NotNull
-    private PostingApplicationStatus status;
+    private DescribedEnumDto<PostingApplicationStatus> status;
 
     @Schema(description = "지원자 요약 정보")
     @NotNull
@@ -51,7 +52,7 @@ public class PostingApplicationResponseDto {
             .workspace(PostingApplicationWorkspaceResponseDto.from(entity.getWorkspace()))
             .schedule(PostingApplicationResponsePostingScheduleSummaryDto.from(entity.getSchedule()))
             .description(entity.getDescription())
-            .status(entity.getStatus())
+            .status(DescribedEnumDto.of(entity.getStatus(), PostingApplicationStatus.describe()))
             .applicant(PostingApplicationResponseApplicantDetailDto.from(entity.getUser()))
             .createdAt(entity.getCreatedAt())
             .build();
@@ -66,7 +67,7 @@ public class PostingApplicationResponseDto {
             .workspace(PostingApplicationWorkspaceResponseDto.from(entity.getWorkspace()))
             .schedule(PostingApplicationResponsePostingScheduleSummaryDto.from(entity.getSchedule()))
             .description(entity.getDescription())
-            .status(entity.getStatus())
+            .status(DescribedEnumDto.of(entity.getStatus(), PostingApplicationStatus.describe()))
             .applicant(PostingApplicationResponseApplicantDetailDto.from(entity.getUser(), applicantReputationSummary))
             .createdAt(entity.getCreatedAt())
             .build();
