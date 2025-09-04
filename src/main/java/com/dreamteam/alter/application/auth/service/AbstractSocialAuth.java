@@ -1,27 +1,20 @@
 package com.dreamteam.alter.application.auth.service;
 
+import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialAuthInfo;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.LoginUserRequestDto;
-import com.dreamteam.alter.domain.auth.port.outbound.SocialRefreshTokenRepository;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.SocialLoginRequestDto;
 import com.dreamteam.alter.domain.user.type.PlatformType;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import org.apache.commons.lang3.ObjectUtils;
 
 public abstract class AbstractSocialAuth {
 
-    protected final SocialRefreshTokenRepository socialRefreshTokenRepository;
-
-    protected AbstractSocialAuth(SocialRefreshTokenRepository socialRefreshTokenRepository) {
-        this.socialRefreshTokenRepository = socialRefreshTokenRepository;
-    }
-
-    public SocialUserInfo authenticate(LoginUserRequestDto request) {
+    public SocialAuthInfo authenticate(SocialLoginRequestDto request) {
         SocialTokenResponseDto socialTokens = getToken(request);
         return getUserInfo(socialTokens);
     }
 
-    protected SocialTokenResponseDto getToken(LoginUserRequestDto request) {
+    protected SocialTokenResponseDto getToken(SocialLoginRequestDto request) {
         if (ObjectUtils.isNotEmpty(request.getAuthorizationCode()))
             return exchangeCodeForToken(request.getAuthorizationCode(), request.getPlatformType());
 
@@ -36,12 +29,7 @@ public abstract class AbstractSocialAuth {
 
     protected abstract SocialTokenResponseDto exchangeCodeForToken(String authorizationCode, PlatformType platformType);
 
-    protected abstract SocialUserInfo getUserInfo(SocialTokenResponseDto socialTokens);
+    protected abstract SocialAuthInfo getUserInfo(SocialTokenResponseDto socialTokens);
 
     public abstract boolean supports(SocialProvider provider);
-
-    protected void saveOrUpdateRefreshToken(SocialProvider provider, String socialId, String refreshToken) {
-        socialRefreshTokenRepository.saveOrUpdate(provider, socialId, refreshToken);
-    }
-
 }

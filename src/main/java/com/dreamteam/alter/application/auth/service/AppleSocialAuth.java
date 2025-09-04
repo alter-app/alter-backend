@@ -1,11 +1,10 @@
 package com.dreamteam.alter.application.auth.service;
 
+import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialAuthInfo;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialTokenResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.port.outbound.AppleAuthClient;
-import com.dreamteam.alter.domain.auth.port.outbound.SocialRefreshTokenRepository;
 import com.dreamteam.alter.domain.user.type.PlatformType;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -39,12 +38,7 @@ public class AppleSocialAuth extends AbstractSocialAuth {
     private final AppleAuthClient appleAuthClient;
     private final ObjectMapper objectMapper;
 
-    public AppleSocialAuth(
-        SocialRefreshTokenRepository socialRefreshTokenRepository,
-        AppleAuthClient appleAuthClient,
-        ObjectMapper objectMapper
-    ) {
-        super(socialRefreshTokenRepository);
+    public AppleSocialAuth(AppleAuthClient appleAuthClient, ObjectMapper objectMapper) {
         this.appleAuthClient = appleAuthClient;
         this.objectMapper = objectMapper;
     }
@@ -55,16 +49,18 @@ public class AppleSocialAuth extends AbstractSocialAuth {
     }
 
     @Override
-    protected SocialUserInfo getUserInfo(SocialTokenResponseDto socialTokens) {
+    protected SocialAuthInfo getUserInfo(SocialTokenResponseDto socialTokens) {
         Jws<Claims> claimsJws = verifyIdentityToken(socialTokens.getIdentityToken());
         Claims claims = claimsJws.getPayload();
         String id = claims.getSubject();
         String email = claims.get(KEY_EMAIL, String.class);
 
-        // RefreshToken 저장
-        saveOrUpdateRefreshToken(SocialProvider.APPLE, id, socialTokens.getRefreshToken());
-
-        return SocialUserInfo.of(SocialProvider.APPLE, id, email);
+        return SocialAuthInfo.of(
+            SocialProvider.APPLE,
+            id,
+            email,
+            socialTokens.getRefreshToken()
+        );
     }
 
     @Override
