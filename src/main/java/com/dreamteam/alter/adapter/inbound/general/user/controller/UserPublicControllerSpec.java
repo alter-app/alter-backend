@@ -102,4 +102,10 @@ public interface UserPublicControllerSpec {
     })
     ResponseEntity<CommonApiResponse<CheckContactDuplicationResponseDto>> checkContactDuplication(@Valid CheckContactDuplicationRequestDto request);
 
+    @Operation(summary = "사용자 이메일 중복 체크")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "이메일 중복 체크 성공")
+    })
+    ResponseEntity<CommonApiResponse<CheckEmailDuplicationResponseDto>> checkEmailDuplication(@Valid CheckEmailDuplicationRequestDto request);
+
 }

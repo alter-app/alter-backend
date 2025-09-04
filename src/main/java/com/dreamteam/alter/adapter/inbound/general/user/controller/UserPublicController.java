@@ -8,6 +8,7 @@ import com.dreamteam.alter.domain.user.port.inbound.LoginWithSocialUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckContactDuplicationUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckNicknameDuplicationUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.CheckEmailDuplicationUseCase;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,9 @@ public class UserPublicController implements UserPublicControllerSpec {
 
     @Resource(name = "checkNicknameDuplication")
     private final CheckNicknameDuplicationUseCase checkNicknameDuplication;
+
+    @Resource(name = "checkEmailDuplication")
+    private final CheckEmailDuplicationUseCase checkEmailDuplication;
 
     @Override
     @PostMapping("/signup-session")
@@ -85,6 +89,14 @@ public class UserPublicController implements UserPublicControllerSpec {
         @Valid @RequestBody CheckContactDuplicationRequestDto request
     ) {
         return ResponseEntity.ok(CommonApiResponse.of(checkContactDuplication.execute(request)));
+    }
+
+    @Override
+    @PostMapping("/exists/email")
+    public ResponseEntity<CommonApiResponse<CheckEmailDuplicationResponseDto>> checkEmailDuplication(
+        @Valid @RequestBody CheckEmailDuplicationRequestDto request
+    ) {
+        return ResponseEntity.ok(CommonApiResponse.of(checkEmailDuplication.execute(request)));
     }
 
 }
