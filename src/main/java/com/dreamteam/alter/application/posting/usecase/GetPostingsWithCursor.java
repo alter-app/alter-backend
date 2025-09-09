@@ -1,6 +1,7 @@
 package com.dreamteam.alter.application.posting.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.*;
+import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingListFilterDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingListResponseDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingListResponse;
 import com.dreamteam.alter.common.util.CursorUtil;
@@ -24,19 +25,19 @@ public class GetPostingsWithCursor implements GetPostingsWithCursorUseCase {
     private final ObjectMapper objectMapper;
 
     @Override
-    public CursorPaginatedApiResponse<PostingListResponseDto> execute(CursorPageRequestDto request, AppActor actor) {
+    public CursorPaginatedApiResponse<PostingListResponseDto> execute(CursorPageRequestDto request, PostingListFilterDto filter, AppActor actor) {
         CursorDto cursorDto = null;
         if (ObjectUtils.isNotEmpty(request.cursor())) {
             cursorDto = CursorUtil.decodeCursor(request.cursor(), CursorDto.class, objectMapper);
         }
         CursorPageRequest<CursorDto> pageRequest = CursorPageRequest.of(cursorDto, request.pageSize());
 
-        long count = postingQueryRepository.getCountOfPostings();
+        long count = postingQueryRepository.getCountOfPostings(filter);
         if (count == 0) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(request.pageSize(), (int) count));
         }
 
-        List<PostingListResponse> postings = postingQueryRepository.getPostingsWithCursor(pageRequest, actor.getUser());
+        List<PostingListResponse> postings = postingQueryRepository.getPostingsWithCursor(pageRequest, filter, actor.getUser());
         if (ObjectUtils.isEmpty(postings)) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(request.pageSize(), (int) count));
         }
