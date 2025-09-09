@@ -2,8 +2,10 @@ package com.dreamteam.alter.adapter.outbound.posting.persistence;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
+import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingListFilterDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingListResponse;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingDetailResponse;
+import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingFilterOptionsResponse;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingListResponse;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListFilterDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingDetailResponse;
@@ -14,6 +16,7 @@ import com.dreamteam.alter.domain.user.entity.QUserFavoritePosting;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -31,20 +34,33 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public long getCountOfPostings() {
+    public long getCountOfPostings(PostingListFilterDto filter) {
         QPosting qPosting = QPosting.posting;
+        QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
+        QWorkspace qWorkspace = QWorkspace.workspace;
 
         Long count = queryFactory
-            .select(qPosting.count())
+            .select(qPosting.countDistinct())
             .from(qPosting)
-            .where(qPosting.status.eq(PostingStatus.OPEN))
+            .leftJoin(qPosting.schedules, qPostingSchedule)
+            .leftJoin(qPosting.workspace, qWorkspace)
+            .where(
+                qPosting.status.eq(PostingStatus.OPEN),
+                eqProvince(qWorkspace, filter.getProvince()),
+                eqDistrict(qWorkspace, filter.getDistrict()),
+                eqTown(qWorkspace, filter.getTown()),
+                gtePayAmount(qPosting, filter.getMinPayAmount()),
+                ltePayAmount(qPosting, filter.getMaxPayAmount()),
+                gteStartTime(qPostingSchedule, filter.getStartTime()),
+                lteEndTime(qPostingSchedule, filter.getEndTime())
+            )
             .fetchOne();
 
         return ObjectUtils.isEmpty(count) ? 0 : count;
     }
 
     @Override
-    public List<PostingListResponse> getPostingsWithCursor(CursorPageRequest<CursorDto> request, User user) {
+    public List<PostingListResponse> getPostingsWithCursor(CursorPageRequest<CursorDto> request, PostingListFilterDto filter, User user) {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
         QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
@@ -55,11 +71,20 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         List<Long> postingIds = queryFactory
             .select(qPosting.id)
             .from(qPosting)
+            .leftJoin(qPosting.schedules, qPostingSchedule)
+            .leftJoin(qPosting.workspace, qWorkspace)
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
-                cursorConditions(qPosting, request.cursor())
+                cursorConditions(qPosting, request.cursor()),
+                eqProvince(qWorkspace, filter.getProvince()),
+                eqDistrict(qWorkspace, filter.getDistrict()),
+                eqTown(qWorkspace, filter.getTown()),
+                gtePayAmount(qPosting, filter.getMinPayAmount()),
+                ltePayAmount(qPosting, filter.getMaxPayAmount()),
+                gteStartTime(qPostingSchedule, filter.getStartTime()),
+                lteEndTime(qPostingSchedule, filter.getEndTime())
             )
-            .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
+            .orderBy(getOrderSpecifiers(qPosting, filter.getPayAmountSort()))
             .limit(request.pageSize())
             .fetch();
 
@@ -72,7 +97,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .where(qPosting.id.in(postingIds))
-            .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
+            .orderBy(getOrderSpecifiers(qPosting, filter.getPayAmountSort()))
             .distinct()
             .fetch();
 
@@ -279,6 +304,53 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         return status != null ? qPosting.status.eq(status) : null;
     }
 
+    private BooleanExpression eqProvince(QWorkspace qWorkspace, String province) {
+        return province != null ? qWorkspace.province.eq(province) : null;
+    }
+
+    private BooleanExpression eqDistrict(QWorkspace qWorkspace, String district) {
+        return district != null ? qWorkspace.district.eq(district) : null;
+    }
+
+    private BooleanExpression eqTown(QWorkspace qWorkspace, String town) {
+        return town != null ? qWorkspace.town.eq(town) : null;
+    }
+
+    private BooleanExpression gtePayAmount(QPosting qPosting, Integer minPayAmount) {
+        return minPayAmount != null ? qPosting.payAmount.goe(minPayAmount) : null;
+    }
+
+    private BooleanExpression ltePayAmount(QPosting qPosting, Integer maxPayAmount) {
+        return maxPayAmount != null ? qPosting.payAmount.loe(maxPayAmount) : null;
+    }
+
+    private BooleanExpression gteStartTime(QPostingSchedule qPostingSchedule, java.time.LocalTime startTime) {
+        return startTime != null ? qPostingSchedule.startTime.goe(startTime) : null;
+    }
+
+    private BooleanExpression lteEndTime(QPostingSchedule qPostingSchedule, java.time.LocalTime endTime) {
+        return endTime != null ? qPostingSchedule.endTime.loe(endTime) : null;
+    }
+
+
+    private OrderSpecifier<?>[] getOrderSpecifiers(QPosting qPosting, Boolean payAmountSort) {
+        List<OrderSpecifier<?>> orderSpecifiers = new java.util.ArrayList<>();
+        
+        // 급여순이 true인 경우 급여를 첫 번째 정렬 기준으로 설정
+        if (payAmountSort != null && payAmountSort) {
+            orderSpecifiers.add(qPosting.payAmount.desc());
+        }
+        
+        // 기본적으로 최신순 정렬 적용
+        orderSpecifiers.add(qPosting.createdAt.desc());
+        
+        // 마지막에 ID로 정렬하여 일관성 보장
+        orderSpecifiers.add(qPosting.id.desc());
+        
+        return orderSpecifiers.toArray(new OrderSpecifier[0]);
+    }
+
+
     @Override
     public Optional<ManagerPostingDetailResponse> getManagerPostingDetail(Long postingId, ManagerUser managerUser) {
         QPosting qPosting = QPosting.posting;
@@ -327,5 +399,43 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
 
         return ObjectUtils.isEmpty(posting) ? Optional.empty() : Optional.of(posting);
     }
+
+
+    @Override
+    public PostingFilterOptionsResponse getPostingFilterOptions() {
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        QPosting qPosting = QPosting.posting;
+
+        List<String> provinces = queryFactory
+            .select(qWorkspace.province)
+            .from(qPosting)
+            .join(qPosting.workspace, qWorkspace)
+            .where(qPosting.status.eq(PostingStatus.OPEN))
+            .groupBy(qWorkspace.province)
+            .orderBy(qWorkspace.province.asc())
+            .fetch();
+
+        List<String> districts = queryFactory
+            .select(qWorkspace.district)
+            .from(qPosting)
+            .join(qPosting.workspace, qWorkspace)
+            .where(qPosting.status.eq(PostingStatus.OPEN))
+            .groupBy(qWorkspace.district)
+            .orderBy(qWorkspace.district.asc())
+            .fetch();
+
+        List<String> towns = queryFactory
+            .select(qWorkspace.town)
+            .from(qPosting)
+            .join(qPosting.workspace, qWorkspace)
+            .where(qPosting.status.eq(PostingStatus.OPEN))
+            .groupBy(qWorkspace.town)
+            .orderBy(qWorkspace.town.asc())
+            .fetch();
+
+        return PostingFilterOptionsResponse.of(provinces, districts, towns);
+    }
+
+
 
 }

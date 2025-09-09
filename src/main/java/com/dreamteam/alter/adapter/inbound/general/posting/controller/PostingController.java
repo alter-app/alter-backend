@@ -30,14 +30,18 @@ public class PostingController implements PostingControllerSpec {
     @Resource(name = "createPostingApplication")
     private final CreatePostingApplicationUseCase createPostingApplication;
 
+    @Resource(name = "getPostingFilterOptions")
+    private final GetPostingFilterOptionsUseCase getPostingFilterOptions;
+
     @Override
     @GetMapping
     public ResponseEntity<CursorPaginatedApiResponse<PostingListResponseDto>> getPostingsWithCursor(
-        CursorPageRequestDto request
+        CursorPageRequestDto request,
+        PostingListFilterDto filter
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        return ResponseEntity.ok(getPostingsWithCursor.execute(request, actor));
+        return ResponseEntity.ok(getPostingsWithCursor.execute(request, filter, actor));
     }
 
     @Override
@@ -60,6 +64,12 @@ public class PostingController implements PostingControllerSpec {
 
         createPostingApplication.execute(actor, postingId, request);
         return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @GetMapping("/filter-options")
+    public ResponseEntity<CommonApiResponse<PostingFilterOptionsResponseDto>> getPostingFilterOptions() {
+        return ResponseEntity.ok(CommonApiResponse.of(getPostingFilterOptions.execute()));
     }
 
 }

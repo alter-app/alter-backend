@@ -18,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.List;
 
 @Tag(name = "APP - 공고 API")
 public interface PostingControllerSpec {
@@ -41,7 +40,10 @@ public interface PostingControllerSpec {
                     )
                 }))
     })
-    ResponseEntity<CursorPaginatedApiResponse<PostingListResponseDto>> getPostingsWithCursor(CursorPageRequestDto request);
+    ResponseEntity<CursorPaginatedApiResponse<PostingListResponseDto>> getPostingsWithCursor(
+        CursorPageRequestDto request,
+        PostingListFilterDto filter
+    );
 
     @Operation(summary = "공고 상세 조회", description = "")
     @ApiResponses(value = {
@@ -81,5 +83,11 @@ public interface PostingControllerSpec {
         @PathVariable @Min(1) Long postingId,
         @Valid @RequestBody CreatePostingApplicationRequestDto request
     );
+
+    @Operation(summary = "공고 필터링 옵션 조회", description = "공고 목록 필터링에 사용할 수 있는 옵션들을 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "필터링 옵션 조회 성공")
+    })
+    ResponseEntity<CommonApiResponse<PostingFilterOptionsResponseDto>> getPostingFilterOptions();
 
 }
