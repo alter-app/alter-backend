@@ -39,6 +39,11 @@ public class LoginWithSocial implements LoginWithSocialUseCase {
 
         userSocial.updateRefreshToken(socialAuthInfo.getRefreshToken());
 
-        return GenerateTokenResponseDto.of(authService.generateAuthorization(user, TokenScope.APP));
+        TokenScope scope = switch (user.getRole()) {
+            case ROLE_MANAGER -> TokenScope.MANAGER;
+            case ROLE_ADMIN -> TokenScope.ADMIN;
+            default -> TokenScope.APP;
+        };
+        return GenerateTokenResponseDto.of(authService.generateAuthorization(user, scope));
     }
 }

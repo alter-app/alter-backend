@@ -13,7 +13,7 @@ public class UserRoleUtil {
             case ADMIN -> UserRole.ROLE_ADMIN;
             default -> UserRole.ROLE_USER;
         };
-        if (!authorization.getUser().getRoles().contains(requiredRole)) {
+        if (!authorization.getUser().getRole().equals(requiredRole)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
         return requiredRole;
