@@ -7,9 +7,8 @@ import java.util.Optional;
 
 public interface UserQueryRepository {
     Optional<User> findById(Long id);
-    User findBySocialId(String socialId);
-    User findByEmail(String email);
-    User findByNickname(String nickname);
-    User findByContact(String contact);
+    Optional<User> findByEmail(String email);
+    Optional<User> findByNickname(String nickname);
+    Optional<User> findByContact(String contact);
     Optional<UserSelfInfoResponse> getUserSelfInfoSummary(Long id);
 }

@@ -1,17 +1,12 @@
 package com.dreamteam.alter.domain.user.entity;
 
-import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialUserInfo;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.CreateUserRequestDto;
-import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.dreamteam.alter.domain.user.type.UserGender;
 import com.dreamteam.alter.domain.user.type.UserRole;
 import com.dreamteam.alter.domain.user.type.UserStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
-import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -36,6 +31,9 @@ public class User {
     @Column(name = "email", length = 255, nullable = false, unique = true)
     private String email;
 
+    @Column(name = "password", length = 255, nullable = false)
+    private String password;
+
     @Column(name = "name", length = 12, nullable = false)
     private String name;
 
@@ -48,19 +46,13 @@ public class User {
     @Column(name = "birthday", length = 8, nullable = false)
     private String birthday;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender", nullable = false)
     private UserGender gender;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "social_provider", length = 12, nullable = false)
-    private SocialProvider provider;
-
-    @Column(name = "social_id", length = Integer.MAX_VALUE, nullable = false, unique = true)
-    private String socialId;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "roles", columnDefinition = "jsonb", nullable = false)
-    private List<UserRole> roles;
+    @Column(name = "role", nullable = false)
+    private UserRole role;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
@@ -81,20 +73,28 @@ public class User {
     @SQLRestriction("status != 'DELETED'")
     private List<UserCertificate> certificates;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<UserSocial> userSocials;
+
     public static User create(
-        CreateUserRequestDto request,
-        SocialUserInfo socialUserInfo
+        String email,
+        String contact,
+        String encodedPassword,
+        String name,
+        String nickname,
+        UserGender gender,
+        String birthday
     ) {
         return User.builder()
-            .email(socialUserInfo.getEmail())
-            .name(request.getName())
-            .nickname(request.getNickname())
-            .contact(request.getContact())
-            .birthday(request.getBirthday())
-            .gender(request.getGender())
-            .provider(socialUserInfo.getProvider())
-            .socialId(socialUserInfo.getSocialId())
-            .roles(List.of(UserRole.ROLE_USER))
+            .email(email)
+            .password(encodedPassword)
+            .name(name)
+            .nickname(nickname)
+            .contact(contact)
+            .birthday(birthday)
+            .gender(gender)
+            .role(UserRole.ROLE_USER)
             .status(UserStatus.ACTIVE)
             .build();
     }
@@ -103,4 +103,7 @@ public class User {
         certificates.add(userCertificate);
     }
 
+    public void addUserSocial(UserSocial userSocial) {
+        userSocials.add(userSocial);
+    }
 }

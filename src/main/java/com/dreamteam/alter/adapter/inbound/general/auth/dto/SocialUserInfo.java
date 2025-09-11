@@ -50,16 +50,4 @@ public class SocialUserInfo {
             .build();
     }
 
-    public static SocialUserInfo of(
-        SocialProvider provider,
-        String socialId,
-        String email
-    ) {
-        return SocialUserInfo.builder()
-            .provider(provider)
-            .socialId(socialId)
-            .email(email)
-            .build();
-    }
-
 }
