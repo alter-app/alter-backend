@@ -1,14 +1,13 @@
 package com.dreamteam.alter.adapter.outbound.posting.persistence;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.CoordinateDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingListFilterDto;
-import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingListResponse;
-import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingDetailResponse;
-import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingFilterOptionsResponse;
-import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingListResponse;
+import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingMapListFilterDto;
+import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingMapMarkerFilterDto;
+import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.*;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListFilterDto;
-import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingDetailResponse;
 import com.dreamteam.alter.domain.posting.entity.*;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
@@ -17,13 +16,14 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,6 +53,24 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
                 lteEndTime(qPostingSchedule, filter.getEndTime())
+            )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
+    @Override
+    public long getCountOfPostingMapList(PostingMapListFilterDto filter) {
+        QPosting qPosting = QPosting.posting;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
+        Long count = queryFactory
+            .select(qPosting.countDistinct())
+            .from(qPosting)
+            .leftJoin(qPosting.workspace, qWorkspace)
+            .where(
+                qPosting.status.eq(PostingStatus.OPEN),
+                withinBounds(qWorkspace, filter.getCoordinate1(), filter.getCoordinate2())
             )
             .fetchOne();
 
@@ -132,6 +150,169 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                     scrappedPostingIds.contains(posting.getId())
                 )
             )
+            .toList();
+    }
+
+    @Override
+    public List<PostingListResponse> getPostingMapListWithCursor(CursorPageRequest<CursorDto> request, PostingMapListFilterDto filter, User user) {
+        QPosting qPosting = QPosting.posting;
+        QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
+        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
+        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        QUserFavoritePosting qUserFavoritePosting = QUserFavoritePosting.userFavoritePosting;
+
+        // getPostingMapMarkers와 동일한 좌표 기준으로 공고 목록을 커서 페이징으로 조회
+        List<Long> postingIds = queryFactory
+            .select(qPosting.id)
+            .from(qPosting)
+            .leftJoin(qPosting.workspace, qWorkspace)
+            .where(
+                qPosting.status.eq(PostingStatus.OPEN),
+                cursorConditions(qPosting, request.cursor()),
+                withinBounds(qWorkspace, filter.getCoordinate1(), filter.getCoordinate2())
+            )
+            .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
+            .limit(request.pageSize())
+            .fetch();
+
+        if (ObjectUtils.isEmpty(postingIds)) {
+            return Collections.emptyList();
+        }
+
+        List<Posting> postings = queryFactory
+            .selectFrom(qPosting)
+            .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
+            .where(qPosting.id.in(postingIds))
+            .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
+            .distinct()
+            .fetch();
+
+        Set<Long> scrappedPostingIds =
+            new HashSet<>(queryFactory.select(qUserFavoritePosting.posting.id)
+                .from(qUserFavoritePosting)
+                .where(
+                    qUserFavoritePosting.user.eq(user),
+                    qUserFavoritePosting.posting.id.in(postingIds)
+                )
+                .fetch());
+
+        List<PostingKeywordMap> keywordMaps = queryFactory
+            .selectFrom(qPostingKeywordMap)
+            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword).fetchJoin()
+            .where(qPostingKeywordMap.posting.id.in(postingIds))
+            .fetch();
+
+        Map<Long, List<PostingKeyword>> postingIdToKeywords = keywordMaps.stream()
+            .collect(
+                Collectors.groupingBy(
+                    pkMap -> pkMap.getPosting().getId(),
+                    java.util.stream.Collectors.mapping(PostingKeywordMap::getPostingKeyword, java.util.stream.Collectors.toList())
+                )
+            );
+
+        return postings.stream()
+            .map(
+                posting -> PostingListResponse.of(
+                    posting,
+                    postingIdToKeywords,
+                    scrappedPostingIds.contains(posting.getId())
+                )
+            )
+            .toList();
+    }
+
+    @Override
+    public List<PostingListForMapMarkerResponse> getPostingListForMapMarker(PostingMapMarkerFilterDto filter) {
+        QPosting qPosting = QPosting.posting;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
+        List<PostingListForMapMarkerResponse> results = queryFactory.select(
+                Projections.constructor(
+                    PostingListForMapMarkerResponse.class,
+                    qWorkspace.id,
+                    qWorkspace.latitude,
+                    qWorkspace.longitude
+                )
+
+            )
+            .from(qPosting)
+            .leftJoin(qPosting.workspace, qWorkspace)
+            .where(
+                qPosting.status.eq(PostingStatus.OPEN),
+                withinBounds(qWorkspace, filter.getCoordinate1(), filter.getCoordinate2())
+            )
+            .groupBy(qWorkspace.id, qWorkspace.businessName, qWorkspace.latitude, qWorkspace.longitude)
+            .orderBy(qWorkspace.id.asc())
+            .limit(50)
+            .fetch();
+
+        if (ObjectUtils.isEmpty(results)) {
+            return Collections.emptyList();
+        }
+
+        return results;
+    }
+
+    @Override
+    public List<PostingListResponse> getWorkspacePostingList(Long workspaceId, User user) {
+        QPosting qPosting = QPosting.posting;
+        QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
+        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
+        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        QUserFavoritePosting qUserFavoritePosting = QUserFavoritePosting.userFavoritePosting;
+
+        List<Posting> postings = queryFactory
+            .selectFrom(qPosting)
+            .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
+            .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .where(
+                qPosting.status.eq(PostingStatus.OPEN),
+                qWorkspace.id.eq(workspaceId)
+            )
+            .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
+            .fetch();
+
+        if (ObjectUtils.isEmpty(postings)) {
+            return Collections.emptyList();
+        }
+
+        List<Long> postingIds = postings.stream()
+            .map(Posting::getId)
+            .toList();
+
+        Set<Long> scrappedPostingIds = new HashSet<>(
+            queryFactory.select(qUserFavoritePosting.posting.id)
+                .from(qUserFavoritePosting)
+                .where(
+                    qUserFavoritePosting.user.eq(user),
+                    qUserFavoritePosting.posting.id.in(postingIds)
+                )
+                .fetch()
+        );
+
+        List<PostingKeywordMap> keywordMaps = queryFactory
+            .selectFrom(qPostingKeywordMap)
+            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword).fetchJoin()
+            .where(qPostingKeywordMap.posting.id.in(postingIds))
+            .fetch();
+
+        Map<Long, List<PostingKeyword>> postingIdToKeywords = keywordMaps.stream()
+            .collect(
+                Collectors.groupingBy(
+                    pkMap -> pkMap.getPosting().getId(),
+                    Collectors.mapping(PostingKeywordMap::getPostingKeyword, Collectors.toList())
+                )
+            );
+
+        return postings.stream()
+            .map(posting -> PostingListResponse.of(
+                posting,
+                postingIdToKeywords,
+                scrappedPostingIds.contains(posting.getId())
+            ))
             .toList();
     }
 
@@ -279,17 +460,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     private BooleanExpression cursorConditions(QPosting qPosting, CursorDto cursor) {
         return ObjectUtils.isEmpty(cursor)
             ? null
-            : ltCreatedAt(qPosting, cursor.getCreatedAt())
-                .or(eqCreatedAt(qPosting, cursor.getCreatedAt())
-                    .and(ltPostingId(qPosting, cursor.getId())));
-    }
-
-    private BooleanExpression ltCreatedAt(QPosting qPosting, LocalDateTime createdAt) {
-        return createdAt != null ? qPosting.createdAt.lt(createdAt) : null;
-    }
-
-    private BooleanExpression eqCreatedAt(QPosting qPosting, LocalDateTime createdAt) {
-        return createdAt != null ? qPosting.createdAt.eq(createdAt) : null;
+            : ltPostingId(qPosting, cursor.getId());
     }
 
     private BooleanExpression ltPostingId(QPosting qPosting, Long postingId) {
@@ -332,6 +503,16 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         return endTime != null ? qPostingSchedule.endTime.loe(endTime) : null;
     }
 
+    private BooleanExpression withinBounds(QWorkspace qWorkspace, CoordinateDto coordinate1, CoordinateDto coordinate2) {
+        BigDecimal minLat = coordinate1.getLatitude().min(coordinate2.getLatitude());
+        BigDecimal maxLat = coordinate1.getLatitude().max(coordinate2.getLatitude());
+        BigDecimal minLng = coordinate1.getLongitude().min(coordinate2.getLongitude());
+        BigDecimal maxLng = coordinate1.getLongitude().max(coordinate2.getLongitude());
+        
+        return qWorkspace.latitude.between(minLat, maxLat)
+            .and(qWorkspace.longitude.between(minLng, maxLng));
+    }
+
 
     private OrderSpecifier<?>[] getOrderSpecifiers(QPosting qPosting, Boolean payAmountSort) {
         List<OrderSpecifier<?>> orderSpecifiers = new java.util.ArrayList<>();
@@ -339,13 +520,14 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         // 급여순이 true인 경우 급여를 첫 번째 정렬 기준으로 설정
         if (payAmountSort != null && payAmountSort) {
             orderSpecifiers.add(qPosting.payAmount.desc());
+            // 급여순 정렬 시 커서 페이지네이션을 위해 ID를 두 번째 기준으로 사용
+            orderSpecifiers.add(qPosting.id.desc());
+        } else {
+            // 기본적으로 최신순 정렬 적용
+            orderSpecifiers.add(qPosting.createdAt.desc());
+            // 마지막에 ID로 정렬하여 일관성 보장
+            orderSpecifiers.add(qPosting.id.desc());
         }
-        
-        // 기본적으로 최신순 정렬 적용
-        orderSpecifiers.add(qPosting.createdAt.desc());
-        
-        // 마지막에 ID로 정렬하여 일관성 보장
-        orderSpecifiers.add(qPosting.id.desc());
         
         return orderSpecifiers.toArray(new OrderSpecifier[0]);
     }
