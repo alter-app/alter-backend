@@ -1,7 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
 
+import com.dreamteam.alter.adapter.inbound.general.posting.dto.ManagerPostingListWorkspaceResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingKeywordListResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingListWorkspaceResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingScheduleResponseDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingListResponse;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
@@ -57,7 +57,7 @@ public class ManagerPostingListResponseDto {
 
     @NotNull
     @Schema(description = "업장 정보")
-    private PostingListWorkspaceResponseDto workspace;
+    private ManagerPostingListWorkspaceResponseDto workspace;
 
     public static ManagerPostingListResponseDto from(ManagerPostingListResponse response) {
         return ManagerPostingListResponseDto.builder()
@@ -72,7 +72,7 @@ public class ManagerPostingListResponseDto {
             .schedules(response.getSchedules().stream()
                 .map(PostingScheduleResponseDto::from)
                 .toList())
-            .workspace(PostingListWorkspaceResponseDto.from(response.getWorkspace()))
+            .workspace(ManagerPostingListWorkspaceResponseDto.from(response.getWorkspace()))
             .build();
     }
 
