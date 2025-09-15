@@ -28,7 +28,7 @@ public class PostingMapMarkerResponseDto {
 
     public static PostingMapMarkerResponseDto of(PostingListForMapMarkerResponse entity) {
         return PostingMapMarkerResponseDto.builder()
-            .workspaceId(entity.getId())
+            .workspaceId(entity.getWorkspaceId())
             .latitude(entity.getLatitude())
             .longitude(entity.getLongitude())
             .build();

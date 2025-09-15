@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class PostingListForMapMarkerResponse {
 
-    private Long id;
+    private Long workspaceId;
     private BigDecimal latitude;
     private BigDecimal longitude;
 
