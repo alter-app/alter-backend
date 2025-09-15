@@ -20,6 +20,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
@@ -30,6 +31,8 @@ import java.util.stream.Collectors;
 @Repository
 @RequiredArgsConstructor
 public class PostingQueryRepositoryImpl implements PostingQueryRepository {
+
+    private static final int MARKER_MAX_COUNT = 50;
 
     private final JPAQueryFactory queryFactory;
 
@@ -245,7 +248,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             )
             .groupBy(qWorkspace.id, qWorkspace.businessName, qWorkspace.latitude, qWorkspace.longitude)
             .orderBy(qWorkspace.id.asc())
-            .limit(50)
+            .limit(MARKER_MAX_COUNT)
             .fetch();
 
         if (ObjectUtils.isEmpty(results)) {
@@ -462,9 +465,9 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             return null;
         }
         
-        // 급여순 정렬인 경우 ID만 사용 (급여 정보가 CursorDto에 없음)
-        if (payAmountSort != null && payAmountSort) {
-            return cursor.getId() != null ? qPosting.id.lt(cursor.getId()) : null;
+        // 급여순 정렬인 경우 급여와 ID 조건을 모두 적용
+        if (BooleanUtils.isTrue(payAmountSort)) {
+            return ltPayAmountAndId(qPosting, cursor);
         } else {
             // 최신순 정렬인 경우 생성일시와 ID 조건을 모두 적용
             return ltCreatedAtAndId(qPosting, cursor);
@@ -492,6 +495,33 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             return idCondition;
         }
         return null;
+    }
+
+    private BooleanExpression ltPayAmountAndId(QPosting qPosting, CursorDto cursor) {
+        if (cursor.getId() == null) {
+            return null;
+        }
+        
+        // 마지막 조회된 공고의 급여 정보를 조회
+        Integer lastPayAmount = queryFactory
+            .select(qPosting.payAmount)
+            .from(qPosting)
+            .where(qPosting.id.eq(cursor.getId()))
+            .fetchOne();
+        
+        if (lastPayAmount == null) {
+            // 해당 ID의 공고가 없으면 ID만으로 비교
+            return qPosting.id.lt(cursor.getId());
+        }
+        
+        // 급여가 다른 경우: payAmount < lastPayAmount
+        BooleanExpression payAmountCondition = qPosting.payAmount.lt(lastPayAmount);
+        
+        // 급여가 같은 경우: payAmount = lastPayAmount AND id < cursor.id
+        BooleanExpression payAmountEqualCondition = qPosting.payAmount.eq(lastPayAmount)
+            .and(qPosting.id.lt(cursor.getId()));
+        
+        return payAmountCondition.or(payAmountEqualCondition);
     }
 
     private BooleanExpression eqWorkspaceId(QWorkspace qWorkspace, Long workspaceId) {
@@ -545,9 +575,9 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         List<OrderSpecifier<?>> orderSpecifiers = new java.util.ArrayList<>();
         
         // 급여순이 true인 경우 급여를 첫 번째 정렬 기준으로 설정
-        if (payAmountSort != null && payAmountSort) {
+        if (BooleanUtils.isTrue(payAmountSort)) {
             orderSpecifiers.add(qPosting.payAmount.desc());
-            // 급여순 정렬 시 커서 페이지네이션을 위해 ID를 두 번째 기준으로 사용
+            // 급여가 같은 경우 ID로 정렬
             orderSpecifiers.add(qPosting.id.desc());
         } else {
             // 기본적으로 최신순 정렬 적용
