@@ -93,7 +93,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .leftJoin(qPosting.workspace, qWorkspace)
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
-                cursorConditions(qPosting, request.cursor()),
+                cursorConditions(qPosting, request.cursor(), filter.getPayAmountSort()),
                 eqProvince(qWorkspace, filter.getProvince()),
                 eqDistrict(qWorkspace, filter.getDistrict()),
                 eqTown(qWorkspace, filter.getTown()),
@@ -169,7 +169,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .leftJoin(qPosting.workspace, qWorkspace)
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
-                cursorConditions(qPosting, request.cursor()),
+                cursorConditions(qPosting, request.cursor(), false),
                 withinBounds(qWorkspace, filter.getCoordinate1(), filter.getCoordinate2())
             )
             .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
@@ -413,7 +413,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 qWorkspace.managerUser.eq(managerUser),
                 eqWorkspaceId(qWorkspace, filter.getWorkspaceId()),
                 eqPostingStatus(qPosting, filter.getStatus()),
-                cursorConditions(qPosting, request.cursor()),
+                cursorConditions(qPosting, request.cursor(), false),
                 qPosting.status.ne(PostingStatus.DELETED)
             )
             .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
@@ -457,14 +457,41 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .toList();
     }
 
-    private BooleanExpression cursorConditions(QPosting qPosting, CursorDto cursor) {
-        return ObjectUtils.isEmpty(cursor)
-            ? null
-            : ltPostingId(qPosting, cursor.getId());
+    private BooleanExpression cursorConditions(QPosting qPosting, CursorDto cursor, Boolean payAmountSort) {
+        if (ObjectUtils.isEmpty(cursor)) {
+            return null;
+        }
+        
+        // 급여순 정렬인 경우 ID만 사용 (급여 정보가 CursorDto에 없음)
+        if (payAmountSort != null && payAmountSort) {
+            return cursor.getId() != null ? qPosting.id.lt(cursor.getId()) : null;
+        } else {
+            // 최신순 정렬인 경우 생성일시와 ID 조건을 모두 적용
+            return ltCreatedAtAndId(qPosting, cursor);
+        }
     }
 
-    private BooleanExpression ltPostingId(QPosting qPosting, Long postingId) {
-        return postingId != null ? qPosting.id.lt(postingId) : null;
+    private BooleanExpression ltCreatedAtAndId(QPosting qPosting, CursorDto cursor) {
+        BooleanExpression createdAtCondition = cursor.getCreatedAt() != null 
+            ? qPosting.createdAt.lt(cursor.getCreatedAt()) 
+            : null;
+        BooleanExpression idCondition = cursor.getId() != null 
+            ? qPosting.id.lt(cursor.getId()) 
+            : null;
+        
+        // 생성일시가 같을 때만 ID로 비교
+        BooleanExpression createdAtEqualCondition = cursor.getCreatedAt() != null 
+            ? qPosting.createdAt.eq(cursor.getCreatedAt()).and(qPosting.id.lt(cursor.getId()))
+            : null;
+        
+        if (createdAtCondition != null && idCondition != null) {
+            return createdAtCondition.or(createdAtEqualCondition);
+        } else if (createdAtCondition != null) {
+            return createdAtCondition;
+        } else if (idCondition != null) {
+            return idCondition;
+        }
+        return null;
     }
 
     private BooleanExpression eqWorkspaceId(QWorkspace qWorkspace, Long workspaceId) {
