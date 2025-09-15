@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
+
 @Tag(name = "APP - 공고 API")
 public interface PostingControllerSpec {
 
@@ -41,7 +42,10 @@ public interface PostingControllerSpec {
                     )
                 }))
     })
-    ResponseEntity<CursorPaginatedApiResponse<PostingListResponseDto>> getPostingsWithCursor(CursorPageRequestDto request);
+    ResponseEntity<CursorPaginatedApiResponse<PostingListResponseDto>> getPostingsWithCursor(
+        CursorPageRequestDto request,
+        PostingListFilterDto filter
+    );
 
     @Operation(summary = "공고 상세 조회", description = "")
     @ApiResponses(value = {
@@ -80,6 +84,49 @@ public interface PostingControllerSpec {
     ResponseEntity<CommonApiResponse<Void>> applyIntoPosting(
         @PathVariable @Min(1) Long postingId,
         @Valid @RequestBody CreatePostingApplicationRequestDto request
+    );
+
+    @Operation(summary = "공고 필터링 옵션 조회", description = "공고 목록 필터링에 사용할 수 있는 옵션들을 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "필터링 옵션 조회 성공")
+    })
+    ResponseEntity<CommonApiResponse<PostingFilterOptionsResponseDto>> getPostingFilterOptions();
+
+    @Operation(summary = "지도 공고 리스트 조회 (커서 페이징)", description = "지도 뷰에서 좌표 기반으로 공고를 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "지도 공고 리스트 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    ResponseEntity<CursorPaginatedApiResponse<PostingMapListResponseDto>> getPostingMapList(
+        CursorPageRequestDto request,
+        PostingMapListFilterDto filter
+    );
+
+    @Operation(summary = "지도 마커 조회", description = "지도에 표시할 workspace별 마커 정보를 조회합니다. (최대 50건)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "지도 마커 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    ResponseEntity<CommonApiResponse<List<PostingMapMarkerResponseDto>>> getPostingMapMarkers(
+        PostingMapMarkerFilterDto filter
+    );
+
+    @Operation(summary = "업장 공고 목록 조회", description = "특정 업장의 공고 목록을 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "업장 공고 목록 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    ResponseEntity<CommonApiResponse<List<PostingListResponseDto>>> getWorkspacePostingList(
+        @PathVariable Long workspaceId
     );
 
 }

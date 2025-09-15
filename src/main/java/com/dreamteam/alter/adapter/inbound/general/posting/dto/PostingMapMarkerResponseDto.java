@@ -1,8 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.general.posting.dto;
 
-import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingListForMapMarkerResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -12,16 +11,12 @@ import java.math.BigDecimal;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-@Schema(description = "공고 리스트 조회 업장 정보 응답 DTO")
-public class PostingListWorkspaceResponseDto {
+@Schema(description = "지도 마커 응답 DTO")
+public class PostingMapMarkerResponseDto {
 
     @NotNull
     @Schema(description = "업장 ID", example = "1")
-    private Long id;
-
-    @NotBlank
-    @Schema(description = "업장 이름", example = "카페 알터")
-    private String businessName;
+    private Long workspaceId;
 
     @NotNull
     @Schema(description = "위도", example = "37.5665")
@@ -31,13 +26,11 @@ public class PostingListWorkspaceResponseDto {
     @Schema(description = "경도", example = "126.9780")
     private BigDecimal longitude;
 
-    public static PostingListWorkspaceResponseDto from(Workspace entity) {
-        return PostingListWorkspaceResponseDto.builder()
-            .id(entity.getId())
-            .businessName(entity.getBusinessName())
+    public static PostingMapMarkerResponseDto of(PostingListForMapMarkerResponse entity) {
+        return PostingMapMarkerResponseDto.builder()
+            .workspaceId(entity.getWorkspaceId())
             .latitude(entity.getLatitude())
             .longitude(entity.getLongitude())
             .build();
     }
-
 }

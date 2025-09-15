@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/app/postings")
 @PreAuthorize("hasAnyRole('USER')")
@@ -30,14 +32,27 @@ public class PostingController implements PostingControllerSpec {
     @Resource(name = "createPostingApplication")
     private final CreatePostingApplicationUseCase createPostingApplication;
 
+    @Resource(name = "getPostingFilterOptions")
+    private final GetPostingFilterOptionsUseCase getPostingFilterOptions;
+
+    @Resource(name = "getPostingMapList")
+    private final GetPostingMapListUseCase getPostingMapList;
+
+    @Resource(name = "getPostingMapMarkers")
+    private final GetPostingMapMarkersUseCase getPostingMapMarkers;
+
+    @Resource(name = "getWorkspacePostingList")
+    private final GetWorkspacePostingListUseCase getWorkspacePostingList;
+
     @Override
     @GetMapping
     public ResponseEntity<CursorPaginatedApiResponse<PostingListResponseDto>> getPostingsWithCursor(
-        CursorPageRequestDto request
+        CursorPageRequestDto request,
+        PostingListFilterDto filter
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        return ResponseEntity.ok(getPostingsWithCursor.execute(request, actor));
+        return ResponseEntity.ok(getPostingsWithCursor.execute(request, filter, actor));
     }
 
     @Override
@@ -60,6 +75,41 @@ public class PostingController implements PostingControllerSpec {
 
         createPostingApplication.execute(actor, postingId, request);
         return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @GetMapping("/filter-options")
+    public ResponseEntity<CommonApiResponse<PostingFilterOptionsResponseDto>> getPostingFilterOptions() {
+        return ResponseEntity.ok(CommonApiResponse.of(getPostingFilterOptions.execute()));
+    }
+
+    @Override
+    @GetMapping("/map")
+    public ResponseEntity<CursorPaginatedApiResponse<PostingMapListResponseDto>> getPostingMapList(
+        CursorPageRequestDto request,
+        PostingMapListFilterDto filter
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        return ResponseEntity.ok(getPostingMapList.execute(request, filter, actor));
+    }
+
+    @Override
+    @GetMapping("/map/markers")
+    public ResponseEntity<CommonApiResponse<List<PostingMapMarkerResponseDto>>> getPostingMapMarkers(
+        PostingMapMarkerFilterDto filter
+    ) {
+        return ResponseEntity.ok(CommonApiResponse.of(getPostingMapMarkers.execute(filter)));
+    }
+
+    @Override
+    @GetMapping("/workspace/{workspaceId}")
+    public ResponseEntity<CommonApiResponse<List<PostingListResponseDto>>> getWorkspacePostingList(
+        @PathVariable Long workspaceId
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        return ResponseEntity.ok(CommonApiResponse.of(getWorkspacePostingList.execute(workspaceId, actor)));
     }
 
 }
