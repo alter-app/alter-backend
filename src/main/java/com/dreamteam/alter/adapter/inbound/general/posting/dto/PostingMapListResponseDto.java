@@ -42,8 +42,19 @@ public class PostingMapListResponseDto {
     private List<PostingKeywordListResponseDto> keywords;
 
     @NotNull
+    @Schema(description = "공고 스케줄", example = "[" +
+        "{" +
+        "\"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"positionsNeeded\": 3, \"position\": 3" +
+        "}," +
+        "{" +
+        "\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"positionsNeeded\": 1, \"position\": 2" +
+        "}" +
+        "]")
+    private List<PostingScheduleResponseDto> schedules;
+
+    @NotNull
     @Schema(description = "업장 정보")
-    private PostingMapListWorkspaceResponseDto workspace;
+    private PostingListWorkspaceResponseDto workspace;
 
     @NotNull
     @Schema(description = "스크랩 여부", example = "true")
@@ -59,7 +70,10 @@ public class PostingMapListResponseDto {
             .keywords(entity.getPostingKeywords().stream()
                 .map(PostingKeywordListResponseDto::from)
                 .toList())
-            .workspace(PostingMapListWorkspaceResponseDto.from(entity.getWorkspace()))
+            .schedules(entity.getSchedules().stream()
+                .map(PostingScheduleResponseDto::from)
+                .toList())
+            .workspace(PostingListWorkspaceResponseDto.from(entity.getWorkspace()))
             .scrapped(entity.isScrapped())
             .build();
     }
