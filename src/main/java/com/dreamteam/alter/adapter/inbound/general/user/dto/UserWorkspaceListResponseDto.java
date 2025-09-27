@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -22,11 +23,15 @@ public class UserWorkspaceListResponseDto {
     @Schema(description = "입사일", example = "2024-01-15")
     private LocalDate employedAt;
 
+    @Schema(description = "다음 근무 일정", example = "2024-01-20T09:00:00")
+    private LocalDateTime nextShiftDateTime;
+
     public static UserWorkspaceListResponseDto from(UserWorkspaceListResponse response) {
         return UserWorkspaceListResponseDto.builder()
             .workspaceId(response.getWorkspaceId())
             .businessName(response.getBusinessName())
             .employedAt(response.getEmployedAt())
+            .nextShiftDateTime(response.getNextShiftDateTime())
             .build();
     }
 }
