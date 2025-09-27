@@ -68,11 +68,6 @@ public class WorkspaceShift {
     }
 
     public void assignWorker(WorkspaceWorker workspaceWorker) {
-        // 이미 배정된 근무자가 있는지 확인
-        if (this.assignedWorkspaceWorker != null) {
-            throw new IllegalStateException("이미 근무자가 배정된 스케줄입니다.");
-        }
-        
         this.assignedWorkspaceWorker = workspaceWorker;
         this.status = WorkspaceShiftStatus.CONFIRMED;
     }

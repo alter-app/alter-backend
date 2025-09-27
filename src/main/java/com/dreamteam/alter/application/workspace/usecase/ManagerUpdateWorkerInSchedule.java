@@ -9,6 +9,7 @@ import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateWorkerUseC
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,11 @@ public class ManagerUpdateWorkerInSchedule implements ManagerUpdateWorkerUseCase
         }
 
         WorkspaceShift workspaceShift = shift.get();
+
+        // 기존 근무자 존재 확인
+        if (ObjectUtils.isEmpty(workspaceShift.getAssignedWorkspaceWorker())) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "기존에 배정된 근무자가 없는 스케줄입니다.");
+        }
 
         // 새로운 근무자 존재 확인
         Optional<WorkspaceWorker> newWorkspaceWorker = workspaceWorkerQueryRepository.findById(newWorkerId);

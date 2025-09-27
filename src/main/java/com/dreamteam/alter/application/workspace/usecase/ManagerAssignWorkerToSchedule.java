@@ -9,6 +9,7 @@ import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerAssignWorkerUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,8 +50,8 @@ public class ManagerAssignWorkerToSchedule implements ManagerAssignWorkerUseCase
         WorkspaceShift workspaceShift = shift.get();
         
         // 이미 배정된 근무자가 있는지 확인
-        if (workspaceShift.getAssignedWorkspaceWorker() != null) {
-            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이미 근무자가 배정된 스케줄입니다.");
+        if (ObjectUtils.isNotEmpty(workspaceShift.getAssignedWorkspaceWorker())) {
+            throw new CustomException(ErrorCode.CONFLICT, "이미 근무자가 배정된 스케줄입니다.");
         }
         
         // 해당 근무자가 이미 같은 시간대에 배정된 스케줄이 있는지 확인
@@ -61,7 +62,7 @@ public class ManagerAssignWorkerToSchedule implements ManagerAssignWorkerUseCase
         )) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "해당 근무자가 이미 같은 시간대에 배정된 스케줄이 있습니다.");
         }
-        
+
         workspaceShift.assignWorker(workspaceWorker.get());
     }
 }
