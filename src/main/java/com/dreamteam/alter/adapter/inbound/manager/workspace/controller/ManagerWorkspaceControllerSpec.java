@@ -1,8 +1,8 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceListResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListFilterDto;
@@ -37,10 +37,10 @@ public interface ManagerWorkspaceControllerSpec {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "근무자 목록 조회 성공")
     })
-    ResponseEntity<PaginatedResponseDto<ManagerWorkspaceWorkerListResponseDto>> getWorkspaceWorkerList(
+    ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<ManagerWorkspaceWorkerListResponseDto>>> getWorkspaceWorkerList(
         @PathVariable Long workspaceId,
         ManagerWorkspaceWorkerListFilterDto filter,
-        PageRequestDto pageRequest
+        CursorPageRequestDto pageRequest
     );
 
     // 업장 근무자 상세 정보 조회

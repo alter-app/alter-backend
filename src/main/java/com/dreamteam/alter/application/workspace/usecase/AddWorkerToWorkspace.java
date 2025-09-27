@@ -12,10 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service("createWorkspaceWorker")
+@Service("addWorkerToWorkspace")
 @RequiredArgsConstructor
 @Transactional
-public class CreateWorkspaceWorker implements CreateWorkspaceWorkerUseCase {
+public class AddWorkerToWorkspace implements CreateWorkspaceWorkerUseCase {
 
     private final WorkspaceWorkerRepository workspaceWorkerRepository;
     private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;

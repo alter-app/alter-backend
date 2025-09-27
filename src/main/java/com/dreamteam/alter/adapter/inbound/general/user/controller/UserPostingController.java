@@ -38,8 +38,8 @@ public class UserPostingController implements UserPostingControllerSpec {
 
     @Override
     @GetMapping("/applications")
-    public ResponseEntity<PaginatedResponseDto<UserPostingApplicationListResponseDto>> getMyPostingApplications(
-        PageRequestDto pageRequest
+    public ResponseEntity<CursorPaginatedApiResponse<UserPostingApplicationListResponseDto>> getMyPostingApplications(
+        CursorPageRequestDto pageRequest
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 

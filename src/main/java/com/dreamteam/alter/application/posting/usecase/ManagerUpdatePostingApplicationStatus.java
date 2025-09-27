@@ -22,7 +22,7 @@ public class ManagerUpdatePostingApplicationStatus implements ManagerUpdatePosti
 
     private final PostingApplicationQueryRepository postingApplicationQueryRepository;
 
-    @Resource(name = "createWorkspaceWorker")
+    @Resource(name = "addWorkerToWorkspace")
     private final CreateWorkspaceWorkerUseCase createWorkspaceWorker;
 
     @Override

@@ -46,7 +46,7 @@ public class WorkspaceAcceptReputationRequest extends AbstractAcceptReputationRe
         }
 
         if (!ReputationRequestStatus.REQUESTED.equals(reputationRequest.getStatus())) {
-            throw new CustomException(ErrorCode.UNMODIFIABLE_STATUS, "이미 처리된 평판 요청입니다.");
+            throw new CustomException(ErrorCode.CONFLICT, "이미 처리된 평판 요청입니다.");
         }
 
         Workspace workspace = workspaceQueryRepository.findById(reputationRequest.getTargetId())

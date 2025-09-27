@@ -1,11 +1,15 @@
 package com.dreamteam.alter.domain.workspace.port.outbound;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListFilterDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceWorkerListResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceWorkerListResponse;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 
 import java.util.List;
@@ -28,5 +32,28 @@ public interface WorkspaceQueryRepository {
         Long workspaceId,
         ManagerWorkspaceWorkerListFilterDto filter,
         PageRequestDto pageRequest
+    );
+
+    List<ManagerWorkspaceWorkerListResponse> getWorkspaceWorkerListWithCursor(
+        ManagerUser managerUser,
+        Long workspaceId,
+        ManagerWorkspaceWorkerListFilterDto filter,
+        CursorPageRequest<CursorDto> pageRequest
+    );
+
+    boolean isUserActiveWorkerInWorkspace(User user, Long workspaceId);
+
+    long getUserWorkspaceWorkerCount(User user, Long workspaceId);
+
+    List<UserWorkspaceWorkerListResponse> getUserWorkspaceWorkerList(
+        User user,
+        Long workspaceId,
+        PageRequestDto pageRequest
+    );
+
+    List<UserWorkspaceWorkerListResponse> getUserWorkspaceWorkerListWithCursor(
+        User user,
+        Long workspaceId,
+        CursorPageRequest<CursorDto> pageRequest
     );
 }
