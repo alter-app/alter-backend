@@ -1,8 +1,8 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceListResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListFilterDto;
@@ -60,14 +60,14 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
 
     @Override
     @GetMapping("/{workspaceId}/workers")
-    public ResponseEntity<PaginatedResponseDto<ManagerWorkspaceWorkerListResponseDto>> getWorkspaceWorkerList(
+    public ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<ManagerWorkspaceWorkerListResponseDto>>> getWorkspaceWorkerList(
         @PathVariable Long workspaceId,
         ManagerWorkspaceWorkerListFilterDto filter,
-        PageRequestDto pageRequest
+        CursorPageRequestDto pageRequest
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
 
-        return ResponseEntity.ok(managerGetWorkspaceWorkerList.execute(actor, workspaceId, filter, pageRequest));
+        return ResponseEntity.ok(CommonApiResponse.of(managerGetWorkspaceWorkerList.execute(actor, workspaceId, filter, pageRequest)));
     }
 
 }

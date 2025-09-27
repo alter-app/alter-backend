@@ -12,6 +12,7 @@ import java.util.Optional;
 
 public interface WorkspaceWorkerQueryRepository {
     Optional<WorkspaceWorker> findActiveWorkerByWorkspaceAndUser(Workspace workspace, User user);
+    Optional<WorkspaceWorker> findById(Long id);
     
     long getUserActiveWorkspaceCount(User user);
     
