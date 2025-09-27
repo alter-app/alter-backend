@@ -5,10 +5,12 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceListResponse;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
+import com.dreamteam.alter.domain.workspace.entity.QWorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,11 +70,12 @@ public class WorkspaceWorkerQueryRepositoryImpl implements WorkspaceWorkerQueryR
 
     @Override
     public List<UserWorkspaceListResponse> getUserActiveWorkspaceListWithCursor(
-        CursorPageRequest<CursorDto> request, 
+        CursorPageRequest<CursorDto> request,
         User user
     ) {
         QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
         QWorkspace qWorkspace = QWorkspace.workspace;
+        QWorkspaceShift qWorkspaceShift = QWorkspaceShift.workspaceShift;
 
         return queryFactory
             .select(Projections.constructor(
@@ -80,7 +84,15 @@ public class WorkspaceWorkerQueryRepositoryImpl implements WorkspaceWorkerQueryR
                 qWorkspace.id,
                 qWorkspace.businessName,
                 qWorkspaceWorker.employedAt,
-                qWorkspaceWorker.createdAt
+                qWorkspaceWorker.createdAt,
+                queryFactory
+                    .select(qWorkspaceShift.startDateTime.min())
+                    .from(qWorkspaceShift)
+                    .where(
+                        qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
+                        qWorkspaceShift.startDateTime.gt(LocalDateTime.now()),
+                        qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
+                    )
             ))
             .from(qWorkspaceWorker)
             .join(qWorkspaceWorker.workspace, qWorkspace)
