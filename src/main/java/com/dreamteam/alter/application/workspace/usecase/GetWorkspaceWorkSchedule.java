@@ -32,7 +32,7 @@ public class GetWorkspaceWorkSchedule implements GetWorkspaceScheduleUseCase {
     @Override
     public List<WorkspaceScheduleResponseDto> execute(AppActor actor, Long workspaceId, WorkScheduleInquiryRequestDto request) {
         if (ObjectUtils.isEmpty(request.getYear()) || ObjectUtils.isEmpty(request.getMonth())) {
-            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "근무일정 조회 시 월, 일 파라미터는 필수입니다.");
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "근무일정 조회 시 연도, 월 파라미터는 필수입니다.");
         }
 
         // 워크스페이스 존재 확인 및 사용자가 해당 워크스페이스에 근무중인지 확인
