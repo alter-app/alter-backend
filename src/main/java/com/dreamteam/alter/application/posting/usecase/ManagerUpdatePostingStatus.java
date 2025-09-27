@@ -29,7 +29,7 @@ public class ManagerUpdatePostingStatus implements ManagerUpdatePostingStatusUse
 
         // DELETED 상태인 경우 상태 변경 불가
         if (PostingStatus.DELETED.equals(posting.getStatus())) {
-            throw new CustomException(ErrorCode.UNMODIFIABLE_STATUS);
+            throw new CustomException(ErrorCode.CONFLICT);
         }
 
         posting.updateStatus(request.getStatus());
