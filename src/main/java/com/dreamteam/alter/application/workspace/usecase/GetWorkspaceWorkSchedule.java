@@ -12,6 +12,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryReposito
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,10 @@ public class GetWorkspaceWorkSchedule implements GetWorkspaceScheduleUseCase {
 
     @Override
     public List<WorkspaceScheduleResponseDto> execute(AppActor actor, Long workspaceId, int year, int month) {
+        if (ObjectUtils.isEmpty(year) || ObjectUtils.isEmpty(month)) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "근무일정 조회 시 월, 일 파라미터는 필수입니다.");
+        }
+
         // 워크스페이스 존재 확인 및 사용자가 해당 워크스페이스에 근무중인지 확인
         Workspace workspace = workspaceQueryRepository.findById(workspaceId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
