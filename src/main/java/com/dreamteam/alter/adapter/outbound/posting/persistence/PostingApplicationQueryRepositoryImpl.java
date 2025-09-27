@@ -2,7 +2,6 @@ package com.dreamteam.alter.adapter.outbound.posting.persistence;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
-import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicationListFilterDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingApplicationDetailResponse;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.PostingApplicationWorkspaceResponse;
@@ -51,15 +50,29 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         return ObjectUtils.isEmpty(count) ? 0 : count;
     }
 
+
     @Override
-    public List<UserPostingApplicationListResponse> getUserPostingApplicationList(
+    public List<UserPostingApplicationListResponse> getUserPostingApplicationListWithCursor(
         User user,
-        PageRequestDto pageRequest
+        CursorPageRequest<CursorDto> pageRequest
     ) {
         QPostingApplication qPostingApplication = QPostingApplication.postingApplication;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
         QPosting qPosting = QPosting.posting;
         QWorkspace qWorkspace = QWorkspace.workspace;
+
+        BooleanExpression whereCondition = qPostingApplication.user.eq(user)
+            .and(qPostingApplication.status.ne(PostingApplicationStatus.DELETED));
+
+        if (pageRequest.cursor() != null) {
+            whereCondition = whereCondition.and(
+                qPostingApplication.createdAt.lt(pageRequest.cursor().getCreatedAt())
+                .or(
+                    qPostingApplication.createdAt.eq(pageRequest.cursor().getCreatedAt())
+                    .and(qPostingApplication.id.lt(pageRequest.cursor().getId()))
+                )
+            );
+        }
 
         return queryFactory
             .select(Projections.constructor(
@@ -76,13 +89,9 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .join(qPostingApplication.postingSchedule.posting, qPosting)
             .join(qPostingApplication.postingSchedule, qPostingSchedule)
             .join(qPosting.workspace, qWorkspace).fetchJoin()
-            .where(
-                qPostingApplication.user.eq(user),
-                qPostingApplication.status.ne(PostingApplicationStatus.DELETED)
-            )
+            .where(whereCondition)
             .orderBy(qPostingApplication.createdAt.desc(), qPostingApplication.id.desc())
-            .offset(pageRequest.getOffset())
-            .limit(pageRequest.getLimit())
+            .limit(pageRequest.pageSize())
             .fetch();
     }
 

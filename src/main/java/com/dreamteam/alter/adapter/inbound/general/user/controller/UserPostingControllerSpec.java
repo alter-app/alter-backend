@@ -20,11 +20,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "APP - 사용자 공고 관련 API")
 public interface UserPostingControllerSpec {
 
-    @Operation(summary = "사용자 공고 지원 목록 조회")
+    @Operation(summary = "사용자 공고 지원 목록 조회 (커서 페이징)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "지원 목록 조회 성공")
     })
-    ResponseEntity<PaginatedResponseDto<UserPostingApplicationListResponseDto>> getMyPostingApplications(PageRequestDto pageRequest);
+    ResponseEntity<CursorPaginatedApiResponse<UserPostingApplicationListResponseDto>> getMyPostingApplications(CursorPageRequestDto pageRequest);
 
     @Operation(summary = "사용자 공고 지원 상태 업데이트 (지원 취소)")
     @ApiResponses(value = {
