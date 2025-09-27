@@ -103,11 +103,11 @@ public class WorkspaceWorkerQueryRepositoryImpl implements WorkspaceWorkerQueryR
             return null;
         }
         
-        BooleanExpression idCondition = qWorkspaceWorker.id.lt(cursor.getId());
         BooleanExpression createdAtCondition = qWorkspaceWorker.createdAt.lt(cursor.getCreatedAt());
+        BooleanExpression idCondition = qWorkspaceWorker.id.lt(cursor.getId());
         
-        return idCondition.or(
-            qWorkspaceWorker.id.eq(cursor.getId()).and(createdAtCondition)
+        return createdAtCondition.or(
+            qWorkspaceWorker.createdAt.eq(cursor.getCreatedAt()).and(idCondition)
         );
     }
 

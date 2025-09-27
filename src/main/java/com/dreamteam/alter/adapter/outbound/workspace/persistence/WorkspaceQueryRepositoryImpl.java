@@ -202,7 +202,21 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QUser qUser = QUser.user;
         QManagerUser qManagerUser = QManagerUser.managerUser;
 
-        // WorkspaceWorker 조회 (알바생) - 엔티티로 조회
+        // 점주와 일반 근무자를 통합하여 반환
+        List<ManagerWorkspaceWorkerListResponse> allWorkers = new ArrayList<>();
+        
+        // 1. ManagerUser 조회 (점주) - 우선 조회
+        List<ManagerUser> managerUsers = queryFactory
+            .selectFrom(qManagerUser)
+            .join(qManagerUser.user, qUser).fetchJoin()
+            .where(
+                qManagerUser.eq(managerUser),
+                likeWorkerName(qUser, filter.getName())
+            )
+            .orderBy(qUser.name.asc(), qManagerUser.id.asc())
+            .fetch();
+
+        // 2. WorkspaceWorker 조회 (알바생) - 커서 조건 적용
         List<WorkspaceWorker> workspaceWorkers = queryFactory
             .selectFrom(qWorkspaceWorker)
             .join(qWorkspaceWorker.workspace, qWorkspace).fetchJoin()
@@ -222,27 +236,11 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .limit(pageRequest.pageSize())
             .fetch();
 
-        // ManagerUser 조회 (점주) - 엔티티로 조회
-        List<ManagerUser> managerUsers = queryFactory
-            .selectFrom(qManagerUser)
-            .join(qManagerUser.user, qUser).fetchJoin()
-            .where(
-                qManagerUser.eq(managerUser),
-                likeWorkerName(qUser, filter.getName()),
-                cursorConditionsForManager(qManagerUser, pageRequest.cursor())
-            )
-            .orderBy(qUser.name.asc(), qManagerUser.id.asc())
-            .fetch();
-
-        // 점주와 일반 근무자를 통합하여 반환
-        List<ManagerWorkspaceWorkerListResponse> allWorkers = new ArrayList<>();
-        
-        // 1. 점주(매니저) 먼저 추가
+        // 3. 점주 먼저 추가, 알바생 나중에 추가
         managerUsers.stream()
             .map(ManagerWorkspaceWorkerListResponse::from)
             .forEach(allWorkers::add);
         
-        // 2. 일반 근무자(알바생) 나중에 추가
         workspaceWorkers.stream()
             .map(ManagerWorkspaceWorkerListResponse::from)
             .forEach(allWorkers::add);
@@ -348,7 +346,21 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QUser qUser = QUser.user;
         QManagerUser qManagerUser = QManagerUser.managerUser;
 
-        // WorkspaceWorker 조회 (알바생) - 엔티티로 조회
+        // 점주와 일반 근무자를 통합하여 반환
+        List<UserWorkspaceWorkerListResponse> allWorkers = new ArrayList<>();
+        
+        // 1. ManagerUser 조회 (점주) - 우선 조회
+        List<ManagerUser> managerUsers = queryFactory
+            .selectFrom(qManagerUser)
+            .join(qManagerUser.user, qUser).fetchJoin()
+            .join(qManagerUser.workspaces, qWorkspace)
+            .where(
+                qWorkspace.id.eq(workspaceId)
+            )
+            .orderBy(qUser.name.asc(), qManagerUser.id.asc())
+            .fetch();
+
+        // 2. WorkspaceWorker 조회 (알바생) - 커서 조건 적용
         List<WorkspaceWorker> workspaceWorkers = queryFactory
             .selectFrom(qWorkspaceWorker)
             .join(qWorkspaceWorker.workspace, qWorkspace).fetchJoin()
@@ -357,31 +369,15 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspace.id.eq(workspaceId),
                 cursorConditions(qWorkspaceWorker, pageRequest.cursor())
             )
-            .orderBy(qWorkspaceWorker.createdAt.asc(), qWorkspaceWorker.id.asc())
+            .orderBy(qUser.name.asc(), qWorkspaceWorker.id.asc())
             .limit(pageRequest.pageSize())
             .fetch();
 
-        // ManagerUser 조회 (점주) - 엔티티로 조회
-        List<ManagerUser> managerUsers = queryFactory
-            .selectFrom(qManagerUser)
-            .join(qManagerUser.user, qUser).fetchJoin()
-            .join(qManagerUser.workspaces, qWorkspace)
-            .where(
-                qWorkspace.id.eq(workspaceId),
-                cursorConditionsForManager(qManagerUser, pageRequest.cursor())
-            )
-            .orderBy(qManagerUser.createdAt.asc(), qManagerUser.id.asc())
-            .fetch();
-
-        // 점주와 일반 근무자를 통합하여 반환
-        List<UserWorkspaceWorkerListResponse> allWorkers = new ArrayList<>();
-        
-        // 1. 점주(매니저) 먼저 추가
+        // 3. 점주 먼저 추가, 알바생 나중에 추가
         managerUsers.stream()
             .map(UserWorkspaceWorkerListResponse::from)
             .forEach(allWorkers::add);
         
-        // 2. 일반 근무자(알바생) 나중에 추가
         workspaceWorkers.stream()
             .map(UserWorkspaceWorkerListResponse::from)
             .forEach(allWorkers::add);
@@ -417,20 +413,9 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         if (cursor == null) {
             return null;
         }
-        // createdAt 시간순 정렬을 위한 커서 조건 (시간이 같으면 ID로 구분)
-        return qWorkspaceWorker.createdAt.gt(cursor.getCreatedAt())
+        return qWorkspaceWorker.createdAt.lt(cursor.getCreatedAt())
             .or(qWorkspaceWorker.createdAt.eq(cursor.getCreatedAt())
-                .and(qWorkspaceWorker.id.gt(cursor.getId())));
-    }
-
-    private BooleanExpression cursorConditionsForManager(QManagerUser qManagerUser, CursorDto cursor) {
-        if (cursor == null) {
-            return null;
-        }
-        // createdAt 시간순 정렬을 위한 커서 조건 (시간이 같으면 ID로 구분)
-        return qManagerUser.createdAt.gt(cursor.getCreatedAt())
-            .or(qManagerUser.createdAt.eq(cursor.getCreatedAt())
-                .and(qManagerUser.id.gt(cursor.getId())));
+                .and(qWorkspaceWorker.id.lt(cursor.getId())));
     }
 
 }
