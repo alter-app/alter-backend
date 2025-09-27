@@ -11,6 +11,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,18 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
             .where(workspaceShift.assignedWorkspaceWorker.user.eq(user)
                 .and(workspaceShift.startDateTime.year().eq(year))
                 .and(workspaceShift.startDateTime.month().eq(month))
+                .and(workspaceShift.status.ne(WorkspaceShiftStatus.DELETED)))
+            .orderBy(workspaceShift.startDateTime.asc())
+            .fetch();
+    }
+
+    @Override
+    public List<WorkspaceShift> findByUserAndWeeklyRange(User user, LocalDate startDate, LocalDate endDate) {
+        return queryFactory
+            .selectFrom(workspaceShift)
+            .where(workspaceShift.assignedWorkspaceWorker.user.eq(user)
+                .and(workspaceShift.startDateTime.goe(startDate.atStartOfDay()))
+                .and(workspaceShift.startDateTime.lt(endDate.atStartOfDay()))
                 .and(workspaceShift.status.ne(WorkspaceShiftStatus.DELETED)))
             .orderBy(workspaceShift.startDateTime.asc())
             .fetch();

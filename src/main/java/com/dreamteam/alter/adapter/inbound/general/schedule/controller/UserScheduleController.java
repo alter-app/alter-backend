@@ -37,7 +37,7 @@ public class UserScheduleController implements UserScheduleControllerSpec {
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        return ResponseEntity.ok(CommonApiResponse.of(getMySchedule.execute(actor, request.getYear(), request.getMonth())));
+        return ResponseEntity.ok(CommonApiResponse.of(getMySchedule.execute(actor, request)));
     }
 
     @Override
@@ -48,6 +48,6 @@ public class UserScheduleController implements UserScheduleControllerSpec {
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceSchedule.execute(actor, workspaceId, request.getYear(), request.getMonth())));
+        return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceSchedule.execute(actor, workspaceId, request)));
     }
 }

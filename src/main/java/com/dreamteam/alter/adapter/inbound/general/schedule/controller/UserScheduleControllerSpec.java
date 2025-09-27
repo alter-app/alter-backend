@@ -21,7 +21,7 @@ import java.util.List;
 @Tag(name = "APP - 근무 스케줄 관리 API")
 public interface UserScheduleControllerSpec {
 
-    @Operation(summary = "전체 근무 스케줄 조회")
+    @Operation(summary = "나의 근무 스케줄 조회", description = "특정 월의 스케줄을 조회하려면 year, month 값을 모두 포함해야합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "스케줄 조회 성공")
     })
@@ -29,7 +29,7 @@ public interface UserScheduleControllerSpec {
         WorkScheduleInquiryRequestDto request
     );
 
-    @Operation(summary = "업장별 근무 스케줄 조회")
+    @Operation(summary = "업장별 근무 스케줄 조회", description = "year, month 값을 모두 포함해야합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "스케줄 조회 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",

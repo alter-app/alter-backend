@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkScheduleInquiryRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkspaceScheduleResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -29,8 +30,8 @@ public class GetWorkspaceWorkSchedule implements GetWorkspaceScheduleUseCase {
     private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
 
     @Override
-    public List<WorkspaceScheduleResponseDto> execute(AppActor actor, Long workspaceId, int year, int month) {
-        if (ObjectUtils.isEmpty(year) || ObjectUtils.isEmpty(month)) {
+    public List<WorkspaceScheduleResponseDto> execute(AppActor actor, Long workspaceId, WorkScheduleInquiryRequestDto request) {
+        if (ObjectUtils.isEmpty(request.getYear()) || ObjectUtils.isEmpty(request.getMonth())) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "근무일정 조회 시 월, 일 파라미터는 필수입니다.");
         }
 
@@ -46,7 +47,7 @@ public class GetWorkspaceWorkSchedule implements GetWorkspaceScheduleUseCase {
         }
 
         List<WorkspaceShift> shifts = workspaceShiftQueryRepository
-            .findByWorkspaceAndDateRange(workspaceWorker.get().getWorkspace(), year, month);
+            .findByWorkspaceAndDateRange(workspaceWorker.get().getWorkspace(), request.getYear(), request.getMonth());
         
         return shifts.stream()
             .map(WorkspaceScheduleResponseDto::of)
