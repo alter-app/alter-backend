@@ -39,6 +39,10 @@ public class WorkspaceShift {
     @Column(name = "status", nullable = false)
     private WorkspaceShiftStatus status;
 
+    @JoinColumn(name = "worker_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private WorkspaceWorker assignedWorkspaceWorker;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -61,6 +65,31 @@ public class WorkspaceShift {
             .position(position)
             .status(status)
             .build();
+    }
+
+    public void assignWorker(WorkspaceWorker workspaceWorker) {
+        // 이미 배정된 근무자가 있는지 확인
+        if (this.assignedWorkspaceWorker != null) {
+            throw new IllegalStateException("이미 근무자가 배정된 스케줄입니다.");
+        }
+        
+        this.assignedWorkspaceWorker = workspaceWorker;
+        this.status = WorkspaceShiftStatus.CONFIRMED;
+    }
+
+    public void unassignWorker() {
+        this.assignedWorkspaceWorker = null;
+        this.status = WorkspaceShiftStatus.CANCELLED;
+    }
+
+    public void update(LocalDateTime startDateTime, LocalDateTime endDateTime, String position) {
+        this.startDateTime = startDateTime;
+        this.endDateTime = endDateTime;
+        this.position = position;
+    }
+
+    public void delete() {
+        this.status = WorkspaceShiftStatus.DELETED;
     }
 
 }
