@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @ParameterObject
 public record CursorPageRequestDto(
-    @Parameter(example = "cursorString") @RequestParam(required = false) String cursor,
+    @Parameter @RequestParam(required = false) String cursor,
     @Parameter(example = "10", required = true) @RequestParam(defaultValue = "10") int pageSize
 ) {
     private static final int MAX_PAGE_SIZE = 100;
