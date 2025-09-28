@@ -167,6 +167,7 @@ public class ReputationRequestQueryRepositoryImpl implements ReputationRequestQu
                 qReputationRequest.targetType,
                 qReputationRequest.targetId,
                 qTargetUser.name,
+                qReputationRequest.workspace,
                 qReputationRequest.status,
                 qReputationRequest.createdAt,
                 qReputationRequest.expiresAt
@@ -255,6 +256,7 @@ public class ReputationRequestQueryRepositoryImpl implements ReputationRequestQu
                 qReputationRequest.targetType,
                 qReputationRequest.targetId,
                 qTargetWorkspace.businessName,
+                qReputationRequest.workspace,
                 qReputationRequest.status,
                 qReputationRequest.createdAt,
                 qReputationRequest.expiresAt

@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.outbound.reputation.persistence.readonly;
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestStatus;
 import com.dreamteam.alter.domain.reputation.type.ReputationRequestType;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
+import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,7 @@ public class ReputationRequestListResponse {
     private ReputationType targetType;
     private Long targetId;
     private String targetName;
+    private Workspace workspace;
     private ReputationRequestStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;

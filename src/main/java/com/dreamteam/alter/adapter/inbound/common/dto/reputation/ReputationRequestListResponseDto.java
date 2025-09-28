@@ -34,6 +34,9 @@ public class ReputationRequestListResponseDto {
     @Schema(description = "대상 정보")
     private TargetInfo target;
 
+    @Schema(description = "근무 업장 정보 (요청자 타입이 USER인 경우에만 존재)")
+    private WorkspaceInfo workspace;
+
     @NotNull
     @Schema(description = "평판 요청 상태")
     private DescribedEnumDto<ReputationRequestStatus> status;
@@ -62,6 +65,9 @@ public class ReputationRequestListResponseDto {
                 entity.getTargetId(),
                 entity.getTargetName()
             ))
+            .workspace(ReputationRequestType.WORKSPACE_TO_USER.equals(entity.getRequestType())
+                ? null
+                : WorkspaceInfo.of(entity.getWorkspace()))
             .status(DescribedEnumDto.of(entity.getStatus(), ReputationRequestStatus.describe()))
             .createdAt(entity.getCreatedAt())
             .expiresAt(entity.getExpiresAt())
