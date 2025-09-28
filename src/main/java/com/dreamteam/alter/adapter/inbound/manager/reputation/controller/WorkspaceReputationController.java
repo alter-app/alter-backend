@@ -81,7 +81,7 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
     }
 
     @Override
-    @PatchMapping("/requests/{requestId}/accept")
+    @PostMapping("/requests/{requestId}/accept")
     public ResponseEntity<CommonApiResponse<Void>> acceptReputationRequest(
         @PathVariable Long requestId,
         @Valid @RequestBody AcceptReputationRequestDto request

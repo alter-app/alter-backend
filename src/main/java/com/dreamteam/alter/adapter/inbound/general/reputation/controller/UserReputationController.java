@@ -97,7 +97,7 @@ public class UserReputationController implements UserReputationControllerSpec {
     }
 
     @Override
-    @PatchMapping("/requests/{requestId}/accept")
+    @PostMapping("/requests/{requestId}/accept")
     public ResponseEntity<CommonApiResponse<Void>> acceptReputationRequest(
         @PathVariable Long requestId,
         @Valid @RequestBody AcceptReputationRequestDto request
