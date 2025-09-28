@@ -47,27 +47,33 @@ public class ReportQueryRepositoryImpl implements ReportQueryRepository {
     public Optional<ReportDetailResponse> findByIdWithTarget(Long id) {
         return Optional.ofNullable(
             queryFactory
-                .select(Projections.constructor(ReportDetailResponse.class,
-                        report.id,
-                        report.targetType,
-                        report.targetId,
-                        getTargetName(),
-                        report.reason,
-                        report.status,
-                        report.adminComment,
-                        report.createdAt,
-                        report.updatedAt
+                .select(Projections.constructor(
+                    ReportDetailResponse.class,
+                    report.id,
+                    report.targetType,
+                    report.targetId,
+                    getTargetName(),
+                    report.reason,
+                    report.status,
+                    report.adminComment,
+                    report.createdAt,
+                    report.updatedAt
                 ))
                 .from(report)
-                .leftJoin(user).on(
-                        report.targetType.eq(ReportTargetType.USER)
+                .leftJoin(user)
+                .on(
+                    report.targetType.eq(ReportTargetType.USER)
                         .and(report.targetId.eq(user.id))
                 )
-                .leftJoin(workspace).on(
+                .leftJoin(workspace)
+                .on(
+                    (
                         report.targetType.eq(ReportTargetType.POSTING)
-                        .and(report.targetId.eq(workspace.id))
-                        .or(report.targetType.eq(ReportTargetType.WORKSPACE)
-                        .and(report.targetId.eq(workspace.id)))
+                            .and(report.targetId.eq(workspace.id))
+                    ).or(
+                        report.targetType.eq(ReportTargetType.WORKSPACE)
+                            .and(report.targetId.eq(workspace.id))
+                    )
                 )
                 .where(report.id.eq(id))
                 .fetchOne()
@@ -128,10 +134,13 @@ public class ReportQueryRepositoryImpl implements ReportQueryRepository {
             )
             .leftJoin(workspace)
             .on(
-                report.targetType.eq(ReportTargetType.POSTING)
-                    .and(report.targetId.eq(workspace.id))
-                    .or(report.targetType.eq(ReportTargetType.WORKSPACE)
-                    .and(report.targetId.eq(workspace.id)))
+                (
+                    report.targetType.eq(ReportTargetType.POSTING)
+                        .and(report.targetId.eq(workspace.id))
+                ).or(
+                    report.targetType.eq(ReportTargetType.WORKSPACE)
+                        .and(report.targetId.eq(workspace.id))
+                )
             )
             .where(
                 report.reporterType.eq(reporterType),
@@ -181,10 +190,13 @@ public class ReportQueryRepositoryImpl implements ReportQueryRepository {
             )
             .leftJoin(workspace)
             .on(
-                report.targetType.eq(ReportTargetType.POSTING)
-                    .and(report.targetId.eq(workspace.id))
-                    .or(report.targetType.eq(ReportTargetType.WORKSPACE)
-                    .and(report.targetId.eq(workspace.id)))
+                (
+                    report.targetType.eq(ReportTargetType.POSTING)
+                        .and(report.targetId.eq(workspace.id))
+                ).or(
+                    report.targetType.eq(ReportTargetType.WORKSPACE)
+                        .and(report.targetId.eq(workspace.id))
+                )
             )
             .where(
                 report.status.ne(ReportStatus.DELETED),
