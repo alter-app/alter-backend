@@ -56,12 +56,9 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 ManagerWorkspaceListResponse.class,
                 qWorkspace.id,
                 qWorkspace.businessName,
-                qWorkspace.businessType,
-                qWorkspace.contact,
-                qWorkspace.status,
                 qWorkspace.fullAddress,
-                qWorkspace.province,
-                qWorkspace.district
+                qWorkspace.createdAt,
+                qWorkspace.status
             ))
             .from(qWorkspace)
             .where(qWorkspace.managerUser.eq(managerUser))
@@ -86,10 +83,9 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                         qWorkspace.description,
                         qWorkspace.status,
                         qWorkspace.fullAddress,
-                        qWorkspace.province,
-                        qWorkspace.district,
-                        qWorkspace.createdAt,
-                        qWorkspace.updatedAt
+                        qWorkspace.latitude,
+                        qWorkspace.longitude,
+                        qWorkspace.createdAt
                     )
                 )
                 .from(qWorkspace)
