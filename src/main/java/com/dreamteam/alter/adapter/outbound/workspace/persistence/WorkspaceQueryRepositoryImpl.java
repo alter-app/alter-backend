@@ -161,18 +161,17 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspaceWorker.employedAt,
                 qWorkspaceWorker.resignedAt,
                 qWorkspaceWorker.createdAt,
-                queryFactory
-                    .select(qWorkspaceShift.startDateTime.min())
-                    .from(qWorkspaceShift)
-                    .where(
-                        qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
-                        qWorkspaceShift.startDateTime.gt(LocalDateTime.now()),
-                        qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
-                    )
+                qWorkspaceShift.startDateTime.min()
             ))
             .from(qWorkspaceWorker)
             .join(qWorkspaceWorker.workspace, qWorkspace)
             .join(qWorkspaceWorker.user, qUser)
+            .leftJoin(qWorkspaceShift)
+            .on(
+                qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
+                qWorkspaceShift.startDateTime.gt(LocalDateTime.now()),
+                qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
+            )
             .where(
                 qWorkspace.managerUser.eq(managerUser),
                 qWorkspace.id.eq(workspaceId),
@@ -183,6 +182,17 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 gteResignedAt(qWorkspaceWorker, filter.getResignedAtFrom()),
                 lteResignedAt(qWorkspaceWorker, filter.getResignedAtTo()),
                 cursorConditions(qWorkspaceWorker, pageRequest.cursor())
+            )
+            .groupBy(
+                qWorkspaceWorker.id,
+                qUser.id,
+                qUser.name,
+                qUser.contact,
+                qUser.gender,
+                qWorkspaceWorker.status,
+                qWorkspaceWorker.employedAt,
+                qWorkspaceWorker.resignedAt,
+                qWorkspaceWorker.createdAt
             )
             .orderBy(qUser.name.asc(), qWorkspaceWorker.id.asc())
             .limit(pageRequest.pageSize())
@@ -247,22 +257,30 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 ),
                 Expressions.constant(WorkerPositionType.WORKER),
                 qWorkspaceWorker.employedAt,
-                queryFactory
-                    .select(qWorkspaceShift.startDateTime.min())
-                    .from(qWorkspaceShift)
-                    .where(
-                        qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
-                        qWorkspaceShift.startDateTime.gt(LocalDateTime.now()),
-                        qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
-                    )
+                qWorkspaceShift.startDateTime.min(),
+                qWorkspaceWorker.createdAt
             ))
             .from(qWorkspaceWorker)
             .join(qWorkspaceWorker.workspace, qWorkspace)
             .join(qWorkspaceWorker.user, qUser)
+            .leftJoin(qWorkspaceShift)
+            .on(
+                qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
+                qWorkspaceShift.startDateTime.gt(LocalDateTime.now()),
+                qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
+            )
             .where(
                 qWorkspaceWorker.user.eq(user),
                 qWorkspace.id.eq(workspaceId),
+                qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
                 cursorConditions(qWorkspaceWorker, pageRequest.cursor())
+            )
+            .groupBy(
+                qWorkspaceWorker.id,
+                qUser.id,
+                qUser.name,
+                qWorkspaceWorker.employedAt,
+                qWorkspaceWorker.createdAt
             )
             .orderBy(qUser.name.asc(), qWorkspaceWorker.id.asc())
             .limit(pageRequest.pageSize())

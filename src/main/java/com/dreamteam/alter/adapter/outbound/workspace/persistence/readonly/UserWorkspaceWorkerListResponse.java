@@ -26,4 +26,6 @@ public class UserWorkspaceWorkerListResponse {
 
     private LocalDateTime nextShiftDateTime;
 
+    private LocalDateTime createdAt;
+
 }
