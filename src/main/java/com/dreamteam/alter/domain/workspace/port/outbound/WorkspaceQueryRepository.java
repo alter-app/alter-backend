@@ -45,11 +45,15 @@ public interface WorkspaceQueryRepository {
         CursorPageRequest<CursorDto> pageRequest
     );
 
+    long getUserWorkspaceManagerCount(User user, Long workspaceId);
+
     List<UserWorkspaceManagerListResponse> getUserWorkspaceManagerListWithCursor(
         User user,
         Long workspaceId,
         CursorPageRequest<CursorDto> pageRequest
     );
+
+    long getManagerWorkspaceManagerCount(ManagerUser managerUser, Long workspaceId);
 
     List<ManagerWorkspaceManagerListResponse> getManagerWorkspaceManagerListWithCursor(
         ManagerUser managerUser,

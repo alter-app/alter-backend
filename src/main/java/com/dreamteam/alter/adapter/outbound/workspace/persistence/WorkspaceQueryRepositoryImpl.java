@@ -228,7 +228,9 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .from(qWorkspaceWorker)
             .join(qWorkspaceWorker.workspace, qWorkspace)
             .where(
-                qWorkspace.id.eq(workspaceId)
+                qWorkspaceWorker.user.eq(user),
+                qWorkspace.id.eq(workspaceId),
+                qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED)
             )
             .fetchOne();
 
@@ -288,6 +290,23 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
     }
 
     @Override
+    public long getUserWorkspaceManagerCount(User user, Long workspaceId) {
+        QManagerUser qManagerUser = QManagerUser.managerUser;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
+        Long count = queryFactory
+            .select(qManagerUser.id.count())
+            .from(qManagerUser)
+            .join(qManagerUser.workspaces, qWorkspace)
+            .where(
+                qWorkspace.id.eq(workspaceId)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
+    @Override
     public List<UserWorkspaceManagerListResponse> getUserWorkspaceManagerListWithCursor(
         User user,
         Long workspaceId,
@@ -319,6 +338,24 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .orderBy(qUser.name.asc(), qManagerUser.id.asc())
             .limit(pageRequest.pageSize())
             .fetch();
+    }
+
+    @Override
+    public long getManagerWorkspaceManagerCount(ManagerUser managerUser, Long workspaceId) {
+        QManagerUser qManagerUser = QManagerUser.managerUser;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
+        Long count = queryFactory
+            .select(qManagerUser.id.count())
+            .from(qManagerUser)
+            .join(qManagerUser.workspaces, qWorkspace)
+            .where(
+                qWorkspace.managerUser.eq(managerUser),
+                qWorkspace.id.eq(workspaceId)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
     }
 
     @Override

@@ -42,18 +42,23 @@ public class ManagerGetWorkspaceManagerList implements ManagerGetWorkspaceManage
         }
         CursorPageRequest<CursorDto> cursorPageRequest = CursorPageRequest.of(cursorDto, pageRequest.pageSize());
 
+        long count = workspaceQueryRepository.getManagerWorkspaceManagerCount(managerUser, workspaceId);
+        if (count == 0) {
+            return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));
+        }
+
         List<ManagerWorkspaceManagerListResponse> result =
             workspaceQueryRepository.getManagerWorkspaceManagerListWithCursor(managerUser, workspaceId, cursorPageRequest);
         
         if (ObjectUtils.isEmpty(result)) {
-            return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), 0));
+            return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));
         }
 
         ManagerWorkspaceManagerListResponse last = result.getLast();
         CursorPageResponseDto pageResponseDto = CursorPageResponseDto.of(
             CursorUtil.encodeCursor(new CursorDto(last.getId(), last.getCreatedAt()), objectMapper),
             cursorPageRequest.pageSize(),
-            result.size()
+            (int) count
         );
 
         return CursorPaginatedApiResponse.of(
