@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -23,7 +24,7 @@ public class ManagerWorkspaceWorkerListResponseDto {
 
     @NotNull
     @Schema(description = "근무자 정보")
-    private WorkspaceWorkerUserResponseDto user;
+    private WorkspaceWorkerResponseDto user;
 
     @NotNull
     @Schema(description = "근무자 상태")
@@ -37,18 +38,21 @@ public class ManagerWorkspaceWorkerListResponseDto {
     @Schema(description = "채용일자", example = "2023-10-01T12:00:00")
     private LocalDate employedAt;
 
-    @NotNull
-    @Schema(description = "퇴사일자", example = "2023-10-15T12:00:00")
+    @Schema(description = "퇴사일자", example = "2023-10-15")
     private LocalDate resignedAt;
+
+    @Schema(description = "다음 근무 시간", example = "2023-10-01T12:00:00")
+    private LocalDateTime nextShiftDateTime;
 
     public static ManagerWorkspaceWorkerListResponseDto of(ManagerWorkspaceWorkerListResponse entity) {
         return ManagerWorkspaceWorkerListResponseDto.builder()
             .id(entity.getId())
-            .user(WorkspaceWorkerUserResponseDto.of(entity.getUser()))
+            .user(WorkspaceWorkerResponseDto.of(entity.getUser()))
             .status(DescribedEnumDto.of(entity.getStatus(), WorkspaceWorkerStatus.describe()))
             .position(WorkerPositionResponseDto.from(entity.getPosition()))
             .employedAt(entity.getEmployedAt())
             .resignedAt(entity.getResignedAt())
+            .nextShiftDateTime(entity.getNextShiftDateTime())
             .build();
     }
 
