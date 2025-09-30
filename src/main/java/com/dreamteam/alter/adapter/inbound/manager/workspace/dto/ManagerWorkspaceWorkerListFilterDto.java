@@ -16,22 +16,22 @@ import java.time.LocalDate;
 @Schema(description = "업장 관리자 근무자 목록 필터 DTO")
 public class ManagerWorkspaceWorkerListFilterDto {
 
-    @Schema(description = "근무자 상태 (eq)", example = "ACTIVATED / RESIGNED")
+    @Schema(description = "근무자 상태 (eq)")
     private WorkspaceWorkerStatus status;
 
-    @Schema(description = "근무자 이름 (like)", example = "홍길동")
+    @Schema(description = "근무자 이름 (like)")
     private String name;
 
-    @Schema(description = "채용일 시작일 (gte)", example = "2023-01-01")
+    @Schema(description = "채용일 범위 시작 (gte) (YYYY-MM-DD)")
     private LocalDate employedAtFrom;
 
-    @Schema(description = "채용일 종료일 (lte)", example = "2023-12-31")
+    @Schema(description = "채용일 범위 종료 (lte) (YYYY-MM-DD)")
     private LocalDate employedAtTo;
 
-    @Schema(description = "퇴사일 시작일 (gte)", example = "2023-01-01")
+    @Schema(description = "퇴사일 범위 시작 (gte) (YYYY-MM-DD)")
     private LocalDate resignedAtFrom;
 
-    @Schema(description = "퇴사일 종료일 (lte)", example = "2023-12-31")
+    @Schema(description = "퇴사일 범위 종료 (lte) (YYYY-MM-DD)")
     private LocalDate resignedAtTo;
 
 }

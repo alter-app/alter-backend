@@ -3,10 +3,7 @@ package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceListResponseDto;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceResponseDto;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListFilterDto;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListResponseDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -40,6 +37,16 @@ public interface ManagerWorkspaceControllerSpec {
     ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<ManagerWorkspaceWorkerListResponseDto>>> getWorkspaceWorkerList(
         @PathVariable Long workspaceId,
         ManagerWorkspaceWorkerListFilterDto filter,
+        CursorPageRequestDto pageRequest
+    );
+
+
+    @Operation(summary = "매니저 - 업장 점주/매니저 목록 조회", description = "")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "점주/매니저 목록 조회 성공")
+    })
+    ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<ManagerWorkspaceManagerListResponseDto>>> getWorkspaceManagerList(
+        @PathVariable Long workspaceId,
         CursorPageRequestDto pageRequest
     );
 

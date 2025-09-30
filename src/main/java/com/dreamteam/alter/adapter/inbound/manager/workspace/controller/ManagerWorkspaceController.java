@@ -3,15 +3,13 @@ package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceListResponseDto;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceResponseDto;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListFilterDto;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListResponseDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.*;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceWorkerListUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceManagerListUseCase;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +37,9 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
 
     @Resource(name = "managerGetWorkspaceWorkerList")
     private final ManagerGetWorkspaceWorkerListUseCase managerGetWorkspaceWorkerList;
+
+    @Resource(name = "managerGetWorkspaceManagerList")
+    private final ManagerGetWorkspaceManagerListUseCase managerGetWorkspaceManagerList;
 
     @Override
     @GetMapping
@@ -68,6 +69,17 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
 
         return ResponseEntity.ok(CommonApiResponse.of(managerGetWorkspaceWorkerList.execute(actor, workspaceId, filter, pageRequest)));
+    }
+
+    @Override
+    @GetMapping("/{workspaceId}/managers")
+    public ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<ManagerWorkspaceManagerListResponseDto>>> getWorkspaceManagerList(
+        @PathVariable Long workspaceId,
+        CursorPageRequestDto pageRequest
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+
+        return ResponseEntity.ok(CommonApiResponse.of(managerGetWorkspaceManagerList.execute(actor, workspaceId, pageRequest)));
     }
 
 }

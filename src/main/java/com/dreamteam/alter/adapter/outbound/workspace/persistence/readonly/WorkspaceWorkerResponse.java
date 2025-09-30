@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class WorkspaceWorkerUserResponse {
+public class WorkspaceWorkerResponse {
 
     private Long id;
 
@@ -25,8 +25,8 @@ public class WorkspaceWorkerUserResponse {
     /**
      * User 엔티티로부터 DTO 생성
      */
-    public static WorkspaceWorkerUserResponse from(User user) {
-        return new WorkspaceWorkerUserResponse(
+    public static WorkspaceWorkerResponse from(User user) {
+        return new WorkspaceWorkerResponse(
             user.getId(),
             user.getName(),
             user.getContact(),

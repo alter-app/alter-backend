@@ -7,24 +7,19 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserWorkspaceWorkerListResponse {
+public class ManagerWorkspaceManagerListResponse {
 
     private Long id;
 
-    private UserWorkspaceWorkerResponse user;
+    private WorkspaceWorkerResponse manager;
 
     @Enumerated(EnumType.STRING)
     private WorkerPositionType position;
-
-    private LocalDate employedAt;
-
-    private LocalDateTime nextShiftDateTime;
 
     private LocalDateTime createdAt;
 

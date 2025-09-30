@@ -1,6 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
 
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceWorkerUserResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceWorkerResponse;
 import com.dreamteam.alter.domain.user.type.UserGender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -12,7 +12,7 @@ import lombok.*;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
 @Schema(description = "매니저 - 업장 근무자 정보 응답 DTO")
-public class WorkspaceWorkerUserResponseDto {
+public class WorkspaceWorkerResponseDto {
 
     @NotNull
     @Schema(description = "근무자 ID", example = "1")
@@ -30,8 +30,8 @@ public class WorkspaceWorkerUserResponseDto {
     @Schema(description = "근무자 성별", example = "GENDER_MALE")
     private UserGender gender;
 
-    public static WorkspaceWorkerUserResponseDto of(WorkspaceWorkerUserResponse entity) {
-        return WorkspaceWorkerUserResponseDto.builder()
+    public static WorkspaceWorkerResponseDto of(WorkspaceWorkerResponse entity) {
+        return WorkspaceWorkerResponseDto.builder()
             .id(entity.getId())
             .name(entity.getName())
             .contact(entity.getContact())

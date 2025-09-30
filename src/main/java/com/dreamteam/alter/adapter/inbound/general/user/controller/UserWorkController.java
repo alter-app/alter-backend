@@ -5,10 +5,12 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.UserWorkspaceListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.UserWorkspaceWorkerListResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UserWorkspaceManagerListResponseDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetUserActiveWorkspaceListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetUserWorkspaceWorkerListUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.GetUserWorkspaceManagerListUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +25,7 @@ public class UserWorkController implements UserWorkControllerSpec {
 
     private final GetUserActiveWorkspaceListUseCase getUserActiveWorkspaceListUseCase;
     private final GetUserWorkspaceWorkerListUseCase getUserWorkspaceWorkerListUseCase;
+    private final GetUserWorkspaceManagerListUseCase getUserWorkspaceManagerListUseCase;
 
     @GetMapping
     public ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<UserWorkspaceListResponseDto>>> getActiveWorkspaceList(
@@ -45,6 +48,17 @@ public class UserWorkController implements UserWorkControllerSpec {
         AppActor actor = AppActionContext.getInstance().getActor();
 
         return ResponseEntity.ok(CommonApiResponse.of(getUserWorkspaceWorkerListUseCase.execute(actor, workspaceId, pageRequest)));
+    }
+
+    @Override
+    @GetMapping("/{workspaceId}/managers")
+    public ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<UserWorkspaceManagerListResponseDto>>> getWorkspaceManagerList(
+        @PathVariable Long workspaceId,
+        CursorPageRequestDto pageRequest
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        return ResponseEntity.ok(CommonApiResponse.of(getUserWorkspaceManagerListUseCase.execute(actor, workspaceId, pageRequest)));
     }
 
 }
