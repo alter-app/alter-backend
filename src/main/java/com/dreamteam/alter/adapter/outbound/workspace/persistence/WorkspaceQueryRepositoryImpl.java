@@ -2,31 +2,37 @@ package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
-import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListFilterDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceWorkerListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceWorkerListResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceManagerListResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceManagerListResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceWorkerResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceWorkerResponse;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.QManagerUser;
 import com.dreamteam.alter.domain.user.entity.QUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
+import com.dreamteam.alter.domain.workspace.entity.QWorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
-import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
+import com.dreamteam.alter.domain.workspace.type.WorkerPositionType;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -128,65 +134,6 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
     }
 
     @Override
-    public List<ManagerWorkspaceWorkerListResponse> getWorkspaceWorkerList(
-        ManagerUser managerUser,
-        Long workspaceId,
-        ManagerWorkspaceWorkerListFilterDto filter,
-        PageRequestDto pageRequest
-    ) {
-        QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
-        QWorkspace qWorkspace = QWorkspace.workspace;
-        QUser qUser = QUser.user;
-        QManagerUser qManagerUser = QManagerUser.managerUser;
-
-        // WorkspaceWorker 조회 (알바생) - 엔티티로 조회
-        List<WorkspaceWorker> workspaceWorkers = queryFactory
-            .selectFrom(qWorkspaceWorker)
-            .join(qWorkspaceWorker.workspace, qWorkspace).fetchJoin()
-            .join(qWorkspaceWorker.user, qUser).fetchJoin()
-            .where(
-                qWorkspace.managerUser.eq(managerUser),
-                qWorkspace.id.eq(workspaceId),
-                eqWorkerStatus(qWorkspaceWorker, filter.getStatus()),
-                likeWorkerName(qUser, filter.getName()),
-                gteEmployedAt(qWorkspaceWorker, filter.getEmployedAtFrom()),
-                lteEmployedAt(qWorkspaceWorker, filter.getEmployedAtTo()),
-                gteResignedAt(qWorkspaceWorker, filter.getResignedAtFrom()),
-                lteResignedAt(qWorkspaceWorker, filter.getResignedAtTo())
-            )
-            .orderBy(qUser.name.asc(), qWorkspaceWorker.id.asc())
-            .offset(pageRequest.getOffset())
-            .limit(pageRequest.getLimit())
-            .fetch();
-
-        // ManagerUser 조회 (점주) - 엔티티로 조회
-        List<ManagerUser> managerUsers = queryFactory
-            .selectFrom(qManagerUser)
-            .join(qManagerUser.user, qUser).fetchJoin()
-            .where(
-                qManagerUser.eq(managerUser),
-                likeWorkerName(qUser, filter.getName())
-            )
-            .orderBy(qUser.name.asc(), qManagerUser.id.asc())
-            .fetch();
-
-        // 점주와 일반 근무자를 통합하여 반환
-        List<ManagerWorkspaceWorkerListResponse> allWorkers = new ArrayList<>();
-        
-        // 1. 점주(매니저) 먼저 추가
-        managerUsers.stream()
-            .map(ManagerWorkspaceWorkerListResponse::from)
-            .forEach(allWorkers::add);
-        
-        // 2. 일반 근무자(알바생) 나중에 추가
-        workspaceWorkers.stream()
-            .map(ManagerWorkspaceWorkerListResponse::from)
-            .forEach(allWorkers::add);
-        
-        return allWorkers;
-    }
-
-    @Override
     public List<ManagerWorkspaceWorkerListResponse> getWorkspaceWorkerListWithCursor(
         ManagerUser managerUser,
         Long workspaceId,
@@ -196,27 +143,36 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUser qUser = QUser.user;
-        QManagerUser qManagerUser = QManagerUser.managerUser;
+        QWorkspaceShift qWorkspaceShift = QWorkspaceShift.workspaceShift;
 
-        // 점주와 일반 근무자를 통합하여 반환
-        List<ManagerWorkspaceWorkerListResponse> allWorkers = new ArrayList<>();
-        
-        // 1. ManagerUser 조회 (점주) - 우선 조회
-        List<ManagerUser> managerUsers = queryFactory
-            .selectFrom(qManagerUser)
-            .join(qManagerUser.user, qUser).fetchJoin()
-            .where(
-                qManagerUser.eq(managerUser),
-                likeWorkerName(qUser, filter.getName())
-            )
-            .orderBy(qUser.name.asc(), qManagerUser.id.asc())
-            .fetch();
-
-        // 2. WorkspaceWorker 조회 (알바생) - 커서 조건 적용
-        List<WorkspaceWorker> workspaceWorkers = queryFactory
-            .selectFrom(qWorkspaceWorker)
-            .join(qWorkspaceWorker.workspace, qWorkspace).fetchJoin()
-            .join(qWorkspaceWorker.user, qUser).fetchJoin()
+        return queryFactory
+            .select(Projections.constructor(
+                ManagerWorkspaceWorkerListResponse.class,
+                qWorkspaceWorker.id,
+                Projections.constructor(
+                    WorkspaceWorkerResponse.class,
+                    qUser.id,
+                    qUser.name,
+                    qUser.contact,
+                    qUser.gender
+                ),
+                qWorkspaceWorker.status,
+                Expressions.constant(WorkerPositionType.WORKER),
+                qWorkspaceWorker.employedAt,
+                qWorkspaceWorker.resignedAt,
+                qWorkspaceWorker.createdAt,
+                queryFactory
+                    .select(qWorkspaceShift.startDateTime.min())
+                    .from(qWorkspaceShift)
+                    .where(
+                        qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
+                        qWorkspaceShift.startDateTime.gt(LocalDateTime.now()),
+                        qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
+                    )
+            ))
+            .from(qWorkspaceWorker)
+            .join(qWorkspaceWorker.workspace, qWorkspace)
+            .join(qWorkspaceWorker.user, qUser)
             .where(
                 qWorkspace.managerUser.eq(managerUser),
                 qWorkspace.id.eq(workspaceId),
@@ -231,17 +187,6 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .orderBy(qUser.name.asc(), qWorkspaceWorker.id.asc())
             .limit(pageRequest.pageSize())
             .fetch();
-
-        // 3. 점주 먼저 추가, 알바생 나중에 추가
-        managerUsers.stream()
-            .map(ManagerWorkspaceWorkerListResponse::from)
-            .forEach(allWorkers::add);
-        
-        workspaceWorkers.stream()
-            .map(ManagerWorkspaceWorkerListResponse::from)
-            .forEach(allWorkers::add);
-        
-        return allWorkers;
     }
 
     @Override
@@ -281,57 +226,6 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
     }
 
     @Override
-    public List<UserWorkspaceWorkerListResponse> getUserWorkspaceWorkerList(
-        User user,
-        Long workspaceId,
-        PageRequestDto pageRequest
-    ) {
-        QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
-        QWorkspace qWorkspace = QWorkspace.workspace;
-        QUser qUser = QUser.user;
-        QManagerUser qManagerUser = QManagerUser.managerUser;
-
-        // WorkspaceWorker 조회 (알바생) - 엔티티로 조회
-        List<WorkspaceWorker> workspaceWorkers = queryFactory
-            .selectFrom(qWorkspaceWorker)
-            .join(qWorkspaceWorker.workspace, qWorkspace).fetchJoin()
-            .join(qWorkspaceWorker.user, qUser).fetchJoin()
-            .where(
-                qWorkspace.id.eq(workspaceId)
-            )
-            .orderBy(qWorkspaceWorker.createdAt.asc(), qWorkspaceWorker.id.asc())
-            .offset(pageRequest.getOffset())
-            .limit(pageRequest.getLimit())
-            .fetch();
-
-        // ManagerUser 조회 (점주) - 엔티티로 조회
-        List<ManagerUser> managerUsers = queryFactory
-            .selectFrom(qManagerUser)
-            .join(qManagerUser.user, qUser).fetchJoin()
-            .join(qManagerUser.workspaces, qWorkspace)
-            .where(
-                qWorkspace.id.eq(workspaceId)
-            )
-            .orderBy(qManagerUser.createdAt.asc(), qManagerUser.id.asc())
-            .fetch();
-
-        // 점주와 일반 근무자를 통합하여 반환
-        List<UserWorkspaceWorkerListResponse> allWorkers = new ArrayList<>();
-        
-        // 1. 점주(매니저) 먼저 추가
-        managerUsers.stream()
-            .map(UserWorkspaceWorkerListResponse::from)
-            .forEach(allWorkers::add);
-        
-        // 2. 일반 근무자(알바생) 나중에 추가
-        workspaceWorkers.stream()
-            .map(UserWorkspaceWorkerListResponse::from)
-            .forEach(allWorkers::add);
-        
-        return allWorkers;
-    }
-
-    @Override
     public List<UserWorkspaceWorkerListResponse> getUserWorkspaceWorkerListWithCursor(
         User user,
         Long workspaceId,
@@ -340,45 +234,110 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUser qUser = QUser.user;
-        QManagerUser qManagerUser = QManagerUser.managerUser;
+        QWorkspaceShift qWorkspaceShift = QWorkspaceShift.workspaceShift;
 
-        // 점주와 일반 근무자를 통합하여 반환
-        List<UserWorkspaceWorkerListResponse> allWorkers = new ArrayList<>();
-        
-        // 1. ManagerUser 조회 (점주) - 우선 조회
-        List<ManagerUser> managerUsers = queryFactory
-            .selectFrom(qManagerUser)
-            .join(qManagerUser.user, qUser).fetchJoin()
-            .join(qManagerUser.workspaces, qWorkspace)
+        return queryFactory
+            .select(Projections.constructor(
+                UserWorkspaceWorkerListResponse.class,
+                qWorkspaceWorker.id,
+                Projections.constructor(
+                    UserWorkspaceWorkerResponse.class,
+                    qUser.id,
+                    qUser.name
+                ),
+                Expressions.constant(WorkerPositionType.WORKER),
+                qWorkspaceWorker.employedAt,
+                queryFactory
+                    .select(qWorkspaceShift.startDateTime.min())
+                    .from(qWorkspaceShift)
+                    .where(
+                        qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
+                        qWorkspaceShift.startDateTime.gt(LocalDateTime.now()),
+                        qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
+                    )
+            ))
+            .from(qWorkspaceWorker)
+            .join(qWorkspaceWorker.workspace, qWorkspace)
+            .join(qWorkspaceWorker.user, qUser)
             .where(
-                qWorkspace.id.eq(workspaceId)
-            )
-            .orderBy(qUser.name.asc(), qManagerUser.id.asc())
-            .fetch();
-
-        // 2. WorkspaceWorker 조회 (알바생) - 커서 조건 적용
-        List<WorkspaceWorker> workspaceWorkers = queryFactory
-            .selectFrom(qWorkspaceWorker)
-            .join(qWorkspaceWorker.workspace, qWorkspace).fetchJoin()
-            .join(qWorkspaceWorker.user, qUser).fetchJoin()
-            .where(
+                qWorkspaceWorker.user.eq(user),
                 qWorkspace.id.eq(workspaceId),
                 cursorConditions(qWorkspaceWorker, pageRequest.cursor())
             )
             .orderBy(qUser.name.asc(), qWorkspaceWorker.id.asc())
             .limit(pageRequest.pageSize())
             .fetch();
+    }
 
-        // 3. 점주 먼저 추가, 알바생 나중에 추가
-        managerUsers.stream()
-            .map(UserWorkspaceWorkerListResponse::from)
-            .forEach(allWorkers::add);
-        
-        workspaceWorkers.stream()
-            .map(UserWorkspaceWorkerListResponse::from)
-            .forEach(allWorkers::add);
-        
-        return allWorkers;
+    @Override
+    public List<UserWorkspaceManagerListResponse> getUserWorkspaceManagerListWithCursor(
+        User user,
+        Long workspaceId,
+        CursorPageRequest<CursorDto> pageRequest
+    ) {
+        QManagerUser qManagerUser = QManagerUser.managerUser;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        QUser qUser = QUser.user;
+
+        return queryFactory
+            .select(Projections.constructor(
+                UserWorkspaceManagerListResponse.class,
+                qManagerUser.id,
+                Projections.constructor(
+                    UserWorkspaceWorkerResponse.class,
+                    qUser.id,
+                    qUser.name
+                ),
+                Expressions.constant(WorkerPositionType.OWNER),
+                qManagerUser.createdAt
+            ))
+            .from(qManagerUser)
+            .join(qManagerUser.user, qUser)
+            .join(qManagerUser.workspaces, qWorkspace)
+            .where(
+                qWorkspace.id.eq(workspaceId),
+                cursorConditions(qManagerUser, pageRequest.cursor())
+            )
+            .orderBy(qUser.name.asc(), qManagerUser.id.asc())
+            .limit(pageRequest.pageSize())
+            .fetch();
+    }
+
+    @Override
+    public List<ManagerWorkspaceManagerListResponse> getManagerWorkspaceManagerListWithCursor(
+        ManagerUser managerUser,
+        Long workspaceId,
+        CursorPageRequest<CursorDto> pageRequest
+    ) {
+        QManagerUser qManagerUser = QManagerUser.managerUser;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        QUser qUser = QUser.user;
+
+        return queryFactory
+            .select(Projections.constructor(
+                ManagerWorkspaceManagerListResponse.class,
+                qManagerUser.id,
+                Projections.constructor(
+                    WorkspaceWorkerResponse.class,
+                    qUser.id,
+                    qUser.name,
+                    qUser.contact,
+                    qUser.gender
+                ),
+                Expressions.constant(WorkerPositionType.OWNER),
+                qManagerUser.createdAt
+            ))
+            .from(qManagerUser)
+            .join(qManagerUser.user, qUser)
+            .join(qManagerUser.workspaces, qWorkspace)
+            .where(
+                qWorkspace.managerUser.eq(managerUser),
+                qWorkspace.id.eq(workspaceId),
+                cursorConditions(qManagerUser, pageRequest.cursor())
+            )
+            .orderBy(qUser.name.asc(), qManagerUser.id.asc())
+            .limit(pageRequest.pageSize())
+            .fetch();
     }
 
     private BooleanExpression eqWorkerStatus(QWorkspaceWorker qWorkspaceWorker, WorkspaceWorkerStatus status) {
@@ -412,6 +371,15 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         return qWorkspaceWorker.createdAt.lt(cursor.getCreatedAt())
             .or(qWorkspaceWorker.createdAt.eq(cursor.getCreatedAt())
                 .and(qWorkspaceWorker.id.lt(cursor.getId())));
+    }
+
+    private BooleanExpression cursorConditions(QManagerUser qManagerUser, CursorDto cursor) {
+        if (cursor == null) {
+            return null;
+        }
+        return qManagerUser.createdAt.lt(cursor.getCreatedAt())
+            .or(qManagerUser.createdAt.eq(cursor.getCreatedAt())
+                .and(qManagerUser.id.lt(cursor.getId())));
     }
 
 }

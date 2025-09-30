@@ -60,7 +60,7 @@ public class GetUserWorkspaceWorkerList implements GetUserWorkspaceWorkerListUse
 
         UserWorkspaceWorkerListResponse last = result.getLast();
         CursorPageResponseDto pageResponseDto = CursorPageResponseDto.of(
-            CursorUtil.encodeCursor(new CursorDto(last.getId(), last.getCreatedAt()), objectMapper),
+            CursorUtil.encodeCursor(new CursorDto(last.getId(), last.getNextShiftDateTime()), objectMapper),
             cursorPageRequest.pageSize(),
             (int) count
         );
