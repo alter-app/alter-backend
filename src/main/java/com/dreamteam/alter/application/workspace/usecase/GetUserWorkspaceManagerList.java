@@ -46,13 +46,13 @@ public class GetUserWorkspaceManagerList implements GetUserWorkspaceManagerListU
         }
         CursorPageRequest<CursorDto> cursorPageRequest = CursorPageRequest.of(cursorDto, pageRequest.pageSize());
 
-        long count = workspaceQueryRepository.getUserWorkspaceManagerCount(actor.getUser(), workspaceId);
+        long count = workspaceQueryRepository.getUserWorkspaceManagerCount(workspaceId);
         if (count == 0) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));
         }
 
         List<UserWorkspaceManagerListResponse> result =
-            workspaceQueryRepository.getUserWorkspaceManagerListWithCursor(actor.getUser(), workspaceId, cursorPageRequest);
+            workspaceQueryRepository.getUserWorkspaceManagerListWithCursor(workspaceId, cursorPageRequest);
         
         if (ObjectUtils.isEmpty(result)) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));

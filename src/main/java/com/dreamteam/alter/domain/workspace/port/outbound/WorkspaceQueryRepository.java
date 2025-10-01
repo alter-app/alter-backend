@@ -37,18 +37,16 @@ public interface WorkspaceQueryRepository {
 
     boolean isUserActiveWorkerInWorkspace(User user, Long workspaceId);
 
-    long getUserWorkspaceWorkerCount(User user, Long workspaceId);
+    long getUserWorkspaceWorkerCount(Long workspaceId);
 
     List<UserWorkspaceWorkerListResponse> getUserWorkspaceWorkerListWithCursor(
-        User user,
         Long workspaceId,
         CursorPageRequest<CursorDto> pageRequest
     );
 
-    long getUserWorkspaceManagerCount(User user, Long workspaceId);
+    long getUserWorkspaceManagerCount(Long workspaceId);
 
     List<UserWorkspaceManagerListResponse> getUserWorkspaceManagerListWithCursor(
-        User user,
         Long workspaceId,
         CursorPageRequest<CursorDto> pageRequest
     );

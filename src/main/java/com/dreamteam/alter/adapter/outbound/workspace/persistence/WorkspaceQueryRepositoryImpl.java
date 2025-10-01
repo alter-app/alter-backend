@@ -219,7 +219,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
     }
 
     @Override
-    public long getUserWorkspaceWorkerCount(User user, Long workspaceId) {
+    public long getUserWorkspaceWorkerCount(Long workspaceId) {
         QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
         QWorkspace qWorkspace = QWorkspace.workspace;
 
@@ -228,7 +228,6 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .from(qWorkspaceWorker)
             .join(qWorkspaceWorker.workspace, qWorkspace)
             .where(
-                qWorkspaceWorker.user.eq(user),
                 qWorkspace.id.eq(workspaceId),
                 qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED)
             )
@@ -239,7 +238,6 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
 
     @Override
     public List<UserWorkspaceWorkerListResponse> getUserWorkspaceWorkerListWithCursor(
-        User user,
         Long workspaceId,
         CursorPageRequest<CursorDto> pageRequest
     ) {
@@ -272,7 +270,6 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
             )
             .where(
-                qWorkspaceWorker.user.eq(user),
                 qWorkspace.id.eq(workspaceId),
                 qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
                 cursorConditions(qWorkspaceWorker, pageRequest.cursor())
@@ -290,7 +287,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
     }
 
     @Override
-    public long getUserWorkspaceManagerCount(User user, Long workspaceId) {
+    public long getUserWorkspaceManagerCount(Long workspaceId) {
         QManagerUser qManagerUser = QManagerUser.managerUser;
         QWorkspace qWorkspace = QWorkspace.workspace;
 
@@ -308,7 +305,6 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
 
     @Override
     public List<UserWorkspaceManagerListResponse> getUserWorkspaceManagerListWithCursor(
-        User user,
         Long workspaceId,
         CursorPageRequest<CursorDto> pageRequest
     ) {
