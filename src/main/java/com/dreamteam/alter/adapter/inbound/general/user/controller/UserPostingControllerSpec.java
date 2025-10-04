@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.*;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.UpdateUserPostingApplicationStatusRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.UserPostingApplicationListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.UserFavoritePostingListResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UserPostingApplicationListFilterDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -24,7 +25,10 @@ public interface UserPostingControllerSpec {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "지원 목록 조회 성공")
     })
-    ResponseEntity<CursorPaginatedApiResponse<UserPostingApplicationListResponseDto>> getMyPostingApplications(CursorPageRequestDto pageRequest);
+    ResponseEntity<CursorPaginatedApiResponse<UserPostingApplicationListResponseDto>> getMyPostingApplications(
+        CursorPageRequestDto pageRequest,
+        UserPostingApplicationListFilterDto filter
+    );
 
     @Operation(summary = "사용자 공고 지원 상태 업데이트 (지원 취소)")
     @ApiResponses(value = {

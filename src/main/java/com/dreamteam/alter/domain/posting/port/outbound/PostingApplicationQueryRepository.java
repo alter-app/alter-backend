@@ -3,6 +3,7 @@ package com.dreamteam.alter.domain.posting.port.outbound;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicationListFilterDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UserPostingApplicationListFilterDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingApplicationDetailResponse;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.UserPostingApplicationListResponse;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingApplicationListResponse;
@@ -14,8 +15,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PostingApplicationQueryRepository {
-    long getCountByUser(User user);
-    List<UserPostingApplicationListResponse> getUserPostingApplicationListWithCursor(User user, CursorPageRequest<CursorDto> pageRequest);
+    long getCountByUser(User user, UserPostingApplicationListFilterDto filter);
+    List<UserPostingApplicationListResponse> getUserPostingApplicationListWithCursor(User user, CursorPageRequest<CursorDto> pageRequest, UserPostingApplicationListFilterDto filter);
     Optional<PostingApplication> getUserPostingApplication(User user, Long applicationId);
 
     long getManagerPostingApplicationCount(

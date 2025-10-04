@@ -6,6 +6,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.UserPostingApplicationListResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UserPostingApplicationListFilterDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.UserPostingApplicationListResponse;
 import com.dreamteam.alter.common.util.CursorUtil;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationQueryRepository;
@@ -31,7 +32,8 @@ public class GetUserPostingApplicationList implements GetUserPostingApplicationL
     @Override
     public CursorPaginatedApiResponse<UserPostingApplicationListResponseDto> execute(
         AppActor actor,
-        CursorPageRequestDto pageRequest
+        CursorPageRequestDto pageRequest,
+        UserPostingApplicationListFilterDto filter
     ) {
         User user = actor.getUser();
 
@@ -41,13 +43,13 @@ public class GetUserPostingApplicationList implements GetUserPostingApplicationL
         }
         CursorPageRequest<CursorDto> cursorPageRequest = CursorPageRequest.of(cursorDto, pageRequest.pageSize());
 
-        long count = postingApplicationQueryRepository.getCountByUser(user);
+        long count = postingApplicationQueryRepository.getCountByUser(user, filter);
         if (count == 0) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));
         }
 
         List<UserPostingApplicationListResponse> result =
-            postingApplicationQueryRepository.getUserPostingApplicationListWithCursor(user, cursorPageRequest);
+            postingApplicationQueryRepository.getUserPostingApplicationListWithCursor(user, cursorPageRequest, filter);
         
         if (ObjectUtils.isEmpty(result)) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));
