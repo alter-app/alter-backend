@@ -40,12 +40,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
     public long getCountByUser(User user, UserPostingApplicationListFilterDto filter) {
         QPostingApplication qPostingApplication = QPostingApplication.postingApplication;
 
-        BooleanExpression whereCondition = qPostingApplication.user.eq(user)
-            .and(qPostingApplication.status.ne(PostingApplicationStatus.DELETED));
-
-        if (ObjectUtils.isNotEmpty(filter) && ObjectUtils.isNotEmpty(filter.getStatus())) {
-            whereCondition = whereCondition.and(qPostingApplication.status.in(filter.getStatus()));
-        }
+        BooleanExpression whereCondition = buildUserBaseConditions(qPostingApplication, user, filter);
 
         Long count = queryFactory
             .select(qPostingApplication.count())
@@ -67,12 +62,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         QPosting qPosting = QPosting.posting;
         QWorkspace qWorkspace = QWorkspace.workspace;
 
-        BooleanExpression whereCondition = qPostingApplication.user.eq(user)
-            .and(qPostingApplication.status.ne(PostingApplicationStatus.DELETED));
-
-        if (ObjectUtils.isNotEmpty(filter) && ObjectUtils.isNotEmpty(filter.getStatus())) {
-            whereCondition = whereCondition.and(qPostingApplication.status.in(filter.getStatus()));
-        }
+        BooleanExpression whereCondition = buildUserBaseConditions(qPostingApplication, user, filter);
 
         if (pageRequest.cursor() != null) {
             whereCondition = whereCondition.and(
@@ -298,6 +288,21 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         return statusCondition != null 
             ? statusCondition.and(qPostingApplication.status.ne(PostingApplicationStatus.DELETED))
             : qPostingApplication.status.ne(PostingApplicationStatus.DELETED);
+    }
+
+    private BooleanExpression buildUserBaseConditions(
+        QPostingApplication qPostingApplication,
+        User user,
+        UserPostingApplicationListFilterDto filter
+    ) {
+        BooleanExpression whereCondition = qPostingApplication.user.eq(user)
+            .and(qPostingApplication.status.ne(PostingApplicationStatus.DELETED));
+
+        if (ObjectUtils.isNotEmpty(filter) && ObjectUtils.isNotEmpty(filter.getStatus())) {
+            whereCondition = whereCondition.and(qPostingApplication.status.in(filter.getStatus()));
+        }
+
+        return whereCondition;
     }
 
     private BooleanExpression getManagerPostingApplicationBaseConditions(
