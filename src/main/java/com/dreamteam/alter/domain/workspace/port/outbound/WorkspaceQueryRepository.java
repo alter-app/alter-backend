@@ -20,7 +20,7 @@ public interface WorkspaceQueryRepository {
     Optional<Workspace> findById(Long id);
     List<ManagerWorkspaceListResponse> getManagerWorkspaceList(ManagerUser managerUser);
 
-    Optional<ManagerWorkspaceResponse> getByManagerUserAndId(ManagerUser managerUser, Long workspaceId);
+    ManagerWorkspaceResponse getByManagerUserAndId(ManagerUser managerUser, Long workspaceId);
 
     long getWorkspaceWorkerCount(
         ManagerUser managerUser,

@@ -10,8 +10,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryReposito
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
+import org.springframework.util.ObjectUtils;
 
 @Service("managerGetWorkspace")
 @RequiredArgsConstructor
@@ -22,14 +21,14 @@ public class ManagerGetWorkspace implements ManagerGetWorkspaceUseCase {
 
     @Override
     public ManagerWorkspaceResponseDto execute(ManagerActor actor, Long workspaceId) {
-        Optional<ManagerWorkspaceResponse> workspace =
+        ManagerWorkspaceResponse workspace =
             workspaceQueryRepository.getByManagerUserAndId(actor.getManagerUser(), workspaceId);
 
-        if (workspace.isEmpty()) {
+        if (ObjectUtils.isEmpty(workspace)) {
             throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
         }
 
-        return ManagerWorkspaceResponseDto.of(workspace.get());
+        return ManagerWorkspaceResponseDto.of(workspace);
     }
 
 }

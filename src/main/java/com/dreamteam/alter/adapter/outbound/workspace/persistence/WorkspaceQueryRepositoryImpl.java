@@ -11,6 +11,8 @@ import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserW
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceManagerListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceWorkerResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceWorkerResponse;
+import com.dreamteam.alter.domain.reputation.entity.QReputationSummary;
+import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.QManagerUser;
 import com.dreamteam.alter.domain.user.entity.QUser;
@@ -73,34 +75,39 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
     }
 
     @Override
-    public Optional<ManagerWorkspaceResponse> getByManagerUserAndId(ManagerUser managerUser, Long workspaceId) {
+    public ManagerWorkspaceResponse getByManagerUserAndId(ManagerUser managerUser, Long workspaceId) {
         QWorkspace qWorkspace = QWorkspace.workspace;
+        QReputationSummary qReputationSummary = QReputationSummary.reputationSummary;
 
-        return Optional.ofNullable(
-            queryFactory
-                .select(
-                    Projections.constructor(
-                        ManagerWorkspaceResponse.class,
-                        qWorkspace.id,
-                        qWorkspace.businessRegistrationNo,
-                        qWorkspace.businessName,
-                        qWorkspace.businessType,
-                        qWorkspace.contact,
-                        qWorkspace.description,
-                        qWorkspace.status,
-                        qWorkspace.fullAddress,
-                        qWorkspace.latitude,
-                        qWorkspace.longitude,
-                        qWorkspace.createdAt
-                    )
+        return queryFactory
+            .select(
+                Projections.constructor(
+                    ManagerWorkspaceResponse.class,
+                    qWorkspace.id,
+                    qWorkspace.businessRegistrationNo,
+                    qWorkspace.businessName,
+                    qWorkspace.businessType,
+                    qWorkspace.contact,
+                    qWorkspace.description,
+                    qWorkspace.status,
+                    qWorkspace.fullAddress,
+                    qWorkspace.latitude,
+                    qWorkspace.longitude,
+                    qWorkspace.createdAt,
+                    qReputationSummary
                 )
-                .from(qWorkspace)
-                .where(
-                    qWorkspace.managerUser.eq(managerUser),
-                    qWorkspace.id.eq(workspaceId)
-                )
-                .fetchOne()
-        );
+            )
+            .from(qWorkspace)
+            .leftJoin(qReputationSummary)
+            .on(
+                qReputationSummary.targetType.eq(ReputationType.WORKSPACE),
+                qReputationSummary.targetId.eq(qWorkspace.id)
+            )
+            .where(
+                qWorkspace.managerUser.eq(managerUser),
+                qWorkspace.id.eq(workspaceId)
+            )
+            .fetchOne();
     }
 
     @Override
