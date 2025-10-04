@@ -11,6 +11,8 @@ import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceAcceptReputat
 import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceCreateReputationToUserUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceDeclineReputationRequestUseCase;
 import com.dreamteam.alter.domain.reputation.port.inbound.WorkspaceGetReputationRequestListUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.ManagerGetSentReputationRequestListUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.ManagerCancelReputationRequestUseCase;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -41,6 +43,12 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
 
     @Resource(name = "workspaceAcceptReputationRequest")
     private final WorkspaceAcceptReputationRequestUseCase workspaceAcceptReputationRequest;
+
+    @Resource(name = "managerGetSentReputationRequestList")
+    private final ManagerGetSentReputationRequestListUseCase managerGetSentReputationRequestList;
+
+    @Resource(name = "managerCancelReputationRequest")
+    private final ManagerCancelReputationRequestUseCase managerCancelReputationRequest;
 
     @Override
     @GetMapping("/keywords")
@@ -89,6 +97,26 @@ public class WorkspaceReputationController implements WorkspaceReputationControl
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
 
         workspaceAcceptReputationRequest.execute(actor, requestId, request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @GetMapping("/requests/sent")
+    public ResponseEntity<CursorPaginatedApiResponse<ReputationRequestListResponseDto>> getSentReputationRequestList(
+        UserReputationRequestFilterDto filter,
+        CursorPageRequestDto pageRequest
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+
+        return ResponseEntity.ok(managerGetSentReputationRequestList.execute(actor, filter, pageRequest));
+    }
+
+    @Override
+    @PatchMapping("/requests/sent/{requestId}/cancel")
+    public ResponseEntity<CommonApiResponse<Void>> cancelSentReputationRequest(@PathVariable Long requestId) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+
+        managerCancelReputationRequest.execute(actor, requestId);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

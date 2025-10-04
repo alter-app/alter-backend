@@ -108,4 +108,8 @@ public class Reputation {
         this.status = ReputationStatus.COMPLETED;
     }
 
+    public void cancel() {
+        this.status = ReputationStatus.CANCELED;
+    }
+
 }
