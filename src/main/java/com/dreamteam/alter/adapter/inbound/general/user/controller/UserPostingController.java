@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.*;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.UpdateUserPostingApplicationStatusRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.UserPostingApplicationListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.UserFavoritePostingListResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UserPostingApplicationListFilterDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.port.inbound.*;
@@ -39,11 +40,12 @@ public class UserPostingController implements UserPostingControllerSpec {
     @Override
     @GetMapping("/applications")
     public ResponseEntity<CursorPaginatedApiResponse<UserPostingApplicationListResponseDto>> getMyPostingApplications(
-        CursorPageRequestDto pageRequest
+        CursorPageRequestDto pageRequest,
+        UserPostingApplicationListFilterDto filter
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        return ResponseEntity.ok(getUserPostingApplicationList.execute(actor, pageRequest));
+        return ResponseEntity.ok(getUserPostingApplicationList.execute(actor, pageRequest, filter));
     }
 
     @Override

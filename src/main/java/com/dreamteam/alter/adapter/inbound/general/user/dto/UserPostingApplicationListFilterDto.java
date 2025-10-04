@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
+package com.dreamteam.alter.adapter.inbound.general.user.dto;
 
 import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,11 +14,8 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @ParameterObject
-@Schema(description = "업장 관리자 공고 지원 목록 필터 DTO")
-public class PostingApplicationListFilterDto {
-
-    @Parameter(description = "업장 ID (eq)")
-    private Long workspaceId;
+@Schema(description = "사용자 공고 지원 목록 필터 DTO")
+public class UserPostingApplicationListFilterDto {
 
     @Parameter(description = "지원 상태 (in)")
     private Set<PostingApplicationStatus> status;
