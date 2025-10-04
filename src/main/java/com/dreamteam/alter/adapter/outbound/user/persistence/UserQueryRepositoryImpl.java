@@ -1,6 +1,8 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
 import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.UserSelfInfoResponse;
+import com.dreamteam.alter.domain.reputation.entity.QReputationSummary;
+import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.entity.QUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -77,17 +79,23 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
     @Override
     public Optional<UserSelfInfoResponse> getUserSelfInfoSummary(Long id) {
         QUser qUser = QUser.user;
+        QReputationSummary qReputationSummary = QReputationSummary.reputationSummary;
 
         UserSelfInfoResponse userSelf = queryFactory.select(
-                Projections.fields(
+                Projections.constructor(
                     UserSelfInfoResponse.class,
                     qUser.id,
                     qUser.name,
                     qUser.nickname,
-                    qUser.createdAt
+                    qUser.createdAt,
+                    qReputationSummary
                 )
             )
             .from(qUser)
+            .leftJoin(qReputationSummary).on(
+                qReputationSummary.targetType.eq(ReputationType.USER),
+                qReputationSummary.targetId.eq(qUser.id)
+            )
             .where(
                 qUser.id.eq(id),
                 qUser.status.eq(UserStatus.ACTIVE)
