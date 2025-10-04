@@ -33,4 +33,24 @@ public interface ReputationRequestQueryRepository {
         List<Long> workspaceIds,
         ReputationRequestFilterDto filter
     );
+
+    long getCountOfSentReputationRequestsByUser(Long userId, ReputationRequestStatus status);
+
+    List<ReputationRequestListResponse> getSentReputationRequestsWithCursorByUser(
+        CursorPageRequest<CursorDto> pageRequest,
+        Long userId,
+        ReputationRequestStatus status
+    );
+
+    long getCountOfSentReputationRequestsByManager(Long managerId, ReputationRequestStatus status);
+
+    List<ReputationRequestListResponse> getSentReputationRequestsWithCursorByManager(
+        CursorPageRequest<CursorDto> pageRequest,
+        Long managerId,
+        ReputationRequestStatus status
+    );
+
+    ReputationRequest findSentReputationRequestByUser(Long userId, Long requestId);
+
+    ReputationRequest findSentReputationRequestByManager(Long managerId, Long requestId);
 }

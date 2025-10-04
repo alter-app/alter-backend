@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly;
 
+import com.dreamteam.alter.domain.reputation.entity.ReputationSummary;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -37,5 +38,7 @@ public class ManagerWorkspaceResponse {
     private BigDecimal longitude;
 
     private LocalDateTime createdAt;
+
+    private ReputationSummary reputationSummary;
 
 }

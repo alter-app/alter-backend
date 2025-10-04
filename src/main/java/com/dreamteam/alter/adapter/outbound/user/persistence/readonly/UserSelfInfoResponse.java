@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence.readonly;
 
+import com.dreamteam.alter.domain.reputation.entity.ReputationSummary;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,5 +19,7 @@ public class UserSelfInfoResponse {
     private String nickname;
 
     private LocalDateTime createdAt;
+
+    private ReputationSummary reputationSummary;
 
 }

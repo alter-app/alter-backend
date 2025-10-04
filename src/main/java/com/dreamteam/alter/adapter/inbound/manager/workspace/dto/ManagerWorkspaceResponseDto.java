@@ -1,6 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.reputation.SelfReputationSummaryDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceResponse;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -62,6 +63,9 @@ public class ManagerWorkspaceResponseDto {
     @Schema(description = "업장 등록 일시", example = "2023-10-01T12:00:00")
     private LocalDateTime createdAt;
 
+    @Schema(description = "업장 평판 요약 정보")
+    private SelfReputationSummaryDto reputationSummary;
+
     public static ManagerWorkspaceResponseDto of(ManagerWorkspaceResponse entity) {
         return ManagerWorkspaceResponseDto.builder()
             .id(entity.getId())
@@ -75,6 +79,7 @@ public class ManagerWorkspaceResponseDto {
             .latitude(entity.getLatitude())
             .longitude(entity.getLongitude())
             .createdAt(entity.getCreatedAt())
+            .reputationSummary(SelfReputationSummaryDto.from(entity.getReputationSummary()))
             .build();
     }
 

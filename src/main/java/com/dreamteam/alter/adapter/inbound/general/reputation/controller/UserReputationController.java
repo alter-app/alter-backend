@@ -6,12 +6,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.*;
 import com.dreamteam.alter.adapter.inbound.common.dto.reputation.ReputationRequestListResponseDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
-import com.dreamteam.alter.domain.reputation.port.inbound.AppAcceptReputationRequestUseCase;
-import com.dreamteam.alter.domain.reputation.port.inbound.AppCreateReputationToUserUseCase;
-import com.dreamteam.alter.domain.reputation.port.inbound.AppCreateReputationToWorkspaceUseCase;
-import com.dreamteam.alter.domain.reputation.port.inbound.AppDeclineReputationRequestUseCase;
-import com.dreamteam.alter.domain.reputation.port.inbound.GetAvailableReputationKeywordListUseCase;
-import com.dreamteam.alter.domain.reputation.port.inbound.UserGetReputationRequestListUseCase;
+import com.dreamteam.alter.domain.reputation.port.inbound.*;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -45,6 +40,12 @@ public class UserReputationController implements UserReputationControllerSpec {
 
     @Resource(name = "appAcceptReputationRequest")
     private final AppAcceptReputationRequestUseCase appAcceptReputationRequest;
+
+    @Resource(name = "userGetSentReputationRequestList")
+    private final UserGetSentReputationRequestListUseCase userGetSentReputationRequestList;
+
+    @Resource(name = "userCancelReputationRequest")
+    private final UserCancelReputationRequestUseCase userCancelReputationRequest;
 
     @Override
     @GetMapping("/keywords")
@@ -105,6 +106,26 @@ public class UserReputationController implements UserReputationControllerSpec {
         AppActor actor = AppActionContext.getInstance().getActor();
 
         appAcceptReputationRequest.execute(actor, requestId, request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @GetMapping("/requests/sent")
+    public ResponseEntity<CursorPaginatedApiResponse<ReputationRequestListResponseDto>> getSentReputationRequestList(
+        UserReputationRequestFilterDto filter,
+        CursorPageRequestDto pageRequest
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        return ResponseEntity.ok(userGetSentReputationRequestList.execute(actor, filter, pageRequest));
+    }
+
+    @Override
+    @PatchMapping("/requests/sent/{requestId}/cancel")
+    public ResponseEntity<CommonApiResponse<Void>> cancelSentReputationRequest(@PathVariable Long requestId) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        userCancelReputationRequest.execute(actor, requestId);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

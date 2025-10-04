@@ -276,4 +276,192 @@ public class ReputationRequestQueryRepositoryImpl implements ReputationRequestQu
             .limit(pageRequest.pageSize())
             .fetch();
     }
+
+    @Override
+    public long getCountOfSentReputationRequestsByUser(Long userId, ReputationRequestStatus status) {
+        QReputationRequest qReputationRequest = QReputationRequest.reputationRequest;
+
+        BooleanExpression condition = qReputationRequest.requesterType.eq(ReputationType.USER)
+            .and(qReputationRequest.requesterId.eq(userId));
+
+        if (status != null) {
+            condition = condition.and(qReputationRequest.status.eq(status));
+        }
+
+        Long count = queryFactory
+            .select(qReputationRequest.count())
+            .from(qReputationRequest)
+            .where(condition)
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
+    @Override
+    public List<ReputationRequestListResponse> getSentReputationRequestsWithCursorByUser(
+        CursorPageRequest<CursorDto> pageRequest,
+        Long userId,
+        ReputationRequestStatus status
+    ) {
+        QReputationRequest qReputationRequest = QReputationRequest.reputationRequest;
+        QUser qRequesterUser = new QUser("qRequesterUser");
+        QWorkspace qRequesterWorkspace = new QWorkspace("qRequesterWorkspace");
+        QUser qTargetUser = new QUser("qTargetUser");
+        QWorkspace qTargetWorkspace = new QWorkspace("qTargetWorkspace");
+
+        BooleanExpression condition = qReputationRequest.requesterType.eq(ReputationType.USER)
+            .and(qReputationRequest.requesterId.eq(userId))
+            .and(cursorCondition(qReputationRequest, pageRequest.cursor()));
+
+        if (status != null) {
+            condition = condition.and(qReputationRequest.status.eq(status));
+        }
+
+        return queryFactory
+            .select(Projections.constructor(
+                ReputationRequestListResponse.class,
+                qReputationRequest.id,
+                qReputationRequest.requestType,
+                qReputationRequest.requesterType,
+                qReputationRequest.requesterId,
+                qRequesterUser.name.coalesce(qRequesterWorkspace.businessName),
+                qReputationRequest.targetType,
+                qReputationRequest.targetId,
+                qTargetUser.name.coalesce(qTargetWorkspace.businessName),
+                qReputationRequest.workspace,
+                qReputationRequest.status,
+                qReputationRequest.createdAt,
+                qReputationRequest.expiresAt
+            ))
+            .from(qReputationRequest)
+            .leftJoin(qRequesterUser)
+            .on(qReputationRequest.requesterType.eq(ReputationType.USER)
+                .and(qReputationRequest.requesterId.eq(qRequesterUser.id)))
+            .leftJoin(qRequesterWorkspace)
+            .on(qReputationRequest.requesterType.eq(ReputationType.WORKSPACE)
+                .and(qReputationRequest.requesterId.eq(qRequesterWorkspace.id)))
+            .leftJoin(qTargetUser)
+            .on(qReputationRequest.targetType.eq(ReputationType.USER)
+                .and(qReputationRequest.targetId.eq(qTargetUser.id)))
+            .leftJoin(qTargetWorkspace)
+            .on(qReputationRequest.targetType.eq(ReputationType.WORKSPACE)
+                .and(qReputationRequest.targetId.eq(qTargetWorkspace.id)))
+            .where(condition)
+            .orderBy(qReputationRequest.createdAt.desc(), qReputationRequest.id.desc())
+            .limit(pageRequest.pageSize())
+            .fetch();
+    }
+
+    @Override
+    public long getCountOfSentReputationRequestsByManager(Long managerId, ReputationRequestStatus status) {
+        QReputationRequest qReputationRequest = QReputationRequest.reputationRequest;
+
+        BooleanExpression condition = qReputationRequest.requesterType.eq(ReputationType.WORKSPACE)
+            .and(qReputationRequest.requesterId.in(
+                JPAExpressions.select(QWorkspace.workspace.id)
+                    .from(QWorkspace.workspace)
+                    .where(QWorkspace.workspace.managerUser.id.eq(managerId))
+            ));
+
+        if (status != null) {
+            condition = condition.and(qReputationRequest.status.eq(status));
+        }
+
+        Long count = queryFactory
+            .select(qReputationRequest.count())
+            .from(qReputationRequest)
+            .where(condition)
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
+    @Override
+    public List<ReputationRequestListResponse> getSentReputationRequestsWithCursorByManager(
+        CursorPageRequest<CursorDto> pageRequest,
+        Long managerId,
+        ReputationRequestStatus status
+    ) {
+        QReputationRequest qReputationRequest = QReputationRequest.reputationRequest;
+        QUser qRequesterUser = new QUser("qRequesterUser");
+        QWorkspace qRequesterWorkspace = new QWorkspace("qRequesterWorkspace");
+        QUser qTargetUser = new QUser("qTargetUser");
+        QWorkspace qTargetWorkspace = new QWorkspace("qTargetWorkspace");
+
+        BooleanExpression condition = qReputationRequest.requesterType.eq(ReputationType.WORKSPACE)
+            .and(qReputationRequest.requesterId.in(
+                JPAExpressions.select(QWorkspace.workspace.id)
+                    .from(QWorkspace.workspace)
+                    .where(QWorkspace.workspace.managerUser.id.eq(managerId))
+            ))
+            .and(cursorCondition(qReputationRequest, pageRequest.cursor()));
+
+        if (status != null) {
+            condition = condition.and(qReputationRequest.status.eq(status));
+        }
+
+        return queryFactory
+            .select(Projections.constructor(
+                ReputationRequestListResponse.class,
+                qReputationRequest.id,
+                qReputationRequest.requestType,
+                qReputationRequest.requesterType,
+                qReputationRequest.requesterId,
+                qRequesterUser.name.coalesce(qRequesterWorkspace.businessName),
+                qReputationRequest.targetType,
+                qReputationRequest.targetId,
+                qTargetUser.name.coalesce(qTargetWorkspace.businessName),
+                qReputationRequest.workspace,
+                qReputationRequest.status,
+                qReputationRequest.createdAt,
+                qReputationRequest.expiresAt
+            ))
+            .from(qReputationRequest)
+            .leftJoin(qRequesterUser)
+            .on(qReputationRequest.requesterType.eq(ReputationType.USER)
+                .and(qReputationRequest.requesterId.eq(qRequesterUser.id)))
+            .leftJoin(qRequesterWorkspace)
+            .on(qReputationRequest.requesterType.eq(ReputationType.WORKSPACE)
+                .and(qReputationRequest.requesterId.eq(qRequesterWorkspace.id)))
+            .leftJoin(qTargetUser)
+            .on(qReputationRequest.targetType.eq(ReputationType.USER)
+                .and(qReputationRequest.targetId.eq(qTargetUser.id)))
+            .leftJoin(qTargetWorkspace)
+            .on(qReputationRequest.targetType.eq(ReputationType.WORKSPACE)
+                .and(qReputationRequest.targetId.eq(qTargetWorkspace.id)))
+            .where(condition)
+            .orderBy(qReputationRequest.createdAt.desc(), qReputationRequest.id.desc())
+            .limit(pageRequest.pageSize())
+            .fetch();
+    }
+
+    @Override
+    public ReputationRequest findSentReputationRequestByUser(Long userId, Long requestId) {
+        QReputationRequest qReputationRequest = QReputationRequest.reputationRequest;
+
+        return queryFactory.selectFrom(qReputationRequest)
+            .where(qReputationRequest.requesterType.eq(ReputationType.USER)
+                .and(qReputationRequest.requesterId.eq(userId))
+                .and(qReputationRequest.id.eq(requestId))
+                .and(qReputationRequest.status.eq(ReputationRequestStatus.REQUESTED))
+            )
+            .fetchOne();
+    }
+
+    @Override
+    public ReputationRequest findSentReputationRequestByManager(Long managerId, Long requestId) {
+        QReputationRequest qReputationRequest = QReputationRequest.reputationRequest;
+
+        return queryFactory.selectFrom(qReputationRequest)
+            .where(qReputationRequest.requesterType.eq(ReputationType.WORKSPACE)
+                .and(qReputationRequest.requesterId.in(
+                    JPAExpressions.select(QWorkspace.workspace.id)
+                        .from(QWorkspace.workspace)
+                        .where(QWorkspace.workspace.managerUser.id.eq(managerId))
+                ))
+                .and(qReputationRequest.id.eq(requestId))
+                .and(qReputationRequest.status.eq(ReputationRequestStatus.REQUESTED))
+            )
+            .fetchOne();
+    }
 }

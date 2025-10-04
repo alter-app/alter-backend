@@ -6,7 +6,8 @@ public enum ReputationRequestStatus {
     REQUESTED,
     EXPIRED,
     DECLINED,
-    COMPLETED
+    COMPLETED,
+    CANCELED
     ;
 
     public static Map<ReputationRequestStatus, String> describe() {
@@ -14,7 +15,8 @@ public enum ReputationRequestStatus {
             ReputationRequestStatus.REQUESTED, "요청됨",
             ReputationRequestStatus.EXPIRED, "만료됨",
             ReputationRequestStatus.DECLINED, "거절됨",
-            ReputationRequestStatus.COMPLETED, "작성 완료"
+            ReputationRequestStatus.COMPLETED, "작성 완료",
+            ReputationRequestStatus.CANCELED, "취소됨"
         );
     }
 

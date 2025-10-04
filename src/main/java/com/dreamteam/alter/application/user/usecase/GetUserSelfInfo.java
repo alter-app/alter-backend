@@ -6,13 +6,13 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.port.inbound.GetUserSelfInfoUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service("getUserSelfInfo")
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class GetUserSelfInfo implements GetUserSelfInfoUseCase {
 
     private final UserQueryRepository userQueryRepository;
