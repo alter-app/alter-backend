@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 
+import java.util.Set;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,7 +20,7 @@ public class PostingApplicationListFilterDto {
     @Parameter(description = "업장 ID (eq)")
     private Long workspaceId;
 
-    @Parameter(description = "지원 상태 (eq)")
-    private PostingApplicationStatus status;
+    @Parameter(description = "지원 상태 (in)")
+    private Set<PostingApplicationStatus> status;
 
 }

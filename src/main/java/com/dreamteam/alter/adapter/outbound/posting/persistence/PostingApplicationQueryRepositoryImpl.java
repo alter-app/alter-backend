@@ -26,6 +26,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import com.dreamteam.alter.domain.reputation.entity.QReputationSummary;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 
@@ -285,16 +286,18 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             : null;
     }
 
-    private BooleanExpression eqApplicationStatusOrDefault(QPostingApplication qPostingApplication, PostingApplicationStatus status) {
+    private BooleanExpression eqApplicationStatusOrDefault(QPostingApplication qPostingApplication, Set<PostingApplicationStatus> statuses) {
         BooleanExpression statusCondition;
-        if (ObjectUtils.isNotEmpty(status)) {
-            statusCondition = qPostingApplication.status.eq(status);
+        if (ObjectUtils.isNotEmpty(statuses)) {
+            statusCondition = qPostingApplication.status.in(statuses);
         } else {
-            statusCondition = qPostingApplication.status.in(PostingApplicationStatus.defaultInquirableStatuses());
+            statusCondition = null;
         }
         
         // DELETED 상태는 항상 제외
-        return statusCondition.and(qPostingApplication.status.ne(PostingApplicationStatus.DELETED));
+        return statusCondition != null 
+            ? statusCondition.and(qPostingApplication.status.ne(PostingApplicationStatus.DELETED))
+            : qPostingApplication.status.ne(PostingApplicationStatus.DELETED);
     }
 
     private BooleanExpression getManagerPostingApplicationBaseConditions(
