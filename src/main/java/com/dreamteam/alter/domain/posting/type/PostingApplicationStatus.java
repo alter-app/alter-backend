@@ -1,7 +1,6 @@
 package com.dreamteam.alter.domain.posting.type;
 
 import java.util.Map;
-import java.util.Set;
 
 public enum PostingApplicationStatus {
     SUBMITTED,
@@ -23,10 +22,6 @@ public enum PostingApplicationStatus {
             PostingApplicationStatus.EXPIRED, "만료됨",
             PostingApplicationStatus.DELETED, "삭제됨"
         );
-    }
-
-    public static Set<PostingApplicationStatus> defaultInquirableStatuses() {
-        return Set.of(SUBMITTED, SHORTLISTED);
     }
 
 }
