@@ -118,4 +118,16 @@ public class ReputationRequest {
         }
     }
 
+    public void cancel() {
+        this.status = ReputationRequestStatus.CANCELED;
+
+        if (ObjectUtils.isNotEmpty(this.reputations)) {
+            for (Reputation reputation : this.reputations) {
+                if (ReputationStatus.REQUESTED.equals(reputation.getStatus())) {
+                    reputation.cancel();
+                }
+            }
+        }
+    }
+
 }

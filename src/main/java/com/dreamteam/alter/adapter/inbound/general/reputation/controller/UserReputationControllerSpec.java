@@ -148,4 +148,39 @@ public interface UserReputationControllerSpec {
         @Valid @RequestBody AcceptReputationRequestDto request
     );
 
+    @Operation(summary = "보낸 평판 요청 목록 조회", description = "사용자가 보낸 평판 요청 목록을 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "보낸 평판 요청 목록 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "잘못된 커서 페이징 요청",
+                        value = "{\"code\" : \"B005\"}"
+                    )
+                }))
+    })
+    ResponseEntity<CursorPaginatedApiResponse<ReputationRequestListResponseDto>> getSentReputationRequestList(
+        UserReputationRequestFilterDto filter,
+        CursorPageRequestDto pageRequest
+    );
+
+    @Operation(summary = "보낸 평판 요청 취소", description = "사용자가 보낸 평판 요청을 취소합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "평판 요청 취소 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "요청한 리소스를 찾을 수 없음 (취소할 수 있는 평판 요청)",
+                        value = "{\"code\" : \"B019\"}"
+                    )
+                }))
+    })
+    ResponseEntity<CommonApiResponse<Void>> cancelSentReputationRequest(@PathVariable Long requestId);
+
 }
