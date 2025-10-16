@@ -2,6 +2,8 @@ package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
 import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.common.notification.NotificationMessageBuilder;
+import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
@@ -75,17 +77,13 @@ public class ManagerAssignWorkerToSchedule implements ManagerAssignWorkerUseCase
     
     private void sendScheduleAssignmentNotification(WorkspaceShift shift, WorkspaceWorker worker) {
         try {
-            String workspaceName = shift.getWorkspace().getBusinessName();
-            String date = shift.getStartDateTime().format(DateTimeFormatter.ofPattern("MM월 dd일"));
-            String time = String.format("%s - %s", 
-                shift.getStartDateTime().format(DateTimeFormatter.ofPattern("HH:mm")),
-                shift.getEndDateTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+            String title = NotificationMessageConstants.Schedule.ASSIGNMENT_TITLE;
+            String body = NotificationMessageBuilder.buildScheduleAssignmentMessage(
+                shift.getWorkspace().getBusinessName(),
+                shift.getStartDateTime(),
+                shift.getEndDateTime(),
+                shift.getPosition()
             );
-            String position = shift.getPosition();
-            
-            String title = "새로운 근무 스케줄이 배정되었습니다";
-            String body = String.format("%s - %s %s %s 근무가 배정되었습니다", 
-                workspaceName, date, time, position);
             
             notificationService.sendNotification(
                 FcmNotificationRequestDto.of(worker.getUser().getId(), title, body)
