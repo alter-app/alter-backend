@@ -7,7 +7,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.notification.entity.Notification;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationRepository;
-import com.dreamteam.alter.domain.user.entity.FCMDeviceToken;
+import com.dreamteam.alter.domain.user.entity.FcmDeviceToken;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserFcmDeviceTokenRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -38,7 +38,7 @@ public class NotificationService {
     private final UserQueryRepository userQueryRepository;
 
     public void saveOrUpdateUserDeviceToken(User user, String deviceToken, DevicePlatformType devicePlatformType) {
-        Optional<FCMDeviceToken> existingDeviceTokenByUser =
+        Optional<FcmDeviceToken> existingDeviceTokenByUser =
             userFCMDeviceTokenQueryRepository.findByUser(user);
 
         if (existingDeviceTokenByUser.isPresent()) {
@@ -48,7 +48,7 @@ public class NotificationService {
             userFCMDeviceTokenQueryRepository.findByDeviceToken(deviceToken)
                 .ifPresent(userFCMDeviceTokenRepository::delete);
 
-            userFCMDeviceTokenRepository.save(FCMDeviceToken.create(
+            userFCMDeviceTokenRepository.save(FcmDeviceToken.create(
                 user,
                 deviceToken,
                 devicePlatformType
@@ -62,13 +62,13 @@ public class NotificationService {
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 디바이스 토큰 조회
-        Optional<FCMDeviceToken> deviceTokenOpt = userFCMDeviceTokenQueryRepository.findByUser(user);
+        Optional<FcmDeviceToken> deviceTokenOpt = userFCMDeviceTokenQueryRepository.findByUser(user);
         if (deviceTokenOpt.isEmpty()) {
             log.warn("사용자 {}의 디바이스 토큰이 없습니다.", request.getTargetUserId());
             return;
         }
 
-        FCMDeviceToken deviceToken = deviceTokenOpt.get();
+        FcmDeviceToken deviceToken = deviceTokenOpt.get();
 
         try {
             // 3. 알림 레코드 저장
@@ -98,7 +98,7 @@ public class NotificationService {
         List<User> users = userQueryRepository.findAllById(request.getTargetUserIds());
 
         // 2. 각 사용자의 디바이스 토큰 조회
-        List<FCMDeviceToken> deviceTokens = users.stream()
+        List<FcmDeviceToken> deviceTokens = users.stream()
             .map(userFCMDeviceTokenQueryRepository::findByUser)
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -123,7 +123,7 @@ public class NotificationService {
 
             // 4. FCM 배치 발송
             List<String> deviceTokenStrings = deviceTokens.stream()
-                .map(FCMDeviceToken::getDeviceToken)
+                .map(FcmDeviceToken::getDeviceToken)
                 .toList();
 
             BatchResponse response = fcmClient.sendMultipleNotifications(
@@ -142,14 +142,14 @@ public class NotificationService {
     /**
      * 배치 응답 처리
      */
-    private void processBatchResponse(BatchResponse response, List<FCMDeviceToken> deviceTokens) {
-        List<FCMDeviceToken> invalidTokens = new ArrayList<>();
+    private void processBatchResponse(BatchResponse response, List<FcmDeviceToken> deviceTokens) {
+        List<FcmDeviceToken> invalidTokens = new ArrayList<>();
 
         for (int i = 0; i < response.getResponses()
             .size(); i++) {
             SendResponse sendResponse = response.getResponses()
                 .get(i);
-            FCMDeviceToken deviceToken = deviceTokens.get(i);
+            FcmDeviceToken deviceToken = deviceTokens.get(i);
 
             if (sendResponse.isSuccessful()) {
                 deviceToken.updateLastNotificationSentAt();

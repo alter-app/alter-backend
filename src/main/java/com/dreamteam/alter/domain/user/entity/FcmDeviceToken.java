@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @EntityListeners(AuditingEntityListener.class)
-public class FCMDeviceToken {
+public class FcmDeviceToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,8 +47,8 @@ public class FCMDeviceToken {
     @Column(name = "last_notification_sent_at")
     private LocalDateTime lastNotificationSentAt;
 
-    public static FCMDeviceToken create(User user, String deviceToken, DevicePlatformType devicePlatform) {
-        return FCMDeviceToken.builder()
+    public static FcmDeviceToken create(User user, String deviceToken, DevicePlatformType devicePlatform) {
+        return FcmDeviceToken.builder()
             .user(user)
             .deviceToken(deviceToken)
             .devicePlatform(devicePlatform)

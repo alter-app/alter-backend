@@ -1,15 +1,15 @@
 package com.dreamteam.alter.domain.user.port.outbound;
 
-import com.dreamteam.alter.domain.user.entity.FCMDeviceToken;
+import com.dreamteam.alter.domain.user.entity.FcmDeviceToken;
 
 import java.util.List;
 
 public interface UserFcmDeviceTokenRepository {
 
-    void save(FCMDeviceToken fcmDeviceToken);
+    void save(FcmDeviceToken fcmDeviceToken);
 
-    void delete(FCMDeviceToken fcmDeviceToken);
+    void delete(FcmDeviceToken fcmDeviceToken);
     
-    void deleteAll(List<FCMDeviceToken> fcmDeviceTokens);
+    void deleteAll(List<FcmDeviceToken> fcmDeviceTokens);
     
 }

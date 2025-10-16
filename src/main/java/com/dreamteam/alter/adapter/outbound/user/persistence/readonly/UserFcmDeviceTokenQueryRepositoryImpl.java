@@ -1,6 +1,6 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence.readonly;
 
-import com.dreamteam.alter.domain.user.entity.FCMDeviceToken;
+import com.dreamteam.alter.domain.user.entity.FcmDeviceToken;
 import com.dreamteam.alter.domain.user.entity.QFCMDeviceToken;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -16,7 +16,7 @@ public class UserFcmDeviceTokenQueryRepositoryImpl implements UserFcmDeviceToken
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Optional<FCMDeviceToken> findByUser(User user) {
+    public Optional<FcmDeviceToken> findByUser(User user) {
         QFCMDeviceToken qfcmDeviceToken = QFCMDeviceToken.fCMDeviceToken;
 
         return Optional.ofNullable(queryFactory
@@ -26,7 +26,7 @@ public class UserFcmDeviceTokenQueryRepositoryImpl implements UserFcmDeviceToken
     }
 
     @Override
-    public Optional<FCMDeviceToken> findByDeviceToken(String deviceToken) {
+    public Optional<FcmDeviceToken> findByDeviceToken(String deviceToken) {
         QFCMDeviceToken qfcmDeviceToken = QFCMDeviceToken.fCMDeviceToken;
 
         return Optional.ofNullable(queryFactory

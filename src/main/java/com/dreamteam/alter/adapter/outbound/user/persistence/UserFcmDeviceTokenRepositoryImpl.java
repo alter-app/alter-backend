@@ -1,6 +1,6 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
-import com.dreamteam.alter.domain.user.entity.FCMDeviceToken;
+import com.dreamteam.alter.domain.user.entity.FcmDeviceToken;
 import com.dreamteam.alter.domain.user.port.outbound.UserFcmDeviceTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -14,17 +14,17 @@ public class UserFcmDeviceTokenRepositoryImpl implements UserFcmDeviceTokenRepos
     private final UserFCMDeviceTokenJpaRepository userFCMDeviceTokenJpaRepository;
     
     @Override
-    public void save(FCMDeviceToken fcmDeviceToken) {
+    public void save(FcmDeviceToken fcmDeviceToken) {
         userFCMDeviceTokenJpaRepository.save(fcmDeviceToken);
     }
     
     @Override
-    public void delete(FCMDeviceToken fcmDeviceToken) {
+    public void delete(FcmDeviceToken fcmDeviceToken) {
         userFCMDeviceTokenJpaRepository.delete(fcmDeviceToken);
     }
     
     @Override
-    public void deleteAll(List<FCMDeviceToken> fcmDeviceTokens) {
+    public void deleteAll(List<FcmDeviceToken> fcmDeviceTokens) {
         userFCMDeviceTokenJpaRepository.deleteAll(fcmDeviceTokens);
     }
 }
