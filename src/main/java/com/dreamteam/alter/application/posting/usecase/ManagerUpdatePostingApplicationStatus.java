@@ -82,7 +82,7 @@ public class ManagerUpdatePostingApplicationStatus implements ManagerUpdatePosti
 
             switch (status) {
                 case SHORTLISTED -> {
-                    title = "서류 합격 소식이 있습니다";
+                    title = "서류 합격을 축하합니다!";
                     body = String.format("%s 지원 결과: 서류 합격", businessName);
                 }
                 case ACCEPTED -> {
