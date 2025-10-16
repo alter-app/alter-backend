@@ -3,6 +3,8 @@ package com.dreamteam.alter.application.posting.usecase;
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingApplicationRequestDto;
 import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.common.notification.NotificationMessageBuilder;
+import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.entity.PostingApplication;
@@ -55,8 +57,8 @@ public class CreatePostingApplication implements CreatePostingApplicationUseCase
             String postingTitle = postingSchedule.getPosting().getTitle();
             Long managerUserId = postingSchedule.getPosting().getWorkspace().getManagerUser().getId();
             
-            String title = "새로운 지원자가 있습니다";
-            String body = String.format("%s에 새로운 지원자가 있습니다!", postingTitle);
+            String title = NotificationMessageConstants.PostingApplication.NEW_APPLICATION_TITLE;
+            String body = NotificationMessageBuilder.buildNewApplicationMessage(postingTitle);
             
             notificationService.sendNotification(
                 FcmNotificationRequestDto.of(managerUserId, title, body)

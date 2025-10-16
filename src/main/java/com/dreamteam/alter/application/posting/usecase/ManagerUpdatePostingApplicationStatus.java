@@ -3,6 +3,7 @@ package com.dreamteam.alter.application.posting.usecase;
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingApplicationStatusRequestDto;
 import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.entity.PostingApplication;
@@ -82,16 +83,16 @@ public class ManagerUpdatePostingApplicationStatus implements ManagerUpdatePosti
 
             switch (status) {
                 case SHORTLISTED -> {
-                    title = "서류 합격을 축하합니다!";
-                    body = String.format("%s 지원 결과: 서류 합격", businessName);
+                    title = NotificationMessageConstants.PostingApplication.SHORTLISTED_TITLE;
+                    body = NotificationMessageConstants.PostingApplication.SHORTLISTED_BODY.formatted(businessName);
                 }
                 case ACCEPTED -> {
-                    title = "최종 합격을 축하합니다!";
-                    body = String.format("%s 지원 결과: 최종 합격", businessName);
+                    title = NotificationMessageConstants.PostingApplication.ACCEPTED_TITLE;
+                    body = NotificationMessageConstants.PostingApplication.ACCEPTED_BODY.formatted(businessName);
                 }
                 case REJECTED -> {
-                    title = "지원 결과를 안내드립니다";
-                    body = String.format("%s 지원 결과: 불합격", businessName);
+                    title = NotificationMessageConstants.PostingApplication.REJECTED_TITLE;
+                    body = NotificationMessageConstants.PostingApplication.REJECTED_BODY.formatted(businessName);
                 }
                 default -> throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "지원하지 않는 상태입니다.");
             }
