@@ -2,6 +2,7 @@ package com.dreamteam.alter.application.reputation.usecase;
 
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationKeywordMapDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
+import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.reputation.entity.ReputationKeyword;
@@ -37,11 +38,12 @@ public class AppCreateReputationToUser extends AbstractCreateReputation implemen
         ReputationRequestRepository reputationRequestRepository,
         ReputationRepository reputationRepository,
         ReputationKeywordQueryRepository reputationKeywordQueryRepository,
+        NotificationService notificationService,
         WorkspaceQueryRepository workspaceQueryRepository,
         UserQueryRepository userQueryRepository,
         WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository
     ) {
-        super(reputationRequestRepository, reputationRepository, reputationKeywordQueryRepository);
+        super(reputationRequestRepository, reputationRepository, reputationKeywordQueryRepository, notificationService);
         this.workspaceQueryRepository = workspaceQueryRepository;
         this.userQueryRepository = userQueryRepository;
         this.workspaceWorkerQueryRepository = workspaceWorkerQueryRepository;
@@ -99,5 +101,11 @@ public class AppCreateReputationToUser extends AbstractCreateReputation implemen
             keywords,
             keywordMap
         );
+
+        // 평판 요청 대상 사용자에게 알림 발송
+        String title = "새로운 평판 요청";
+        String body = String.format("%s님이 평판을 요청했습니다.", actor.getUser().getName());
+
+        sendNotificationToTarget(targetUser.getId(), title, body);
     }
 }

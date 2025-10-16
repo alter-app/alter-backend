@@ -1,6 +1,8 @@
 package com.dreamteam.alter.application.reputation.usecase;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationKeywordMapDto;
+import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.reputation.entity.Reputation;
@@ -12,12 +14,14 @@ import com.dreamteam.alter.domain.reputation.port.outbound.ReputationRequestRepo
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Transactional
 public abstract class AbstractCreateReputation {
@@ -25,6 +29,7 @@ public abstract class AbstractCreateReputation {
     protected final ReputationRequestRepository reputationRequestRepository;
     protected final ReputationRepository reputationRepository;
     protected final ReputationKeywordQueryRepository reputationKeywordQueryRepository;
+    protected final NotificationService notificationService;
 
     protected final Map<String, ReputationKeyword> validateAndGetKeywords(Set<ReputationKeywordMapDto> keywords) {
         if (keywords.size() < 2 || keywords.size() > 5) {
@@ -66,5 +71,15 @@ public abstract class AbstractCreateReputation {
         );
 
         reputation.addReputationKeywordMap(keywords, keywordMap);
+    }
+
+    protected final void sendNotificationToTarget(Long targetUserId, String title, String body) {
+        try {
+            notificationService.sendNotification(
+                FcmNotificationRequestDto.of(targetUserId, title, body)
+            );
+        } catch (Exception e) {
+            // 알림 발송 실패는 평판 요청 프로세스에 영향을 주지 않음
+        }
     }
 }
