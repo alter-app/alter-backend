@@ -55,3 +55,7 @@ alter:
     exposed-headers: ${EXPOSED_HEADERS}
     allowed-pattern: ${ALLOWED_PATTERN}
     permit-all-urls: ${PERMIT_ALL_URLS}
+firebase:
+  fcm:
+    project-id: ${FIREBASE_PROJECT_ID}
+    service-account-key: ${FIREBASE_SERVICE_ACCOUNT_KEY}
