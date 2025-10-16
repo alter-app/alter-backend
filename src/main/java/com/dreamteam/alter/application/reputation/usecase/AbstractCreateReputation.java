@@ -14,14 +14,12 @@ import com.dreamteam.alter.domain.reputation.port.outbound.ReputationRequestRepo
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Slf4j
 @RequiredArgsConstructor
 @Transactional
 public abstract class AbstractCreateReputation {

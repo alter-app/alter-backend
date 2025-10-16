@@ -82,7 +82,7 @@ public class AppCreateReputationToWorkspace extends AbstractCreateReputation imp
         // 업장 관리자에게 알림 발송
         String title = "새로운 평판 요청";
         String body = String.format("%s님이 %s으로 평판을 요청했습니다.", 
-            actor.getUser().getNickname(), 
+            actor.getUser().getName(),
             targetWorkspace.getBusinessName());
 
         sendNotificationToTarget(targetWorkspace.getManagerUser().getUser().getId(), title, body);
