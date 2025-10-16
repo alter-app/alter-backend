@@ -2,6 +2,9 @@ package com.dreamteam.alter.application.reputation.usecase;
 
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToWorkspaceRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationKeywordMapDto;
+import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.common.notification.NotificationMessageBuilder;
+import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.reputation.entity.ReputationKeyword;
@@ -34,10 +37,11 @@ public class AppCreateReputationToWorkspace extends AbstractCreateReputation imp
         ReputationRequestRepository reputationRequestRepository,
         ReputationRepository reputationRepository,
         ReputationKeywordQueryRepository reputationKeywordQueryRepository,
+        NotificationService notificationService,
         WorkspaceQueryRepository workspaceQueryRepository,
         WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository
     ) {
-        super(reputationRequestRepository, reputationRepository, reputationKeywordQueryRepository);
+        super(reputationRequestRepository, reputationRepository, reputationKeywordQueryRepository, notificationService);
         this.workspaceQueryRepository = workspaceQueryRepository;
         this.workspaceWorkerQueryRepository = workspaceWorkerQueryRepository;
     }
@@ -77,6 +81,14 @@ public class AppCreateReputationToWorkspace extends AbstractCreateReputation imp
             keywordMap
         );
 
+        // 업장 관리자에게 알림 발송
+        String title = NotificationMessageConstants.Reputation.REQUEST_TITLE;
+        String body = NotificationMessageBuilder.buildAppToWorkspaceReputationMessage(
+            actor.getUser().getName(),
+            targetWorkspace.getBusinessName()
+        );
+
+        sendNotificationToTarget(targetWorkspace.getManagerUser().getUser().getId(), title, body);
     }
 
 }

@@ -1,5 +1,9 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
+import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.common.notification.NotificationMessageBuilder;
+import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
@@ -13,6 +17,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 @Service("managerAssignWorkerToSchedule")
@@ -22,6 +27,7 @@ public class ManagerAssignWorkerToSchedule implements ManagerAssignWorkerUseCase
 
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
     private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
+    private final NotificationService notificationService;
 
     @Override
     public void execute(ManagerActor actor, Long shiftId, Long workerId) {
@@ -64,5 +70,26 @@ public class ManagerAssignWorkerToSchedule implements ManagerAssignWorkerUseCase
         }
 
         workspaceShift.assignWorker(workspaceWorker.get());
+        
+        // 근무자에게 스케줄 배정 알림 전송
+        sendScheduleAssignmentNotification(workspaceShift, workspaceWorker.get());
+    }
+    
+    private void sendScheduleAssignmentNotification(WorkspaceShift shift, WorkspaceWorker worker) {
+        try {
+            String title = NotificationMessageConstants.Schedule.ASSIGNMENT_TITLE;
+            String body = NotificationMessageBuilder.buildScheduleAssignmentMessage(
+                shift.getWorkspace().getBusinessName(),
+                shift.getStartDateTime(),
+                shift.getEndDateTime(),
+                shift.getPosition()
+            );
+            
+            notificationService.sendNotification(
+                FcmNotificationRequestDto.of(worker.getUser().getId(), title, body)
+            );
+        } catch (CustomException e) {
+            // 알림 발송 실패는 스케줄 배정 프로세스에 영향을 주지 않음
+        }
     }
 }
