@@ -11,10 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Table(name = "fcm_device_tokens",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "device_token"})
-    })
+@Table(name = "fcm_device_tokens")
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

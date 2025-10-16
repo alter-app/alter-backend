@@ -82,7 +82,7 @@ public class NotificationService {
             deviceToken.updateLastNotificationSentAt();
 
         } catch (FirebaseMessagingException e) {
-            log.error("FCM 알림 발송 실패. DeviceToken: {}, Error: {}", deviceToken, e.getMessage(), e);
+            log.error("FCM 알림 발송 실패. UserId: {}, Error: {}", deviceToken.getUser().getId(), e.getMessage(), e);
 
             // 토큰 무효화 처리
             if (isTokenInvalid(e)) {
@@ -145,8 +145,8 @@ public class NotificationService {
     private void processBatchResponse(BatchResponse response, List<FcmDeviceToken> deviceTokens) {
         List<FcmDeviceToken> invalidTokens = new ArrayList<>();
 
-        for (int i = 0; i < response.getResponses()
-            .size(); i++) {
+        int responseSize = response.getResponses().size();
+        for (int i = 0; i < responseSize; i++) {
             SendResponse sendResponse = response.getResponses()
                 .get(i);
             FcmDeviceToken deviceToken = deviceTokens.get(i);
@@ -156,8 +156,8 @@ public class NotificationService {
             } else {
                 FirebaseMessagingException exception = sendResponse.getException();
                 log.error(
-                    "FCM 알림 발송 실패. DeviceToken: {}, Error Code: {}, Error Message: {}",
-                    deviceToken,
+                    "FCM 알림 발송 실패. UserId: {}, Error Code: {}, Error Message: {}",
+                    deviceToken.getUser().getId(),
                     exception.getMessagingErrorCode(),
                     exception.getMessage()
                 );

@@ -76,7 +76,7 @@ public abstract class AbstractCreateReputation {
             notificationService.sendNotification(
                 FcmNotificationRequestDto.of(targetUserId, title, body)
             );
-        } catch (Exception e) {
+        } catch (CustomException e) {
             // 알림 발송 실패는 평판 요청 프로세스에 영향을 주지 않음
         }
     }
