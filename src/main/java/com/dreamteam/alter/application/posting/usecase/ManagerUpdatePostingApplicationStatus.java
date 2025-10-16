@@ -1,6 +1,8 @@
 package com.dreamteam.alter.application.posting.usecase;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingApplicationStatusRequestDto;
+import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.entity.PostingApplication;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 public class ManagerUpdatePostingApplicationStatus implements ManagerUpdatePostingApplicationStatusUseCase {
 
     private final PostingApplicationQueryRepository postingApplicationQueryRepository;
+    private final NotificationService notificationService;
 
     @Resource(name = "addWorkerToWorkspace")
     private final CreateWorkspaceWorkerUseCase createWorkspaceWorker;
@@ -57,6 +60,47 @@ public class ManagerUpdatePostingApplicationStatus implements ManagerUpdatePosti
                 postingApplication.getPosting().getWorkspace(),
                 postingApplication.getUser()
             );
+        }
+
+        // 지원자에게 상태 변경 알림 전송
+        sendApplicationStatusNotification(postingApplication, request.getStatus());
+    }
+
+    private void sendApplicationStatusNotification(
+        PostingApplication postingApplication,
+        PostingApplicationStatus status
+    ) {
+        try {
+            String businessName = postingApplication.getPosting()
+                .getWorkspace()
+                .getBusinessName();
+            Long applicantUserId = postingApplication.getUser()
+                .getId();
+
+            String title;
+            String body;
+
+            switch (status) {
+                case SHORTLISTED -> {
+                    title = "서류 합격 소식이 있습니다";
+                    body = String.format("%s 지원 결과: 서류 합격", businessName);
+                }
+                case ACCEPTED -> {
+                    title = "최종 합격을 축하합니다!";
+                    body = String.format("%s 지원 결과: 최종 합격", businessName);
+                }
+                case REJECTED -> {
+                    title = "지원 결과를 안내드립니다";
+                    body = String.format("%s 지원 결과: 불합격", businessName);
+                }
+                default -> throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "지원하지 않는 상태입니다.");
+            }
+
+            notificationService.sendNotification(
+                FcmNotificationRequestDto.of(applicantUserId, title, body)
+            );
+        } catch (CustomException e) {
+            // 알림 발송 실패는 상태 변경 프로세스에 영향을 주지 않음
         }
     }
 
