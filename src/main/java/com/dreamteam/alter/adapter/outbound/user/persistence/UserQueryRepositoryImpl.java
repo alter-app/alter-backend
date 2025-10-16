@@ -12,6 +12,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -103,5 +104,16 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
             .fetchOne();
 
         return Optional.ofNullable(userSelf);
+    }
+
+    @Override
+    public List<User> findAllById(List<Long> ids) {
+        QUser qUser = QUser.user;
+        return queryFactory.selectFrom(qUser)
+            .where(
+                qUser.id.in(ids),
+                qUser.status.eq(UserStatus.ACTIVE)
+            )
+            .fetch();
     }
 }
