@@ -3,6 +3,8 @@ package com.dreamteam.alter.application.reputation.usecase;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToWorkspaceRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationKeywordMapDto;
 import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.common.notification.NotificationMessageBuilder;
+import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.reputation.entity.ReputationKeyword;
@@ -80,10 +82,11 @@ public class AppCreateReputationToWorkspace extends AbstractCreateReputation imp
         );
 
         // 업장 관리자에게 알림 발송
-        String title = "새로운 평판 요청";
-        String body = String.format("%s님이 %s으로 평판을 요청했습니다.", 
+        String title = NotificationMessageConstants.Reputation.REQUEST_TITLE;
+        String body = NotificationMessageBuilder.buildAppToWorkspaceReputationMessage(
             actor.getUser().getName(),
-            targetWorkspace.getBusinessName());
+            targetWorkspace.getBusinessName()
+        );
 
         sendNotificationToTarget(targetWorkspace.getManagerUser().getUser().getId(), title, body);
     }

@@ -3,6 +3,8 @@ package com.dreamteam.alter.application.reputation.usecase;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.ReputationKeywordMapDto;
 import com.dreamteam.alter.adapter.inbound.general.reputation.dto.CreateReputationToUserRequestDto;
 import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.common.notification.NotificationMessageBuilder;
+import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.reputation.entity.ReputationKeyword;
@@ -103,8 +105,8 @@ public class AppCreateReputationToUser extends AbstractCreateReputation implemen
         );
 
         // 평판 요청 대상 사용자에게 알림 발송
-        String title = "새로운 평판 요청";
-        String body = String.format("%s님이 평판을 요청했습니다.", actor.getUser().getName());
+        String title = NotificationMessageConstants.Reputation.REQUEST_TITLE;
+        String body = NotificationMessageBuilder.buildAppToUserReputationMessage(actor.getUser().getName());
 
         sendNotificationToTarget(targetUser.getId(), title, body);
     }
