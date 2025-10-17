@@ -24,26 +24,36 @@ public class FcmConfig {
     private String projectId;
 
     @Bean
-    public FirebaseMessaging firebaseMessaging() {
+    public FirebaseApp firebaseApp() {
         try {
-            byte[] decodedKey = Base64.getDecoder().decode(serviceAccountKey);
-            
-            GoogleCredentials credentials = GoogleCredentials.fromStream(
-                new ByteArrayInputStream(decodedKey)
-            );
+            if (FirebaseApp.getApps().isEmpty()) {
+                byte[] decodedKey = Base64.getDecoder()
+                    .decode(serviceAccountKey);
 
-            FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(credentials)
-                .setProjectId(projectId)
-                .build();
+                GoogleCredentials credentials = GoogleCredentials.fromStream(
+                    new ByteArrayInputStream(decodedKey)
+                );
 
-            FirebaseApp app = FirebaseApp.initializeApp(options);
-            log.info("Successfully Initialized Firebase Admin SDK");
-            
-            return FirebaseMessaging.getInstance(app);
+                FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(credentials)
+                    .setProjectId(projectId)
+                    .build();
+
+                FirebaseApp app = FirebaseApp.initializeApp(options);
+                log.info("Successfully Initialized Firebase Admin SDK");
+                return app;
+            } else {
+                return FirebaseApp.getInstance();
+            }
         } catch (IOException e) {
             log.error("Error Occurred While Initializing Firebase Admin SDK : {}", e.getMessage(), e);
             throw new RuntimeException("Firebase 초기화 실패", e);
         }
     }
+
+    @Bean
+    public FirebaseMessaging firebaseMessaging(FirebaseApp firebaseApp) {
+        return FirebaseMessaging.getInstance(firebaseApp);
+    }
+
 }
