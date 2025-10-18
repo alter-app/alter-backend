@@ -2,6 +2,7 @@ package com.dreamteam.alter.domain.workspace.entity;
 
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestType;
+import com.dreamteam.alter.domain.workspace.type.SubstituteRequestTargetStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.function.Consumer;
 
 @Entity
 @Getter
@@ -22,6 +24,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @EntityListeners(AuditingEntityListener.class)
 public class SubstituteRequest {
+
+    private static final int DEFAULT_EXPIRY_DAYS = 7;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -92,7 +96,7 @@ public class SubstituteRequest {
             .requestType(requestType)
             .requestReason(requestReason)
             .status(SubstituteRequestStatus.PENDING)
-            .expiresAt(LocalDateTime.now().plusDays(7))
+            .expiresAt(LocalDateTime.now().plusDays(DEFAULT_EXPIRY_DAYS))
             .targets(new ArrayList<>())
             .build();
     }
@@ -102,39 +106,21 @@ public class SubstituteRequest {
         this.status = SubstituteRequestStatus.ACCEPTED;
         this.acceptedAt = LocalDateTime.now();
         
-        // ALL 타입인 경우 해당 target의 상태도 업데이트
-        if (this.requestType == SubstituteRequestType.ALL && this.targets != null && !this.targets.isEmpty()) {
-            // 수락한 사용자의 상태를 ACCEPTED로 변경
-            this.targets.stream()
-                .filter(target -> target.getTargetWorkerId().equals(workerId))
-                .findFirst()
-                .ifPresent(SubstituteRequestTarget::accept);
-            
-            // 나머지 PENDING 상태인 대상자들을 ACCEPTED_BY_OTHERS로 변경
-            this.targets.stream()
-                .filter(target -> !target.getTargetWorkerId().equals(workerId))
-                .filter(target -> target.getStatus().name().equals("PENDING"))
-                .forEach(SubstituteRequestTarget::markAsAcceptedByOthers);
+        // 수락한 사용자의 상태를 ACCEPTED로 변경 (requestType과 무관하게)
+        updateTargetStatus(workerId, SubstituteRequestTarget::accept);
+        
+        // ALL 타입인 경우 나머지 PENDING 상태인 대상자들을 ACCEPTED_BY_OTHERS로 변경
+        if (SubstituteRequestType.ALL.equals(this.requestType)) {
+            updateOtherPendingTargets(workerId);
         }
-    }
-
-    public void rejectByTarget(String rejectionReason) {
-        this.targetRejectionReason = rejectionReason;
-        this.status = SubstituteRequestStatus.REJECTED_BY_TARGET;
-        this.processedAt = LocalDateTime.now();
     }
 
     public void rejectByTarget(Long workerId, String rejectionReason) {
-        // ALL 타입인 경우 해당 target의 상태 업데이트
-        if (this.requestType == SubstituteRequestType.ALL && this.targets != null && !this.targets.isEmpty()) {
-            this.targets.stream()
-                .filter(target -> target.getTargetWorkerId().equals(workerId))
-                .findFirst()
-                .ifPresent(target -> target.reject(rejectionReason));
-        } else {
-            // SPECIFIC 타입인 경우 기존 로직
-            rejectByTarget(rejectionReason);
-        }
+        updateTargetStatus(workerId, target -> target.reject(rejectionReason));
+        
+        this.targetRejectionReason = rejectionReason;
+        this.status = SubstituteRequestStatus.REJECTED_BY_TARGET;
+        this.processedAt = LocalDateTime.now();
     }
 
     public void approve(Long approverId, String approvalComment) {
@@ -144,11 +130,8 @@ public class SubstituteRequest {
         this.processedAt = LocalDateTime.now();
 
         // 수락한 사용자의 SubstituteRequestTarget 상태도 APPROVED로 변경
-        if (this.targets != null && !this.targets.isEmpty() && this.acceptedWorkerId != null) {
-            this.targets.stream()
-                .filter(target -> target.getTargetWorkerId().equals(this.acceptedWorkerId))
-                .findFirst()
-                .ifPresent(SubstituteRequestTarget::approve);
+        if (ObjectUtils.isNotEmpty(this.acceptedWorkerId)) {
+            updateTargetStatus(this.acceptedWorkerId, SubstituteRequestTarget::approve);
         }
     }
 
@@ -159,9 +142,7 @@ public class SubstituteRequest {
         this.processedAt = LocalDateTime.now();
 
         // 모든 SubstituteRequestTarget의 상태도 REJECTED_BY_APPROVER로 변경
-        if (this.targets != null && !this.targets.isEmpty()) {
-            this.targets.forEach(target -> target.rejectByApprover(rejectionReason));
-        }
+        this.targets.forEach(target -> target.rejectByApprover(rejectionReason));
     }
 
     public void cancel() {
@@ -169,9 +150,7 @@ public class SubstituteRequest {
         this.processedAt = LocalDateTime.now();
 
         // 모든 SubstituteRequestTarget의 상태도 CANCELLED로 변경
-        if (this.targets != null && !this.targets.isEmpty()) {
-            this.targets.forEach(SubstituteRequestTarget::cancel);
-        }
+        this.targets.forEach(SubstituteRequestTarget::cancel);
     }
 
     public void expire() {
@@ -185,41 +164,59 @@ public class SubstituteRequest {
 
     public boolean canBeCancelledBy(Long userId) {
         return this.requesterId.equals(userId)
-            && (this.status == SubstituteRequestStatus.PENDING
-                || this.status == SubstituteRequestStatus.ACCEPTED);
+            && (SubstituteRequestStatus.PENDING.equals(this.status) || SubstituteRequestStatus.ACCEPTED.equals(this.status));
     }
 
     public boolean canBeAcceptedBy(Long workerId) {
-        if (this.status != SubstituteRequestStatus.PENDING) {
+        if (!SubstituteRequestStatus.PENDING.equals(this.status)) {
             return false;
         }
         
         // 만료된 요청은 수락 불가
-        if (this.expiresAt != null && this.expiresAt.isBefore(LocalDateTime.now())) {
+        if (this.expiresAt.isBefore(LocalDateTime.now())) {
             return false;
         }
         
         // targets에서 해당 worker가 PENDING 상태인지 확인
-        return this.targets != null && !this.targets.isEmpty() && this.targets.stream()
+        return this.targets.stream()
             .anyMatch(target -> target.getTargetWorkerId().equals(workerId) 
-                && target.getStatus().name().equals("PENDING"));
+                && SubstituteRequestTargetStatus.PENDING.equals(target.getStatus()));
     }
 
     public boolean canBeRejectedBy(Long workerId) {
-        if (this.status != SubstituteRequestStatus.PENDING) {
+        if (!SubstituteRequestStatus.PENDING.equals(this.status)) {
             return false;
         }
         
         // 만료된 요청은 거절 불가
-        if (this.expiresAt != null && this.expiresAt.isBefore(LocalDateTime.now())) {
+        if (this.expiresAt.isBefore(LocalDateTime.now())) {
             return false;
         }
         
         // targets에서 해당 worker가 PENDING 상태인지 확인
-        return this.targets != null && !this.targets.isEmpty() && this.targets.stream()
+        return this.targets.stream()
             .anyMatch(target -> target.getTargetWorkerId().equals(workerId) 
-                && target.getStatus().name().equals("PENDING"));
+                && SubstituteRequestTargetStatus.PENDING.equals(target.getStatus()));
+    }
+
+    /**
+     * 특정 workerId에 해당하는 타깃의 상태를 업데이트합니다.
+     */
+    private void updateTargetStatus(Long workerId, Consumer<SubstituteRequestTarget> action) {
+        this.targets.stream()
+            .filter(target -> target.getTargetWorkerId().equals(workerId))
+            .findFirst()
+            .ifPresent(action);
+    }
+
+    /**
+     * ALL 타입 요청에서 수락한 사용자를 제외한 나머지 PENDING 상태 타깃들을 ACCEPTED_BY_OTHERS로 변경합니다.
+     */
+    private void updateOtherPendingTargets(Long acceptedWorkerId) {
+        this.targets.stream()
+            .filter(target -> !target.getTargetWorkerId().equals(acceptedWorkerId))
+            .filter(target -> SubstituteRequestTargetStatus.PENDING.equals(target.getStatus()))
+            .forEach(SubstituteRequestTarget::markAsAcceptedByOthers);
     }
 
 }
-
