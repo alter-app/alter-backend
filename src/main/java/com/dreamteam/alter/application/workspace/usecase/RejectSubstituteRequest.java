@@ -39,7 +39,7 @@ public class RejectSubstituteRequest implements RejectSubstituteRequestUseCase {
             .findActiveWorkerByWorkspaceAndUser(substituteRequest.getWorkspaceShift().getWorkspace(), actor.getUser())
             .orElseThrow(() -> new CustomException(ErrorCode.FORBIDDEN, "해당 업장의 근무자가 아닙니다."));
 
-        // 거절 가능 여부 검증 (특정 대상 요청이고, 본인이 대상자인 경우만)
+        // 거절 가능 여부 검증 (SPECIFIC 또는 ALL 요청에서, 본인이 타깃에 포함된 경우 거절 가능)
         if (!substituteRequest.canBeRejectedBy(myWorker.getId())) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "거절할 수 없는 요청입니다.");
         }

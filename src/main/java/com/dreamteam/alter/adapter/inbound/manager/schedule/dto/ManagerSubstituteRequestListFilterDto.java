@@ -16,6 +16,6 @@ import org.springdoc.core.annotations.ParameterObject;
 public class ManagerSubstituteRequestListFilterDto {
 
     @Parameter(description = "대타 요청 상태")
-    @Schema(description = "대타 요청 상태 (ACCEPTED, APPROVED, REJECTED_BY_APPROVER, CANCELLED)")
+    @Schema(description = "대타 요청 상태 (ACCEPTED, APPROVED, REJECTED_BY_APPROVER)")
     private SubstituteRequestStatus status;
 }

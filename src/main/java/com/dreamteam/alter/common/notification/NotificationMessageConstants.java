@@ -55,6 +55,9 @@ public final class NotificationMessageConstants {
         
         public static final String MANAGER_REJECTED_TITLE = "대타 요청이 거절되었습니다";
         public static final String MANAGER_REJECTED_BODY = "%s에서 %s %s 근무 대타 요청이 거절되었습니다";
+        
+        public static final String MANAGER_ACCEPTED_TITLE = "대타 요청이 수락되었습니다";
+        public static final String MANAGER_ACCEPTED_BODY = "%s님이 %s %s 근무 대타를 수락했습니다. 승인을 기다리고 있습니다.";
     }
     
 }

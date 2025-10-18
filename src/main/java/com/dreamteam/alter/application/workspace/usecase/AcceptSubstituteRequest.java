@@ -87,9 +87,9 @@ public class AcceptSubstituteRequest implements AcceptSubstituteRequestUseCase {
                 .getWorkspace()
                 .getManagerUser();
 
-            String managerTitle = "대타 요청이 수락되었습니다";
+            String managerTitle = NotificationMessageConstants.SubstituteRequest.MANAGER_ACCEPTED_TITLE;
             String managerBody = String.format(
-                "%s님이 %s %s 근무 대타를 수락했습니다. 승인을 기다리고 있습니다.",
+                NotificationMessageConstants.SubstituteRequest.MANAGER_ACCEPTED_BODY,
                 accepterName,
                 request.getWorkspaceShift().getStartDateTime().toLocalDate(),
                 request.getWorkspaceShift().getStartDateTime().toLocalTime()

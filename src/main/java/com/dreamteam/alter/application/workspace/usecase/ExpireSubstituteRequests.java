@@ -4,7 +4,7 @@ import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
 import com.dreamteam.alter.domain.workspace.port.inbound.ExpireSubstituteRequestsUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.SubstituteRequestQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
