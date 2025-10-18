@@ -28,6 +28,7 @@ import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -290,6 +291,151 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             )
             .orderBy(qUser.name.asc(), qWorkspaceWorker.id.asc())
             .limit(pageRequest.pageSize())
+            .fetch();
+    }
+
+    @Override
+    public long getExchangeableWorkerCount(Long workspaceId, User self, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        QUser qUser = QUser.user;
+        QWorkspaceShift qWorkspaceShift = QWorkspaceShift.workspaceShift;
+
+        BooleanExpression excludeCondition = ObjectUtils.isNotEmpty(self)
+            ? qUser.id.ne(self.getId())
+            : null;
+
+        // 해당 시간대에 다른 근무 스케줄이 있는 근무자 제외
+        BooleanExpression hasConflictingSchedule = JPAExpressions
+            .selectFrom(qWorkspaceShift)
+            .where(
+                qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
+                qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED),
+                qWorkspaceShift.startDateTime.lt(endDateTime),
+                qWorkspaceShift.endDateTime.gt(startDateTime)
+            )
+            .exists();
+
+        Long count = queryFactory
+            .select(qWorkspaceWorker.id.count())
+            .from(qWorkspaceWorker)
+            .join(qWorkspaceWorker.workspace, qWorkspace)
+            .join(qWorkspaceWorker.user, qUser)
+            .where(
+                qWorkspace.id.eq(workspaceId),
+                qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
+                excludeCondition,
+                hasConflictingSchedule.not()
+            )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
+    @Override
+    public List<UserWorkspaceWorkerListResponse> getExchangeableWorkerListWithCursor(
+        Long workspaceId,
+        User self,
+        LocalDateTime startDateTime,
+        LocalDateTime endDateTime,
+        CursorPageRequest<CursorDto> pageRequest
+    ) {
+        QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        QUser qUser = QUser.user;
+        QWorkspaceShift qWorkspaceShift = QWorkspaceShift.workspaceShift;
+
+        BooleanExpression excludeCondition = ObjectUtils.isNotEmpty(self)
+            ? qUser.id.ne(self.getId())
+            : null;
+
+        // 해당 시간대에 다른 근무 스케줄이 있는 근무자 제외
+        BooleanExpression hasConflictingSchedule = JPAExpressions
+            .selectFrom(qWorkspaceShift)
+            .where(
+                qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
+                qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED),
+                qWorkspaceShift.startDateTime.lt(endDateTime),
+                qWorkspaceShift.endDateTime.gt(startDateTime)
+            )
+            .exists();
+
+        return queryFactory
+            .select(Projections.constructor(
+                UserWorkspaceWorkerListResponse.class,
+                qWorkspaceWorker.id,
+                Projections.constructor(
+                    UserWorkspaceWorkerResponse.class,
+                    qUser.id,
+                    qUser.name
+                ),
+                Expressions.constant(WorkerPositionType.WORKER),
+                qWorkspaceWorker.employedAt,
+                qWorkspaceShift.startDateTime.min(),
+                qWorkspaceWorker.createdAt
+            ))
+            .from(qWorkspaceWorker)
+            .join(qWorkspaceWorker.workspace, qWorkspace)
+            .join(qWorkspaceWorker.user, qUser)
+            .leftJoin(qWorkspaceShift)
+            .on(
+                qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
+                qWorkspaceShift.startDateTime.gt(LocalDateTime.now()),
+                qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
+            )
+            .where(
+                qWorkspace.id.eq(workspaceId),
+                qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
+                excludeCondition,
+                hasConflictingSchedule.not(),
+                cursorConditions(qWorkspaceWorker, pageRequest.cursor())
+            )
+            .groupBy(
+                qWorkspaceWorker.id,
+                qUser.id,
+                qUser.name,
+                qWorkspaceWorker.employedAt,
+                qWorkspaceWorker.createdAt
+            )
+            .orderBy(qUser.name.asc(), qWorkspaceWorker.id.asc())
+            .limit(pageRequest.pageSize())
+            .fetch();
+    }
+
+    @Override
+    public List<Long> getExchangeableWorkerIds(Long workspaceId, User self, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        QUser qUser = QUser.user;
+        QWorkspaceShift qWorkspaceShift = QWorkspaceShift.workspaceShift;
+
+        BooleanExpression excludeCondition = ObjectUtils.isNotEmpty(self)
+            ? qUser.id.ne(self.getId())
+            : null;
+
+        // 해당 시간대에 다른 근무 스케줄이 있는 근무자 제외
+        BooleanExpression hasConflictingSchedule = JPAExpressions
+            .selectFrom(qWorkspaceShift)
+            .where(
+                qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
+                qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED),
+                qWorkspaceShift.startDateTime.lt(endDateTime),
+                qWorkspaceShift.endDateTime.gt(startDateTime)
+            )
+            .exists();
+
+        return queryFactory
+            .select(qWorkspaceWorker.id)
+            .from(qWorkspaceWorker)
+            .join(qWorkspaceWorker.workspace, qWorkspace)
+            .join(qWorkspaceWorker.user, qUser)
+            .where(
+                qWorkspace.id.eq(workspaceId),
+                qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
+                excludeCondition,
+                hasConflictingSchedule.not()
+            )
+            .orderBy(qUser.name.asc(), qWorkspaceWorker.id.asc())
             .fetch();
     }
 
