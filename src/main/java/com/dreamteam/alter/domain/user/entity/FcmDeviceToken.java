@@ -3,9 +3,6 @@ package com.dreamteam.alter.domain.user.entity;
 import com.dreamteam.alter.domain.user.type.DevicePlatformType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -15,7 +12,6 @@ import java.time.LocalDateTime;
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@EntityListeners(AuditingEntityListener.class)
 public class FcmDeviceToken {
 
     @Id
@@ -33,11 +29,9 @@ public class FcmDeviceToken {
     @Column(name = "device_platform", length = 20, nullable = false)
     private DevicePlatformType devicePlatform;
 
-    @CreatedDate
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
@@ -49,16 +43,20 @@ public class FcmDeviceToken {
             .user(user)
             .deviceToken(deviceToken)
             .devicePlatform(devicePlatform)
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
             .build();
     }
 
     public void updateDeviceToken(String newDeviceToken, DevicePlatformType newDevicePlatform) {
         this.deviceToken = newDeviceToken;
         this.devicePlatform = newDevicePlatform;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateLastNotificationSentAt() {
         this.lastNotificationSentAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
 }
