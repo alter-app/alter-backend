@@ -81,6 +81,10 @@ public class SubstituteRequest {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     public static SubstituteRequest create(
         WorkspaceShift workspaceShift,
         Long requesterId,
@@ -158,6 +162,7 @@ public class SubstituteRequest {
 
     public void expire() {
         this.status = SubstituteRequestStatus.EXPIRED;
+        this.processedAt = LocalDateTime.now();
 
         // 모든 SubstituteRequestTarget의 상태도 EXPIRED로 변경
         if (ObjectUtils.isNotEmpty(targets)) {

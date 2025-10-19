@@ -16,6 +16,9 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRe
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,9 +34,14 @@ public class AcceptSubstituteRequest implements AcceptSubstituteRequestUseCase {
     private final NotificationService notificationService;
 
     @Override
+    @Retryable(
+        value = {ObjectOptimisticLockingFailureException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public void execute(AppActor actor, Long requestId) {
-        // 대타 요청 조회
-        SubstituteRequest request = substituteRequestQueryRepository.findById(requestId)
+        // 대타 요청 조회 (비관적 락 적용)
+        SubstituteRequest request = substituteRequestQueryRepository.findByIdWithPessimisticLock(requestId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 대타 요청입니다."));
 
         // 현재 사용자의 WorkspaceWorker 정보 조회
@@ -41,7 +49,7 @@ public class AcceptSubstituteRequest implements AcceptSubstituteRequestUseCase {
             .findActiveWorkerByWorkspaceAndUser(request.getWorkspaceShift().getWorkspace(), actor.getUser())
             .orElseThrow(() -> new CustomException(ErrorCode.FORBIDDEN, "해당 업장의 근무자가 아닙니다."));
 
-        // 수락 가능 여부 검증
+        // 수락 가능 여부 재검증 (락 획득 후)
         if (!request.canBeAcceptedBy(myWorker.getId())) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "수락할 수 없는 요청입니다.");
         }

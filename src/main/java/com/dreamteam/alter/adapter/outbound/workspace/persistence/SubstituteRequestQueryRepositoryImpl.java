@@ -20,6 +20,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import jakarta.persistence.LockModeType;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
@@ -44,6 +45,17 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
         SubstituteRequest result = queryFactory
             .selectFrom(substituteRequest)
             .where(substituteRequest.id.eq(id))
+            .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
+
+    @Override
+    public Optional<SubstituteRequest> findByIdWithPessimisticLock(Long id) {
+        SubstituteRequest result = queryFactory
+            .selectFrom(substituteRequest)
+            .where(substituteRequest.id.eq(id))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
             .fetchOne();
 
         return Optional.ofNullable(result);

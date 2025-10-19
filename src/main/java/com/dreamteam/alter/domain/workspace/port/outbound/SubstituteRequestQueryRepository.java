@@ -16,6 +16,7 @@ import java.util.Optional;
 
 public interface SubstituteRequestQueryRepository {
     Optional<SubstituteRequest> findById(Long id);
+    Optional<SubstituteRequest> findByIdWithPessimisticLock(Long id);
     
     boolean existsActiveRequestByScheduleAndRequester(Long scheduleId, Long requesterId);
 

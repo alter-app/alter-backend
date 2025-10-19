@@ -89,6 +89,7 @@ public class SubstituteRequestTarget {
 
     public void expire() {
         this.status = SubstituteRequestTargetStatus.EXPIRED;
+        this.respondedAt = LocalDateTime.now();
     }
 
 }
