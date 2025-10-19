@@ -141,7 +141,7 @@ public interface UserSubstituteRequestControllerSpec {
         @PathVariable Long requestId
     );
 
-    @Operation(summary = "대타 요청 거절", description = "받은 대타 요청을 거절합니다. (특정 대상 요청만 가능)")
+    @Operation(summary = "대타 요청 거절", description = "받은 대타 요청을 거절합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "거절 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
