@@ -19,7 +19,7 @@ public enum SubstituteRequestTargetStatus {
             PENDING, "대기 중",
             ACCEPTED, "수락됨",
             REJECTED, "거절됨",
-            ACCEPTED_BY_OTHERS, "딴 사람에게 수락됨",
+            ACCEPTED_BY_OTHERS, "다른 사람에게 수락됨",
             APPROVED, "승인됨",
             CANCELLED, "취소됨",
             REJECTED_BY_APPROVER, "관리자 거절",

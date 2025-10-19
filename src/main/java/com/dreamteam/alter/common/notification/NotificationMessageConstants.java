@@ -45,7 +45,7 @@ public final class NotificationMessageConstants {
         public static final String NEW_REQUEST_BODY = "%s님이 %s %s 근무 대타를 요청했습니다";
         
         public static final String ACCEPTED_TITLE = "대타 요청이 수락되었습니다";
-        public static final String ACCEPTED_BODY = "%s님이 %s %s 근무 대타 요청을 수락했습니다. 사장님 승인 대기중입니다.";
+        public static final String ACCEPTED_BODY = "%s님이 %s %s 근무 대타 요청을 수락했습니다. 사장님 승인 대기 중입니다.";
         
         public static final String REJECTED_TITLE = "대타 요청이 거절되었습니다";
         public static final String REJECTED_BODY = "%s님이 %s %s 근무 대타 요청을 거절했습니다";
