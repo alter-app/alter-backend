@@ -1,6 +1,6 @@
 package com.dreamteam.alter.application.admin.usecase;
 
-import com.dreamteam.alter.adapter.inbound.admin.notificaction.dto.AdminSendMockNotificationRequestDto;
+import com.dreamteam.alter.adapter.inbound.admin.notification.dto.AdminSendMockNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.domain.admin.port.inbound.AdminSendMockNotificationUseCase;

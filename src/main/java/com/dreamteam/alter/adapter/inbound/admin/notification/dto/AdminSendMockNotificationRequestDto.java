@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.admin.notificaction.dto;
+package com.dreamteam.alter.adapter.inbound.admin.notification.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;

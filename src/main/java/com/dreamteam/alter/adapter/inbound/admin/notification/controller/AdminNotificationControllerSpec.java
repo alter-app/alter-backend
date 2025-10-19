@@ -1,6 +1,6 @@
-package com.dreamteam.alter.adapter.inbound.admin.notificaction.controller;
+package com.dreamteam.alter.adapter.inbound.admin.notification.controller;
 
-import com.dreamteam.alter.adapter.inbound.admin.notificaction.dto.AdminSendMockNotificationRequestDto;
+import com.dreamteam.alter.adapter.inbound.admin.notification.dto.AdminSendMockNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
