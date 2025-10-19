@@ -18,6 +18,7 @@ import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.SendResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,12 +98,13 @@ public class NotificationService {
         // 1. 사용자들 조회
         List<User> users = userQueryRepository.findAllById(request.getTargetUserIds());
 
-        // 2. 각 사용자의 디바이스 토큰 조회
-        List<FcmDeviceToken> deviceTokens = users.stream()
-            .map(userFCMDeviceTokenQueryRepository::findByUser)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .toList();
+        if (ObjectUtils.isEmpty(users)) {
+            log.warn("발송할 사용자가 없습니다.");
+            return;
+        }
+
+        // 2. 배치로 디바이스 토큰 조회
+        List<FcmDeviceToken> deviceTokens = userFCMDeviceTokenQueryRepository.findByUsers(users);
 
         if (deviceTokens.isEmpty()) {
             log.warn("발송할 디바이스 토큰이 없습니다.");

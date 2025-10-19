@@ -5,8 +5,10 @@ import com.dreamteam.alter.domain.user.entity.QFcmDeviceToken;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -33,6 +35,20 @@ public class UserFcmDeviceTokenQueryRepositoryImpl implements UserFcmDeviceToken
             .selectFrom(qFcmDeviceToken)
             .where(qFcmDeviceToken.deviceToken.eq(deviceToken))
             .fetchOne());
+    }
+
+    @Override
+    public List<FcmDeviceToken> findByUsers(List<User> users) {
+        if (ObjectUtils.isEmpty(users)) {
+            return List.of();
+        }
+
+        QFcmDeviceToken qFcmDeviceToken = QFcmDeviceToken.fcmDeviceToken;
+
+        return queryFactory
+            .selectFrom(qFcmDeviceToken)
+            .where(qFcmDeviceToken.user.in(users))
+            .fetch();
     }
 
 }

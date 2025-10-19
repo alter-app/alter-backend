@@ -13,6 +13,7 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +44,18 @@ public interface WorkspaceQueryRepository {
         Long workspaceId,
         CursorPageRequest<CursorDto> pageRequest
     );
+
+    long getExchangeableWorkerCount(Long workspaceId, User self, LocalDateTime startDateTime, LocalDateTime endDateTime);
+
+    List<UserWorkspaceWorkerListResponse> getExchangeableWorkerListWithCursor(
+        Long workspaceId,
+        User self,
+        LocalDateTime startDateTime,
+        LocalDateTime endDateTime,
+        CursorPageRequest<CursorDto> pageRequest
+    );
+
+    List<Long> getExchangeableWorkerIds(Long workspaceId, User self, LocalDateTime startDateTime, LocalDateTime endDateTime);
 
     long getUserWorkspaceManagerCount(Long workspaceId);
 
