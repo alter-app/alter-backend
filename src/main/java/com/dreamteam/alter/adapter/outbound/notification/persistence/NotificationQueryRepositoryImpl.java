@@ -50,11 +50,13 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
     public long getCountOfNotifications(User targetUser) {
         QNotification notification = QNotification.notification;
 
-        return queryFactory
-            .selectFrom(notification)
+        Long count = queryFactory
+            .select(notification.id.count())
+            .from(notification)
             .where(notification.targetUser.eq(targetUser))
-            .fetch()
-            .size();
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
     }
 
     private BooleanExpression cursorCondition(
