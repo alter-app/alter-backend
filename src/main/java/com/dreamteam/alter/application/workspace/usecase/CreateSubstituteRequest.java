@@ -1,6 +1,6 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.FcmBatchNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.CreateSubstituteRequestDto;
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -125,15 +125,7 @@ public class CreateSubstituteRequest implements CreateSubstituteRequestUseCase {
 
             // SPECIFIC 타입인 경우 대상자에게 알림 발송
             if (ObjectUtils.isNotEmpty(request.getTargets())) {
-                for (SubstituteRequestTarget target : request.getTargets()) {
-                    WorkspaceWorker targetWorker = workspaceWorkerQueryRepository.findById(target.getTargetWorkerId())
-                        .orElse(null);
-                    if (ObjectUtils.isNotEmpty(targetWorker)) {
-                        notificationService.sendNotification(
-                            FcmNotificationRequestDto.of(targetWorker.getUser().getId(), title, body)
-                        );
-                    }
-                }
+                sendNotificationToTargets(request.getTargets(), title, body);
             }
         } catch (CustomException e) {
             // 알림 발송 실패는 대타 요청 생성 프로세스에 영향을 주지 않음
@@ -146,7 +138,7 @@ public class CreateSubstituteRequest implements CreateSubstituteRequestUseCase {
             // 교환 가능한 근무자 ID 목록 조회
             List<Long> exchangeableWorkerIds = workspaceQueryRepository.getExchangeableWorkerIds(
                 shift.getWorkspace().getId(),
-                null, // 자기 자신 제외하지 않음 (이미 요청자 제외됨)
+                shift.getAssignedWorkspaceWorker().getUser(), // 요청자 본인 제외
                 shift.getStartDateTime(),
                 shift.getEndDateTime()
             );
@@ -176,7 +168,14 @@ public class CreateSubstituteRequest implements CreateSubstituteRequestUseCase {
             substituteRequestRepository.save(request);
 
             // 각 대상자에게 알림 발송
-            sendNotificationToTargets(targets, shift, requesterName);
+            String title = NotificationMessageConstants.SubstituteRequest.NEW_REQUEST_TITLE;
+            String body = String.format(
+                NotificationMessageConstants.SubstituteRequest.NEW_REQUEST_BODY,
+                requesterName,
+                shift.getStartDateTime().toLocalDate(),
+                shift.getStartDateTime().toLocalTime()
+            );
+            sendNotificationToTargets(targets, title, body);
 
             log.info("전체 공개 대타 요청 생성 완료. 대상자 수={}, workspaceId={}",
                 exchangeableWorkerIds.size(), shift.getWorkspace().getId());
@@ -188,27 +187,38 @@ public class CreateSubstituteRequest implements CreateSubstituteRequestUseCase {
         }
     }
 
-    private void sendNotificationToTargets(List<SubstituteRequestTarget> targets, WorkspaceShift shift, String requesterName) {
+    private void sendNotificationToTargets(List<SubstituteRequestTarget> targets, String title, String body) {
         try {
-            String title = NotificationMessageConstants.SubstituteRequest.NEW_REQUEST_TITLE;
-            String body = String.format(
-                NotificationMessageConstants.SubstituteRequest.NEW_REQUEST_BODY,
-                requesterName,
-                shift.getStartDateTime().toLocalDate(),
-                shift.getStartDateTime().toLocalTime()
+            if (ObjectUtils.isEmpty(targets)) {
+                return;
+            }
+
+            // 대상자 ID 목록 추출
+            List<Long> targetWorkerIds = targets.stream()
+                .map(SubstituteRequestTarget::getTargetWorkerId)
+                .toList();
+
+            // 배치로 WorkspaceWorker 조회
+            List<WorkspaceWorker> targetWorkers = workspaceWorkerQueryRepository.findAllById(targetWorkerIds);
+
+            if (ObjectUtils.isEmpty(targetWorkers)) {
+                log.warn("알림 발송 대상 근무자를 찾을 수 없습니다. targetWorkerIds={}", targetWorkerIds);
+                return;
+            }
+
+            // 사용자 ID 목록 추출
+            List<Long> targetUserIds = targetWorkers.stream()
+                .map(worker -> worker.getUser().getId())
+                .toList();
+
+            // 다중 사용자 알림 발송
+            notificationService.sendMultipleNotifications(
+                FcmBatchNotificationRequestDto.of(targetUserIds, title, body)
             );
 
-            for (SubstituteRequestTarget target : targets) {
-                WorkspaceWorker targetWorker = workspaceWorkerQueryRepository.findById(target.getTargetWorkerId())
-                    .orElse(null);
-                if (ObjectUtils.isNotEmpty(targetWorker)) {
-                    notificationService.sendNotification(
-                        FcmNotificationRequestDto.of(targetWorker.getUser().getId(), title, body)
-                    );
-                }
-            }
         } catch (CustomException e) {
             // 알림 발송 실패는 대타 요청 생성 프로세스에 영향을 주지 않음
+            log.warn("대타 요청 알림 발송 실패: {}", e.getMessage());
         }
     }
 }

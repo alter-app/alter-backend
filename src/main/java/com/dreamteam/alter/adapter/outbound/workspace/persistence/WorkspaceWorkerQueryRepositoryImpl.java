@@ -55,6 +55,20 @@ public class WorkspaceWorkerQueryRepositoryImpl implements WorkspaceWorkerQueryR
     }
 
     @Override
+    public List<WorkspaceWorker> findAllById(List<Long> ids) {
+        if (ObjectUtils.isEmpty(ids)) {
+            return List.of();
+        }
+        
+        QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
+        
+        return queryFactory.selectFrom(qWorkspaceWorker)
+            .where(qWorkspaceWorker.id.in(ids)
+                .and(qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED)))
+            .fetch();
+    }
+
+    @Override
     public long getUserActiveWorkspaceCount(User user) {
         QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
 
