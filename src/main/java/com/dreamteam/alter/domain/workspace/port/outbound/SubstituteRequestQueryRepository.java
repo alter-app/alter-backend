@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerSubstituteRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ReceivedSubstituteRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SentSubstituteRequestListResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SentSubstituteRequestDetailResponse;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
@@ -40,5 +41,7 @@ public interface SubstituteRequestQueryRepository {
         SubstituteRequestStatus status,
         CursorPageRequest<CursorDto> pageRequest
     );
+    
+    Optional<SentSubstituteRequestDetailResponse> getSentRequestDetail(User user, Long requestId);
 }
 

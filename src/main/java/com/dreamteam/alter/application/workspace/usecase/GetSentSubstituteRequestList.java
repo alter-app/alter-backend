@@ -5,7 +5,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.schedule.dto.SubstituteRequestResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.schedule.dto.SubstituteRequestListResponseDto;
 import com.dreamteam.alter.common.util.CursorUtil;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetSentSubstituteRequestListUseCase;
@@ -29,7 +29,7 @@ public class GetSentSubstituteRequestList implements GetSentSubstituteRequestLis
     private final ObjectMapper objectMapper;
 
     @Override
-    public CursorPaginatedApiResponse<SubstituteRequestResponseDto> execute(
+    public CursorPaginatedApiResponse<SubstituteRequestListResponseDto> execute(
         AppActor actor,
         SubstituteRequestStatus status,
         CursorPageRequestDto pageRequestDto
@@ -52,9 +52,9 @@ public class GetSentSubstituteRequestList implements GetSentSubstituteRequestLis
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequestDto.pageSize(), (int) totalCount));
         }
 
-        List<SubstituteRequestResponseDto> requests = requestList
+        List<SubstituteRequestListResponseDto> requests = requestList
             .stream()
-            .map(SubstituteRequestResponseDto::of)
+            .map(SubstituteRequestListResponseDto::of)
             .toList();
 
         SentSubstituteRequestListResponse last = requestList.getLast();

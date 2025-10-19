@@ -87,10 +87,29 @@ public interface UserSubstituteRequestControllerSpec {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공")
     })
-    ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<SubstituteRequestResponseDto>>> getSentRequests(
+    ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<SubstituteRequestListResponseDto>>> getSentRequests(
         @Parameter(description = "요청 상태", example = "PENDING")
         @RequestParam(required = false) SubstituteRequestStatus status,
         CursorPageRequestDto pageRequest
+    );
+
+    @Operation(summary = "보낸 대타 요청 단일 조회", description = "내가 보낸 대타 요청의 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "404", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "존재하지 않는 요청",
+                        value = "{\"code\" : \"B020\"}"
+                    )
+                }))
+    })
+    ResponseEntity<CommonApiResponse<SubstituteRequestDetailResponseDto>> getSentRequestDetail(
+        @Parameter(description = "대타 요청 ID", example = "1", required = true)
+        @PathVariable Long requestId
     );
 
     @Operation(summary = "대타 요청 수락", description = "받은 대타 요청을 수락합니다.")

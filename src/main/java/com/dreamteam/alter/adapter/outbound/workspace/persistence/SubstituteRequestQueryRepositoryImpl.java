@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerSubstituteRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ReceivedSubstituteRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SentSubstituteRequestListResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SentSubstituteRequestDetailResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SubstituteRequestTargetInfo;
 import com.dreamteam.alter.domain.user.entity.QUser;
 import com.dreamteam.alter.domain.user.entity.User;
@@ -24,7 +25,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -187,88 +187,105 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
         SubstituteRequestStatus status,
         CursorPageRequest<CursorDto> pageRequest
     ) {
-        // 먼저 요청 자체를 조회
-        QWorkspaceWorker requesterWorker = new QWorkspaceWorker("requesterWorker");
+        QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
         
-        List<SubstituteRequest> requests = queryFactory
-            .selectFrom(substituteRequest)
+        return queryFactory
+            .select(Projections.constructor(
+                SentSubstituteRequestListResponse.class,
+                substituteRequest.id,
+                workspaceShift.id,
+                workspaceShift.startDateTime,
+                workspaceShift.endDateTime,
+                workspaceShift.position,
+                workspace.id,
+                workspace.businessName,
+                substituteRequest.requestType,
+                substituteRequest.status,
+                substituteRequest.createdAt
+            ))
+            .from(substituteRequest)
             .join(substituteRequest.workspaceShift, workspaceShift)
             .join(workspaceShift.workspace, workspace)
-            .join(requesterWorker).on(requesterWorker.id.eq(substituteRequest.requesterId))
+            .join(qWorkspaceWorker).on(qWorkspaceWorker.id.eq(substituteRequest.requesterId))
             .where(
-                requesterWorker.user.eq(user)
+                qWorkspaceWorker.user.eq(user)
                     .and(statusCondition(status))
                     .and(cursorCondition(pageRequest.cursor()))
             )
             .orderBy(substituteRequest.id.desc())
             .limit(pageRequest.pageSize())
             .fetch();
+    }
 
-        // 각 요청에 대해 대상자 목록을 조회하여 응답 구성
-        return requests.stream()
-            .map(request -> {
-                // 요청 기본 정보 조회
-                QUser requesterUserForRequest = new QUser("requesterUserForRequest");
-                QUser acceptedUserForRequest = new QUser("acceptedUserForRequest");
-                QWorkspaceWorker requesterWorkerForRequest = new QWorkspaceWorker("requesterWorkerForRequest");
-                QWorkspaceWorker acceptedWorkerForRequest = new QWorkspaceWorker("acceptedWorkerForRequest");
+    @Override
+    public Optional<SentSubstituteRequestDetailResponse> getSentRequestDetail(User user, Long requestId) {
+        // 1. 요청 기본 정보 조회
+        QWorkspaceWorker requesterWorker = new QWorkspaceWorker("requesterWorker");
+        QUser requesterUser = new QUser("requesterUser");
+        QWorkspaceWorker acceptedWorker = new QWorkspaceWorker("acceptedWorker");
+        QUser acceptedUser = new QUser("acceptedUser");
+        
+        SentSubstituteRequestDetailResponse requestInfo = queryFactory
+            .select(Projections.bean(
+                SentSubstituteRequestDetailResponse.class,
+                substituteRequest.id.as("id"),
+                workspaceShift.id.as("scheduleId"),
+                workspaceShift.startDateTime.as("scheduleStartDateTime"),
+                workspaceShift.endDateTime.as("scheduleEndDateTime"),
+                workspaceShift.position.as("position"),
+                workspace.id.as("workspaceId"),
+                workspace.businessName.as("workspaceName"),
+                requesterWorker.id.as("requesterId"),
+                requesterUser.name.as("requesterName"),
+                substituteRequest.requestType.as("requestType"),
+                acceptedWorker.id.as("acceptedWorkerId"),
+                acceptedUser.name.as("acceptedWorkerName"),
+                substituteRequest.status.as("status"),
+                substituteRequest.requestReason.as("requestReason"),
+                substituteRequest.createdAt.as("createdAt"),
+                substituteRequest.acceptedAt.as("acceptedAt"),
+                substituteRequest.processedAt.as("processedAt")
+            ))
+            .from(substituteRequest)
+            .join(substituteRequest.workspaceShift, workspaceShift)
+            .join(workspaceShift.workspace, workspace)
+            .join(requesterWorker).on(requesterWorker.id.eq(substituteRequest.requesterId))
+            .join(requesterUser).on(requesterUser.id.eq(requesterWorker.user.id))
+            .leftJoin(acceptedWorker).on(acceptedWorker.id.eq(substituteRequest.acceptedWorkerId))
+            .leftJoin(acceptedUser).on(acceptedUser.id.eq(acceptedWorker.user.id))
+            .where(
+                substituteRequest.id.eq(requestId)
+                    .and(requesterWorker.user.eq(user))
+            )
+            .fetchOne();
 
-                SentSubstituteRequestListResponse requestInfo = queryFactory
-                    .select(Projections.bean(
-                        SentSubstituteRequestListResponse.class,
-                        substituteRequest.id.as("id"),
-                        workspaceShift.id.as("scheduleId"),
-                        workspaceShift.startDateTime.as("scheduleStartDateTime"),
-                        workspaceShift.endDateTime.as("scheduleEndDateTime"),
-                        workspaceShift.position.as("position"),
-                        workspace.id.as("workspaceId"),
-                        workspace.businessName.as("workspaceName"),
-                        requesterWorkerForRequest.id.as("requesterId"),
-                        requesterUserForRequest.name.as("requesterName"),
-                        substituteRequest.requestType.as("requestType"),
-                        acceptedWorkerForRequest.id.as("acceptedWorkerId"),
-                        acceptedUserForRequest.name.as("acceptedWorkerName"),
-                        substituteRequest.status.as("status"),
-                        substituteRequest.requestReason.as("requestReason"),
-                        substituteRequest.createdAt.as("createdAt"),
-                        substituteRequest.acceptedAt.as("acceptedAt"),
-                        substituteRequest.processedAt.as("processedAt")
-                    ))
-                    .from(substituteRequest)
-                    .join(substituteRequest.workspaceShift, workspaceShift)
-                    .join(workspaceShift.workspace, workspace)
-                    .join(requesterWorkerForRequest).on(requesterWorkerForRequest.id.eq(substituteRequest.requesterId))
-                    .join(requesterUserForRequest).on(requesterUserForRequest.id.eq(requesterWorkerForRequest.user.id))
-                    .leftJoin(acceptedWorkerForRequest).on(acceptedWorkerForRequest.id.eq(substituteRequest.acceptedWorkerId))
-                    .leftJoin(acceptedUserForRequest).on(acceptedUserForRequest.id.eq(acceptedWorkerForRequest.user.id))
-                    .where(substituteRequest.id.eq(request.getId()))
-                    .fetchOne();
+        if (ObjectUtils.isEmpty(requestInfo)) {
+            return Optional.empty();
+        }
 
-                // 대상자 목록 조회
-                QUser targetUser = new QUser("targetUser");
-                QWorkspaceWorker targetWorker = new QWorkspaceWorker("targetWorker");
-                QSubstituteRequestTarget substituteRequestTarget = new QSubstituteRequestTarget("substituteRequestTarget");
+        // 2. 대상자 목록 조회
+        QUser targetUser = new QUser("targetUser");
+        QWorkspaceWorker targetWorker = new QWorkspaceWorker("targetWorker");
+        QSubstituteRequestTarget substituteRequestTarget = new QSubstituteRequestTarget("substituteRequestTarget");
 
-                List<SubstituteRequestTargetInfo> targets = queryFactory
-                    .select(Projections.constructor(
-                        SubstituteRequestTargetInfo.class,
-                        targetWorker.id,
-                        targetUser.name,
-                        substituteRequestTarget.status,
-                        substituteRequestTarget.rejectionReason,
-                        substituteRequestTarget.respondedAt
-                    ))
-                    .from(substituteRequestTarget)
-                    .join(targetWorker).on(targetWorker.id.eq(substituteRequestTarget.targetWorkerId))
-                    .join(targetUser).on(targetUser.id.eq(targetWorker.user.id))
-                    .where(substituteRequestTarget.substituteRequest.id.eq(request.getId()))
-                    .fetch();
+        List<SubstituteRequestTargetInfo> targets = queryFactory
+            .select(Projections.constructor(
+                SubstituteRequestTargetInfo.class,
+                targetWorker.id,
+                targetUser.name,
+                substituteRequestTarget.status,
+                substituteRequestTarget.rejectionReason,
+                substituteRequestTarget.respondedAt
+            ))
+            .from(substituteRequestTarget)
+            .join(targetWorker).on(targetWorker.id.eq(substituteRequestTarget.targetWorkerId))
+            .join(targetUser).on(targetUser.id.eq(targetWorker.user.id))
+            .where(substituteRequestTarget.substituteRequest.id.eq(requestId))
+            .orderBy(substituteRequestTarget.id.asc())
+            .fetch();
 
-                // targets 설정
-                requestInfo.setTargets(targets);
-                return requestInfo;
-            })
-            .toList();
+        requestInfo.setTargets(targets);
+        return Optional.of(requestInfo);
     }
 
     @Override

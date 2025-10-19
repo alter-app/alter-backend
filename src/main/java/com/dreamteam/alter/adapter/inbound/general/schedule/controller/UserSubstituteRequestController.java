@@ -35,6 +35,9 @@ public class UserSubstituteRequestController implements UserSubstituteRequestCon
     @Resource(name = "getSentSubstituteRequestList")
     private final GetSentSubstituteRequestListUseCase getSentSubstituteRequestListUseCase;
 
+    @Resource(name = "getSentSubstituteRequestDetail")
+    private final GetSentSubstituteRequestDetailUseCase getSentSubstituteRequestDetailUseCase;
+
     @Resource(name = "acceptSubstituteRequest")
     private final AcceptSubstituteRequestUseCase acceptSubstituteRequestUseCase;
 
@@ -81,13 +84,24 @@ public class UserSubstituteRequestController implements UserSubstituteRequestCon
 
     @Override
     @GetMapping("/users/me/substitute-requests/sent")
-    public ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<SubstituteRequestResponseDto>>> getSentRequests(
+    public ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<SubstituteRequestListResponseDto>>> getSentRequests(
         @RequestParam(required = false) SubstituteRequestStatus status,
         CursorPageRequestDto pageRequest
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
         return ResponseEntity.ok(CommonApiResponse.of(
             getSentSubstituteRequestListUseCase.execute(actor, status, pageRequest)
+        ));
+    }
+
+    @Override
+    @GetMapping("/users/me/substitute-requests/sent/{requestId}")
+    public ResponseEntity<CommonApiResponse<SubstituteRequestDetailResponseDto>> getSentRequestDetail(
+        @PathVariable Long requestId
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        return ResponseEntity.ok(CommonApiResponse.of(
+            getSentSubstituteRequestDetailUseCase.execute(actor, requestId)
         ));
     }
 
