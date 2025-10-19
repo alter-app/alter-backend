@@ -58,9 +58,6 @@ public class SubstituteRequest {
     @Column(name = "request_reason")
     private String requestReason;
 
-    @Column(name = "target_rejection_reason")
-    private String targetRejectionReason;
-
     @Column(name = "approver_rejection_reason")
     private String approverRejectionReason;
 
@@ -106,21 +103,27 @@ public class SubstituteRequest {
         this.status = SubstituteRequestStatus.ACCEPTED;
         this.acceptedAt = LocalDateTime.now();
         
-        // 수락한 사용자의 상태를 ACCEPTED로 변경 (requestType과 무관하게)
-        updateTargetStatus(workerId, SubstituteRequestTarget::accept);
-        
-        // ALL 타입인 경우 나머지 PENDING 상태인 대상자들을 ACCEPTED_BY_OTHERS로 변경
+        // ALL 타입인 경우: 전체 PENDING 타깃을 먼저 ACCEPTED_BY_OTHERS로 변경 후, 수락자만 ACCEPTED로 변경
         if (SubstituteRequestType.ALL.equals(this.requestType)) {
-            updateOtherPendingTargets(workerId);
+            // 1단계: 모든 PENDING 타깃을 ACCEPTED_BY_OTHERS로 변경
+            updateAllPendingTargetsStatus(SubstituteRequestTarget::markAsAcceptedByOthers);
+            
+            // 2단계: 수락한 사용자만 ACCEPTED로 변경
+            updateTargetStatus(workerId, SubstituteRequestTarget::accept);
+        } else {
+            // SPECIFIC 타입인 경우: 해당 사용자만 ACCEPTED로 변경
+            updateTargetStatus(workerId, SubstituteRequestTarget::accept);
         }
     }
 
     public void rejectByTarget(Long workerId, String rejectionReason) {
         updateTargetStatus(workerId, target -> target.reject(rejectionReason));
         
-        this.targetRejectionReason = rejectionReason;
-        this.status = SubstituteRequestStatus.REJECTED_BY_TARGET;
-        this.processedAt = LocalDateTime.now();
+        // 모든 대상자가 거절했는지 확인
+        if (areAllTargetsRejected()) {
+            this.status = SubstituteRequestStatus.REJECTED_BY_TARGET;
+            this.processedAt = LocalDateTime.now();
+        }
     }
 
     public void approve(Long approverId, String approvalComment) {
@@ -210,13 +213,20 @@ public class SubstituteRequest {
     }
 
     /**
-     * ALL 타입 요청에서 수락한 사용자를 제외한 나머지 PENDING 상태 타깃들을 ACCEPTED_BY_OTHERS로 변경합니다.
+     * 모든 PENDING 상태인 타깃들에게 일괄적으로 상태 변경 액션을 적용합니다.
      */
-    private void updateOtherPendingTargets(Long acceptedWorkerId) {
+    private void updateAllPendingTargetsStatus(Consumer<SubstituteRequestTarget> action) {
         this.targets.stream()
-            .filter(target -> !target.getTargetWorkerId().equals(acceptedWorkerId))
             .filter(target -> SubstituteRequestTargetStatus.PENDING.equals(target.getStatus()))
-            .forEach(SubstituteRequestTarget::markAsAcceptedByOthers);
+            .forEach(action);
+    }
+
+    /**
+     * 모든 대상자가 거절했는지 확인합니다.
+     */
+    private boolean areAllTargetsRejected() {        
+        return this.targets.stream()
+            .allMatch(target -> SubstituteRequestTargetStatus.REJECTED.equals(target.getStatus()));
     }
 
 }
