@@ -77,6 +77,11 @@ public class CreateSubstituteRequest implements CreateSubstituteRequestUseCase {
             WorkspaceWorker targetWorker = workspaceWorkerQueryRepository.findById(request.getTargetId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 근무자입니다."));
 
+            // 본인을 대상으로 선택하는 것을 방지
+            if (targetWorker.getId().equals(shift.getAssignedWorkspaceWorker().getId())) {
+                throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "본인을 대상으로 선택할 수 없습니다.");
+            }
+
             // 대상자가 같은 업장 근무자인지 확인
             if (!targetWorker.getWorkspace().equals(shift.getWorkspace())) {
                 throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "해당 업장의 근무자가 아닙니다.");
