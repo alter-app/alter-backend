@@ -105,4 +105,24 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
 
         return count != null && count > 0;
     }
+
+    @Override
+    public List<WorkspaceShift> findByUserAndWorkspaceAndMonthFrom(
+        User user,
+        Workspace workspace,
+        int year,
+        int month,
+        LocalDateTime fromInclusive
+    ) {
+        return queryFactory
+            .selectFrom(workspaceShift)
+            .where(workspaceShift.assignedWorkspaceWorker.user.eq(user)
+                .and(workspaceShift.workspace.eq(workspace))
+                .and(workspaceShift.startDateTime.year().eq(year))
+                .and(workspaceShift.startDateTime.month().eq(month))
+                .and(workspaceShift.startDateTime.goe(fromInclusive))
+                .and(workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)))
+            .orderBy(workspaceShift.startDateTime.asc())
+            .fetch();
+    }
 }

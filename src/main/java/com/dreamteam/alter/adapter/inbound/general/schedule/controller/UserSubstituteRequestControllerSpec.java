@@ -199,5 +199,25 @@ public interface UserSubstituteRequestControllerSpec {
         @Parameter(description = "대타 요청 ID", example = "1", required = true)
         @PathVariable Long requestId
     );
+
+    @Operation(summary = "교환 가능한 내 스케줄 조회", description = "특정 업장에서 교환 가능한 내 스케줄을 조회합니다. 과거 월은 조회할 수 없고, 같은 달이면 현재 시각 이후만 응답합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "과거 스케줄 조회 불가",
+                        value = "{\"code\" : \"B001\"}"
+                    )
+                }))
+    })
+    ResponseEntity<CommonApiResponse<java.util.List<MyScheduleResponseDto>>> getExchangeableSelfSchedules(
+        @Parameter(description = "워크스페이스 ID", required = true)
+        @PathVariable Long workspaceId,
+        WorkScheduleInquiryRequestDto request
+    );
 }
 

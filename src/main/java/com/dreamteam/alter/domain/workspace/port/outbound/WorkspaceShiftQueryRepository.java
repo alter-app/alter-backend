@@ -18,4 +18,5 @@ public interface WorkspaceShiftQueryRepository {
     List<WorkspaceShift> findByManagerAndDateRange(ManagerUser managerUser, Long workspaceId, int year, int month);
     Optional<WorkspaceShift> findById(Long id);
     boolean hasConflictingSchedule(WorkspaceWorker workspaceWorker, LocalDateTime startDateTime, LocalDateTime endDateTime);
+    List<WorkspaceShift> findByUserAndWorkspaceAndMonthFrom(User user, Workspace workspace, int year, int month, LocalDateTime fromInclusive);
 }

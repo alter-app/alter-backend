@@ -16,6 +16,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @PreAuthorize("hasAnyRole('USER')")
 @RequiredArgsConstructor
@@ -46,6 +48,9 @@ public class UserSubstituteRequestController implements UserSubstituteRequestCon
 
     @Resource(name = "cancelSubstituteRequest")
     private final CancelSubstituteRequestUseCase cancelSubstituteRequestUseCase;
+
+    @Resource(name = "getExchangeableSelfSchedules")
+    private final GetExchangeableSelfSchedulesUseCase getExchangeableSelfSchedulesUseCase;
 
     @Override
     @GetMapping("/schedules/{scheduleId}/exchangeable-workers")
@@ -134,5 +139,17 @@ public class UserSubstituteRequestController implements UserSubstituteRequestCon
         AppActor actor = AppActionContext.getInstance().getActor();
         cancelSubstituteRequestUseCase.execute(actor, requestId);
         return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @GetMapping("/workspaces/{workspaceId}/exchangeable-schedules")
+    public ResponseEntity<CommonApiResponse<List<MyScheduleResponseDto>>> getExchangeableSelfSchedules(
+        @PathVariable Long workspaceId,
+        WorkScheduleInquiryRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        return ResponseEntity.ok(CommonApiResponse.of(
+            getExchangeableSelfSchedulesUseCase.execute(actor, workspaceId, request)
+        ));
     }
 }
