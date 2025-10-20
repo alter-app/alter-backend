@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.schedule.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceSummaryDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.WorkerSummaryDto;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
@@ -34,8 +35,8 @@ public class ManagerScheduleResponseDto {
     @Schema(description = "직책", example = "바리스타")
     private String position;
     
-    @Schema(description = "스케줄 상태", example = "PLANNED")
-    private WorkspaceShiftStatus status;
+    @Schema(description = "스케줄 상태")
+    private DescribedEnumDto<WorkspaceShiftStatus> status;
 
     public static ManagerScheduleResponseDto of(WorkspaceShift shift) {
         return ManagerScheduleResponseDto.builder()
@@ -45,7 +46,7 @@ public class ManagerScheduleResponseDto {
             .startDateTime(shift.getStartDateTime())
             .endDateTime(shift.getEndDateTime())
             .position(shift.getPosition())
-            .status(shift.getStatus())
+            .status(DescribedEnumDto.of(shift.getStatus(), WorkspaceShiftStatus.describe()))
             .build();
     }
 }
