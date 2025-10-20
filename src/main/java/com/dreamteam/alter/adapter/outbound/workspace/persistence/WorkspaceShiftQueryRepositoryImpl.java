@@ -31,7 +31,7 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
             .where(workspaceShift.assignedWorkspaceWorker.user.eq(user)
                 .and(workspaceShift.startDateTime.year().eq(year))
                 .and(workspaceShift.startDateTime.month().eq(month))
-                .and(workspaceShift.status.ne(WorkspaceShiftStatus.DELETED)))
+                .and(workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)))
             .orderBy(workspaceShift.startDateTime.asc())
             .fetch();
     }
@@ -43,7 +43,7 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
             .where(workspaceShift.assignedWorkspaceWorker.user.eq(user)
                 .and(workspaceShift.startDateTime.goe(startDate.atStartOfDay()))
                 .and(workspaceShift.startDateTime.lt(endDate.atStartOfDay()))
-                .and(workspaceShift.status.ne(WorkspaceShiftStatus.DELETED)))
+                .and(workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)))
             .orderBy(workspaceShift.startDateTime.asc())
             .fetch();
     }
