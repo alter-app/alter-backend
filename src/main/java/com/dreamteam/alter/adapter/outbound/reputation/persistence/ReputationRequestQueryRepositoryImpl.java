@@ -195,17 +195,14 @@ public class ReputationRequestQueryRepositoryImpl implements ReputationRequestQu
         BooleanExpression condition = qReputationRequest.targetType.eq(ReputationType.WORKSPACE);
 
         // workspaceId 필터링
-        if (filter != null && filter.getWorkspaceId() != null) {
+        if (ObjectUtils.isNotEmpty(filter) && ObjectUtils.isNotEmpty(filter.getWorkspaceId())) {
             condition = condition.and(qReputationRequest.targetId.eq(filter.getWorkspaceId()));
         } else {
             condition = condition.and(qReputationRequest.targetId.in(workspaceIds));
         }
 
-        // 조회 시 기본적으로 REQUESTED 상태인 항목만 조회
-        if (filter != null && filter.getStatus() != null) {
+        if (ObjectUtils.isNotEmpty(filter) && ObjectUtils.isNotEmpty(filter.getStatus())) {
             condition = condition.and(qReputationRequest.status.eq(filter.getStatus()));
-        } else {
-            condition = condition.and(qReputationRequest.status.eq(ReputationRequestStatus.REQUESTED));
         }
 
         Long count = queryFactory
@@ -232,17 +229,14 @@ public class ReputationRequestQueryRepositoryImpl implements ReputationRequestQu
             .and(cursorCondition(qReputationRequest, pageRequest.cursor()));
 
         // workspaceId 필터링
-        if (filter != null && filter.getWorkspaceId() != null) {
+        if (ObjectUtils.isNotEmpty(filter) && ObjectUtils.isNotEmpty(filter.getWorkspaceId())) {
             condition = condition.and(qReputationRequest.targetId.eq(filter.getWorkspaceId()));
         } else {
             condition = condition.and(qReputationRequest.targetId.in(workspaceIds));
         }
 
-        // 조회 시 기본적으로 REQUESTED 상태인 항목만 조회
-        if (filter != null && filter.getStatus() != null) {
+        if (ObjectUtils.isNotEmpty(filter) && ObjectUtils.isNotEmpty(filter.getStatus())) {
             condition = condition.and(qReputationRequest.status.eq(filter.getStatus()));
-        } else {
-            condition = condition.and(qReputationRequest.status.eq(ReputationRequestStatus.REQUESTED));
         }
 
         return queryFactory
