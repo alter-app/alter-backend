@@ -41,7 +41,7 @@ public class UserScheduleController implements UserScheduleControllerSpec {
     }
 
     @Override
-    @GetMapping("/workspace/{workspaceId}")
+    @GetMapping("/workspaces/{workspaceId}")
     public ResponseEntity<CommonApiResponse<List<WorkspaceScheduleResponseDto>>> getWorkspaceSchedule(
         @PathVariable Long workspaceId,
         WorkScheduleInquiryRequestDto request

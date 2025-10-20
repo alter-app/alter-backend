@@ -103,7 +103,7 @@ public class PostingController implements PostingControllerSpec {
     }
 
     @Override
-    @GetMapping("/workspace/{workspaceId}")
+    @GetMapping("/workspaces/{workspaceId}")
     public ResponseEntity<CommonApiResponse<List<PostingListResponseDto>>> getWorkspacePostingList(
         @PathVariable Long workspaceId
     ) {
