@@ -2,6 +2,7 @@ package com.dreamteam.alter.domain.workspace.port.outbound;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
+import com.dreamteam.alter.adapter.inbound.general.schedule.dto.GetReceivedSubstituteRequestsFilterDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerSubstituteRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ReceivedSubstituteRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SentSubstituteRequestListResponse;
@@ -22,10 +23,10 @@ public interface SubstituteRequestQueryRepository {
 
     List<SubstituteRequest> findAllByStatusAndExpiresAtBefore(SubstituteRequestStatus status, LocalDateTime expiresAt);
 
-    long getReceivedRequestCount(User user, Long workspaceId);
+    long getReceivedRequestCount(User user, GetReceivedSubstituteRequestsFilterDto filter);
     List<ReceivedSubstituteRequestListResponse> getReceivedRequestListWithCursor(
-        User user, 
-        Long workspaceId,
+        User user,
+        GetReceivedSubstituteRequestsFilterDto filter,
         CursorPageRequest<CursorDto> pageRequest
     );
     

@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
+import com.dreamteam.alter.adapter.inbound.general.schedule.dto.GetReceivedSubstituteRequestsFilterDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerSubstituteRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ReceivedSubstituteRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SentSubstituteRequestListResponse;
@@ -15,6 +16,7 @@ import com.dreamteam.alter.domain.workspace.entity.QSubstituteRequestTarget;
 import com.dreamteam.alter.domain.workspace.port.outbound.SubstituteRequestQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestType;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
@@ -87,8 +89,24 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
     }
 
     @Override
-    public long getReceivedRequestCount(User user, Long workspaceId) {
-        // 내가 받은 대타 요청: (requestType = ALL OR targetId = 내 ID) AND workspaceId 일치 AND status = PENDING
+    public long getReceivedRequestCount(User user, GetReceivedSubstituteRequestsFilterDto filter) {
+        QWorkspaceWorker myWorker = new QWorkspaceWorker("myWorker");
+
+        BooleanExpression workspaceCondition;
+        if (ObjectUtils.isNotEmpty(filter.getWorkspaceId())) {
+            // 특정 워크스페이스 필터가 있는 경우
+            workspaceCondition = workspace.id.eq(filter.getWorkspaceId());
+        } else {
+            // 사용자가 근무중인 워크스페이스만
+            workspaceCondition = workspace.id.in(
+                JPAExpressions.select(myWorker.workspace.id)
+                    .from(myWorker)
+                    .where(
+                        myWorker.user.eq(user)
+                            .and(myWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED))
+                    )
+            );
+        }
 
         Long count = queryFactory
             .select(substituteRequest.count())
@@ -96,12 +114,13 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .join(substituteRequest.workspaceShift, workspaceShift)
             .join(workspaceShift.workspace, workspace)
             .join(workspaceWorker).on(
-                workspaceWorker.workspace.id.eq(workspaceId)
+                workspaceWorker.workspace.id.eq(workspace.id)
                     .and(workspaceWorker.user.eq(user))
+                    .and(workspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED))
             )
             .where(
-                workspace.id.eq(workspaceId)
-                    .and(substituteRequest.status.eq(SubstituteRequestStatus.PENDING))
+                workspaceCondition
+                    .and(statusCondition(filter.getStatus()))
                     .and(
                         substituteRequest.requestType.eq(SubstituteRequestType.ALL)
                             .or(JPAExpressions.selectFrom(QSubstituteRequestTarget.substituteRequestTarget)
@@ -118,7 +137,7 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
     @Override
     public List<ReceivedSubstituteRequestListResponse> getReceivedRequestListWithCursor(
         User user,
-        Long workspaceId,
+        GetReceivedSubstituteRequestsFilterDto filter,
         CursorPageRequest<CursorDto> pageRequest
     ) {
         QUser requesterUser = new QUser("requesterUser");
@@ -126,6 +145,22 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
         QWorkspaceWorker requesterWorker = new QWorkspaceWorker("requesterWorker");
         QWorkspaceWorker acceptedWorker = new QWorkspaceWorker("acceptedWorker");
         QWorkspaceWorker myWorker = new QWorkspaceWorker("myWorker");
+
+        BooleanExpression workspaceCondition;
+        if (ObjectUtils.isNotEmpty(filter.getWorkspaceId())) {
+            // 특정 워크스페이스 필터가 있는 경우
+            workspaceCondition = workspace.id.eq(filter.getWorkspaceId());
+        } else {
+            // 사용자가 근무중인 워크스페이스만
+            workspaceCondition = workspace.id.in(
+                JPAExpressions.select(myWorker.workspace.id)
+                    .from(myWorker)
+                    .where(
+                        myWorker.user.eq(user)
+                            .and(myWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED))
+                    )
+            );
+        }
 
         return queryFactory
             .select(Projections.constructor(
@@ -155,18 +190,19 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .join(requesterUser).on(requesterUser.id.eq(requesterWorker.user.id))
             .leftJoin(acceptedWorker).on(acceptedWorker.id.eq(substituteRequest.acceptedWorkerId))
             .leftJoin(acceptedUser).on(acceptedUser.id.eq(acceptedWorker.user.id))
-            .join(myWorker).on(
-                myWorker.workspace.id.eq(workspaceId)
-                    .and(myWorker.user.eq(user))
+            .join(workspaceWorker).on(
+                workspaceWorker.workspace.id.eq(workspace.id)
+                    .and(workspaceWorker.user.eq(user))
+                    .and(workspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED))
             )
             .where(
-                workspace.id.eq(workspaceId)
-                    .and(substituteRequest.status.eq(SubstituteRequestStatus.PENDING))
+                workspaceCondition
+                    .and(statusCondition(filter.getStatus()))
                     .and(
                         substituteRequest.requestType.eq(SubstituteRequestType.ALL)
                             .or(JPAExpressions.selectFrom(QSubstituteRequestTarget.substituteRequestTarget)
                                 .where(QSubstituteRequestTarget.substituteRequestTarget.substituteRequest.eq(substituteRequest)
-                                    .and(QSubstituteRequestTarget.substituteRequestTarget.targetWorkerId.eq(myWorker.id)))
+                                    .and(QSubstituteRequestTarget.substituteRequestTarget.targetWorkerId.eq(workspaceWorker.id)))
                                 .exists())
                     )
                     .and(cursorCondition(pageRequest.cursor()))

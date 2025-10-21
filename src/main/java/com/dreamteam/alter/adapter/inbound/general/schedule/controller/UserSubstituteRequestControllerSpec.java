@@ -79,7 +79,7 @@ public interface UserSubstituteRequestControllerSpec {
     })
     ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<ReceivedSubstituteRequestResponseDto>>> getReceivedRequests(
         @Parameter(description = "워크스페이스 ID", example = "1", required = true)
-        @PathVariable Long workspaceId,
+        GetReceivedSubstituteRequestsFilterDto filter,
         CursorPageRequestDto pageRequest
     );
 

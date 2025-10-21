@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
+import com.dreamteam.alter.adapter.inbound.general.schedule.dto.GetReceivedSubstituteRequestsFilterDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.ReceivedSubstituteRequestResponseDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ReceivedSubstituteRequestListResponse;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -34,27 +35,22 @@ public class GetReceivedSubstituteRequestList implements GetReceivedSubstituteRe
     @Override
     public CursorPaginatedApiResponse<ReceivedSubstituteRequestResponseDto> execute(
         AppActor actor,
-        Long workspaceId,
+        GetReceivedSubstituteRequestsFilterDto filter,
         CursorPageRequestDto pageRequestDto
     ) {
-        // 사용자가 해당 워크스페이스의 근무자인지 확인
-        if (!workspaceQueryRepository.isUserActiveWorkerInWorkspace(actor.getUser(), workspaceId)) {
-            throw new CustomException(ErrorCode.FORBIDDEN, "해당 업장의 근무자가 아닙니다.");
-        }
-
         CursorDto cursorDto = null;
         if (ObjectUtils.isNotEmpty(pageRequestDto.cursor())) {
             cursorDto = CursorUtil.decodeCursor(pageRequestDto.cursor(), CursorDto.class, objectMapper);
         }
         CursorPageRequest<CursorDto> pageRequest = CursorPageRequest.of(cursorDto, pageRequestDto.pageSize());
 
-        long totalCount = substituteRequestQueryRepository.getReceivedRequestCount(actor.getUser(), workspaceId);
+        long totalCount = substituteRequestQueryRepository.getReceivedRequestCount(actor.getUser(), filter);
         if (totalCount == 0) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequestDto.pageSize(), (int) totalCount));
         }
 
         List<ReceivedSubstituteRequestListResponse> requestList = substituteRequestQueryRepository
-            .getReceivedRequestListWithCursor(actor.getUser(), workspaceId, pageRequest);
+            .getReceivedRequestListWithCursor(actor.getUser(), filter, pageRequest);
 
         if (ObjectUtils.isEmpty(requestList)) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequestDto.pageSize(), (int) totalCount));

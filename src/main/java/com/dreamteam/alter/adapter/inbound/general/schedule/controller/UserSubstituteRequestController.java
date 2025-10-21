@@ -76,14 +76,14 @@ public class UserSubstituteRequestController implements UserSubstituteRequestCon
     }
 
     @Override
-    @GetMapping("/workspaces/{workspaceId}/substitute-requests/received")
+    @GetMapping("/users/me/substitute-requests/received")
     public ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<ReceivedSubstituteRequestResponseDto>>> getReceivedRequests(
-        @PathVariable Long workspaceId,
+        GetReceivedSubstituteRequestsFilterDto filter,
         CursorPageRequestDto pageRequest
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
         return ResponseEntity.ok(CommonApiResponse.of(
-            getReceivedSubstituteRequestListUseCase.execute(actor, workspaceId, pageRequest)
+            getReceivedSubstituteRequestListUseCase.execute(actor, filter, pageRequest)
         ));
     }
 
