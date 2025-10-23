@@ -37,15 +37,14 @@ public class ManagerSubstituteRequestController implements ManagerSubstituteRequ
     private final ManagerRejectSubstituteRequestUseCase managerRejectSubstituteRequestUseCase;
 
     @Override
-    @GetMapping("/workspaces/{workspaceId}/substitute-requests")
+    @GetMapping("/substitute-requests")
     public ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<ManagerSubstituteRequestResponseDto>>> getRequests(
-        @PathVariable Long workspaceId,
         ManagerSubstituteRequestListFilterDto filter,
         CursorPageRequestDto pageRequest
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
         return ResponseEntity.ok(CommonApiResponse.of(
-            managerGetSubstituteRequestListUseCase.execute(actor, workspaceId, filter, pageRequest)
+            managerGetSubstituteRequestListUseCase.execute(actor, filter, pageRequest)
         ));
     }
 

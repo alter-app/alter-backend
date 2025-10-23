@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "MANAGER - 대타 요청 관리 API")
 public interface ManagerSubstituteRequestControllerSpec {
 
-    @Operation(summary = "대타 요청 목록 조회", description = "워크스페이스의 대타 요청 목록을 조회합니다.")
+    @Operation(summary = "대타 요청 목록 조회", description = "매니저가 관리하는 업장의 대타 요청 목록을 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공"),
         @ApiResponse(responseCode = "403", description = "실패 케이스",
@@ -49,8 +49,6 @@ public interface ManagerSubstituteRequestControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<ManagerSubstituteRequestResponseDto>>> getRequests(
-        @Parameter(description = "워크스페이스 ID", example = "1", required = true)
-        @PathVariable Long workspaceId,
         ManagerSubstituteRequestListFilterDto filter,
         CursorPageRequestDto pageRequest
     );

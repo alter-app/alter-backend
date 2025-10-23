@@ -15,7 +15,9 @@ import org.springdoc.core.annotations.ParameterObject;
 @Schema(description = "매니저 대타 요청 목록 필터 DTO")
 public class ManagerSubstituteRequestListFilterDto {
 
-    @Parameter(description = "대타 요청 상태")
-    @Schema(description = "대타 요청 상태 (ACCEPTED, APPROVED, REJECTED_BY_APPROVER)")
+    @Parameter(description = "업장 ID")
+    private Long workspaceId;
+
+    @Parameter(description = "대타 요청 상태 (ACCEPTED, REJECTED_BY_APPROVER, APPROVED만 조회 가능)")
     private SubstituteRequestStatus status;
 }

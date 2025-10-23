@@ -9,7 +9,6 @@ import com.dreamteam.alter.domain.user.context.ManagerActor;
 public interface ManagerGetSubstituteRequestListUseCase {
     CursorPaginatedApiResponse<ManagerSubstituteRequestResponseDto> execute(
         ManagerActor actor,
-        Long workspaceId,
         ManagerSubstituteRequestListFilterDto filter,
         CursorPageRequestDto pageRequest
     );

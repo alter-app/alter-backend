@@ -338,13 +338,17 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
 
     @Override
     public long getManagerRequestCount(Long workspaceId, SubstituteRequestStatus status) {
+        BooleanExpression workspaceCondition = ObjectUtils.isNotEmpty(workspaceId) 
+            ? workspaceShift.workspace.id.eq(workspaceId) 
+            : null;
+
         Long count = queryFactory
             .select(substituteRequest.count())
             .from(substituteRequest)
             .join(substituteRequest.workspaceShift, workspaceShift)
             .where(
-                workspaceShift.workspace.id.eq(workspaceId)
-                    .and(managerRequestStatusCondition(status))
+                workspaceCondition,
+                managerRequestStatusCondition(status)
             )
             .fetchOne();
 
@@ -391,9 +395,9 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .leftJoin(acceptedWorker).on(acceptedWorker.id.eq(substituteRequest.acceptedWorkerId))
             .leftJoin(acceptedUser).on(acceptedUser.id.eq(acceptedWorker.user.id))
             .where(
-                workspace.id.eq(workspaceId)
-                    .and(managerRequestStatusCondition(status))
-                    .and(cursorCondition(pageRequest.cursor()))
+                ObjectUtils.isNotEmpty(workspaceId) ? workspace.id.eq(workspaceId) : null,
+                managerRequestStatusCondition(status),
+                cursorCondition(pageRequest.cursor())
             )
             .orderBy(substituteRequest.id.desc())
             .limit(pageRequest.pageSize())

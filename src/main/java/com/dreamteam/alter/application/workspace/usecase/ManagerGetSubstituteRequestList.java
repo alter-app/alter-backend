@@ -37,16 +37,17 @@ public class ManagerGetSubstituteRequestList implements ManagerGetSubstituteRequ
     @Override
     public CursorPaginatedApiResponse<ManagerSubstituteRequestResponseDto> execute(
         ManagerActor actor,
-        Long workspaceId,
         ManagerSubstituteRequestListFilterDto filter,
         CursorPageRequestDto pageRequestDto
     ) {
-        // 워크스페이스 조회 및 권한 확인
-        Workspace workspace = workspaceQueryRepository.findById(workspaceId)
-            .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 워크스페이스입니다."));
+        Long workspaceId = ObjectUtils.isNotEmpty(filter) ? filter.getWorkspaceId() : null;
+        if (ObjectUtils.isNotEmpty(workspaceId)) {
+            Workspace workspace = workspaceQueryRepository.findById(workspaceId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 업장입니다."));
 
-        if (!workspace.getManagerUser().equals(actor.getManagerUser())) {
-            throw new CustomException(ErrorCode.FORBIDDEN, "관리 중인 업장이 아닙니다.");
+            if (!workspace.getManagerUser().equals(actor.getManagerUser())) {
+                throw new CustomException(ErrorCode.FORBIDDEN, "관리 중인 업장이 아닙니다.");
+            }
         }
 
         // 상태 검증: 매니저가 조회할 수 있는 상태인지 확인

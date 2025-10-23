@@ -8,13 +8,10 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.GetReceivedSubstituteRequestsFilterDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.ReceivedSubstituteRequestResponseDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ReceivedSubstituteRequestListResponse;
-import com.dreamteam.alter.common.exception.CustomException;
-import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.util.CursorUtil;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetReceivedSubstituteRequestListUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.SubstituteRequestQueryRepository;
-import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -29,7 +26,6 @@ import java.util.List;
 public class GetReceivedSubstituteRequestList implements GetReceivedSubstituteRequestListUseCase {
 
     private final SubstituteRequestQueryRepository substituteRequestQueryRepository;
-    private final WorkspaceQueryRepository workspaceQueryRepository;
     private final ObjectMapper objectMapper;
 
     @Override
