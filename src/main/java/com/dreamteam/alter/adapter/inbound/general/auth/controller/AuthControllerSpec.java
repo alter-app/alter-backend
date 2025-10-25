@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.general.user.controller;
+package com.dreamteam.alter.adapter.inbound.general.auth.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
@@ -13,10 +13,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
-@Tag(name = "APP - 사용자")
-public interface UserControllerSpec {
+@Tag(name = "APP - 인증 관련 API")
+public interface AuthControllerSpec {
 
-    @Operation(summary = "사용자 토큰 재발급", description = "헤더에 RefreshToken을 담아 요청")
+    @Operation(summary = "토큰 재발급", description = "헤더에 RefreshToken을 담아 요청")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "재발급 성공 (JWT 응답)"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
@@ -44,6 +44,10 @@ public interface UserControllerSpec {
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> reissueToken(Authentication authentication);
 
-    ResponseEntity<CommonApiResponse<Void>> logoutUser(Authentication authentication);
+    @Operation(summary = "로그아웃")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "로그아웃 성공")
+    })
+    ResponseEntity<CommonApiResponse<Void>> logout();
 
 }

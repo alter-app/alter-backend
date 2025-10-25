@@ -82,4 +82,7 @@ public class Authorization {
         this.status = AuthorizationStatus.EXPIRED;
     }
 
+    public void revoke() {
+        this.status = AuthorizationStatus.REVOKED;
+    }
 }
