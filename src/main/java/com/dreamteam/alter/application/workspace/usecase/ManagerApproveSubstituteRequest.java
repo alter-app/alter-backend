@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ApproveSubstituteRequestDto;
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
@@ -76,7 +77,7 @@ public class ManagerApproveSubstituteRequest implements ManagerApproveSubstitute
             workspaceWorkerQueryRepository.findById(request.getRequesterId())
                 .ifPresent(requesterWorker -> {
                     notificationService.sendNotification(
-                        FcmNotificationRequestDto.of(requesterWorker.getUser().getId(), title, body)
+                        FcmNotificationRequestDto.of(requesterWorker.getUser().getId(), TokenScope.APP, title, body)
                     );
                 });
 
@@ -84,7 +85,7 @@ public class ManagerApproveSubstituteRequest implements ManagerApproveSubstitute
             workspaceWorkerQueryRepository.findById(request.getAcceptedWorkerId())
                 .ifPresent(acceptedWorker -> {
                     notificationService.sendNotification(
-                        FcmNotificationRequestDto.of(acceptedWorker.getUser().getId(), title, body)
+                        FcmNotificationRequestDto.of(acceptedWorker.getUser().getId(), TokenScope.APP, title, body)
                     );
                 });
         } catch (CustomException e) {

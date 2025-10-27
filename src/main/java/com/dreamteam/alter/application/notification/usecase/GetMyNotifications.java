@@ -8,6 +8,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationResponseDto;
 import com.dreamteam.alter.adapter.outbound.notification.persistence.readonly.NotificationResponse;
 import com.dreamteam.alter.common.util.CursorUtil;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.notification.port.inbound.GetMyNotificationsUseCase;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationQueryRepository;
 import com.dreamteam.alter.domain.user.context.AppActor;
@@ -35,13 +36,13 @@ public class GetMyNotifications implements GetMyNotificationsUseCase {
         }
         CursorPageRequest<CursorDto> cursorPageRequest = CursorPageRequest.of(cursorDto, pageRequest.pageSize());
 
-        long count = notificationQueryRepository.getCountOfNotifications(actor.getUser());
+        long count = notificationQueryRepository.getCountOfNotifications(actor.getUser(), TokenScope.APP);
         if (count == 0) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));
         }
 
         List<NotificationResponse> notifications = notificationQueryRepository.getNotificationsWithCursor(
-            cursorPageRequest, actor.getUser()
+            cursorPageRequest, actor.getUser(), TokenScope.APP
         );
         if (ObjectUtils.isEmpty(notifications)) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));

@@ -1,5 +1,6 @@
 package com.dreamteam.alter.domain.notification.entity;
 
+import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,6 +27,10 @@ public class Notification {
     @ManyToOne(fetch = FetchType.LAZY)
     private User targetUser;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "scope", nullable = false)
+    private TokenScope scope;
+
     @Column(name = "device_token", length = 500, nullable = false)
     private String deviceToken;
 
@@ -41,12 +46,14 @@ public class Notification {
 
     public static Notification create(
         User targetUser,
+        TokenScope scope,
         String deviceToken,
         String title,
         String body
     ) {
         return Notification.builder()
             .targetUser(targetUser)
+            .scope(scope)
             .deviceToken(deviceToken)
             .title(title)
             .body(body)
