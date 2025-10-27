@@ -55,7 +55,7 @@ public class CreatePostingApplication implements CreatePostingApplicationUseCase
     private void sendApplicationNotification(PostingSchedule postingSchedule) {
         try {
             String postingTitle = postingSchedule.getPosting().getTitle();
-            Long managerUserId = postingSchedule.getPosting().getWorkspace().getManagerUser().getId();
+            Long managerUserId = postingSchedule.getPosting().getWorkspace().getManagerUser().getUser().getId();
             
             String title = NotificationMessageConstants.PostingApplication.NEW_APPLICATION_TITLE;
             String body = NotificationMessageBuilder.buildNewApplicationMessage(postingTitle);
