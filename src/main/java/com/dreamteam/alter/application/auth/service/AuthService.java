@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.general.auth.dto.CustomJwtSubject;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
+import com.dreamteam.alter.domain.auth.port.outbound.AuthorizationQueryRepository;
 import com.dreamteam.alter.domain.auth.port.outbound.AuthorizationRepository;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.auth.type.TokenType;
@@ -11,6 +12,7 @@ import com.dreamteam.alter.domain.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -20,10 +22,12 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
 public class AuthService {
 
     @Value("${jwt.access-token.expiration-time}")
@@ -38,17 +42,20 @@ public class AuthService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
     private final AuthorizationRepository authorizationRepository;
+    private final AuthorizationQueryRepository authorizationQueryRepository;
 
     public AuthService(
         @Value("${jwt.secret}") String secretKey,
         StringRedisTemplate stringRedisTemplate,
         ObjectMapper objectMapper,
-        AuthorizationRepository authorizationRepository
+        AuthorizationRepository authorizationRepository,
+        AuthorizationQueryRepository authorizationQueryRepository
     ) {
         this.jwtSecretKey = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
         this.redisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
         this.authorizationRepository = authorizationRepository;
+        this.authorizationQueryRepository = authorizationQueryRepository;
     }
 
     public String generateJwt(CustomJwtSubject jwtSubject, Instant expiredAt) throws JsonProcessingException {
@@ -133,4 +140,21 @@ public class AuthService {
         );
     }
 
+    public void revokeAllExistingAuthorizations(User user) {
+        List<Authorization> existingAuthorizations = authorizationQueryRepository.findAllByUser(user);
+
+        if (existingAuthorizations.isEmpty()) {
+            return;
+        }
+
+        // 사용자의 모든 인가 정보 무효화
+        for (Authorization authorization : existingAuthorizations) {
+            authorization.revoke();
+            deleteAuthorizationFromRedis(authorization.getScope(), user.getId(), authorization.getId());
+        }
+    }
+
+    private void deleteAuthorizationFromRedis(TokenScope scope, Long userId, String authorizationId) {
+        redisTemplate.delete(buildKey(scope, userId, authorizationId));
+    }
 }

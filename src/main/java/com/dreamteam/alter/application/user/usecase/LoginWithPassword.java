@@ -32,11 +32,15 @@ public class LoginWithPassword implements LoginWithPasswordUseCase {
             throw new CustomException(ErrorCode.INVALID_LOGIN_INFO);
         }
 
+        // 기존 인가 정보 정리
+        authService.revokeAllExistingAuthorizations(user);
+
         TokenScope scope = switch (user.getRole()) {
             case ROLE_MANAGER -> TokenScope.MANAGER;
             case ROLE_ADMIN -> TokenScope.ADMIN;
             default -> TokenScope.APP;
         };
+
         return GenerateTokenResponseDto.of(authService.generateAuthorization(user, scope));
     }
 }

@@ -1,7 +1,10 @@
-package com.dreamteam.alter.adapter.inbound.general.user.controller;
+package com.dreamteam.alter.adapter.inbound.general.auth.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
+import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.port.inbound.LogoutUserUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.ReissueTokenUseCase;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
@@ -14,14 +17,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/app/users")
+@RequestMapping("/app/auth")
 @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')") // TODO: 권한 세부 설정
 @RequiredArgsConstructor
 @Validated
-public class UserController implements UserControllerSpec {
+public class AuthController implements AuthControllerSpec {
 
     @Resource(name = "reissueToken")
     private final ReissueTokenUseCase reissueToken;
+
+    @Resource(name = "logoutUser")
+    private final LogoutUserUseCase logoutUser;
 
     @Override
     @PostMapping("/token")
@@ -31,8 +37,11 @@ public class UserController implements UserControllerSpec {
 
     @Override
     @PostMapping("/logout")
-    public ResponseEntity<CommonApiResponse<Void>> logoutUser(Authentication authentication) {
-        return null;
+    public ResponseEntity<CommonApiResponse<Void>> logout() {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        logoutUser.execute(actor);
+        return ResponseEntity.noContent().build();
     }
 
 }

@@ -6,22 +6,19 @@ import com.dreamteam.alter.application.auth.token.RefreshTokenAuthentication;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
-import com.dreamteam.alter.domain.auth.port.outbound.AuthorizationRepository;
-import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.ReissueTokenUseCase;
-import com.dreamteam.alter.domain.user.type.UserRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service("reissueToken")
 @RequiredArgsConstructor
+@Transactional
 public class ReissueToken implements ReissueTokenUseCase {
-
-    private final AuthorizationRepository authorizationRepository;
 
     private final AuthService authService;
 
@@ -39,8 +36,7 @@ public class ReissueToken implements ReissueTokenUseCase {
             case DELETED -> throw new CustomException(ErrorCode.DELETED_USER);
         }
 
-        authorization.expire();
-        authorizationRepository.save(authorization); // 영속성으로 관리되지 않으므로 직접 저장
+        authService.revokeAllExistingAuthorizations(user);
 
         Authorization newAuthorization;
         try {
