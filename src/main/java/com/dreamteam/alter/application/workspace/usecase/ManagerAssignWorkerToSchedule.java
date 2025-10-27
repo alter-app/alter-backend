@@ -5,6 +5,7 @@ import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.common.notification.NotificationMessageBuilder;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
@@ -86,7 +87,7 @@ public class ManagerAssignWorkerToSchedule implements ManagerAssignWorkerUseCase
             );
             
             notificationService.sendNotification(
-                FcmNotificationRequestDto.of(worker.getUser().getId(), title, body)
+                FcmNotificationRequestDto.of(worker.getUser().getId(), TokenScope.APP, title, body)
             );
         } catch (CustomException e) {
             // 알림 발송 실패는 스케줄 배정 프로세스에 영향을 주지 않음

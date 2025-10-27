@@ -64,6 +64,15 @@ public class NotificationService {
 
         // 2. 디바이스 토큰 조회
         Optional<FcmDeviceToken> deviceTokenOpt = userFCMDeviceTokenQueryRepository.findByUser(user);
+        
+        // 3. 알림 레코드 저장
+        String deviceTokenString = deviceTokenOpt.map(FcmDeviceToken::getDeviceToken).orElse(null);
+        Notification notification = Notification.create(
+            user, request.getScope(), deviceTokenString, request.getTitle(), request.getBody()
+        );
+        notificationRepository.save(notification);
+
+        // 4. FCM 발송 (디바이스 토큰이 있는 경우에만)
         if (deviceTokenOpt.isEmpty()) {
             log.warn("사용자 {}의 디바이스 토큰이 없습니다.", request.getTargetUserId());
             return;
@@ -72,13 +81,6 @@ public class NotificationService {
         FcmDeviceToken deviceToken = deviceTokenOpt.get();
 
         try {
-            // 3. 알림 레코드 저장
-            Notification notification = Notification.create(
-                user, deviceToken.getDeviceToken(), request.getTitle(), request.getBody()
-            );
-            notificationRepository.save(notification);
-
-            // 4. FCM 발송
             fcmClient.sendNotification(deviceToken.getDeviceToken(), request.getTitle(), request.getBody());
             deviceToken.updateLastNotificationSentAt();
 
@@ -106,24 +108,32 @@ public class NotificationService {
         // 2. 배치로 디바이스 토큰 조회
         List<FcmDeviceToken> deviceTokens = userFCMDeviceTokenQueryRepository.findByUsers(users);
 
+        // 3. 모든 사용자에 대해 알림 레코드 저장
+        List<Notification> notifications = users.stream()
+            .map(user -> {
+                String deviceTokenString = deviceTokens.stream()
+                    .filter(dt -> dt.getUser().getId().equals(user.getId()))
+                    .findFirst()
+                    .map(FcmDeviceToken::getDeviceToken)
+                    .orElse(null);
+                
+                return Notification.create(
+                    user,
+                    request.getScope(),
+                    deviceTokenString,
+                    request.getTitle(),
+                    request.getBody()
+                );
+            })
+            .toList();
+        notificationRepository.saveAll(notifications);
+
+        // 4. FCM 배치 발송
         if (deviceTokens.isEmpty()) {
-            log.warn("발송할 디바이스 토큰이 없습니다.");
             return;
         }
 
         try {
-            // 3. 알림 레코드 배치 저장
-            List<Notification> notifications = deviceTokens.stream()
-                .map(deviceToken -> Notification.create(
-                    deviceToken.getUser(),
-                    deviceToken.getDeviceToken(),
-                    request.getTitle(),
-                    request.getBody()
-                ))
-                .toList();
-            notificationRepository.saveAll(notifications);
-
-            // 4. FCM 배치 발송
             List<String> deviceTokenStrings = deviceTokens.stream()
                 .map(FcmDeviceToken::getDeviceToken)
                 .toList();

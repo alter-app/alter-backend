@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingAppl
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.entity.PostingApplication;
 import com.dreamteam.alter.domain.posting.port.inbound.ManagerUpdatePostingApplicationStatusUseCase;
@@ -98,7 +99,7 @@ public class ManagerUpdatePostingApplicationStatus implements ManagerUpdatePosti
             }
 
             notificationService.sendNotification(
-                FcmNotificationRequestDto.of(applicantUserId, title, body)
+                FcmNotificationRequestDto.of(applicantUserId, TokenScope.APP, title, body)
             );
         } catch (CustomException e) {
             // 알림 발송 실패는 상태 변경 프로세스에 영향을 주지 않음
