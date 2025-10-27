@@ -31,7 +31,7 @@ public class Notification {
     @Column(name = "scope", nullable = false)
     private TokenScope scope;
 
-    @Column(name = "device_token", length = 500, nullable = false)
+    @Column(name = "device_token", length = 500)
     private String deviceToken;
 
     @Column(name = "title", length = 200, nullable = false)
