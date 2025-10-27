@@ -13,9 +13,11 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service("reissueToken")
 @RequiredArgsConstructor
+@Transactional
 public class ReissueToken implements ReissueTokenUseCase {
 
     private final AuthService authService;
