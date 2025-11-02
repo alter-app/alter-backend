@@ -24,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -108,23 +110,22 @@ public class NotificationService {
         // 2. 배치로 디바이스 토큰 조회
         List<FcmDeviceToken> deviceTokens = userFCMDeviceTokenQueryRepository.findByUsers(users);
 
+        // 사용자에 매핑된 DeviceToken들을 Map으로 변환
+        Map<Long, String> deviceTokenMap = deviceTokens.stream()
+            .collect(Collectors.toMap(
+                dt -> dt.getUser().getId(),
+                FcmDeviceToken::getDeviceToken
+            ));
+
         // 3. 모든 사용자에 대해 알림 레코드 저장
         List<Notification> notifications = users.stream()
-            .map(user -> {
-                String deviceTokenString = deviceTokens.stream()
-                    .filter(dt -> dt.getUser().getId().equals(user.getId()))
-                    .findFirst()
-                    .map(FcmDeviceToken::getDeviceToken)
-                    .orElse(null);
-                
-                return Notification.create(
-                    user,
-                    request.getScope(),
-                    deviceTokenString,
-                    request.getTitle(),
-                    request.getBody()
-                );
-            })
+            .map(user -> Notification.create(
+                user,
+                request.getScope(),
+                deviceTokenMap.get(user.getId()),
+                request.getTitle(),
+                request.getBody()
+            ))
             .toList();
         notificationRepository.saveAll(notifications);
 
