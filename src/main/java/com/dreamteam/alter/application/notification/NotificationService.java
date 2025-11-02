@@ -45,18 +45,23 @@ public class NotificationService {
             userFCMDeviceTokenQueryRepository.findByUser(user);
 
         if (existingDeviceTokenByUser.isPresent()) {
-            existingDeviceTokenByUser.get()
-                .updateDeviceToken(deviceToken, devicePlatformType);
-        } else {
-            userFCMDeviceTokenQueryRepository.findByDeviceToken(deviceToken)
-                .ifPresent(userFCMDeviceTokenRepository::delete);
-
-            userFCMDeviceTokenRepository.save(FcmDeviceToken.create(
-                user,
-                deviceToken,
-                devicePlatformType
-            ));
+            existingDeviceTokenByUser.get().updateDeviceToken(deviceToken, devicePlatformType);
+            return;
         }
+
+        Optional<FcmDeviceToken> existingDeviceToken =
+            userFCMDeviceTokenQueryRepository.findByDeviceToken(deviceToken);
+
+        if (existingDeviceToken.isPresent()) {
+            existingDeviceToken.get().updateUserAndDeviceToken(user, deviceToken, devicePlatformType);
+            return;
+        }
+
+        userFCMDeviceTokenRepository.save(FcmDeviceToken.create(
+            user,
+            deviceToken,
+            devicePlatformType
+        ));
     }
 
     public void sendNotification(FcmNotificationRequestDto request) {

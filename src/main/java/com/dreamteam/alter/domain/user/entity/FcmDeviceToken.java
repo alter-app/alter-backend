@@ -59,4 +59,11 @@ public class FcmDeviceToken {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void updateUserAndDeviceToken(User newUser, String newDeviceToken, DevicePlatformType newDevicePlatform) {
+        this.user = newUser;
+        this.deviceToken = newDeviceToken;
+        this.devicePlatform = newDevicePlatform;
+        this.updatedAt = LocalDateTime.now();
+    }
+
 }
