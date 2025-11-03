@@ -5,7 +5,6 @@ import com.dreamteam.alter.adapter.inbound.common.dto.FirebaseCustomTokenRespons
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.port.inbound.ManagerGenerateFirebaseCustomTokenUseCase;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 public class ManagerAuthController implements ManagerAuthControllerSpec {
 
-    @Resource(name = "managerGenerateFirebaseCustomToken")
     private final ManagerGenerateFirebaseCustomTokenUseCase managerGenerateFirebaseCustomToken;
 
     @Override

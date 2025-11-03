@@ -6,11 +6,9 @@ import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.port.inbound.ManagerGenerateFirebaseCustomTokenUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service("managerGenerateFirebaseCustomToken")
 @RequiredArgsConstructor
-@Transactional
 public class ManagerGenerateFirebaseCustomToken implements ManagerGenerateFirebaseCustomTokenUseCase {
 
     private final AuthService authService;
