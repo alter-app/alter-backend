@@ -1,9 +1,11 @@
 package com.dreamteam.alter.adapter.inbound.general.auth.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.FirebaseCustomTokenResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.port.inbound.GenerateFirebaseCustomTokenUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.LogoutUserUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.ReissueTokenUseCase;
 import jakarta.annotation.Resource;
@@ -29,6 +31,9 @@ public class AuthController implements AuthControllerSpec {
     @Resource(name = "logoutUser")
     private final LogoutUserUseCase logoutUser;
 
+    @Resource(name = "generateFirebaseCustomToken")
+    private final GenerateFirebaseCustomTokenUseCase generateFirebaseCustomToken;
+
     @Override
     @PostMapping("/token")
     public ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> reissueToken(Authentication authentication) {
@@ -42,6 +47,14 @@ public class AuthController implements AuthControllerSpec {
 
         logoutUser.execute(actor);
         return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    @PostMapping("/firebase-token")
+    public ResponseEntity<CommonApiResponse<FirebaseCustomTokenResponseDto>> generateFirebaseCustomToken() {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        return ResponseEntity.ok(CommonApiResponse.of(generateFirebaseCustomToken.execute(actor)));
     }
 
 }
