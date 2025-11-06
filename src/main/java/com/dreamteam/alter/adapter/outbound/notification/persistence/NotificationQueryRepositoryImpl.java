@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.outbound.notification.persistence;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.outbound.notification.persistence.readonly.NotificationResponse;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.notification.entity.QNotification;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationQueryRepository;
 import com.dreamteam.alter.domain.user.entity.User;
@@ -24,7 +25,8 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
     @Override
     public List<NotificationResponse> getNotificationsWithCursor(
         CursorPageRequest<CursorDto> pageRequest,
-        User targetUser
+        User targetUser,
+        TokenScope scope
     ) {
         QNotification notification = QNotification.notification;
 
@@ -39,6 +41,7 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
             .from(notification)
             .where(
                 notification.targetUser.eq(targetUser),
+                notification.scope.eq(scope),
                 cursorCondition(notification, pageRequest.cursor())
             )
             .orderBy(notification.createdAt.desc(), notification.id.desc())
@@ -47,13 +50,16 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
     }
 
     @Override
-    public long getCountOfNotifications(User targetUser) {
+    public long getCountOfNotifications(User targetUser, TokenScope scope) {
         QNotification notification = QNotification.notification;
 
         Long count = queryFactory
             .select(notification.id.count())
             .from(notification)
-            .where(notification.targetUser.eq(targetUser))
+            .where(
+                notification.targetUser.eq(targetUser),
+                notification.scope.eq(scope)
+            )
             .fetchOne();
 
         return ObjectUtils.isEmpty(count) ? 0 : count;
