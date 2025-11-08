@@ -10,6 +10,7 @@ import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.*;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListFilterDto;
 import com.dreamteam.alter.domain.posting.entity.*;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
+import com.dreamteam.alter.domain.posting.type.PostingSortType;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.user.entity.QUserFavoritePosting;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
@@ -73,7 +74,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .leftJoin(qPosting.workspace, qWorkspace)
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
-                withinBounds(qWorkspace, filter.getCoordinate1(), filter.getCoordinate2())
+                withinBounds(qWorkspace, filter.getCoordinate1(), filter.getCoordinate2()),
+                containsSearchKeyword(qPosting, qWorkspace, filter.getSearchKeyword())
             )
             .fetchOne();
 
@@ -172,10 +174,11 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .leftJoin(qPosting.workspace, qWorkspace)
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
-                cursorConditions(qPosting, request.cursor(), false),
-                withinBounds(qWorkspace, filter.getCoordinate1(), filter.getCoordinate2())
+                cursorConditionsForMapList(qPosting, request.cursor(), filter.getSortType()),
+                withinBounds(qWorkspace, filter.getCoordinate1(), filter.getCoordinate2()),
+                containsSearchKeyword(qPosting, qWorkspace, filter.getSearchKeyword())
             )
-            .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
+            .orderBy(getOrderSpecifiersForMapList(qPosting, filter.getSortType()))
             .limit(request.pageSize())
             .fetch();
 
@@ -188,7 +191,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .where(qPosting.id.in(postingIds))
-            .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
+            .orderBy(getOrderSpecifiersForMapList(qPosting, filter.getSortType()))
             .distinct()
             .fetch();
 
@@ -570,6 +573,41 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .and(qWorkspace.longitude.between(minLng, maxLng));
     }
 
+    private BooleanExpression containsSearchKeyword(QPosting qPosting, QWorkspace qWorkspace, String searchKeyword) {
+        if (ObjectUtils.isEmpty(searchKeyword) || searchKeyword.isBlank()) {
+            return null;
+        }
+        return qPosting.title.containsIgnoreCase(searchKeyword)
+            .or(qWorkspace.businessName.containsIgnoreCase(searchKeyword));
+    }
+
+    private OrderSpecifier<?>[] getOrderSpecifiersForMapList(QPosting qPosting, PostingSortType sortType) {
+        List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
+        
+        switch (sortType) {
+            case PAY_AMOUNT:
+                orderSpecifiers.add(qPosting.payAmount.desc());
+                orderSpecifiers.add(qPosting.id.desc());
+                break;
+            case LATEST:
+                orderSpecifiers.add(qPosting.createdAt.desc());
+                orderSpecifiers.add(qPosting.id.desc());
+                break;
+        }
+        
+        return orderSpecifiers.toArray(new OrderSpecifier[0]);
+    }
+
+    private BooleanExpression cursorConditionsForMapList(QPosting qPosting, CursorDto cursor, PostingSortType sortType) {
+        if (ObjectUtils.isEmpty(cursor)) {
+            return null;
+        }
+
+        return switch (sortType) {
+            case PAY_AMOUNT -> ltPayAmountAndId(qPosting, cursor);
+            case LATEST -> ltCreatedAtAndId(qPosting, cursor);
+        };
+    }
 
     private OrderSpecifier<?>[] getOrderSpecifiers(QPosting qPosting, Boolean payAmountSort) {
         List<OrderSpecifier<?>> orderSpecifiers = new java.util.ArrayList<>();

@@ -40,6 +40,10 @@ public class GetPostingMapList implements GetPostingMapListUseCase {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "좌표 값은 좌상단, 우하단 모두 포함해야합니다.");
         }
 
+        if (ObjectUtils.isEmpty(filter.getSortType())) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "정렬 기준은 필수입니다.");
+        }
+
         CursorDto cursorDto = null;
         if (ObjectUtils.isNotEmpty(request.cursor())) {
             cursorDto = CursorUtil.decodeCursor(request.cursor(), CursorDto.class, objectMapper);
