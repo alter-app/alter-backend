@@ -50,4 +50,14 @@ public class ManagerUserQueryRepositoryImpl implements ManagerUserQueryRepositor
         return Optional.ofNullable(managerSelf);
     }
 
+    @Override
+    public Optional<ManagerUser> findById(Long id) {
+        QManagerUser qManagerUser = QManagerUser.managerUser;
+
+        return Optional.ofNullable(queryFactory
+            .selectFrom(qManagerUser)
+            .where(qManagerUser.id.eq(id))
+            .fetchOne());
+    }
+
 }

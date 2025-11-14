@@ -6,6 +6,7 @@ import com.dreamteam.alter.domain.chat.port.inbound.ManagerCreateOrGetChatRoomUs
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
 import org.springframework.stereotype.Service;
 
 @Service("managerCreateOrGetChatRoom")
@@ -14,9 +15,10 @@ public class ManagerCreateOrGetChatRoom extends AbstractCreateOrGetChatRoomUseCa
 
     public ManagerCreateOrGetChatRoom(
         ChatRoomQueryRepository chatRoomQueryRepository,
-        ChatRoomRepository chatRoomRepository
+        ChatRoomRepository chatRoomRepository,
+        ManagerUserQueryRepository managerUserQueryRepository
     ) {
-        super(chatRoomQueryRepository, chatRoomRepository);
+        super(chatRoomQueryRepository, chatRoomRepository, managerUserQueryRepository);
     }
 
     @Override
