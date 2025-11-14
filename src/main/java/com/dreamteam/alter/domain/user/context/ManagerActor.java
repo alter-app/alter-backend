@@ -20,6 +20,10 @@ public class ManagerActor {
 
     private List<? extends GrantedAuthority> authorities;
 
+    public Long getUserId() {
+        return managerUser.getUser().getId();
+    }
+
     public static ManagerActor from(ManagerUser managerUser, List<? extends GrantedAuthority> authorities) {
         if (ObjectUtils.isEmpty(managerUser)) {
             return null;
