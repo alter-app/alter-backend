@@ -19,7 +19,7 @@ public interface UserChatWebSocketControllerSpec {
         summary = "채팅 메시지 전송 (WebSocket)",
         description = "WebSocket을 통해 채팅 메시지를 전송합니다. " +
             "STOMP 메시지 브로커를 사용하며, 클라이언트는 /app/chat/send로 메시지를 보내야 합니다. " +
-            "구독 경로는 /topic/chat/{chatRoomId} 입니다. " +
+            "구독 경로는 /sub/chat.{chatRoomId} 입니다. " +
             "실제 사용 시 WebSocket 클라이언트를 통해 연결해야 합니다."
     )
     @ApiResponses(value = {
