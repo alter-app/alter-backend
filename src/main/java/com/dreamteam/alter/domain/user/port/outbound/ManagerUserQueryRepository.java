@@ -9,4 +9,6 @@ public interface ManagerUserQueryRepository {
     Optional<ManagerUser> findByUserId(Long userId);
 
     Optional<ManagerSelfInfoResponse> getManagerSelfInfoSummary(Long managerId);
+
+    Optional<ManagerUser> findById(Long id);
 }

@@ -10,6 +10,7 @@ import com.dreamteam.alter.domain.notification.port.outbound.NotificationReposit
 import com.dreamteam.alter.domain.user.entity.FcmDeviceToken;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserFcmDeviceTokenRepository;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.user.type.DevicePlatformType;
 import com.google.firebase.messaging.BatchResponse;
@@ -71,36 +72,13 @@ public class NotificationService {
 
         // 2. 디바이스 토큰 조회
         Optional<FcmDeviceToken> deviceTokenOpt = userFCMDeviceTokenQueryRepository.findByUser(user);
-        
-        // 3. 알림 레코드 저장
         String deviceTokenString = deviceTokenOpt.map(FcmDeviceToken::getDeviceToken).orElse(null);
-        Notification notification = Notification.create(
-            user, request.getScope(), deviceTokenString, request.getTitle(), request.getBody()
-        );
-        notificationRepository.save(notification);
 
-        // 4. FCM 발송 (디바이스 토큰이 있는 경우에만)
-        if (deviceTokenOpt.isEmpty()) {
-            log.warn("사용자 {}의 디바이스 토큰이 없습니다.", request.getTargetUserId());
-            return;
-        }
+        // 3. 알림 레코드 저장
+        saveNotification(user, request.getScope(), deviceTokenString, request.getTitle(), request.getBody());
 
-        FcmDeviceToken deviceToken = deviceTokenOpt.get();
-
-        try {
-            fcmClient.sendNotification(deviceToken.getDeviceToken(), request.getTitle(), request.getBody());
-            deviceToken.updateLastNotificationSentAt();
-
-        } catch (FirebaseMessagingException e) {
-            log.error("FCM 알림 발송 실패. UserId: {}, Error: {}", deviceToken.getUser().getId(), e.getMessage(), e);
-
-            // 토큰 무효화 처리
-            if (isTokenInvalid(e)) {
-                userFCMDeviceTokenRepository.delete(deviceToken);
-            }
-
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "FCM 알림 발송 실패");
-        }
+        // 4. FCM 발송
+        sendFcmNotification(user, request.getTitle(), request.getBody(), true);
     }
 
     public void sendMultipleNotifications(FcmBatchNotificationRequestDto request) {
@@ -190,6 +168,67 @@ public class NotificationService {
         if (!invalidTokens.isEmpty()) {
             userFCMDeviceTokenRepository.deleteAll(invalidTokens);
         }
+    }
+
+    /**
+     * FCM 알림만 발송 (Notification 엔티티 저장 없음)
+     * 채팅 메시지 등 별도 저장 로직이 있는 경우 사용
+     */
+    public void sendNotificationOnly(Long userId, String title, String body) {
+        User user = userQueryRepository.findById(userId)
+            .orElse(null);
+
+        if (ObjectUtils.isEmpty(user)) {
+            log.warn("사용자를 찾을 수 없습니다. UserId: {}", userId);
+            return;
+        }
+
+        sendFcmNotification(user, title, body, false);
+    }
+
+    /**
+     * FCM 알림 발송 내부 로직 (공통)
+     * @param user 대상 사용자
+     * @param title 알림 제목
+     * @param body 알림 본문
+     * @param throwOnError 발송 실패 시 예외 throw 여부
+     */
+    private void sendFcmNotification(User user, String title, String body, boolean throwOnError) {
+        // 디바이스 토큰 조회
+        Optional<FcmDeviceToken> deviceTokenOpt = userFCMDeviceTokenQueryRepository.findByUser(user);
+        if (deviceTokenOpt.isEmpty()) {
+            log.warn("사용자 {}의 디바이스 토큰이 없습니다.", user.getId());
+            return;
+        }
+
+        FcmDeviceToken deviceToken = deviceTokenOpt.get();
+
+        try {
+            // FCM 알림 전송
+            fcmClient.sendNotification(deviceToken.getDeviceToken(), title, body);
+            deviceToken.updateLastNotificationSentAt();
+
+        } catch (FirebaseMessagingException e) {
+            log.error("FCM 알림 발송 실패. UserId: {}, Error: {}", user.getId(), e.getMessage(), e);
+
+            // 토큰 무효화 처리
+            if (isTokenInvalid(e)) {
+                userFCMDeviceTokenRepository.delete(deviceToken);
+            }
+
+            if (throwOnError) {
+                throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "FCM 알림 발송 실패");
+            }
+        }
+    }
+
+    /**
+     * Notification 엔티티 저장
+     */
+    private void saveNotification(User user, TokenScope scope, String deviceToken, String title, String body) {
+        notificationRepository.save(Notification.create(
+            user, scope, deviceToken, title, body
+        ));
     }
 
     /**
