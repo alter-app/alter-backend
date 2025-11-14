@@ -60,4 +60,12 @@ public final class NotificationMessageConstants {
         public static final String MANAGER_ACCEPTED_BODY = "%s님이 %s %s 근무 대타를 수락했습니다. 승인을 기다리고 있습니다.";
     }
     
+    /**
+     * 채팅 관련 알림 메시지
+     */
+    public static final class Chat {
+        public static final String NEW_MESSAGE_TITLE = "새로운 메시지";
+        public static final String NEW_MESSAGE_BODY = "%s: %s";
+    }
+    
 }
