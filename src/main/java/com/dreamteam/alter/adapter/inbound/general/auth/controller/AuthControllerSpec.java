@@ -2,7 +2,6 @@ package com.dreamteam.alter.adapter.inbound.general.auth.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
-import com.dreamteam.alter.adapter.inbound.common.dto.FirebaseCustomTokenResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -50,15 +49,5 @@ public interface AuthControllerSpec {
         @ApiResponse(responseCode = "200", description = "로그아웃 성공")
     })
     ResponseEntity<CommonApiResponse<Void>> logout();
-
-    @Operation(summary = "Firebase 커스텀 토큰 발급")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Firebase 커스텀 토큰 발급 성공"),
-        @ApiResponse(responseCode = "400", description = "실패 케이스",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    ResponseEntity<CommonApiResponse<FirebaseCustomTokenResponseDto>> generateFirebaseCustomToken();
 
 }

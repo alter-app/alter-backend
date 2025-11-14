@@ -11,8 +11,6 @@ import com.dreamteam.alter.domain.auth.type.TokenType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -158,21 +156,5 @@ public class AuthService {
 
     private void deleteAuthorizationFromRedis(TokenScope scope, Long userId, String authorizationId) {
         redisTemplate.delete(buildKey(scope, userId, authorizationId));
-    }
-
-    /**
-     * Firebase 커스텀 토큰 생성
-     * uid를 Firebase uid로 사용하여 토큰 생성
-     *
-     * @param uid Firebase uid (User.id 또는 ManagerUser.id를 String으로 변환한 값)
-     * @return Firebase 커스텀 토큰
-     * @throws CustomException Firebase 토큰 생성 실패 시
-     */
-    public String generateFirebaseCustomToken(String uid) {
-        try {
-            return FirebaseAuth.getInstance().createCustomToken(uid);
-        } catch (FirebaseAuthException e) {
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "Firebase 커스텀 토큰 생성 중 오류 발생.");
-        }
     }
 }
