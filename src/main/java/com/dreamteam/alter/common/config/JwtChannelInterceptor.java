@@ -48,7 +48,6 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
 
     @Override
     public void afterSendCompletion(Message<?> message, MessageChannel channel, boolean sent, Exception ex) {
-        SecurityContextHolder.clearContext();
         if (ObjectUtils.isNotEmpty(ex)) {
             log.error("WebSocket 메시지 전송 실패", ex);
         }

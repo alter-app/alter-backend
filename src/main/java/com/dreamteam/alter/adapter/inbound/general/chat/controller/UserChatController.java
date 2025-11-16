@@ -37,7 +37,7 @@ public class UserChatController implements UserChatControllerSpec {
     @Resource(name = "getChatMessages")
     private final GetChatMessagesUseCase getChatMessages;
 
-    @Resource(name = "getChatRoom")
+    @Resource(name = "getChatRoomInfo")
     private final GetChatRoomInfoUseCase getChatRoomInfo;
 
     @Override

@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service("getChatRoom")
+@Service("getChatRoomInfo")
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class GetChatRoomInfo extends AbstractChatUseCase implements GetChatRoomInfoUseCase {
