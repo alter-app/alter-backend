@@ -5,7 +5,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
-import com.dreamteam.alter.domain.chat.port.inbound.GetChatRoomUseCase;
+import com.dreamteam.alter.domain.chat.port.inbound.GetChatRoomInfoUseCase;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.entity.User;
@@ -14,10 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service("getChatRoom")
+@Service("getChatRoomInfo")
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class GetChatRoom extends AbstractChatUseCase implements GetChatRoomUseCase {
+public class GetChatRoomInfo extends AbstractChatUseCase implements GetChatRoomInfoUseCase {
 
     private final ChatRoomQueryRepository chatRoomQueryRepository;
     private final UserQueryRepository userQueryRepository;

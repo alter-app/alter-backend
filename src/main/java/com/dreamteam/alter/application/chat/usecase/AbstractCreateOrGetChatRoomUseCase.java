@@ -7,8 +7,6 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
-import com.dreamteam.alter.domain.user.entity.ManagerUser;
-import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,25 +16,13 @@ public abstract class AbstractCreateOrGetChatRoomUseCase<A> extends AbstractChat
 
     protected final ChatRoomQueryRepository chatRoomQueryRepository;
     protected final ChatRoomRepository chatRoomRepository;
-    protected final ManagerUserQueryRepository managerUserQueryRepository;
 
     protected CreateChatRoomResponseDto execute(A actor, Long opponentUserId, TokenScope opponentScope) {
         Long currentUserId = getParticipantId(actor);
         TokenScope currentScope = getParticipantScope(actor);
 
-        // opponentScope가 MANAGER인 경우 ManagerUser.id를 User.id로 변환
-        final Long actualOpponentUserId;
-        if (opponentScope == TokenScope.MANAGER) {
-            // ManagerUser를 조회하여 User.id 추출
-            ManagerUser managerUser = managerUserQueryRepository.findById(opponentUserId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "매니저를 찾을 수 없습니다."));
-            actualOpponentUserId = managerUser.getUser().getId();
-        } else {
-            actualOpponentUserId = opponentUserId;
-        }
-
         // 자기 자신과는 채팅방 생성 불가
-        if (currentUserId.equals(actualOpponentUserId) && currentScope == opponentScope) {
+        if (currentUserId.equals(opponentUserId) && currentScope == opponentScope) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "자기 자신과는 채팅방을 생성할 수 없습니다.");
         }
 
@@ -44,7 +30,7 @@ public abstract class AbstractCreateOrGetChatRoomUseCase<A> extends AbstractChat
         Long chatRoomId = chatRoomQueryRepository.findExistingChatRoom(
                 currentUserId,
                 currentScope,
-                actualOpponentUserId,
+                opponentUserId,
                 opponentScope
             )
             .map(ChatRoom::getId)
@@ -53,7 +39,7 @@ public abstract class AbstractCreateOrGetChatRoomUseCase<A> extends AbstractChat
                 ChatRoom newChatRoom = ChatRoom.create(
                     currentUserId,
                     currentScope,
-                    actualOpponentUserId,
+                    opponentUserId,
                     opponentScope
                 );
                 return chatRoomRepository.save(newChatRoom)

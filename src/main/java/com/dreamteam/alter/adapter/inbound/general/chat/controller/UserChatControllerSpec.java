@@ -40,7 +40,7 @@ public interface UserChatControllerSpec {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "채팅방 정보 조회 성공")
     })
-    ResponseEntity<CommonApiResponse<ChatRoomResponseDto>> getChatRoom(
+    ResponseEntity<CommonApiResponse<ChatRoomResponseDto>> getChatRoomInfo(
         @PathVariable Long chatRoomId
     );
 
