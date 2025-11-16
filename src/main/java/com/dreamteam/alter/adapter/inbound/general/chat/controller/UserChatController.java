@@ -11,7 +11,7 @@ import com.dreamteam.alter.adapter.inbound.general.chat.dto.CreateChatRoomRespon
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.chat.port.inbound.CreateOrGetChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetChatMessagesUseCase;
-import com.dreamteam.alter.domain.chat.port.inbound.GetChatRoomUseCase;
+import com.dreamteam.alter.domain.chat.port.inbound.GetChatRoomInfoUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetMyChatRoomListUseCase;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
@@ -29,16 +29,16 @@ import org.springframework.web.bind.annotation.*;
 public class UserChatController implements UserChatControllerSpec {
 
     @Resource(name = "createOrGetChatRoom")
-    private final CreateOrGetChatRoomUseCase createOrGetChatRoomUseCase;
+    private final CreateOrGetChatRoomUseCase createOrGetChatRoom;
 
     @Resource(name = "getMyChatRoomList")
-    private final GetMyChatRoomListUseCase getMyChatRoomListUseCase;
+    private final GetMyChatRoomListUseCase getMyChatRoomList;
 
     @Resource(name = "getChatMessages")
-    private final GetChatMessagesUseCase getChatMessagesUseCase;
+    private final GetChatMessagesUseCase getChatMessages;
 
     @Resource(name = "getChatRoom")
-    private final GetChatRoomUseCase getChatRoomUseCase;
+    private final GetChatRoomInfoUseCase getChatRoomInfo;
 
     @Override
     @PostMapping("/rooms")
@@ -47,7 +47,7 @@ public class UserChatController implements UserChatControllerSpec {
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
         CreateChatRoomResponseDto response =
-            createOrGetChatRoomUseCase.execute(actor, request.getOpponentUserId(), request.getOpponentScope());
+            createOrGetChatRoom.execute(actor, request.getOpponentUserId(), request.getOpponentScope());
         return ResponseEntity.ok(CommonApiResponse.of(response));
     }
 
@@ -57,16 +57,16 @@ public class UserChatController implements UserChatControllerSpec {
         CursorPageRequestDto pageRequest
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(getMyChatRoomListUseCase.execute(actor, pageRequest));
+        return ResponseEntity.ok(getMyChatRoomList.execute(actor, pageRequest));
     }
 
     @Override
     @GetMapping("/rooms/{chatRoomId}")
-    public ResponseEntity<CommonApiResponse<ChatRoomResponseDto>> getChatRoom(
+    public ResponseEntity<CommonApiResponse<ChatRoomResponseDto>> getChatRoomInfo(
         @PathVariable Long chatRoomId
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(getChatRoomUseCase.execute(actor, chatRoomId)));
+        return ResponseEntity.ok(CommonApiResponse.of(getChatRoomInfo.execute(actor, chatRoomId)));
     }
 
     @Override
@@ -76,6 +76,6 @@ public class UserChatController implements UserChatControllerSpec {
         CursorPageRequestDto pageRequest
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(getChatMessagesUseCase.execute(actor, chatRoomId, pageRequest));
+        return ResponseEntity.ok(getChatMessages.execute(actor, chatRoomId, pageRequest));
     }
 }
