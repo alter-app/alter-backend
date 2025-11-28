@@ -46,7 +46,7 @@ public interface AuthControllerSpec {
 
     @Operation(summary = "로그아웃")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "로그아웃 성공")
+        @ApiResponse(responseCode = "204", description = "로그아웃 성공")
     })
     ResponseEntity<CommonApiResponse<Void>> logout();
 
