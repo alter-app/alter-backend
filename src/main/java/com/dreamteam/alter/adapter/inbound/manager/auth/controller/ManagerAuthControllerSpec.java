@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.general.auth.controller;
+package com.dreamteam.alter.adapter.inbound.manager.auth.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
@@ -13,8 +13,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
-@Tag(name = "APP - 인증 관련 API")
-public interface AuthControllerSpec {
+@Tag(name = "MANAGER - 인증 관련 API")
+public interface ManagerAuthControllerSpec {
 
     @Operation(summary = "토큰 재발급", description = "헤더에 RefreshToken을 담아 요청")
     @ApiResponses(value = {
