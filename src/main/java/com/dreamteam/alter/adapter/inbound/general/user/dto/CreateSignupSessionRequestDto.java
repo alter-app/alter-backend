@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class CreateSignupSessionRequestDto {
 
     @NotBlank
-    @Size(min = 13, max = 13)
-    @Schema(description = "휴대폰번호", example = "010-1234-5678")
+    @Size(min = 11, max = 11)
+    @Schema(description = "휴대폰번호", example = "01012345678")
     private String contact;
 }
