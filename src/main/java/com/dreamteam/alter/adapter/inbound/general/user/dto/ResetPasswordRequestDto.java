@@ -10,11 +10,15 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "회원가입 세션 생성 요청 DTO")
-public class CreateSignupSessionRequestDto {
+@Schema(description = "비밀번호 재설정 요청 DTO")
+public class ResetPasswordRequestDto {
 
     @NotBlank
-    @Size(min = 11, max = 11)
-    @Schema(description = "휴대폰번호", example = "01012345678")
-    private String contact;
+    @Schema(description = "비밀번호 재설정 세션 ID", example = "UUID")
+    private String sessionId;
+
+    @NotBlank
+    @Size(min = 8, max = 100)
+    @Schema(description = "새 비밀번호", example = "newPassword123")
+    private String newPassword;
 }

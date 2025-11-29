@@ -30,7 +30,7 @@ public class PostingApplicationResponseApplicantDetailDto {
     private String email;
 
     @NotBlank
-    @Schema(description = "연락처", example = "010-1234-5678")
+    @Schema(description = "연락처", example = "01012345678")
     private String contact;
 
     @NotBlank

@@ -9,6 +9,9 @@ import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckContactDuplicationUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckNicknameDuplicationUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckEmailDuplicationUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.FindEmailByContactUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.CreatePasswordResetSessionUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.ResetPasswordUseCase;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +45,15 @@ public class UserPublicController implements UserPublicControllerSpec {
 
     @Resource(name = "checkEmailDuplication")
     private final CheckEmailDuplicationUseCase checkEmailDuplication;
+
+    @Resource(name = "findEmailByContact")
+    private final FindEmailByContactUseCase findEmailByContact;
+
+    @Resource(name = "createPasswordResetSession")
+    private final CreatePasswordResetSessionUseCase createPasswordResetSession;
+
+    @Resource(name = "resetPassword")
+    private final ResetPasswordUseCase resetPassword;
 
     @Override
     @PostMapping("/signup-session")
@@ -99,4 +111,28 @@ public class UserPublicController implements UserPublicControllerSpec {
         return ResponseEntity.ok(CommonApiResponse.of(checkEmailDuplication.execute(request)));
     }
 
+    @Override
+    @PostMapping("/find-email")
+    public ResponseEntity<CommonApiResponse<FindEmailResponseDto>> findEmailByContact(
+        @Valid @RequestBody FindEmailRequestDto request
+    ) {
+        return ResponseEntity.ok(CommonApiResponse.of(findEmailByContact.execute(request)));
+    }
+
+    @Override
+    @PostMapping("/password-reset/session")
+    public ResponseEntity<CommonApiResponse<CreatePasswordResetSessionResponseDto>> createPasswordResetSession(
+        @Valid @RequestBody CreatePasswordResetSessionRequestDto request
+    ) {
+        return ResponseEntity.ok(CommonApiResponse.of(createPasswordResetSession.execute(request)));
+    }
+
+    @Override
+    @PostMapping("/password-reset")
+    public ResponseEntity<CommonApiResponse<Void>> resetPassword(
+        @Valid @RequestBody ResetPasswordRequestDto request
+    ) {
+        resetPassword.execute(request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
 }

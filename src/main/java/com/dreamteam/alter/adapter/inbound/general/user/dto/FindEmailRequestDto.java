@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "회원가입 세션 생성 요청 DTO")
-public class CreateSignupSessionRequestDto {
+@Schema(description = "이메일 찾기 요청 DTO")
+public class FindEmailRequestDto {
 
     @NotBlank
-    @Size(min = 11, max = 11)
-    @Schema(description = "휴대폰번호", example = "01012345678")
+    @Size(min = 10, max = 11)
+    @Schema(description = "전화번호 (하이픈 미포함)")
     private String contact;
 }

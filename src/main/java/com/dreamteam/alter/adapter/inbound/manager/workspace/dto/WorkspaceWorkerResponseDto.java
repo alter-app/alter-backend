@@ -23,7 +23,7 @@ public class WorkspaceWorkerResponseDto {
     private String name;
 
     @NotBlank
-    @Schema(description = "근무자 연락처", example = "010-1234-5678")
+    @Schema(description = "근무자 연락처", example = "01012345678")
     private String contact;
 
     @NotNull

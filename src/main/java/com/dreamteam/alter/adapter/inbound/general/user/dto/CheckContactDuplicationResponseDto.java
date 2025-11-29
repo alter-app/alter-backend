@@ -10,7 +10,7 @@ import lombok.*;
 @Schema(description = "휴대폰 번호 중복 확인 응답 DTO")
 public class CheckContactDuplicationResponseDto {
 
-    @Schema(description = "휴대폰 번호", example = "010-1234-5678")
+    @Schema(description = "휴대폰 번호", example = "01012345678")
     private String contact;
 
     @Schema(description = "중복 여부", example = "true")
