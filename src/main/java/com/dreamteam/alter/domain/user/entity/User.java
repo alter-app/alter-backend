@@ -106,4 +106,13 @@ public class User {
     public void addUserSocial(UserSocial userSocial) {
         userSocials.add(userSocial);
     }
+
+    /**
+     * 비밀번호를 업데이트합니다.
+     *
+     * @param encodedPassword 암호화된 비밀번호
+     */
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
 }

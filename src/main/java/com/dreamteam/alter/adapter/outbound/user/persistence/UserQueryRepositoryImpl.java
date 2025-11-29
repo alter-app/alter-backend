@@ -78,6 +78,21 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
     }
 
     @Override
+    public Optional<User> findByEmailAndContact(String email, String contact) {
+        QUser qUser = QUser.user;
+        User foundUser = queryFactory
+            .selectFrom(qUser)
+            .where(
+                qUser.email.eq(email),
+                qUser.contact.eq(contact),
+                qUser.status.eq(UserStatus.ACTIVE)
+            )
+            .fetchOne();
+
+        return Optional.ofNullable(foundUser);
+    }
+
+    @Override
     public Optional<UserSelfInfoResponse> getUserSelfInfoSummary(Long id) {
         QUser qUser = QUser.user;
         QReputationSummary qReputationSummary = QReputationSummary.reputationSummary;
