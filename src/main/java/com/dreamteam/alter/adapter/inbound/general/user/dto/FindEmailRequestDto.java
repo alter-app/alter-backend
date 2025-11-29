@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class FindEmailRequestDto {
 
     @NotBlank
-    @Size(max = 13)
+    @Size(min = 10, max = 11)
     @Schema(description = "전화번호 (하이픈 미포함)")
     private String contact;
 }

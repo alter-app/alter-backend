@@ -122,7 +122,7 @@ public interface UserPublicControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "성공 응답",
-                        value = "{\"success\": true, \"data\": {\"maskedEmail\": \"user@exa****\"}}"
+                        value = "{\"success\": true, \"data\": {\"maskedEmail\": \"us**@example.com\"}}"
                     )
                 }
             )

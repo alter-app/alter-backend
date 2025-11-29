@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "휴대폰 번호 중복 확인 요청 DTO")
 public class CheckContactDuplicationRequestDto {
 
-    @Size(max = 11)
+    @Size(min = 10, max = 11)
     @Schema(description = "휴대폰 번호", example = "01012345678")
     private String contact;
 

@@ -21,7 +21,7 @@ public class CreatePasswordResetSessionRequestDto {
     private String email;
 
     @NotBlank
-    @Size(max = 13)
+    @Size(min = 10, max = 11)
     @Schema(description = "전화번호", example = "01012345678")
     private String contact;
 }
