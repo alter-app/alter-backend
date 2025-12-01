@@ -28,7 +28,7 @@ public class CreateUserRequestDto {
     private String email;
 
     @NotBlank
-    @Size(min = 8, max = 100)
+    @Size(min = 8, max = 16)
     @Schema(description = "비밀번호", example = "password123")
     private String password;
 

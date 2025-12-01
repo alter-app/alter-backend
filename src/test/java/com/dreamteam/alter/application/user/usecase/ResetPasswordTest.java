@@ -48,7 +48,7 @@ class ResetPasswordTest {
     @DisplayName("Redis에 세션이 없을 때 PASSWORD_RESET_SESSION_NOT_EXIST 예외 발생")
     void execute_세션없음_예외발생() {
         // given
-        ResetPasswordRequestDto request = new ResetPasswordRequestDto("session-id", "newPassword123");
+        ResetPasswordRequestDto request = new ResetPasswordRequestDto("session-id", "newPassword123!");
         @SuppressWarnings("unchecked")
         ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
 
@@ -71,7 +71,7 @@ class ResetPasswordTest {
     @DisplayName("세션은 있으나 사용자가 없을 때 USER_NOT_FOUND 예외 발생")
     void execute_사용자없음_예외발생() {
         // given
-        ResetPasswordRequestDto request = new ResetPasswordRequestDto("session-id", "newPassword123");
+        ResetPasswordRequestDto request = new ResetPasswordRequestDto("session-id", "newPassword123!");
         String userId = "1";
         @SuppressWarnings("unchecked")
         ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
@@ -97,7 +97,7 @@ class ResetPasswordTest {
     void execute_정상적인비밀번호재설정() {
         // given
         String sessionId = "session-id";
-        String newPassword = "newPassword123";
+        String newPassword = "newPassword123!";
         String encodedPassword = "encodedPassword123";
         String userId = "1";
         Long userIdLong = Long.parseLong(userId);
@@ -134,5 +134,46 @@ class ResetPasswordTest {
         verify(redisTemplate, times(1)).delete(sessionKey);
         verify(redisTemplate, times(1)).delete(userIndexKey);
         assertEquals(encodedPassword, user.getPassword());
+    }
+
+    @Test
+    @DisplayName("비밀번호 형식이 규칙에 맞지 않을 때 INVALID_PASSWORD_FORMAT 예외 발생")
+    void execute_비밀번호형식오류_예외발생() {
+        // given
+        String sessionId = "session-id";
+        String invalidPassword = "newPassword123"; // 특수문자 없음
+        String userId = "1";
+        Long userIdLong = Long.parseLong(userId);
+
+        ResetPasswordRequestDto request = new ResetPasswordRequestDto(sessionId, invalidPassword);
+        User user = User.create(
+            "test@example.com",
+            "01012345678",
+            "oldPassword",
+            "테스트",
+            "testuser",
+            UserGender.GENDER_MALE,
+            "19900101"
+        );
+
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+        String sessionKey = "PASSWORD_RESET:PENDING:" + sessionId;
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(sessionKey)).thenReturn(userId);
+        when(userQueryRepository.findById(userIdLong)).thenReturn(Optional.of(user));
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            resetPassword.execute(request);
+        });
+
+        assertEquals(ErrorCode.INVALID_PASSWORD_FORMAT, exception.getErrorCode());
+        verify(redisTemplate, times(1)).opsForValue();
+        verify(valueOperations, times(1)).get(sessionKey);
+        verify(userQueryRepository, times(1)).findById(userIdLong);
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(redisTemplate, never()).delete(anyString());
     }
 }

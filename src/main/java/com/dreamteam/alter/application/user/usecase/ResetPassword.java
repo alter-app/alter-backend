@@ -3,6 +3,7 @@ package com.dreamteam.alter.application.user.usecase;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.ResetPasswordRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.common.util.PasswordValidator;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.ResetPasswordUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -38,6 +39,11 @@ public class ResetPassword implements ResetPasswordUseCase {
         // 사용자 조회
         User user = userQueryRepository.findById(Long.parseLong(userId))
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 비밀번호 형식 검증
+        if (!PasswordValidator.isValid(request.getNewPassword())) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD_FORMAT);
+        }
 
         // 비밀번호 업데이트
         user.updatePassword(passwordEncoder.encode(request.getNewPassword()));

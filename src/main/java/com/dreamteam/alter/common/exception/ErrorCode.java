@@ -20,6 +20,7 @@ public enum ErrorCode {
     INVALID_LOGIN_INFO(400, "A011", "로그인 정보가 올바르지 않습니다."),
     SOCIAL_PROVIDER_ALREADY_LINKED(400, "A012", "이미 연동되어 있는 소셜 플랫폼입니다."),
     PASSWORD_RESET_SESSION_NOT_EXIST(400, "A013", "비밀번호 재설정 세션이 존재하지 않거나 만료되었습니다."),
+    INVALID_PASSWORD_FORMAT(400, "A014", "비밀번호는 8~16자 이내 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다."),
 
     ILLEGAL_ARGUMENT(400, "B001", "잘못된 요청입니다."),
     REFRESH_TOKEN_REQUIRED(400, "B002", "RefreshToken을 통해 요청해야 합니다."),

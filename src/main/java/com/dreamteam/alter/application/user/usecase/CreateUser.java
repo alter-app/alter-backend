@@ -6,6 +6,7 @@ import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenRespons
 import com.dreamteam.alter.application.auth.service.AuthService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.common.util.PasswordValidator;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
@@ -53,6 +54,11 @@ public class CreateUser implements CreateUserUseCase {
 
             // 중복 확인 (요청의 email과 세션의 contact 사용)
             validateDuplication(request, sessionUserInfo, sessionIdKey);
+
+            // 비밀번호 형식 검증
+            if (!PasswordValidator.isValid(request.getPassword())) {
+                throw new CustomException(ErrorCode.INVALID_PASSWORD_FORMAT);
+            }
 
             // 사용자 생성 (요청의 email과 세션의 contact 사용)
             User user = userRepository.save(User.create(

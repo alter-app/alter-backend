@@ -18,7 +18,7 @@ public class ResetPasswordRequestDto {
     private String sessionId;
 
     @NotBlank
-    @Size(min = 8, max = 100)
+    @Size(min = 8, max = 16)
     @Schema(description = "새 비밀번호", example = "newPassword123")
     private String newPassword;
 }

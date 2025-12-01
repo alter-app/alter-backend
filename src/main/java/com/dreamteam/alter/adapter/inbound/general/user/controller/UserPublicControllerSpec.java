@@ -85,6 +85,10 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(
                         name = "사용자 휴대폰 번호 중복",
                         value = "{\"code\" : \"A009\"}"
+                    ),
+                    @ExampleObject(
+                        name = "비밀번호 형식 오류",
+                        value = "{\"success\": false, \"code\" : \"A014\", \"message\" : \"비밀번호는 8~16자 이내 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다.\"}"
                     )
                 }))
     })
@@ -202,6 +206,10 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(
                         name = "존재하지 않는 사용자",
                         value = "{\"success\": false, \"code\" : \"B011\", \"message\" : \"존재하지 않는 사용자입니다.\"}"
+                    ),
+                    @ExampleObject(
+                        name = "비밀번호 형식 오류",
+                        value = "{\"success\": false, \"code\" : \"A014\", \"message\" : \"비밀번호는 8~16자 이내 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다.\"}"
                     )
                 }))
     })
