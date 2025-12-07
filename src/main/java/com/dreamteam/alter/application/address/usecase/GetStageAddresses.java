@@ -2,13 +2,13 @@ package com.dreamteam.alter.application.address.usecase;
 
 import com.dreamteam.alter.adapter.inbound.general.address.dto.StageAddressRequestDto;
 import com.dreamteam.alter.adapter.outbound.address.external.dto.SgisAuthResponse;
+import com.dreamteam.alter.adapter.outbound.address.external.dto.SgisStageAddressResponse;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.address.model.SgisStageAddress;
 import com.dreamteam.alter.domain.address.port.inbound.GetStageAddressesUseCase;
 import com.dreamteam.alter.domain.address.port.outbound.SgisApiClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +29,8 @@ public class GetStageAddresses implements GetStageAddressesUseCase {
     private static final String TOKEN_CACHE_KEY = "SGIS:ACCESS_TOKEN";
     private static final String CACHE_PREFIX = "SGIS:ADDR:";
     private static final Duration CACHE_TTL = Duration.ofDays(1);
+    private static final int SUCCESS_ERR_CD = 0;
+    private static final int UNAUTHORIZED_ERR_CD = -401;
 
     private final SgisApiClient sgisApiClient;
     private final StringRedisTemplate redisTemplate;
@@ -46,34 +48,51 @@ public class GetStageAddresses implements GetStageAddressesUseCase {
         String cached = redisTemplate.opsForValue().get(cacheKey);
         if (StringUtils.isNotBlank(cached)) {
             try {
-                return objectMapper.readValue(cached, new TypeReference<>() {});
+                SgisStageAddressResponse sgisStageAddressResponse =
+                    objectMapper.readValue(cached, SgisStageAddressResponse.class);
+
+                return sgisStageAddressResponse.getResult().stream()
+                    .map(item -> SgisStageAddress.of(item.getCode(), item.getAddrName()))
+                    .toList();
             } catch (JsonProcessingException ignored) {
                 redisTemplate.delete(cacheKey);
             }
         }
 
-        List<SgisStageAddress> result = fetchWithRetry(code);
+        SgisStageAddressResponse result = fetchWithRetry(code);
         try {
-            String serialized = objectMapper.writeValueAsString(result);
-            redisTemplate.opsForValue().set(cacheKey, serialized, CACHE_TTL);
+            redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(result), CACHE_TTL);
         } catch (JsonProcessingException ignored) {
             log.error("행정구역 캐시 저장 실패 code={}", code);
         }
 
-        return result;
+        return result.getResult().stream()
+            .map(item -> SgisStageAddress.of(item.getCode(), item.getAddrName()))
+            .toList();
     }
 
-    private List<SgisStageAddress> fetchWithRetry(String code) {
+    private SgisStageAddressResponse fetchWithRetry(String code) {
         try {
             String token = getOrCreateToken();
-            return sgisApiClient.getStageAddresses(token, code);
-        } catch (CustomException e) {
-            if (!StringUtils.contains(e.getMessage(), "SGIS_TOKEN_EXPIRED")) {
-                throw e;
+            SgisStageAddressResponse response = sgisApiClient.getStageAddresses(token, code);
+
+            int errorCode = response.getErrCd();
+
+            if (errorCode != SUCCESS_ERR_CD) {
+                if (errorCode == UNAUTHORIZED_ERR_CD) {
+                    redisTemplate.delete(TOKEN_CACHE_KEY);
+                    token = getOrCreateToken();
+                    response = sgisApiClient.getStageAddresses(token, code);
+                } else {
+                    throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, response.getErrMsg());
+                }
             }
-            redisTemplate.delete(TOKEN_CACHE_KEY);
-            String token = getOrCreateToken();
-            return sgisApiClient.getStageAddresses(token, code);
+
+            return response;
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR);
         }
     }
 
@@ -83,12 +102,12 @@ public class GetStageAddresses implements GetStageAddressesUseCase {
             return cached;
         }
 
-        synchronized (this) {
-            cached = redisTemplate.opsForValue().get(TOKEN_CACHE_KEY);
-            if (StringUtils.isNotBlank(cached)) {
-                return cached;
-            }
+        try {
             SgisAuthResponse auth = sgisApiClient.authenticate();
+
+            if (auth.getErrCd() != SUCCESS_ERR_CD) {
+                throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, auth.getErrMsg());
+            }
 
             String token = auth.getResult().getAccessToken();
             String timeoutText = auth.getResult().getAccessTimeout();
@@ -100,6 +119,10 @@ public class GetStageAddresses implements GetStageAddressesUseCase {
 
             redisTemplate.opsForValue().set(TOKEN_CACHE_KEY, token, Duration.ofSeconds(ttlSeconds));
             return token;
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.EXTERNAL_API_ERROR);
         }
     }
 }
