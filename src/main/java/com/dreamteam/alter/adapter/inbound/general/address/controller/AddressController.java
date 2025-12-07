@@ -18,11 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasAnyRole('USER')")
 @RequiredArgsConstructor
 @Validated
-public class AddressController {
+public class AddressController implements AddressControllerSpec {
 
     @Resource(name = "getStageAddresses")
     private final GetStageAddressesUseCase getStageAddressesUseCase;
 
+    @Override
     @GetMapping
     public ResponseEntity<CommonApiResponse<StageAddressResponseDto>> getStageAddresses(
         StageAddressRequestDto request
