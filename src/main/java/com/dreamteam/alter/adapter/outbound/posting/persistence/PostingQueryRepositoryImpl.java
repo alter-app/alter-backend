@@ -107,6 +107,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
                 lteEndTime(qPostingSchedule, filter.getEndTime())
             )
+            .groupBy(qPosting.id, qPosting.payAmount, qPosting.createdAt)
             .orderBy(getOrderSpecifiers(qPosting, filter.getPayAmountSort()))
             .limit(request.pageSize())
             .fetch();
@@ -143,7 +144,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .collect(
                 Collectors.groupingBy(
                     pkMap -> pkMap.getPosting().getId(),
-                    java.util.stream.Collectors.mapping(PostingKeywordMap::getPostingKeyword, java.util.stream.Collectors.toList())
+                    Collectors.mapping(PostingKeywordMap::getPostingKeyword, Collectors.toList())
                 )
             );
 
