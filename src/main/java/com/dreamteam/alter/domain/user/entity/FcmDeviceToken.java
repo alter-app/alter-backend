@@ -19,10 +19,10 @@ public class FcmDeviceToken {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(name = "device_token", length = 500, nullable = false)
+    @Column(name = "device_token", length = 500, nullable = false, unique = true)
     private String deviceToken;
 
     @Enumerated(EnumType.STRING)
