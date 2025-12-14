@@ -17,6 +17,7 @@ import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.SendResponse;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -40,29 +41,43 @@ public class NotificationService {
     private final UserFcmDeviceTokenQueryRepository userFCMDeviceTokenQueryRepository;
     private final NotificationRepository notificationRepository;
     private final UserQueryRepository userQueryRepository;
+    private final EntityManager entityManager;
 
     public void saveOrUpdateUserDeviceToken(User user, String deviceToken, DevicePlatformType devicePlatformType) {
         Optional<FcmDeviceToken> existingDeviceTokenByUser =
             userFCMDeviceTokenQueryRepository.findByUser(user);
-
-        if (existingDeviceTokenByUser.isPresent()) {
-            existingDeviceTokenByUser.get().updateDeviceToken(deviceToken, devicePlatformType);
-            return;
-        }
-
-        Optional<FcmDeviceToken> existingDeviceToken =
+        Optional<FcmDeviceToken> sameDeviceTokenEndpoint =
             userFCMDeviceTokenQueryRepository.findByDeviceToken(deviceToken);
 
-        if (existingDeviceToken.isPresent()) {
-            existingDeviceToken.get().updateUserAndDeviceToken(user, deviceToken, devicePlatformType);
+        // deviceToken이 동일한 기존 매핑이 존재하고, 해당 매핑이 현재 사용자와 다를 경우 기존 매핑을 제거
+        if (sameDeviceTokenEndpoint.isPresent() && !sameDeviceTokenEndpoint.get().getUser().equals(user)) {
+            userFCMDeviceTokenRepository.delete(sameDeviceTokenEndpoint.get());
+            entityManager.flush();
+        }
+
+        // userId에 매핑된 기존 엔드포인트가 없는 경우 새로 생성
+        if (existingDeviceTokenByUser.isEmpty()) {
+            userFCMDeviceTokenRepository.save(FcmDeviceToken.create(
+                user,
+                deviceToken,
+                devicePlatformType
+            ));
             return;
         }
 
-        userFCMDeviceTokenRepository.save(FcmDeviceToken.create(
-            user,
-            deviceToken,
-            devicePlatformType
-        ));
+        FcmDeviceToken userEndpoint = existingDeviceTokenByUser.get();
+        String oldDeviceToken = userEndpoint.getDeviceToken();
+
+        // 디바이스 토큰이 변경된 경우에만 업데이트 수행
+        if (!oldDeviceToken.equals(deviceToken) || !userEndpoint.getDevicePlatform().equals(devicePlatformType)) {
+            userEndpoint.updateDeviceToken(deviceToken, devicePlatformType);
+        }
+    }
+
+    public void removeUserDeviceToken(User user) {
+        Optional<FcmDeviceToken> deviceTokenOpt = userFCMDeviceTokenQueryRepository.findByUser(user);
+
+        deviceTokenOpt.ifPresent(userFCMDeviceTokenRepository::delete);
     }
 
     public void sendNotification(FcmNotificationRequestDto request) {
