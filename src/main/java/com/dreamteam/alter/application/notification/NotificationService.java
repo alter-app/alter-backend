@@ -74,6 +74,12 @@ public class NotificationService {
         }
     }
 
+    public void removeUserDeviceToken(User user) {
+        Optional<FcmDeviceToken> deviceTokenOpt = userFCMDeviceTokenQueryRepository.findByUser(user);
+
+        deviceTokenOpt.ifPresent(userFCMDeviceTokenRepository::delete);
+    }
+
     public void sendNotification(FcmNotificationRequestDto request) {
         // 1. 사용자 조회
         User user = userQueryRepository.findById(request.getTargetUserId())
