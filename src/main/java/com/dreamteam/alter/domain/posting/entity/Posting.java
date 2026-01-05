@@ -78,6 +78,11 @@ public class Posting {
             .status(PostingStatus.OPEN)
             .build();
 
+        posting.keywords = postingKeywords
+            .stream()
+            .map(keyword -> PostingKeywordMap.create(keyword, posting))
+            .toList();
+
         if (ObjectUtils.isNotEmpty(request.getSchedules())) {
             posting.schedules = request.getSchedules()
                 .stream()
@@ -89,13 +94,6 @@ public class Posting {
                     scheduleDto.getPosition(),
                     posting
                 ))
-                .toList();
-        }
-
-        if (ObjectUtils.isNotEmpty(postingKeywords)) {
-            posting.keywords = postingKeywords
-                .stream()
-                .map(keyword -> PostingKeywordMap.create(keyword, posting))
                 .toList();
         }
 
@@ -122,57 +120,87 @@ public class Posting {
         this.paymentType = paymentType;
 
         // 키워드 업데이트
-        this.keywords.clear();
-        this.keywords.addAll(postingKeywords
-            .stream()
-            .map(keyword -> PostingKeywordMap.create(keyword, this))
-            .toList());
+        updateKeyword(postingKeywords);
 
         // 스케줄 삭제 처리
-        if (ObjectUtils.isNotEmpty(deleteScheduleIds)) {
-            for (Long scheduleId : deleteScheduleIds) {
-                PostingSchedule existingSchedule = this.schedules.stream()
-                    .filter(schedule -> schedule.getId().equals(scheduleId))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("삭제할 스케줄을 찾을 수 없습니다: " + scheduleId));
-                
-                existingSchedule.updateStatus(PostingStatus.DELETED);
-            }
-        }
+        if (ObjectUtils.isNotEmpty(deleteScheduleIds))
+            deleteSchedules(deleteScheduleIds);
 
         // 스케줄 수정 처리
-        if (ObjectUtils.isNotEmpty(updateSchedules)) {
-            for (UpdatePostingScheduleDto updateDto : updateSchedules) {
-                PostingSchedule existingSchedule = this.schedules.stream()
-                    .filter(schedule -> schedule.getId().equals(updateDto.getId()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("수정할 스케줄을 찾을 수 없습니다: " + updateDto.getId()));
-                
-                existingSchedule.update(
-                    updateDto.getWorkingDays().stream()
-                        .map(DayOfWeek::valueOf)
-                        .toList(),
-                    LocalTime.parse(updateDto.getStartTime()),
-                    LocalTime.parse(updateDto.getEndTime()),
-                    updateDto.getPositionsNeeded(),
-                    updateDto.getPosition()
-                );
-            }
-        }
+        if (ObjectUtils.isNotEmpty(updateSchedules))
+            updateSchedules(updateSchedules);
 
         // 스케줄 추가 처리
-        if (ObjectUtils.isNotEmpty(createSchedules)) {
-            for (CreatePostingScheduleRequestDto createDto : createSchedules) {
-                PostingSchedule newSchedule = PostingSchedule.create(
-                    createDto.getWorkingDays(),
-                    createDto.getStartTime(),
-                    createDto.getEndTime(),
-                    createDto.getPositionsNeeded(),
-                    createDto.getPosition(),
-                    this
-                );
-                this.schedules.add(newSchedule);
-            }
+        if (ObjectUtils.isNotEmpty(createSchedules))
+            addSchedules(createSchedules);
+    }
+
+    /**
+     * 키워드 수정
+     * @param postingKeywords 수정 키워드 List
+     */
+    public void updateKeyword(List<PostingKeyword> postingKeywords) {
+        this.keywords.clear();
+
+        this.keywords.addAll(postingKeywords.stream()
+            .map(keywords -> PostingKeywordMap.create(keywords, this))
+            .toList()
+        );
+    }
+
+    /**
+     * 스케줄 추가
+     * @param createSchedules 스케줄 추가 정보 List
+     */
+    public void addSchedules(List<CreatePostingScheduleRequestDto> createSchedules) {
+        for (CreatePostingScheduleRequestDto createDto : createSchedules) {
+            PostingSchedule newSchedule = PostingSchedule.create(
+                createDto.getWorkingDays(),
+                createDto.getStartTime(),
+                createDto.getEndTime(),
+                createDto.getPositionsNeeded(),
+                createDto.getPosition(),
+                this
+            );
+            this.schedules.add(newSchedule);
+        }
+    }
+
+    /**
+     * 스케줄 수정
+     * @param updateSchedules 스케줄 수정 정보 List
+     */
+    public void updateSchedules(List<UpdatePostingScheduleDto> updateSchedules) {
+        for (UpdatePostingScheduleDto updateDto : updateSchedules) {
+            PostingSchedule existingSchedule = this.schedules.stream()
+                .filter(schedule -> schedule.getId().equals(updateDto.getId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("수정할 스케줄을 찾을 수 없습니다: " + updateDto.getId()));
+
+            existingSchedule.update(
+                updateDto.getWorkingDays().stream()
+                    .map(DayOfWeek::valueOf)
+                    .toList(),
+                LocalTime.parse(updateDto.getStartTime()),
+                LocalTime.parse(updateDto.getEndTime()),
+                updateDto.getPositionsNeeded(),
+                updateDto.getPosition()
+            );
+        }
+    }
+
+    /**
+     * 스케줄 삭제 (Soft Delete)
+     * @param deleteScheduleIds 삭제할 스케줄 Id List
+     */
+    public void deleteSchedules(List<Long> deleteScheduleIds) {
+        for (Long scheduleId : deleteScheduleIds) {
+            PostingSchedule existingSchedule = this.schedules.stream()
+                .filter(schedule -> schedule.getId().equals(scheduleId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("삭제할 스케줄을 찾을 수 없습니다: " + scheduleId));
+
+            existingSchedule.updateStatus(PostingStatus.DELETED);
         }
     }
 }

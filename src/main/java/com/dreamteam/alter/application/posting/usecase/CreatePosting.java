@@ -1,22 +1,22 @@
 package com.dreamteam.alter.application.posting.usecase;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.posting.entity.PostingKeyword;
 import com.dreamteam.alter.domain.posting.entity.Posting;
+import com.dreamteam.alter.domain.posting.entity.PostingKeyword;
 import com.dreamteam.alter.domain.posting.port.inbound.CreatePostingUseCase;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingKeywordQueryRepository;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingRepository;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
-import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service("createPosting")
 @RequiredArgsConstructor
@@ -29,12 +29,8 @@ public class CreatePosting implements CreatePostingUseCase {
 
     @Override
     public void execute(CreatePostingRequestDto request) {
-        if (ObjectUtils.isEmpty(request.getKeywords())) {
-            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT);
-        }
-
         List<PostingKeyword> postingKeywords = postingKeywordQueryRepository.findByIds(request.getKeywords());
-        if (BooleanUtils.isFalse(postingKeywords.size() == request.getKeywords().size())) {
+        if (postingKeywords.size() != request.getKeywords().size()) {
             throw new CustomException(ErrorCode.INVALID_KEYWORD);
         }
 
