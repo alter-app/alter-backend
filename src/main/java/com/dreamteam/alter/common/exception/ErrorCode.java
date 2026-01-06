@@ -42,6 +42,7 @@ public enum ErrorCode {
     WORKSPACE_WORKER_ALREADY_EXISTS(400, "B018", "이미 근무중인 사용자입니다."),
     NOT_FOUND(404, "B019", "요청한 리소스를 찾을 수 없습니다."),
     CONFLICT(409, "B020", "변경할 수 없는 상태입니다."),
+    SCHEDULE_NOT_FOUND(400, "B021", "존재하지 않는 스케줄입니다."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     EXTERNAL_API_ERROR(502, "C002", "외부 API 연동에 실패했습니다."),

@@ -3,6 +3,8 @@ package com.dreamteam.alter.domain.posting.entity;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingScheduleRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingScheduleDto;
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
@@ -175,7 +177,7 @@ public class Posting {
             PostingSchedule existingSchedule = this.schedules.stream()
                 .filter(schedule -> schedule.getId().equals(updateDto.getId()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("수정할 스케줄을 찾을 수 없습니다: " + updateDto.getId()));
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND, "수정할 스케줄을 찾을 수 없습니다: " + updateDto.getId()));
 
             existingSchedule.update(
                 updateDto.getWorkingDays().stream()
@@ -198,7 +200,7 @@ public class Posting {
             PostingSchedule existingSchedule = this.schedules.stream()
                 .filter(schedule -> schedule.getId().equals(scheduleId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("삭제할 스케줄을 찾을 수 없습니다: " + scheduleId));
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND, "삭제할 스케줄을 찾을 수 없습니다: " + scheduleId));
 
             existingSchedule.updateStatus(PostingStatus.DELETED);
         }
