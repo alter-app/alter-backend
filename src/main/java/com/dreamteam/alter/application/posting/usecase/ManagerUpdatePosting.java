@@ -1,5 +1,10 @@
 package com.dreamteam.alter.application.posting.usecase;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -10,13 +15,8 @@ import com.dreamteam.alter.domain.posting.port.outbound.PostingKeywordQueryRepos
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
-import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service("managerUpdatePosting")
 @RequiredArgsConstructor
@@ -33,13 +33,8 @@ public class ManagerUpdatePosting implements ManagerUpdatePostingUseCase {
         Posting posting = postingQueryRepository.findByManagerAndId(postingId, managerUser)
             .orElseThrow(() -> new CustomException(ErrorCode.POSTING_NOT_FOUND));
 
-        // 키워드 검증
-        if (ObjectUtils.isEmpty(request.getKeywords())) {
-            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT);
-        }
-
         List<PostingKeyword> postingKeywords = postingKeywordQueryRepository.findByIds(request.getKeywords());
-        if (BooleanUtils.isFalse(postingKeywords.size() == request.getKeywords().size())) {
+        if (postingKeywords.size() != request.getKeywords().size()) {
             throw new CustomException(ErrorCode.INVALID_KEYWORD);
         }
 
