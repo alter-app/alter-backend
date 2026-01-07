@@ -35,3 +35,59 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew clean build
+
+      - name: Notify Discord (CI - PR)
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" = "success" ]; then
+            COLOR=3066993   # green
+            TITLE="✅ CI Success (PR)"
+          else
+            COLOR=15158332  # red
+            TITLE="❌ CI Failed (PR)"
+          fi
+
+          REPO="${{ github.repository }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          PR_HEAD="${{ github.head_ref }}"
+          PR_BASE="${{ github.base_ref }}"
+
+          SHA="${{ github.sha }}"
+          SHA7="$(echo "$SHA" | cut -c1-7)"
+
+          payload=$(cat <<EOF
+          {
+            "username": "GitHub Actions",
+            "embeds": [
+              {
+                "title": "${TITLE}",
+                "url": "${RUN_URL}",
+                "color": ${COLOR},
+                "fields": [
+                  { "name": "Repository", "value": "${REPO}", "inline": true },
+                  { "name": "Status", "value": "${STATUS}", "inline": true },
+                  { "name": "Commit", "value": "${SHA7}", "inline": true },
+
+                  { "name": "PR", "value": "[#${PR_NUMBER}](${PR_URL})", "inline": true },
+                  { "name": "Title", "value": "${PR_TITLE}", "inline": false },
+                  { "name": "Author", "value": "${PR_AUTHOR}", "inline": true },
+
+                  { "name": "Branch", "value": "${PR_HEAD} → ${PR_BASE}", "inline": false },
+                  { "name": "Logs", "value": "[Open Actions Run](${RUN_URL})", "inline": false }
+                ]
+              }
+            ]
+          }
+          EOF
+          )
+
+          curl -sS -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_URL"
+

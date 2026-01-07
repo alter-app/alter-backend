@@ -61,6 +61,50 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          
+      - name: Notify Discord (CI/CD - Build)
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" = "success" ]; then
+            COLOR=3066993
+            TITLE="✅ Build & Push Success"
+          else
+            COLOR=15158332
+            TITLE="❌ Build & Push Failed"
+          fi
+
+          REPO="${{ github.repository }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          BRANCH="${{ github.ref_name }}"
+          SHA="${{ github.sha }}"
+          SHA7="$(echo "$SHA" | cut -c1-7)"
+
+          payload=$(cat <<EOF
+          {
+            "username": "GitHub Actions",
+            "embeds": [
+              {
+                "title": "${TITLE}",
+                "url": "${RUN_URL}",
+                "color": ${COLOR},
+                "fields": [
+                  { "name": "Repository", "value": "${REPO}", "inline": true },
+                  { "name": "Branch", "value": "${BRANCH}", "inline": true },
+                  { "name": "Commit", "value": "${SHA7}", "inline": true },
+                  { "name": "Status", "value": "${STATUS}", "inline": true },
+                  { "name": "Logs", "value": "[Open Actions Run](${RUN_URL})", "inline": false }
+                ]
+              }
+            ]
+          }
+          EOF
+          )
+
+          curl -sS -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_URL"
+
 
   deploy:
     runs-on: ubuntu-latest
@@ -79,3 +123,47 @@ jobs:
             echo "${{ secrets.PROD_ENV }}" > ./env/prodEnv
             ./deploy.sh
             docker image prune -f
+
+      - name: Notify Discord (CI/CD - Deploy)
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" = "success" ]; then
+            COLOR=3066993
+            TITLE="✅ Deploy Success"
+          else
+            COLOR=15158332
+            TITLE="❌ Deploy Failed"
+          fi
+
+          REPO="${{ github.repository }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          BRANCH="${{ github.ref_name }}"
+          SHA="${{ github.sha }}"
+          SHA7="$(echo "$SHA" | cut -c1-7)"
+
+          payload=$(cat <<EOF
+          {
+            "username": "GitHub Actions",
+            "embeds": [
+              {
+                "title": "${TITLE}",
+                "url": "${RUN_URL}",
+                "color": ${COLOR},
+                "fields": [
+                  { "name": "Repository", "value": "${REPO}", "inline": true },
+                  { "name": "Branch", "value": "${BRANCH}", "inline": true },
+                  { "name": "Commit", "value": "${SHA7}", "inline": true },
+                  { "name": "Status", "value": "${STATUS}", "inline": true },
+                  { "name": "Logs", "value": "[Open Actions Run](${RUN_URL})", "inline": false }
+                ]
+              }
+            ]
+          }
+          EOF
+          )
+
+          curl -sS -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_URL"
+
