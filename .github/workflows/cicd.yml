@@ -61,26 +61,20 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-          
-      - name: Notify Discord (CI/CD - Build)
-        if: always()
+
+      - name: Notify Discord (CI/CD - Build) - Failure Only
+        if: failure()
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          STATUS="${{ job.status }}"
-          if [ "$STATUS" = "success" ]; then
-            COLOR=3066993
-            TITLE="✅ Build & Push Success"
-          else
-            COLOR=15158332
-            TITLE="❌ Build & Push Failed"
-          fi
+          STATUS="${{ job.status }}"   # 여기서는 항상 failure
+          COLOR=15158332
+          TITLE="❌ Build & Push Failed"
 
           REPO="${{ github.repository }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           BRANCH="${{ github.ref_name }}"
-          SHA="${{ github.sha }}"
-          SHA7="$(echo "$SHA" | cut -c1-7)"
+          SHA7="$(echo "${{ github.sha }}" | cut -c1-7)"
 
           payload=$(cat <<EOF
           {
@@ -104,7 +98,8 @@ jobs:
           )
 
           curl -sS -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_URL"
-
+  
+  
 
   deploy:
     runs-on: ubuntu-latest
