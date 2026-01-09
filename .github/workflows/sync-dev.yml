@@ -40,6 +40,40 @@ jobs:
             exit 1
           fi
 
+      - name: Notify Discord (Sync) - Failure Only
+        if: failure()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          STATUS="${{ job.status }}"
+          COLOR=15158332
+          TITLE="❌ Sync Main to Dev Failed"
+
+          REPO="${{ github.repository }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          BRANCH="dev"
+          
+          payload=$(cat <<EOF
+          {
+            "username": "GitHub Actions",
+            "embeds": [
+              {
+                "title": "${TITLE}",
+                "url": "${RUN_URL}",
+                "color": ${COLOR},
+                "fields": [
+                  { "name": "Repository", "value": "${REPO}", "inline": true },
+                  { "name": "Status", "value": "${STATUS}", "inline": true },
+                  { "name": "Logs", "value": "[Open Actions Run](${RUN_URL})", "inline": false }
+                ]
+              }
+            ]
+          }
+          EOF
+          )
+
+          curl -sS -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_URL"
+
   trigger-dev-deploy:
     needs: merge-main-to-dev
     if: needs.merge-main-to-dev.outputs.result == 'success'
