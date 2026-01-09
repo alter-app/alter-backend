@@ -110,8 +110,6 @@ jobs:
           )
 
           curl -sS -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_URL"
-  
-  
 
   deploy:
     runs-on: ubuntu-latest
@@ -201,4 +199,3 @@ jobs:
           )
 
           curl -sS -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_URL"
-
