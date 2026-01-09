@@ -125,7 +125,7 @@ jobs:
           key: ${{ secrets.SERVER_KEY }}
           script: |
             cd ${{ secrets.SERVER_DEPLOY_PATH }}
-            cat << 'EOF' > ./env/env
+            cat << 'EOF' > ./env
             DB_URL=${{ secrets.DB_URL }}
             DB_USERNAME=${{ secrets.DB_USERNAME }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
