@@ -1,6 +1,5 @@
 package com.dreamteam.alter.adapter.inbound.manager.schedule.dto;
 
-import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,9 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "매니저 - 근무자 고정 스케줄 수정 DTO")
 public class UpdateWorkerScheduleRequestDto {
-	@NotNull(message = "요일은 필수입니다")
-	@Schema(description = "요일", example = "MONDAY")
-	private DayOfWeek dayOfWeek;
 
 	@NotNull(message = "시작 시간은 필수입니다")
 	@Schema(description = "시작 시간", example = "09:00:00")

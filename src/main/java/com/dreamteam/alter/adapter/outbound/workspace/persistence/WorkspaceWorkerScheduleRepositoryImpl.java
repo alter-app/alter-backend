@@ -29,11 +29,6 @@ public class WorkspaceWorkerScheduleRepositoryImpl implements WorkspaceWorkerSch
 	}
 
 	@Override
-	public boolean existsByWorkspaceWorkerAndDayOfWeek(WorkspaceWorker workspaceWorker, DayOfWeek dayOfWeek) {
-		return workspaceWorkerScheduleJapRepository.existsByWorkspaceWorkerAndDayOfWeek(workspaceWorker, dayOfWeek);
-	}
-
-	@Override
 	public boolean existsByWorkspaceWorkerAndDayOfWeekIn(WorkspaceWorker workspaceWorker, List<DayOfWeek> dayOfWeeks) {
 		return workspaceWorkerScheduleJapRepository.existsByWorkspaceWorkerAndDayOfWeekIn(workspaceWorker, dayOfWeeks);
 	}

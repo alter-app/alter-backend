@@ -30,11 +30,7 @@ public class ManagerUpdateWorkerSchedule implements ManagerUpdateWorkerScheduleU
 		WorkspaceWorkerSchedule workspaceWorkerSchedule = workspaceWorkerScheduleRepository.findById(workerScheduleId)
 			.orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND_FOR_UPDATE));
 
-		// 같은 요일 중복 등록 검증
-		if (workspaceWorkerScheduleRepository.existsByWorkspaceWorkerAndDayOfWeek(workspaceWorkerSchedule.getWorkspaceWorker(), request.getDayOfWeek()))
-			throw new CustomException(ErrorCode.ALREADY_HAS_SCHEDULE_DAY);
-
-		workspaceWorkerSchedule.update(request.getDayOfWeek(), request.getStartTime(), request.getEndTime());
+		workspaceWorkerSchedule.update(request.getStartTime(), request.getEndTime());
 
 		// TODO Send FCM
 	}

@@ -13,7 +13,6 @@ public interface WorkspaceWorkerScheduleRepository {
 	Optional<WorkspaceWorkerSchedule> findById(Long workerScheduleId);
 
 	boolean existsById(Long workerScheduleId);
-	boolean existsByWorkspaceWorkerAndDayOfWeek(WorkspaceWorker workspaceWorker, DayOfWeek dayOfWeek);
 	boolean existsByWorkspaceWorkerAndDayOfWeekIn(WorkspaceWorker workspaceWorker, List<DayOfWeek> dayOfWeeks);
 
 	void deleteById(Long workerScheduleId);

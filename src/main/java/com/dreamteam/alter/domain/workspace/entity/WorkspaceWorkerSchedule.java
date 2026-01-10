@@ -81,8 +81,7 @@ public class WorkspaceWorkerSchedule {
 		return workspaceWorkerSchedule;
 	}
 
-	public void update(DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
-		this.dayOfWeek = dayOfWeek;
+	public void update(LocalTime startTime, LocalTime endTime) {
 		this.startTime = startTime;
 		this.endTime = endTime;
 

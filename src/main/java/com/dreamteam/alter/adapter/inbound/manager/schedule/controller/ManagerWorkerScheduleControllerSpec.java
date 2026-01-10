@@ -76,10 +76,6 @@ public interface ManagerWorkerScheduleControllerSpec {
 						name = "시작시간은 종료 시간보다 늦을 수 없습니다.",
 						value = "{\"code\" : \"B023\"}"
 					),
-					@ExampleObject(
-						name = "이미 해당 요일에 근무 스케줄이 등록되어있습니다.",
-						value = "{\"code\" : \"B025\"}"
-					),
 				})),
 	})
 	ResponseEntity<CommonApiResponse<Void>> updateWorkerSchedule(
