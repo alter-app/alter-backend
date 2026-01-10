@@ -9,4 +9,6 @@ import com.dreamteam.alter.domain.workspace.entity.Workspace;
 
 public interface WorkspaceJpaRepository extends JpaRepository<Workspace, Long> {
 	Optional<Workspace> findByIdAndManagerUser(Long id, ManagerUser managerUser);
+
+	boolean existsByIdAndManagerUser(Long id, ManagerUser managerUser);
 }

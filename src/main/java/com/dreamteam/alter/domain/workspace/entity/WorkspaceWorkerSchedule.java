@@ -81,8 +81,16 @@ public class WorkspaceWorkerSchedule {
 		return workspaceWorkerSchedule;
 	}
 
+	public void update(DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
+		this.dayOfWeek = dayOfWeek;
+		this.startTime = startTime;
+		this.endTime = endTime;
+
+		validTime();
+	}
+
 	public void validTime() {
-		if (startTime.isAfter(endTime))
+		if (this.startTime.isAfter(this.endTime))
 			throw new CustomException(ErrorCode.START_TIME_AFTER_END_TIME);
 	}
 }

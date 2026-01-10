@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import java.time.DayOfWeek;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerSchedul
 
 import lombok.RequiredArgsConstructor;
 
-@Service("managerCreateWorkerSchedule")
+@Service
 @RequiredArgsConstructor
 @Transactional
 public class ManagerCreateWorkerSchedule implements ManagerCreateWorkerScheduleUseCase {
@@ -32,20 +33,29 @@ public class ManagerCreateWorkerSchedule implements ManagerCreateWorkerScheduleU
 	private final WorkspaceWorkerScheduleRepository workspaceWorkerScheduleRepository;
 
 	@Override
-	public void execute(ManagerActor actor, Long workspaceId, Long workerId, List<CreateWorkerScheduleRequestDto> request) {
-		Workspace workspace = workspaceRepository.getByIdAndManagerUser(workspaceId, actor.getManagerUser())
+	public void execute(ManagerActor actor, Long workspaceId, CreateWorkerScheduleRequestDto request) {
+		Workspace workspace = workspaceRepository.findByIdAndManagerUser(workspaceId, actor.getManagerUser())
 			.orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
-		User user = userQueryRepository.findById(workerId)
+		User user = userQueryRepository.findById(request.getWorkerId())
 				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
 		WorkspaceWorker workspaceWorker = workspaceWorkerQueryRepository.findActiveWorkerByWorkspaceAndUser(workspace, user)
 			.orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_WORKER_NOT_FOUNT));
 
-		workspaceWorkerScheduleRepository.saveAll(request.stream()
-			.map(r -> WorkspaceWorkerSchedule.create(workspaceWorker, r.getDayOfWeek(), r.getStartTime(), r.getEndTime()))
-			.toList());
+		List<DayOfWeek> dayOfWeeks = request.getSchedules().stream()
+			.map(CreateWorkerScheduleRequestDto.WorkerScheduleDto::getDayOfWeek)
+			.toList();
 
-		// send FCM
+		if (workspaceWorkerScheduleRepository.existsByWorkspaceWorkerAndDayOfWeekIn(workspaceWorker, dayOfWeeks))
+			throw new CustomException(ErrorCode.ALREADY_HAS_SCHEDULE_DAY);
+
+		workspaceWorkerScheduleRepository.saveAll(
+			request.getSchedules().stream()
+				.map(r -> WorkspaceWorkerSchedule.create(workspaceWorker, r.getDayOfWeek(), r.getStartTime(), r.getEndTime()))
+				.toList()
+		);
+
+		// TODO Send FCM
 	}
 }

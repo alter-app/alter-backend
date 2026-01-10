@@ -46,6 +46,7 @@ public enum ErrorCode {
     SCHEDULE_NOT_FOUND_FOR_UPDATE(400, "B022", "수정할 스케줄을 찾을 수 없습니다"),
     WORKSPACE_WORKER_NOT_FOUNT(400, "B023", "해당 업장에 근무하는 사용자가 아닙니다."),
     START_TIME_AFTER_END_TIME(400, "B024", "시작 시간은 종료 시간보다 늦을 수 없습니다."),
+    ALREADY_HAS_SCHEDULE_DAY(400, "B025", "이미 해당 요일의 근무 스케줄이 등록되어있습니다."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     EXTERNAL_API_ERROR(502, "C002", "외부 API 연동에 실패했습니다."),

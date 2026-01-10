@@ -17,7 +17,12 @@ public class WorkspaceRepositoryImpl implements WorkspaceRepository {
 	private final WorkspaceJpaRepository workspaceJpaRepository;
 
 	@Override
-	public Optional<Workspace> getByIdAndManagerUser(Long workspaceId, ManagerUser managerUser) {
+	public Optional<Workspace> findByIdAndManagerUser(Long workspaceId, ManagerUser managerUser) {
 		return workspaceJpaRepository.findByIdAndManagerUser(workspaceId, managerUser);
+	}
+
+	@Override
+	public boolean existsByIdAndManagerUser(Long workspaceId, ManagerUser managerUser) {
+		return workspaceJpaRepository.existsByIdAndManagerUser(workspaceId, managerUser);
 	}
 }
