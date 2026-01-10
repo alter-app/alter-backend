@@ -1,0 +1,84 @@
+name: Sync main to dev
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  merge-main-to-dev:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      result: ${{ steps.merge.outputs.result }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+          ref: dev
+
+      - name: Set Git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge main into dev
+        id: merge
+        run: |
+          echo "Starting merge from main to dev..."
+          if git merge origin/main; then
+            echo "Merge successful. Pushing changes to dev..."
+            git push origin dev
+            echo "result=success" >> $GITHUB_OUTPUT
+          else
+            echo "::error::Merge conflict detected or merge failed!"
+            git merge --abort
+            echo "result=fail" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Notify Discord (Sync) - Failure Only
+        if: failure()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          STATUS="${{ job.status }}"
+          COLOR=15158332
+          TITLE="❌ Sync Main to Dev Failed"
+
+          REPO="${{ github.repository }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          BRANCH="dev"
+          
+          payload=$(cat <<EOF
+          {
+            "username": "GitHub Actions",
+            "embeds": [
+              {
+                "title": "${TITLE}",
+                "url": "${RUN_URL}",
+                "color": ${COLOR},
+                "fields": [
+                  { "name": "Repository", "value": "${REPO}", "inline": true },
+                  { "name": "Status", "value": "${STATUS}", "inline": true },
+                  { "name": "Logs", "value": "[Open Actions Run](${RUN_URL})", "inline": false }
+                ]
+              }
+            ]
+          }
+          EOF
+          )
+
+          curl -sS -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_URL"
+
+  trigger-dev-deploy:
+    needs: merge-main-to-dev
+    if: needs.merge-main-to-dev.outputs.result == 'success'
+    uses: ./.github/workflows/cicd.yml
+    with:
+      environment: dev
+      ref: refs/heads/dev
+    secrets: inherit

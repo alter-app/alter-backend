@@ -1,13 +1,26 @@
 package com.dreamteam.alter.adapter.inbound.manager.posting.controller;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
-import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingKeywordListResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingDetailResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListFilterDto;
+import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicationListFilterDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicationListResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicationResponseDto;
@@ -15,16 +28,20 @@ import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingAppl
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingStatusRequestDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
-import com.dreamteam.alter.domain.posting.port.inbound.*;
+import com.dreamteam.alter.domain.posting.port.inbound.CreatePostingUseCase;
+import com.dreamteam.alter.domain.posting.port.inbound.GetPostingKeywordListUseCase;
+import com.dreamteam.alter.domain.posting.port.inbound.ManagerGetPostingApplicationDetailUseCase;
+import com.dreamteam.alter.domain.posting.port.inbound.ManagerGetPostingApplicationListWithCursorUseCase;
+import com.dreamteam.alter.domain.posting.port.inbound.ManagerGetPostingDetailUseCase;
+import com.dreamteam.alter.domain.posting.port.inbound.ManagerGetPostingListUseCase;
+import com.dreamteam.alter.domain.posting.port.inbound.ManagerUpdatePostingApplicationStatusUseCase;
+import com.dreamteam.alter.domain.posting.port.inbound.ManagerUpdatePostingStatusUseCase;
+import com.dreamteam.alter.domain.posting.port.inbound.ManagerUpdatePostingUseCase;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
-import jakarta.annotation.Resource;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/manager/postings")
@@ -63,7 +80,7 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
     @Override
     @PostMapping
     public ResponseEntity<CommonApiResponse<Void>> createPosting(
-        CreatePostingRequestDto request
+        @Valid CreatePostingRequestDto request
     ) {
         createPosting.execute(request);
         return ResponseEntity.ok(CommonApiResponse.empty());
@@ -121,7 +138,7 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
     @PatchMapping("/applications/{postingApplicationId}/status")
     public ResponseEntity<CommonApiResponse<Void>> updatePostingApplicationStatus(
         @PathVariable Long postingApplicationId,
-        UpdatePostingApplicationStatusRequestDto request
+        @Valid UpdatePostingApplicationStatusRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
 
@@ -133,7 +150,7 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
     @PatchMapping("/{postingId}/status")
     public ResponseEntity<CommonApiResponse<Void>> updatePostingStatus(
         @PathVariable Long postingId,
-        UpdatePostingStatusRequestDto request
+        @Valid UpdatePostingStatusRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
 
@@ -145,7 +162,7 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
     @PutMapping("/{postingId}")
     public ResponseEntity<CommonApiResponse<Void>> updatePosting(
         @PathVariable Long postingId,
-        UpdatePostingRequestDto request
+        @Valid UpdatePostingRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
 

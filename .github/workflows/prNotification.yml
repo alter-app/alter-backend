@@ -1,0 +1,89 @@
+name: PR Notification (Discord)
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify Discord (PR)
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          sanitize() {
+            echo -n "$1" \
+              | sed 's/\\/\\\\/g; s/"/\\"/g; s/\r/ /g; s/\n/ /g; s/\t/ /g'
+          }
+
+          ACTION="${{ github.event.action }}"
+          REPO="$(sanitize "${{ github.repository }}")"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          PR_TITLE="$(sanitize "${{ github.event.pull_request.title }}")"
+          PR_AUTHOR="$(sanitize "${{ github.event.pull_request.user.login }}")"
+          PR_BASE="$(sanitize "${{ github.event.pull_request.base.ref }}")"
+          PR_HEAD="$(sanitize "${{ github.event.pull_request.head.ref }}")"
+          PR_DRAFT="${{ github.event.pull_request.draft }}"
+
+          # 액션별 타이틀/색상
+          COLOR=3447003
+          TITLE="🔔 PR Updated"
+          if [ "$ACTION" = "opened" ]; then
+            TITLE="🆕 PR Opened"
+            COLOR=3066993
+          elif [ "$ACTION" = "reopened" ]; then
+            TITLE="🔁 PR Reopened"
+            COLOR=15844367
+          elif [ "$ACTION" = "ready_for_review" ]; then
+            TITLE="✅ PR Ready for Review"
+            COLOR=3066993
+          elif [ "$ACTION" = "synchronize" ]; then
+            TITLE="🔄 PR Synchronize (New Commits)"
+            COLOR=3447003
+          fi
+
+          # Draft 표시
+          if [ "$PR_DRAFT" = "true" ]; then
+            TITLE="📝 (Draft) $TITLE"
+            COLOR=10197915
+          fi
+
+          payload=$(cat <<EOF
+          {
+            "username": "GitHub PR Notifier",
+            "embeds": [
+              {
+                "title": "$(sanitize "$TITLE")",
+                "url": "${PR_URL}",
+                "color": ${COLOR},
+                "fields": [
+                  { "name": "Repository", "value": "${REPO}", "inline": true },
+                  { "name": "PR", "value": "[#${PR_NUMBER}](${PR_URL})", "inline": true },
+                  { "name": "Author", "value": "${PR_AUTHOR}", "inline": true },
+                  { "name": "Base", "value": "${PR_BASE}", "inline": true },
+                  { "name": "Head", "value": "${PR_HEAD}", "inline": true },
+                  { "name": "Action", "value": "$(sanitize "$ACTION")", "inline": true },
+                  { "name": "Title", "value": "${PR_TITLE}", "inline": false },
+                  { "name": "Workflow Logs", "value": "[Open Actions Run](${RUN_URL})", "inline": false }
+                ]
+              }
+            ]
+          }
+          EOF
+          )
+
+          curl -sS -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK_URL"
