@@ -146,7 +146,7 @@ public interface ManagerPostingControllerSpec {
     })
     ResponseEntity<CommonApiResponse<Void>> updatePostingApplicationStatus(
         @PathVariable Long postingApplicationId,
-        @RequestBody UpdatePostingApplicationStatusRequestDto request
+        @Valid @RequestBody UpdatePostingApplicationStatusRequestDto request
     );
 
     @Operation(summary = "매니저 - 내가 등록한 공고 상태 변경", description = "")
@@ -169,7 +169,7 @@ public interface ManagerPostingControllerSpec {
     })
     ResponseEntity<CommonApiResponse<Void>> updatePostingStatus(
         @PathVariable Long postingId,
-        @RequestBody UpdatePostingStatusRequestDto request
+        @Valid @RequestBody UpdatePostingStatusRequestDto request
     );
 
     @Operation(summary = "매니저 - 내가 등록한 공고 내용 수정", description = "")
@@ -204,7 +204,7 @@ public interface ManagerPostingControllerSpec {
     })
     ResponseEntity<CommonApiResponse<Void>> updatePosting(
         @PathVariable Long postingId,
-        @RequestBody UpdatePostingRequestDto request
+        @Valid @RequestBody UpdatePostingRequestDto request
     );
 
 }
