@@ -8,6 +8,9 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -60,4 +63,26 @@ public class WorkspaceWorkerSchedule {
 	@LastModifiedDate
 	@Column(name = "updated_at", nullable = false)
 	private LocalDateTime updatedAt;
+
+	public static WorkspaceWorkerSchedule create(
+		WorkspaceWorker workspaceWorker,
+		DayOfWeek dayOfWeek,
+		LocalTime startTime,
+		LocalTime endTime
+	) {
+		WorkspaceWorkerSchedule workspaceWorkerSchedule = WorkspaceWorkerSchedule.builder()
+			.workspaceWorker(workspaceWorker)
+			.dayOfWeek(dayOfWeek)
+			.startTime(startTime)
+			.endTime(endTime)
+			.build();
+
+		workspaceWorkerSchedule.validTime();
+		return workspaceWorkerSchedule;
+	}
+
+	public void validTime() {
+		if (startTime.isAfter(endTime))
+			throw new CustomException(ErrorCode.START_TIME_AFTER_END_TIME);
+	}
 }
