@@ -34,8 +34,8 @@ public class WorkspaceWorkerScheduleRepositoryImpl implements WorkspaceWorkerSch
 	}
 
 	@Override
-	public Optional<WorkspaceWorkerSchedule> findById(Long workerScheduleId) {
-		return workspaceWorkerScheduleJapRepository.findById(workerScheduleId);
+	public Optional<WorkspaceWorkerSchedule> findByIdWithWorkspaceWorker(Long workerScheduleId) {
+		return workspaceWorkerScheduleJapRepository.findByIdWithWorkspaceWorker(workerScheduleId);
 	}
 
 	@Override

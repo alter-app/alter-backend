@@ -29,7 +29,7 @@ public class ManagerUpdateWorkerSchedule implements ManagerUpdateWorkerScheduleU
 		if (!workspaceRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser()))
 			throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
 
-		WorkspaceWorkerSchedule workspaceWorkerSchedule = workspaceWorkerScheduleRepository.findById(workerScheduleId)
+		WorkspaceWorkerSchedule workspaceWorkerSchedule = workspaceWorkerScheduleRepository.findByIdWithWorkspaceWorker(workerScheduleId)
 			.orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND_FOR_UPDATE));
 
 		validOverlappingTime(workspaceWorkerSchedule, request);
