@@ -9,6 +9,5 @@ import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 
 public interface WorkspaceWorkerScheduleJapRepository extends JpaRepository<WorkspaceWorkerSchedule, Long> {
-	boolean existsByWorkspaceWorkerAndDayOfWeek(WorkspaceWorker workspaceWorker, DayOfWeek dayOfWeek);
-	boolean existsByWorkspaceWorkerAndDayOfWeekIn(WorkspaceWorker workspaceWorker, List<DayOfWeek> dayOfWeeks);
+	List<WorkspaceWorkerSchedule> findByWorkspaceWorkerAndDayOfWeekIn(WorkspaceWorker workspaceWorker, List<DayOfWeek> dayOfWeeks);
 }

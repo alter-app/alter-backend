@@ -92,4 +92,9 @@ public class WorkspaceWorkerSchedule {
 		if (this.startTime.isAfter(this.endTime))
 			throw new CustomException(ErrorCode.START_TIME_AFTER_END_TIME);
 	}
+
+	public void validOverlappingTime(LocalTime newStart, LocalTime newEnd) {
+		if (newStart.isBefore(this.endTime) && newEnd.isAfter(this.startTime))
+			throw new CustomException(ErrorCode.SCHEDULE_TIME_OVERLAPPING);
+	}
 }

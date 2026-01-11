@@ -11,9 +11,9 @@ public interface WorkspaceWorkerScheduleRepository {
 	void saveAll(List<WorkspaceWorkerSchedule> workspaceWorkerSchedules);
 
 	Optional<WorkspaceWorkerSchedule> findById(Long workerScheduleId);
+	List<WorkspaceWorkerSchedule> findByWorkspaceWorkerAndDayOfWeekIn(WorkspaceWorker workspaceWorker, List<DayOfWeek> dayOfWeeks);
 
 	boolean existsById(Long workerScheduleId);
-	boolean existsByWorkspaceWorkerAndDayOfWeekIn(WorkspaceWorker workspaceWorker, List<DayOfWeek> dayOfWeeks);
 
 	void deleteById(Long workerScheduleId);
 }

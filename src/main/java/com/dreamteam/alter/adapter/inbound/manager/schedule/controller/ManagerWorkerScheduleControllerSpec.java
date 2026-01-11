@@ -46,7 +46,7 @@ public interface ManagerWorkerScheduleControllerSpec {
 						value = "{\"code\" : \"B024\"}"
 					),
 					@ExampleObject(
-						name = "이미 해당 요일에 근무 스케줄이 등록되어있습니다.",
+						name = "같은 요일에 겹치는 근무 시간이 존재합니다.",
 						value = "{\"code\" : \"B025\"}"
 					),
 				})),
@@ -75,6 +75,10 @@ public interface ManagerWorkerScheduleControllerSpec {
 					@ExampleObject(
 						name = "시작시간은 종료 시간보다 늦을 수 없습니다.",
 						value = "{\"code\" : \"B023\"}"
+					),
+					@ExampleObject(
+						name = "같은 요일에 겹치는 근무 시간이 존재합니다.",
+						value = "{\"code\" : \"B025\"}"
 					),
 				})),
 	})

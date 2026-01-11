@@ -43,12 +43,7 @@ public class ManagerCreateWorkerSchedule implements ManagerCreateWorkerScheduleU
 		WorkspaceWorker workspaceWorker = workspaceWorkerQueryRepository.findActiveWorkerByWorkspaceAndUser(workspace, user)
 			.orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_WORKER_NOT_FOUNT));
 
-		List<DayOfWeek> dayOfWeeks = request.getSchedules().stream()
-			.map(CreateWorkerScheduleRequestDto.WorkerScheduleDto::getDayOfWeek)
-			.toList();
-
-		if (workspaceWorkerScheduleRepository.existsByWorkspaceWorkerAndDayOfWeekIn(workspaceWorker, dayOfWeeks))
-			throw new CustomException(ErrorCode.ALREADY_HAS_SCHEDULE_DAY);
+		validOverlappingTime(workspaceWorker, request);
 
 		workspaceWorkerScheduleRepository.saveAll(
 			request.getSchedules().stream()
@@ -57,5 +52,24 @@ public class ManagerCreateWorkerSchedule implements ManagerCreateWorkerScheduleU
 		);
 
 		// TODO Send FCM
+	}
+
+	/**
+	 * 같은 요일 곂치는 시간 검증
+	 * @param workspaceWorker 해당 근무자
+	 * @param request 요청 정보
+	 */
+	private void validOverlappingTime(WorkspaceWorker workspaceWorker, CreateWorkerScheduleRequestDto request) {
+		List<DayOfWeek> dayOfWeeks = request.getSchedules().stream()
+			.map(CreateWorkerScheduleRequestDto.WorkerScheduleDto::getDayOfWeek)
+			.toList();
+
+		List<WorkspaceWorkerSchedule> workspaceWorkerSchedules = workspaceWorkerScheduleRepository.findByWorkspaceWorkerAndDayOfWeekIn(workspaceWorker, dayOfWeeks);
+
+		for (WorkspaceWorkerSchedule existingSchedule : workspaceWorkerSchedules) {
+			request.getSchedules().stream()
+				.filter(newSchedule -> newSchedule.getDayOfWeek().equals(existingSchedule.getDayOfWeek()))
+				.forEach(newSchedule -> existingSchedule.validOverlappingTime(newSchedule.getStartTime(), newSchedule.getEndTime()));
+		}
 	}
 }
