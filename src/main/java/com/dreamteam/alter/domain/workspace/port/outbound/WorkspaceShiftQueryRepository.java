@@ -14,6 +14,7 @@ import java.util.Optional;
 public interface WorkspaceShiftQueryRepository {
     List<WorkspaceShift> findByUserAndDateRange(User user, int year, int month);
     List<WorkspaceShift> findByUserAndWeeklyRange(User user, LocalDate startDate, LocalDate endDate);
+    List<WorkspaceShift> findByUserAndDate(User user, int year, int month, int day);
     List<WorkspaceShift> findByWorkspaceAndDateRange(Workspace workspace, int year, int month);
     List<WorkspaceShift> findByManagerAndDateRange(ManagerUser managerUser, Long workspaceId, int year, int month);
     Optional<WorkspaceShift> findById(Long id);

@@ -2,9 +2,7 @@ package com.dreamteam.alter.adapter.inbound.general.schedule.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
-import com.dreamteam.alter.adapter.inbound.general.schedule.dto.MyScheduleResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkScheduleInquiryRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkspaceScheduleResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.schedule.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,6 +26,24 @@ public interface UserScheduleControllerSpec {
     ResponseEntity<CommonApiResponse<List<MyScheduleResponseDto>>> getMySchedule(
         WorkScheduleInquiryRequestDto request
     );
+
+    @Operation(summary = "나의 월별 근무 스케쥴 조회", description = "특정 월의 총 근무시간과 스케줄 목록을 조회합니다. year, month 값을 모두 포함해야합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "월별 스케줄 조회 성공")
+    })
+    ResponseEntity<CommonApiResponse<MyScheduleMonthlyResponseDto>> getMyMonthlySchedule(
+            MonthlyWorkScheduleInquiryRequestDto request
+    );
+
+    @Operation(summary = "나의 일별 근무 스케줄 조회", description = "특정 일의 상세 스케줄 목록을 조회합니다. year, month, day 값을 모두 포함해야합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "일별 스케줄 조회 성공")
+    })
+    ResponseEntity<CommonApiResponse<List<MyScheduleResponseDto>>> getMyDailySchedule(
+            DailyWorkScheduleInquiryRequestDto request
+    );
+
+
 
     @Operation(summary = "업장별 근무 스케줄 조회", description = "year, month 값을 모두 포함해야합니다.")
     @ApiResponses(value = {
