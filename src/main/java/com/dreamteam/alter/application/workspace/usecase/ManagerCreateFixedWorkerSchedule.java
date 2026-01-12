@@ -11,9 +11,6 @@ import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.CreateWorkerSch
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
-import com.dreamteam.alter.domain.user.entity.User;
-import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
-import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerCreateFixedWorkerScheduleUseCase;
@@ -30,21 +27,17 @@ import lombok.RequiredArgsConstructor;
 public class ManagerCreateFixedWorkerSchedule implements ManagerCreateFixedWorkerScheduleUseCase {
 
 	private final WorkspaceQueryRepository workspaceQueryRepository;
-	private final UserQueryRepository userQueryRepository;
 	private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
 	private final WorkspaceWorkerScheduleRepository workspaceWorkerScheduleRepository;
 	private final WorkspaceWorkerScheduleQueryRepository workspaceWorkerScheduleQueryRepository;
 
 	@Override
 	public void execute(ManagerActor actor, Long workspaceId, CreateWorkerScheduleRequestDto request) {
-		Workspace workspace = workspaceQueryRepository.getByIdAndManagerUser(workspaceId, actor.getManagerUser())
-			.orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
+		if (workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser()))
+			throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
 
-		User user = userQueryRepository.findById(request.getWorkerId())
-				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-		WorkspaceWorker workspaceWorker = workspaceWorkerQueryRepository.findActiveWorkerByWorkspaceAndUser(workspace, user)
-			.orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_WORKER_NOT_FOUNT));
+		WorkspaceWorker workspaceWorker = workspaceWorkerQueryRepository.findById(request.getWorkerId())
+			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 업장에 근무하는 사용자가 아닙니다."));
 
 		validOverlappingTime(workspaceWorker, request);
 
@@ -53,8 +46,6 @@ public class ManagerCreateFixedWorkerSchedule implements ManagerCreateFixedWorke
 				.map(r -> WorkspaceWorkerSchedule.create(workspaceWorker, r.getDayOfWeek(), r.getStartTime(), r.getEndTime()))
 				.toList()
 		);
-
-		// TODO Send FCM
 	}
 
 	/**

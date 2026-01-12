@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerDeleteFixedWorkerScheduleUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerScheduleQueryRepository;
@@ -25,11 +26,9 @@ public class ManagerDeleteFixedWorkerSchedule implements ManagerDeleteFixedWorke
 		if (!workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser()))
 			throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
 
-		if (!workspaceWorkerScheduleQueryRepository.existsById(workerScheduleId))
-			throw new CustomException(ErrorCode.SCHEDULE_NOT_FOUND_FOR_DELETE);
+		WorkspaceWorkerSchedule workspaceWorkerSchedule = workspaceWorkerScheduleQueryRepository.findById(workerScheduleId)
+			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "삭제할 스케줄을 찾지 못하였습니다."));
 
-		workspaceWorkerScheduleQueryRepository.deleteById(workerScheduleId);
-
-		// TODO Send FCM
+		workspaceWorkerSchedule.delete();
 	}
 }

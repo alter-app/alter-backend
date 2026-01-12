@@ -13,10 +13,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WorkspaceWorkerScheduleRepositoryImpl implements WorkspaceWorkerScheduleRepository {
 
-	private final WorkspaceWorkerScheduleJapRepository workspaceWorkerScheduleJapRepository;
+	private final WorkspaceWorkerScheduleJpaRepository workspaceWorkerScheduleJpaRepository;
 
 	@Override
 	public void saveAll(List<WorkspaceWorkerSchedule> workspaceWorkerSchedules) {
-		workspaceWorkerScheduleJapRepository.saveAll(workspaceWorkerSchedules);
+		workspaceWorkerScheduleJpaRepository.saveAll(workspaceWorkerSchedules);
 	}
 }

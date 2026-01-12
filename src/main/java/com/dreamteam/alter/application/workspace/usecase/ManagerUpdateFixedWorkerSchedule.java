@@ -30,13 +30,11 @@ public class ManagerUpdateFixedWorkerSchedule implements ManagerUpdateFixedWorke
 			throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
 
 		WorkspaceWorkerSchedule workspaceWorkerSchedule = workspaceWorkerScheduleQueryRepository.getByIdWithWorkspaceWorker(workerScheduleId)
-			.orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND_FOR_UPDATE));
+			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "수정할 스케줄을 찾을 수 없습니다."));
 
 		validOverlappingTime(workspaceWorkerSchedule, request);
 
 		workspaceWorkerSchedule.update(request.getStartTime(), request.getEndTime());
-
-		// TODO Send FCM
 	}
 
 	/**

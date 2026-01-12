@@ -30,9 +30,9 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/manager/workspaces/{workspaceId}/worker-schedules")
 public class ManagerWorkerScheduleController implements ManagerWorkerScheduleControllerSpec{
 
-	private final ManagerCreateFixedWorkerScheduleUseCase managerCreateFixedWorkerScheduleUseCase;
-	private final ManagerUpdateFixedWorkerScheduleUseCase managerUpdateWorkerScheduleUseCase;
-	private final ManagerDeleteFixedWorkerScheduleUseCase managerDeleteFixedWorkerScheduleUseCase;
+	private final ManagerCreateFixedWorkerScheduleUseCase managerCreateFixedWorkerSchedule;
+	private final ManagerUpdateFixedWorkerScheduleUseCase managerUpdateWorkerSchedule;
+	private final ManagerDeleteFixedWorkerScheduleUseCase managerDeleteFixedWorkerSchedule;
 
 	@Override
 	@PostMapping
@@ -41,7 +41,7 @@ public class ManagerWorkerScheduleController implements ManagerWorkerScheduleCon
 		@RequestBody @Valid CreateWorkerScheduleRequestDto request
 	) {
 		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		managerCreateFixedWorkerScheduleUseCase.execute(actor, workspaceId, request);
+		managerCreateFixedWorkerSchedule.execute(actor, workspaceId, request);
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 
@@ -53,7 +53,7 @@ public class ManagerWorkerScheduleController implements ManagerWorkerScheduleCon
 		@RequestBody @Valid UpdateWorkerScheduleRequestDto request
 	) {
 		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		managerUpdateWorkerScheduleUseCase.execute(actor, workspaceId, workerScheduleId, request);
+		managerUpdateWorkerSchedule.execute(actor, workspaceId, workerScheduleId, request);
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 
@@ -64,7 +64,7 @@ public class ManagerWorkerScheduleController implements ManagerWorkerScheduleCon
 		@PathVariable Long workerScheduleId
 	) {
 		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		managerDeleteFixedWorkerScheduleUseCase.execute(actor, workspaceId, workerScheduleId);
+		managerDeleteFixedWorkerSchedule.execute(actor, workspaceId, workerScheduleId);
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 }

@@ -192,15 +192,21 @@ public interface ManagerPostingControllerSpec {
                         name = "요청에 키워드가 포함되지 않은 경우",
                         value = "{\"code\" : \"B001\"}"
                     ),
+                })),
+        @ApiResponse(responseCode = "404", description = "404 Error 실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
                     @ExampleObject(
                         name = "삭제할 스케줄이 존재하지 않는 경우",
-                        value = "{\"code\" : \"B021\", \"message\" : \"해당 Schedule ID\"}"
+                        value = "{\"code\" : \"B019\"}"
                     ),
                     @ExampleObject(
                         name = "수정할 스케줄이 존재하지 않는 경우",
-                        value = "{\"code\" : \"B022\", \"message\" : \"해당 Schedule ID\"}"
+                        value = "{\"code\" : \"B019\"}"
                     ),
-                }))
+                })),
     })
     ResponseEntity<CommonApiResponse<Void>> updatePosting(
         @PathVariable Long postingId,

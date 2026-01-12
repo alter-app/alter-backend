@@ -80,7 +80,7 @@ public class WorkspaceWorkerSchedule {
 			.dayOfWeek(dayOfWeek)
 			.startTime(startTime)
 			.endTime(endTime)
-			.status(WorkspaceWorkerScheduleStatus.ACTIVE)
+			.status(WorkspaceWorkerScheduleStatus.ACTIVATED)
 			.build();
 
 		workspaceWorkerSchedule.validTime();
@@ -96,11 +96,15 @@ public class WorkspaceWorkerSchedule {
 
 	public void validTime() {
 		if (this.startTime.isAfter(this.endTime))
-			throw new CustomException(ErrorCode.START_TIME_AFTER_END_TIME);
+			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "시작 시간은 종료 시간보다 늦을 수 없습니다.");
 	}
 
 	public void validOverlappingTime(LocalTime newStart, LocalTime newEnd) {
 		if (newStart.isBefore(this.endTime) && newEnd.isAfter(this.startTime))
-			throw new CustomException(ErrorCode.SCHEDULE_TIME_OVERLAPPING);
+			throw new CustomException(ErrorCode.CONFLICT, "같은 요일에 겹치는 근무 시간이 존재합니다.");
+	}
+
+	public void delete() {
+		this.status = WorkspaceWorkerScheduleStatus.DELETED;
 	}
 }

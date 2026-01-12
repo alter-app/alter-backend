@@ -8,10 +8,7 @@ import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 
 public interface WorkspaceWorkerScheduleQueryRepository {
+	Optional<WorkspaceWorkerSchedule> findById(Long workerScheduleId);
 	Optional<WorkspaceWorkerSchedule> getByIdWithWorkspaceWorker(Long workerScheduleId);
 	List<WorkspaceWorkerSchedule> getByWorkspaceWorkerAndDayOfWeekIn(WorkspaceWorker workspaceWorker, List<DayOfWeek> dayOfWeeks);
-
-	boolean existsById(Long workerScheduleId);
-
-	void deleteById(Long workerScheduleId);
 }
