@@ -9,9 +9,9 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
-import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateWorkerScheduleUseCase;
-import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRepository;
-import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerScheduleRepository;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateFixedWorkerScheduleUseCase;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerScheduleQueryRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,17 +19,17 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ManagerUpdateWorkerSchedule implements ManagerUpdateWorkerScheduleUseCase {
+public class ManagerUpdateFixedWorkerSchedule implements ManagerUpdateFixedWorkerScheduleUseCase {
 
-	private final WorkspaceRepository workspaceRepository;
-	private final WorkspaceWorkerScheduleRepository workspaceWorkerScheduleRepository;
+	private final WorkspaceQueryRepository workspaceQueryRepository;
+	private final WorkspaceWorkerScheduleQueryRepository workspaceWorkerScheduleQueryRepository;
 
 	@Override
 	public void execute(ManagerActor actor, Long workspaceId, Long workerScheduleId, UpdateWorkerScheduleRequestDto request) {
-		if (!workspaceRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser()))
+		if (!workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser()))
 			throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
 
-		WorkspaceWorkerSchedule workspaceWorkerSchedule = workspaceWorkerScheduleRepository.findByIdWithWorkspaceWorker(workerScheduleId)
+		WorkspaceWorkerSchedule workspaceWorkerSchedule = workspaceWorkerScheduleQueryRepository.getByIdWithWorkspaceWorker(workerScheduleId)
 			.orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND_FOR_UPDATE));
 
 		validOverlappingTime(workspaceWorkerSchedule, request);
@@ -45,7 +45,7 @@ public class ManagerUpdateWorkerSchedule implements ManagerUpdateWorkerScheduleU
 	 * @param request 요청 정보
 	 */
 	private void validOverlappingTime(WorkspaceWorkerSchedule workspaceWorkerSchedule, UpdateWorkerScheduleRequestDto request) {
-		List<WorkspaceWorkerSchedule> existingSchedules = workspaceWorkerScheduleRepository.findByWorkspaceWorkerAndDayOfWeekIn(workspaceWorkerSchedule.getWorkspaceWorker(), List.of(workspaceWorkerSchedule.getDayOfWeek()));
+		List<WorkspaceWorkerSchedule> existingSchedules = workspaceWorkerScheduleQueryRepository.getByWorkspaceWorkerAndDayOfWeekIn(workspaceWorkerSchedule.getWorkspaceWorker(), List.of(workspaceWorkerSchedule.getDayOfWeek()));
 
 		existingSchedules.stream()
 			.filter(schedule -> !schedule.getId().equals(workspaceWorkerSchedule.getId()))

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerScheduleStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -56,6 +57,10 @@ public class WorkspaceWorkerSchedule {
 	@Column(name = "end_time", nullable = false)
 	private LocalTime endTime;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "status", nullable = false)
+	private WorkspaceWorkerScheduleStatus status;
+
 	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
@@ -75,6 +80,7 @@ public class WorkspaceWorkerSchedule {
 			.dayOfWeek(dayOfWeek)
 			.startTime(startTime)
 			.endTime(endTime)
+			.status(WorkspaceWorkerScheduleStatus.ACTIVE)
 			.build();
 
 		workspaceWorkerSchedule.validTime();

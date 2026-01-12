@@ -16,9 +16,9 @@ import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.UpdateWorkerSche
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.CreateWorkerScheduleRequestDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
-import com.dreamteam.alter.domain.workspace.port.inbound.ManagerCreateWorkerScheduleUseCase;
-import com.dreamteam.alter.domain.workspace.port.inbound.ManagerDeleteWorkerScheduleUseCase;
-import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateWorkerScheduleUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerCreateFixedWorkerScheduleUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerDeleteFixedWorkerScheduleUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateFixedWorkerScheduleUseCase;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +27,12 @@ import lombok.RequiredArgsConstructor;
 @PreAuthorize("hasAnyRole('MANAGER')")
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/manager/workspace/{workspaceId}/worker-schedules")
+@RequestMapping("/manager/workspaces/{workspaceId}/worker-schedules")
 public class ManagerWorkerScheduleController implements ManagerWorkerScheduleControllerSpec{
 
-	private final ManagerCreateWorkerScheduleUseCase managerCreateWorkerScheduleUseCase;
-	private final ManagerUpdateWorkerScheduleUseCase managerUpdateWorkerScheduleUseCase;
-	private final ManagerDeleteWorkerScheduleUseCase managerDeleteWorkerScheduleUseCase;
+	private final ManagerCreateFixedWorkerScheduleUseCase managerCreateFixedWorkerScheduleUseCase;
+	private final ManagerUpdateFixedWorkerScheduleUseCase managerUpdateWorkerScheduleUseCase;
+	private final ManagerDeleteFixedWorkerScheduleUseCase managerDeleteFixedWorkerScheduleUseCase;
 
 	@Override
 	@PostMapping
@@ -41,7 +41,7 @@ public class ManagerWorkerScheduleController implements ManagerWorkerScheduleCon
 		@RequestBody @Valid CreateWorkerScheduleRequestDto request
 	) {
 		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		managerCreateWorkerScheduleUseCase.execute(actor, workspaceId, request);
+		managerCreateFixedWorkerScheduleUseCase.execute(actor, workspaceId, request);
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 
@@ -64,7 +64,7 @@ public class ManagerWorkerScheduleController implements ManagerWorkerScheduleCon
 		@PathVariable Long workerScheduleId
 	) {
 		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		managerDeleteWorkerScheduleUseCase.execute(actor, workspaceId, workerScheduleId);
+		managerDeleteFixedWorkerScheduleUseCase.execute(actor, workspaceId, workerScheduleId);
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 }
