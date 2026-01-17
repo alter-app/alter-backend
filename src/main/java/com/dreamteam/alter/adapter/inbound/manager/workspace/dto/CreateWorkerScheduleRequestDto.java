@@ -18,9 +18,9 @@ import lombok.NoArgsConstructor;
 @Schema(description = "매니저 - 근무자 고정 스케줄 등록 DTO")
 public class CreateWorkerScheduleRequestDto {
 
-	@NotNull(message = "근무자 ID는 필수입니다.")
-	@Schema(description = "근무자 ID", example = "1")
-	private Long workerId;
+	@NotNull(message = "업장 근무자 ID는 필수입니다.")
+	@Schema(description = "업장 근무자 ID", example = "1")
+	private Long workspaceWorkerId;
 
 	@NotEmpty(message = "스케줄 목록은 필수입니다.")
 	@Valid

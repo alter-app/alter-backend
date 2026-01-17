@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 @PreAuthorize("hasAnyRole('MANAGER')")
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/manager/workspaces/{workspaceId}/worker-schedules")
+@RequestMapping("/manager/workspaces/{workspaceId}/fixed-worker-schedules")
 public class ManagerFixedWorkerScheduleController implements ManagerFixedWorkerScheduleControllerSpec {
 
 	private final ManagerCreateFixedWorkerScheduleUseCase managerCreateFixedWorkerSchedule;
