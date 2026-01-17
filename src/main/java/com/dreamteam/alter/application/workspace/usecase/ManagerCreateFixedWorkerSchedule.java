@@ -35,7 +35,7 @@ public class ManagerCreateFixedWorkerSchedule implements ManagerCreateFixedWorke
 		if (!workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser()))
 			throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
 
-		WorkspaceWorker workspaceWorker = workspaceWorkerQueryRepository.findById(request.getWorkerId())
+		WorkspaceWorker workspaceWorker = workspaceWorkerQueryRepository.findById(request.getWorkspaceWorkerId())
 			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 업장에 근무하는 사용자가 아닙니다."));
 
 		validOverlappingTime(workspaceWorker, request.getSchedules());
