@@ -18,8 +18,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
-@Tag(name = "MANAGER - 근무자 스케줄 관리 API")
-public interface ManagerWorkerScheduleControllerSpec {
+@Tag(name = "MANAGER - 근무자 고정 스케줄 관리 API")
+public interface ManagerFixedWorkerScheduleControllerSpec {
 
 	@Operation(summary = "매니저 - 근무자 고정 스케줄 등록", description = "근무자의 요일별 고정 근무 시간을 등록합니다.")
 	@ApiResponses(value = {

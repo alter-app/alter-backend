@@ -1,6 +1,5 @@
 package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 
-import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,14 +54,13 @@ public class WorkspaceWorkerScheduleQueryRepositoryImpl implements WorkspaceWork
 	}
 
 	@Override
-	public List<WorkspaceWorkerSchedule> getByWorkspaceWorkerAndDayOfWeekIn(WorkspaceWorker workspaceWorker, List<DayOfWeek> dayOfWeeks) {
+	public List<WorkspaceWorkerSchedule> getByWorkspaceWorker(WorkspaceWorker workspaceWorker) {
 		QWorkspaceWorkerSchedule qWorkspaceWorkerSchedule = QWorkspaceWorkerSchedule.workspaceWorkerSchedule;
 
 		return queryFactory
 			.selectFrom(qWorkspaceWorkerSchedule)
 			.where(
 				qWorkspaceWorkerSchedule.workspaceWorker.eq(workspaceWorker),
-				qWorkspaceWorkerSchedule.dayOfWeek.in(dayOfWeeks),
 				qWorkspaceWorkerSchedule.status.ne(WorkspaceWorkerScheduleStatus.DELETED)
 			)
 			.fetch();

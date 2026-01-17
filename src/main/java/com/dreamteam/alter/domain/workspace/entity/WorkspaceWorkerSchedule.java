@@ -48,11 +48,15 @@ public class WorkspaceWorkerSchedule {
 	private WorkspaceWorker workspaceWorker;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "day_of_week", nullable = false)
-	private DayOfWeek dayOfWeek;
+	@Column(name = "start_day_of_week", nullable = false)
+	private DayOfWeek startDayOfWeek;
 
 	@Column(name = "start_time", nullable = false)
 	private LocalTime startTime;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "end_day_of_week", nullable = false)
+	private DayOfWeek endDayOfWeek;
 
 	@Column(name = "end_time", nullable = false)
 	private LocalTime endTime;
@@ -71,14 +75,16 @@ public class WorkspaceWorkerSchedule {
 
 	public static WorkspaceWorkerSchedule create(
 		WorkspaceWorker workspaceWorker,
-		DayOfWeek dayOfWeek,
+		DayOfWeek startDayOfWeek,
 		LocalTime startTime,
+		DayOfWeek endDayOfWeek,
 		LocalTime endTime
 	) {
 		WorkspaceWorkerSchedule workspaceWorkerSchedule = WorkspaceWorkerSchedule.builder()
 			.workspaceWorker(workspaceWorker)
-			.dayOfWeek(dayOfWeek)
+			.startDayOfWeek(startDayOfWeek)
 			.startTime(startTime)
+			.endDayOfWeek(endDayOfWeek)
 			.endTime(endTime)
 			.status(WorkspaceWorkerScheduleStatus.ACTIVATED)
 			.build();
@@ -87,21 +93,36 @@ public class WorkspaceWorkerSchedule {
 		return workspaceWorkerSchedule;
 	}
 
-	public void update(LocalTime startTime, LocalTime endTime) {
+	public void update(DayOfWeek startDayOfWeek, LocalTime startTime, DayOfWeek endDayOfWeek, LocalTime endTime) {
+		this.startDayOfWeek = startDayOfWeek;
 		this.startTime = startTime;
+		this.endDayOfWeek = endDayOfWeek;
 		this.endTime = endTime;
 
 		validTime();
 	}
 
 	public void validTime() {
-		if (this.startTime.isAfter(this.endTime))
+		if (toWeekMinutes(this.startDayOfWeek, this.startTime) >= toWeekMinutes(this.endDayOfWeek, this.endTime))
 			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "시작 시간은 종료 시간보다 늦을 수 없습니다.");
 	}
 
-	public void validOverlappingTime(LocalTime newStart, LocalTime newEnd) {
-		if (newStart.isBefore(this.endTime) && newEnd.isAfter(this.startTime))
-			throw new CustomException(ErrorCode.CONFLICT, "같은 요일에 겹치는 근무 시간이 존재합니다.");
+	public void validOverlappingTime(DayOfWeek newStartDay, LocalTime newStart, DayOfWeek newEndDay, LocalTime newEnd) {
+		long thisStartMinutes = toWeekMinutes(this.startDayOfWeek, this.startTime);
+		long thisEndMinutes = toWeekMinutes(this.endDayOfWeek, this.endTime);
+		long newStartMinutes = toWeekMinutes(newStartDay, newStart);
+		long newEndMinutes = toWeekMinutes(newEndDay, newEnd);
+
+		if (newStartMinutes < thisEndMinutes && newEndMinutes > thisStartMinutes)
+			throw new CustomException(ErrorCode.CONFLICT, "겹치는 근무 시간이 존재합니다.");
+	}
+
+	/**
+	 * 요일과 시간을 주 시작(월요일 00:00) 기준 분 단위로 변환
+	 * 예: 월요일 09:00 → 540분, 화요일 18:30 → 2550분
+	 */
+	private long toWeekMinutes(DayOfWeek dayOfWeek, LocalTime time) {
+		return (long) (dayOfWeek.getValue() - 1) * 24 * 60 + time.getHour() * 60 + time.getMinute();
 	}
 
 	public void delete() {

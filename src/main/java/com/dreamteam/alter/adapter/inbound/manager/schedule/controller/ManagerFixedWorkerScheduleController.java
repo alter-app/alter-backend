@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping("/manager/workspaces/{workspaceId}/worker-schedules")
-public class ManagerWorkerScheduleController implements ManagerWorkerScheduleControllerSpec{
+public class ManagerFixedWorkerScheduleController implements ManagerFixedWorkerScheduleControllerSpec {
 
 	private final ManagerCreateFixedWorkerScheduleUseCase managerCreateFixedWorkerSchedule;
 	private final ManagerUpdateFixedWorkerScheduleUseCase managerUpdateWorkerSchedule;

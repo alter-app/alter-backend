@@ -1,6 +1,5 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
-import java.time.DayOfWeek;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -33,37 +32,44 @@ public class ManagerCreateFixedWorkerSchedule implements ManagerCreateFixedWorke
 
 	@Override
 	public void execute(ManagerActor actor, Long workspaceId, CreateWorkerScheduleRequestDto request) {
-		if (workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser()))
+		if (!workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser()))
 			throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
 
 		WorkspaceWorker workspaceWorker = workspaceWorkerQueryRepository.findById(request.getWorkerId())
 			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 업장에 근무하는 사용자가 아닙니다."));
 
-		validOverlappingTime(workspaceWorker, request);
+		validOverlappingTime(workspaceWorker, request.getSchedules());
 
 		workspaceWorkerScheduleRepository.saveAll(
 			request.getSchedules().stream()
-				.map(r -> WorkspaceWorkerSchedule.create(workspaceWorker, r.getDayOfWeek(), r.getStartTime(), r.getEndTime()))
+				.map(r -> WorkspaceWorkerSchedule.create(
+					workspaceWorker,
+					r.getStartDayOfWeek(),
+					r.getStartTime(),
+					r.getEndDayOfWeek(),
+					r.getEndTime()
+				))
 				.toList()
 		);
 	}
 
 	/**
-	 * 곂치는 시간 검증
+	 * 겹치는 시간 검증
 	 * @param workspaceWorker 해당 근무자
-	 * @param request 요청 정보
+	 * @param newSchedules 새로 생성할 스케줄 목록
 	 */
-	private void validOverlappingTime(WorkspaceWorker workspaceWorker, CreateWorkerScheduleRequestDto request) {
-		List<DayOfWeek> dayOfWeeks = request.getSchedules().stream()
-			.map(WorkerScheduleDto::getDayOfWeek)
-			.toList();
+	private void validOverlappingTime(WorkspaceWorker workspaceWorker, List<WorkerScheduleDto> newSchedules) {
+		List<WorkspaceWorkerSchedule> existingSchedules = workspaceWorkerScheduleQueryRepository.getByWorkspaceWorker(workspaceWorker);
 
-		List<WorkspaceWorkerSchedule> workspaceWorkerSchedules = workspaceWorkerScheduleQueryRepository.getByWorkspaceWorkerAndDayOfWeekIn(workspaceWorker, dayOfWeeks);
-
-		for (WorkspaceWorkerSchedule existingSchedule : workspaceWorkerSchedules) {
-			request.getSchedules().stream()
-				.filter(newSchedule -> newSchedule.getDayOfWeek().equals(existingSchedule.getDayOfWeek()))
-				.forEach(newSchedule -> existingSchedule.validOverlappingTime(newSchedule.getStartTime(), newSchedule.getEndTime()));
+		for (WorkspaceWorkerSchedule existingSchedule : existingSchedules) {
+			for (WorkerScheduleDto newSchedule : newSchedules) {
+				existingSchedule.validOverlappingTime(
+					newSchedule.getStartDayOfWeek(),
+					newSchedule.getStartTime(),
+					newSchedule.getEndDayOfWeek(),
+					newSchedule.getEndTime()
+				);
+			}
 		}
 	}
 }

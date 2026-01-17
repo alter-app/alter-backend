@@ -34,19 +34,29 @@ public class ManagerUpdateFixedWorkerSchedule implements ManagerUpdateFixedWorke
 
 		validOverlappingTime(workspaceWorkerSchedule, request);
 
-		workspaceWorkerSchedule.update(request.getStartTime(), request.getEndTime());
+		workspaceWorkerSchedule.update(
+			request.getStartDayOfWeek(),
+			request.getStartTime(),
+			request.getEndDayOfWeek(),
+			request.getEndTime()
+		);
 	}
 
 	/**
-	 * 같은 요일 곂치는 시간 검증 (자기 자신 제외)
+	 * 겹치는 시간 검증 (자기 자신 제외)
 	 * @param workspaceWorkerSchedule 수정 중인 스케줄
 	 * @param request 요청 정보
 	 */
 	private void validOverlappingTime(WorkspaceWorkerSchedule workspaceWorkerSchedule, UpdateWorkerScheduleRequestDto request) {
-		List<WorkspaceWorkerSchedule> existingSchedules = workspaceWorkerScheduleQueryRepository.getByWorkspaceWorkerAndDayOfWeekIn(workspaceWorkerSchedule.getWorkspaceWorker(), List.of(workspaceWorkerSchedule.getDayOfWeek()));
+		List<WorkspaceWorkerSchedule> existingSchedules = workspaceWorkerScheduleQueryRepository.getByWorkspaceWorker(workspaceWorkerSchedule.getWorkspaceWorker());
 
 		existingSchedules.stream()
 			.filter(schedule -> !schedule.getId().equals(workspaceWorkerSchedule.getId()))
-			.forEach(schedule -> schedule.validOverlappingTime(request.getStartTime(), request.getEndTime()));
+			.forEach(schedule -> schedule.validOverlappingTime(
+				request.getStartDayOfWeek(),
+				request.getStartTime(),
+				request.getEndDayOfWeek(),
+				request.getEndTime()
+			));
 	}
 }

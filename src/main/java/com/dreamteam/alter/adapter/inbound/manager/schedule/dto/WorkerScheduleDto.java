@@ -14,15 +14,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "근무자 스케줄 정보")
 public class WorkerScheduleDto {
-	@NotNull(message = "요일은 필수입니다")
-	@Schema(description = "요일", example = "MONDAY")
-	private DayOfWeek dayOfWeek;
+	@NotNull(message = "시작 요일은 필수입니다")
+	@Schema(description = "시작 요일", example = "MONDAY")
+	private DayOfWeek startDayOfWeek;
 
 	@NotNull(message = "시작 시간은 필수입니다")
-	@Schema(description = "시작 시간", example = "09:00:00")
+	@Schema(description = "시작 시간", example = "22:00:00")
 	private LocalTime startTime;
 
+	@NotNull(message = "종료 요일은 필수입니다")
+	@Schema(description = "종료 요일", example = "TUESDAY")
+	private DayOfWeek endDayOfWeek;
+
 	@NotNull(message = "종료 시간은 필수입니다")
-	@Schema(description = "종료 시간", example = "18:00:00")
+	@Schema(description = "종료 시간", example = "04:00:00")
 	private LocalTime endTime;
 }
