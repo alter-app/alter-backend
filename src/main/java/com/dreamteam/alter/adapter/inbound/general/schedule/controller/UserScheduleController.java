@@ -22,7 +22,7 @@ import java.util.List;
 public class UserScheduleController implements UserScheduleControllerSpec {
 
     @Resource(name = "getMySchedule")
-    private final GetMyScheduleInquiryUseCase getMySchedule;
+    private final GetMyScheduleUseCase getMySchedule;
 
     @Resource(name = "getWorkspaceWorkSchedule")
     private final GetWorkspaceScheduleUseCase getWorkspaceSchedule;
