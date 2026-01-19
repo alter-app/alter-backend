@@ -26,7 +26,7 @@ public interface UserScheduleControllerSpec {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "스케줄 조회 성공")
     })
-    ResponseEntity<CommonApiResponse<MyScheduleInquiryResponseDto>> getMySchedule(
+    ResponseEntity<CommonApiResponse<GetMyScheduleResponseDto>> getMySchedule(
         WorkScheduleInquiryRequestDto request
     );
 

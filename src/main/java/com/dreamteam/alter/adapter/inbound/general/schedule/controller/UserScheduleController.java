@@ -29,7 +29,7 @@ public class UserScheduleController implements UserScheduleControllerSpec {
 
     @Override
     @GetMapping("/self")
-    public ResponseEntity<CommonApiResponse<MyScheduleInquiryResponseDto>> getMySchedule(
+    public ResponseEntity<CommonApiResponse<GetMyScheduleResponseDto>> getMySchedule(
         WorkScheduleInquiryRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();

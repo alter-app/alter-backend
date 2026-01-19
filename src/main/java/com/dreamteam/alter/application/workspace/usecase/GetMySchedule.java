@@ -1,6 +1,6 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.schedule.dto.MyScheduleInquiryResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.schedule.dto.GetMyScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.MyScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkScheduleInquiryRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -28,7 +28,7 @@ public class GetMySchedule implements GetMyScheduleUseCase {
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
 
     @Override
-    public MyScheduleInquiryResponseDto execute(AppActor actor, WorkScheduleInquiryRequestDto request) {
+    public GetMyScheduleResponseDto execute(AppActor actor, WorkScheduleInquiryRequestDto request) {
 
         List<WorkspaceShift> shifts;
 
@@ -76,6 +76,6 @@ public class GetMySchedule implements GetMyScheduleUseCase {
                 .map(MyScheduleResponseDto::of)
                 .toList();
 
-        return MyScheduleInquiryResponseDto.of(totalWorkHours, scheduleDtos);
+        return GetMyScheduleResponseDto.of(totalWorkHours, scheduleDtos);
     }
 }

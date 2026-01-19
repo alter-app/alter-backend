@@ -10,7 +10,7 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
 @Schema(description = "스케줄 조회 통합 응답")
-public class MyScheduleInquiryResponseDto {
+public class GetMyScheduleResponseDto {
 
     @Schema(description = "총 근무 시간", example = "40.5")
     private double totalWorkHours;
@@ -18,8 +18,8 @@ public class MyScheduleInquiryResponseDto {
     @Schema(description = "스케줄 목록")
     private List<MyScheduleResponseDto> schedules;
 
-    public static MyScheduleInquiryResponseDto of(double totalWorkHours, List<MyScheduleResponseDto> schedules) {
-        return MyScheduleInquiryResponseDto.builder()
+    public static GetMyScheduleResponseDto of(double totalWorkHours, List<MyScheduleResponseDto> schedules) {
+        return GetMyScheduleResponseDto.builder()
                 .totalWorkHours(totalWorkHours)
                 .schedules(schedules)
                 .build();
