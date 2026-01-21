@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.general.schedule.dto.GetMyScheduleRes
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkScheduleInquiryRequestDto;
 import com.dreamteam.alter.domain.user.context.AppActor;
 
+
 public interface GetMyScheduleUseCase {
     GetMyScheduleResponseDto execute(AppActor actor, WorkScheduleInquiryRequestDto request);
 }
