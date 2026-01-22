@@ -1,13 +1,10 @@
 package com.dreamteam.alter.adapter.inbound.general.schedule.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.schedule.dto.MyScheduleResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkScheduleInquiryRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkspaceScheduleResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.schedule.dto.*;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
-import com.dreamteam.alter.domain.workspace.port.inbound.GetMyScheduleUseCase;
-import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceScheduleUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.*;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +21,7 @@ import java.util.List;
 @RequestMapping("/app/schedules")
 public class UserScheduleController implements UserScheduleControllerSpec {
 
-    @Resource(name = "getMyWorkSchedule")
+    @Resource(name = "getMySchedule")
     private final GetMyScheduleUseCase getMySchedule;
 
     @Resource(name = "getWorkspaceWorkSchedule")
@@ -32,7 +29,7 @@ public class UserScheduleController implements UserScheduleControllerSpec {
 
     @Override
     @GetMapping("/self")
-    public ResponseEntity<CommonApiResponse<List<MyScheduleResponseDto>>> getMySchedule(
+    public ResponseEntity<CommonApiResponse<GetMyScheduleResponseDto>> getMySchedule(
         WorkScheduleInquiryRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();

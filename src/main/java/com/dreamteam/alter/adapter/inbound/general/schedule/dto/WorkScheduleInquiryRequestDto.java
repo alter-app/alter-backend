@@ -17,4 +17,7 @@ public class WorkScheduleInquiryRequestDto {
 
     @Parameter(description = "조회할 월")
     private Integer month;
+
+    @Parameter(description = "조회할 일 (일별 조회 시 사용)")
+    private Integer day;
 }

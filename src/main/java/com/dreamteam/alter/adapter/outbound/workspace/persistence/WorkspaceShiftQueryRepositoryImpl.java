@@ -49,6 +49,21 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
     }
 
     @Override
+    public List<WorkspaceShift> findByUserAndDate(User user, int year, int month, int day) {
+        LocalDateTime startOfDay = LocalDateTime.of(year, month, day, 0, 0, 0);
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        return queryFactory
+                .selectFrom(workspaceShift)
+                .where(
+                        workspaceShift.assignedWorkspaceWorker.user.eq(user),
+                        workspaceShift.startDateTime.goe(startOfDay),
+                        workspaceShift.startDateTime.lt(endOfDay)
+                )
+                .orderBy(workspaceShift.startDateTime.asc())
+                .fetch();
+    }
+
+    @Override
     public List<WorkspaceShift> findByWorkspaceAndDateRange(Workspace workspace, int year, int month) {
         return queryFactory
             .selectFrom(workspaceShift)
