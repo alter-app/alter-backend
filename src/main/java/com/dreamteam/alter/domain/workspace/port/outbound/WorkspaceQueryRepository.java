@@ -71,4 +71,6 @@ public interface WorkspaceQueryRepository {
         Long workspaceId,
         CursorPageRequest<CursorDto> pageRequest
     );
+
+    boolean existsByIdAndManagerUser(Long workspaceId, ManagerUser managerUser);
 }

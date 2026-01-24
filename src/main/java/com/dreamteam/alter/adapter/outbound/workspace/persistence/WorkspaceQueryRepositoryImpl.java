@@ -1,16 +1,24 @@
 package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.stereotype.Repository;
+
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListFilterDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceListResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceManagerListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceWorkerListResponse;
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceWorkerListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceManagerListResponse;
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ManagerWorkspaceManagerListResponse;
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceWorkerResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceWorkerListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceWorkerResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceWorkerResponse;
 import com.dreamteam.alter.domain.reputation.entity.QReputationSummary;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
@@ -24,20 +32,15 @@ import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.WorkerPositionType;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
@@ -542,6 +545,23 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .orderBy(qUser.name.asc(), qManagerUser.id.asc())
             .limit(pageRequest.pageSize())
             .fetch();
+    }
+
+    @Override
+    public boolean existsByIdAndManagerUser(Long workspaceId, ManagerUser managerUser) {
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
+        Integer result = queryFactory
+            .selectOne()
+            .from(qWorkspace)
+            .where(
+                qWorkspace.id.eq(workspaceId),
+                qWorkspace.managerUser.eq(managerUser),
+                qWorkspace.status.eq(WorkspaceStatus.ACTIVATED)
+            )
+            .fetchFirst();
+
+        return result != null;
     }
 
     private BooleanExpression eqWorkerStatus(QWorkspaceWorker qWorkspaceWorker, WorkspaceWorkerStatus status) {

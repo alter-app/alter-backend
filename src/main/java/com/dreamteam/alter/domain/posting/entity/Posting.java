@@ -177,7 +177,7 @@ public class Posting {
             PostingSchedule existingSchedule = this.schedules.stream()
                 .filter(schedule -> schedule.getId().equals(updateDto.getId()))
                 .findFirst()
-                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND_FOR_UPDATE, updateDto.getId().toString()));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "수정할 스케줄을 찾을 수 없습니다."));
 
             existingSchedule.update(
                 updateDto.getWorkingDays().stream()
@@ -200,7 +200,7 @@ public class Posting {
             PostingSchedule existingSchedule = this.schedules.stream()
                 .filter(schedule -> schedule.getId().equals(scheduleId))
                 .findFirst()
-                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND_FOR_DELETE, scheduleId.toString()));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "삭제할 스케줄을 찾을 수 없습니다."));
 
             existingSchedule.updateStatus(PostingStatus.DELETED);
         }
