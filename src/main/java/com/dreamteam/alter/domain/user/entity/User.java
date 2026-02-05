@@ -129,4 +129,16 @@ public class User {
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
+
+    /**
+     * 회원 상태를 변경합니다.
+     *
+     * @param newStatus 변경할 상태
+     */
+    public void updateStatus(UserStatus newStatus) {
+        if (this.status.equals(newStatus)) {
+            throw new IllegalArgumentException("이미 동일한 상태입니다.");
+        }
+        this.status = newStatus;
+    }
 }
