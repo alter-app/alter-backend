@@ -37,6 +37,11 @@ public class LoginWithSocial implements LoginWithSocialUseCase {
 
         User user = userSocial.getUser();
 
+        switch (user.getStatus()) {
+            case SUSPENDED -> throw new CustomException(ErrorCode.SUSPENDED_USER);
+            case DELETED -> throw new CustomException(ErrorCode.DELETED_USER);
+        }
+
         userSocial.updateRefreshToken(socialAuthInfo.getRefreshToken());
 
         // 기존 인가 정보 정리
