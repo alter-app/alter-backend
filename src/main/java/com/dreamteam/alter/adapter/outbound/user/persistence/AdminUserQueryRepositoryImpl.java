@@ -7,6 +7,7 @@ import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.AdminUserL
 import com.dreamteam.alter.domain.reputation.entity.QReputationSummary;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.entity.QUser;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.AdminUserQueryRepository;
 import com.dreamteam.alter.domain.user.type.UserRole;
 import com.dreamteam.alter.domain.user.type.UserStatus;
@@ -110,6 +111,19 @@ public class AdminUserQueryRepositoryImpl implements AdminUserQueryRepository {
             .fetchOne();
 
         return Optional.ofNullable(response);
+    }
+
+    @Override
+    public Optional<User> findById(Long userId) {
+        User foundUser = queryFactory
+            .selectFrom(user)
+            .where(
+                user.id.eq(userId),
+                user.status.ne(UserStatus.DELETED)
+            )
+            .fetchOne();
+
+        return Optional.ofNullable(foundUser);
     }
 
     private BooleanExpression eqStatus(UserStatus status) {
