@@ -336,7 +336,10 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
-            .where(qPosting.id.eq(postingId))
+            .where(
+                qPosting.id.eq(postingId),
+                qPosting.status.eq(PostingStatus.OPEN)
+            )
             .fetchOne();
 
         if (ObjectUtils.isEmpty(posting)) {
