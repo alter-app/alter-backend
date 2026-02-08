@@ -60,6 +60,7 @@ alter:
     code-ttl-seconds: ${EMAIL_CODE_TTL_SECONDS:300}
     verified-ttl-seconds: ${EMAIL_VERIFIED_TTL_SECONDS:900}
     cooldown-seconds: ${EMAIL_COOLDOWN_SECONDS:30}
+    max-attempts: ${EMAIL_MAX_ATTEMPTS:5}
 firebase:
   fcm:
     project-id: ${FIREBASE_PROJECT_ID}

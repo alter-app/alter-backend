@@ -12,4 +12,5 @@ public class EmailAuthProperties {
     private long codeTtlSeconds = 300;
     private long verifiedTtlSeconds = 900;
     private long cooldownSeconds = 30;
+    private int maxAttempts = 5;
 }

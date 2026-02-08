@@ -47,6 +47,7 @@ public enum ErrorCode {
     EMAIL_VERIFICATION_CODE_MISMATCH(400, "E002", "인증 코드가 일치하지 않습니다."),
     EMAIL_VERIFICATION_SEND_FAILED(500, "E003", "이메일 전송에 실패했습니다."),
     EMAIL_VERIFICATION_TOO_MANY_REQUESTS(429, "E004", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
+    EMAIL_VERIFICATION_EXCEEDED_MAX_ATTEMPTS(400, "E005", "인증 시도 횟수를 초과했습니다."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     EXTERNAL_API_ERROR(502, "C002", "외부 API 연동에 실패했습니다."),

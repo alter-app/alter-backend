@@ -13,4 +13,6 @@ public interface EmailVerificationTokenStorePort {
 
     boolean isCooldown(String email);
     void markCooldown(String email, Duration ttl);
+
+    long incrementAttempt(String email, Duration ttl);
 }
