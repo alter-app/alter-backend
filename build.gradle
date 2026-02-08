@@ -46,6 +46,9 @@ dependencies {
         exclude group: 'io.swagger.core.v3', module: 'swagger-annotations'
     }
 
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'software.amazon.awssdk:ses:2.29.46'
+
 	compileOnly 'org.projectlombok:lombok'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -62,8 +65,9 @@ dependencies {
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+    runtimeOnly 'org.postgresql:postgresql'
 
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 dependencyManagement {
