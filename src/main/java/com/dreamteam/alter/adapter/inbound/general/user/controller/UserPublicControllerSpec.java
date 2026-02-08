@@ -2,6 +2,8 @@ package com.dreamteam.alter.adapter.inbound.general.user.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificationCodeRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -214,5 +216,22 @@ public interface UserPublicControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> resetPassword(@Valid ResetPasswordRequestDto request);
+
+    @Operation(summary = "이메일 인증 코드 발송", description = "이메일로 6자리 인증 코드 발송")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "인증 코드 발송 성공"),
+            @ApiResponse(responseCode = "429", description = "요청이 너무 많음 (쿨다운)",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    ResponseEntity<CommonApiResponse<Void>> sendVerificationCode(@Valid SendEmailVerificationCodeRequestDto request);
+
+    @Operation(summary = "이메일 인증 코드 검증", description = "발송된 인증 코드를 검증")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "인증 코드 검증 성공"),
+            @ApiResponse(responseCode = "400", description = "인증 코드 불일치 또는 만료",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    ResponseEntity<CommonApiResponse<Void>> verifyVerificationCode(@Valid VerifyEmailVerificationCodeRequestDto request);
+
 
 }

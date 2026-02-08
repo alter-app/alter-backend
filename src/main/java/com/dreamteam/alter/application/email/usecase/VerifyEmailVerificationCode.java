@@ -1,6 +1,6 @@
 package com.dreamteam.alter.application.email.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.amail.dto.VerifyEmailVerificationCodeRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
 import com.dreamteam.alter.application.email.properties.EmailAuthProperties;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;

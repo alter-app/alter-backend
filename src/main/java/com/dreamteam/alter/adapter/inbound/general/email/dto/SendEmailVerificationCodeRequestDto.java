@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.general.amail.dto;
+package com.dreamteam.alter.adapter.inbound.general.email.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
