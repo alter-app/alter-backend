@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.outbound.redis.email;
+package com.dreamteam.alter.adapter.outbound.email.redis;
 
 import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationTokenStorePort;
 import lombok.RequiredArgsConstructor;
