@@ -65,3 +65,5 @@ sgis:
   service-secret: mock-sgis-service-secret
 aws:
   region: mockocko
+  access-key: mockmockmockmock
+  secret-key: mockmockmockmock

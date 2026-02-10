@@ -9,4 +9,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "aws")
 public class AwsProperties {
     private String region;
+    private String accessKey;
+    private String secretKey;
 }
