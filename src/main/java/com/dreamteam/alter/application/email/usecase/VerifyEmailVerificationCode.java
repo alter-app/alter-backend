@@ -1,6 +1,7 @@
 package com.dreamteam.alter.application.email.usecase;
 
 import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
 import com.dreamteam.alter.application.email.properties.EmailAuthProperties;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -21,7 +22,7 @@ public class VerifyEmailVerificationCode implements VerifyEmailVerificationCodeU
     private final EmailAuthProperties properties;
 
     @Override
-    public void execute(VerifyEmailVerificationCodeRequestDto request) {
+    public VerifyEmailVerificationCodeResponseDto execute(VerifyEmailVerificationCodeRequestDto request) {
         String email = request.getEmail();
         String inputCode = request.getCode();
 
@@ -44,6 +45,10 @@ public class VerifyEmailVerificationCode implements VerifyEmailVerificationCodeU
 
         // Success -> Delete Code & Mark Verified
         tokenStorePort.deleteCode(email);
-        tokenStorePort.markVerified(email, Duration.ofSeconds(properties.getVerifiedTtlSeconds()));
+        String verificationToken = tokenStorePort.createVerificationSession(
+                email, Duration.ofSeconds(properties.getVerifiedTtlSeconds())
+        );
+
+        return new VerifyEmailVerificationCodeResponseDto(verificationToken);
     }
 }

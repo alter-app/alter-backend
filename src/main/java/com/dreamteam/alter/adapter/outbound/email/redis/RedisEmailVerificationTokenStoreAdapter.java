@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -18,7 +19,10 @@ public class RedisEmailVerificationTokenStoreAdapter implements EmailVerificatio
     private static final String KEY_PREFIX_VERIFIED = "auth:email:verified:";
     private static final String KEY_PREFIX_COOLDOWN = "auth:email:cooldown:";
     private static final String KEY_PREFIX_ATTEMPTS = "auth:email:attempts:";
+    private static final String KEY_PREFIX_SESSION = "auth:email:session:";
 
+
+    // --- 인증 코드 관련 ---
 
     @Override
     public void saveCode(String email, String code, Duration ttl) {
@@ -35,26 +39,7 @@ public class RedisEmailVerificationTokenStoreAdapter implements EmailVerificatio
     @Override
     public void deleteCode(String email) {
         redisTemplate.delete(KEY_PREFIX_CODE + email);
-    }
-
-    @Override
-    public void markVerified(String email, Duration ttl) {
-        redisTemplate.opsForValue().set(KEY_PREFIX_VERIFIED + email, "true", ttl);
-    }
-
-    @Override
-    public boolean isVerified(String email) {
-        return redisTemplate.hasKey(KEY_PREFIX_VERIFIED + email);
-    }
-
-    @Override
-    public boolean isCooldown(String email) {
-        return redisTemplate.hasKey(KEY_PREFIX_COOLDOWN + email);
-    }
-
-    @Override
-    public void markCooldown(String email, Duration ttl) {
-        redisTemplate.opsForValue().set(KEY_PREFIX_COOLDOWN + email, "true", ttl);
+        redisTemplate.delete(KEY_PREFIX_ATTEMPTS + email);
     }
 
     @Override
@@ -66,5 +51,50 @@ public class RedisEmailVerificationTokenStoreAdapter implements EmailVerificatio
             redisTemplate.expire(key, ttl);
         }
         return attempts != null ? attempts : 1L;
+    }
+
+    // --- 쿨다운 관련 ---
+
+    @Override
+    public boolean isCooldown(String email) {
+        return redisTemplate.hasKey(KEY_PREFIX_COOLDOWN + email);
+    }
+
+    @Override
+    public void markCooldown(String email, Duration ttl) {
+        redisTemplate.opsForValue().set(KEY_PREFIX_COOLDOWN + email, "true", ttl);
+    }
+
+    // --- 인증 완료(Verified) 마킹 ---
+
+    @Override
+    public void markVerified(String email, Duration ttl) {
+        redisTemplate.opsForValue().set(KEY_PREFIX_VERIFIED + email, "true", ttl);
+    }
+
+    @Override
+    public boolean isVerified(String email) {
+        return redisTemplate.hasKey(KEY_PREFIX_VERIFIED + email);
+    }
+
+    // --- 인증 세션 토큰 관련 (신규) ---
+
+    @Override
+    public String createVerificationSession(String email, Duration ttl) {
+        String token = UUID.randomUUID().toString();
+        // Key: 토큰, Value: 이메일
+        redisTemplate.opsForValue().set(KEY_PREFIX_SESSION + email, token, ttl);
+        return token;
+    }
+
+    @Override
+    public Optional<String> getEmailBySession(String token) {
+        String email = redisTemplate.opsForValue().get(KEY_PREFIX_SESSION + token);
+        return Optional.ofNullable(email);
+    }
+
+    @Override
+    public void deleteSession(String token) {
+        redisTemplate.delete(KEY_PREFIX_SESSION + token);
     }
 }

@@ -51,4 +51,8 @@ public class CreateUserRequestDto {
     @Schema(description = "생년월일", example = "YYYYMMDD")
     private String birthday;
 
+    @NotBlank
+    @Schema(description = "이메일 인증 성공 후 받은 세션 토큰")
+    private String emailVerificationToken;
+
 }

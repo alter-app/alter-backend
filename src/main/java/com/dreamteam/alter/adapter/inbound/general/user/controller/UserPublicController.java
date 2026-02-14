@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.inbound.general.user.controller;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificationCodeRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
 import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.email.port.inbound.VerifyEmailVerificationCodeUseCase;
@@ -158,10 +159,10 @@ public class UserPublicController implements UserPublicControllerSpec {
 
     @Override
     @PostMapping("/email/verify")
-    public ResponseEntity<CommonApiResponse<Void>> verifyVerificationCode(
+    public ResponseEntity<CommonApiResponse<VerifyEmailVerificationCodeResponseDto>> verifyVerificationCode(
             @Valid @RequestBody VerifyEmailVerificationCodeRequestDto request
     ) {
-        verifyEmailVerificationCode.execute(request);
-        return ResponseEntity.ok(CommonApiResponse.empty());
+        VerifyEmailVerificationCodeResponseDto response = verifyEmailVerificationCode.execute(request);
+        return ResponseEntity.ok(CommonApiResponse.of(response));
     }
 }

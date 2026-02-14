@@ -8,6 +8,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.util.PasswordValidator;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationTokenStorePort;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -34,9 +35,21 @@ public class CreateUser implements CreateUserUseCase {
     private final PasswordEncoder passwordEncoder;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
+    private final EmailVerificationTokenStorePort emailVerificationTokenStorePort;
 
     @Override
     public GenerateTokenResponseDto execute(CreateUserRequestDto request) {
+
+        // 이메일 인증 세션 검증
+        String token = request.getEmailVerificationToken();
+        String verifiedEmail = emailVerificationTokenStorePort.getEmailBySession(token)
+                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_VERIFICATION_SESSION_INVALID));
+
+        // 토큰의 이메일과 요청의 이메일이 일치하는지 확인 (보안 강화)
+        if (!verifiedEmail.equals(request.getEmail())) {
+            throw new CustomException(ErrorCode.EMAIL_VERIFICATION_SESSION_INVALID);
+        }
+        
         // Redis 세션에서 휴대폰 인증 정보 확인
         String sessionIdKey = KEY_PREFIX + request.getSignupSessionId();
         String userInfoJson = redisTemplate.opsForValue().get(sessionIdKey);
@@ -71,8 +84,9 @@ public class CreateUser implements CreateUserUseCase {
                 request.getBirthday()
             ));
             
-            // 세션 삭제
+            // 세션 삭제 (휴대폰 인증 세션 & 이메일 인증 세션)
             redisTemplate.delete(sessionIdKey);
+            emailVerificationTokenStorePort.deleteSession(token);
 
             return GenerateTokenResponseDto.of(authService.generateAuthorization(user, TokenScope.APP));
         } catch (JsonProcessingException e) {

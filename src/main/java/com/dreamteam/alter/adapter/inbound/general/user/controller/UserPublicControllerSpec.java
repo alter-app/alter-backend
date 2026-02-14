@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificationCodeRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -91,6 +92,10 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(
                         name = "비밀번호 형식 오류",
                         value = "{\"success\": false, \"code\" : \"A014\", \"message\" : \"비밀번호는 8~16자 이내 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다.\"}"
+                    ),
+                    @ExampleObject(
+                        name = "이메일 인증 세션 오류",
+                        value = "{\"success\": false, \"code\" : \"A015\", \"message\" : \"이메일 인증 세션이 유효하지 않거나 만료되었습니다.\" }"
                     )
                 }))
     })
@@ -277,7 +282,7 @@ public interface UserPublicControllerSpec {
                     )
             )
     })
-    ResponseEntity<CommonApiResponse<Void>> verifyVerificationCode(@Valid VerifyEmailVerificationCodeRequestDto request);
+    ResponseEntity<CommonApiResponse<VerifyEmailVerificationCodeResponseDto>> verifyVerificationCode(@Valid VerifyEmailVerificationCodeRequestDto request);
 
 
 }

@@ -4,15 +4,22 @@ import java.time.Duration;
 import java.util.Optional;
 
 public interface EmailVerificationTokenStorePort {
+    // --- 인증 코드 관련 ---
     void saveCode(String email, String code, Duration ttl);
     Optional<String> findCode(String email);
     void deleteCode(String email);
+    long incrementAttempt(String email, Duration ttl);
 
-    void markVerified(String email, Duration ttl);
-    boolean isVerified(String email);
-
+    // --- 쿨다운 관련 ---
     boolean isCooldown(String email);
     void markCooldown(String email, Duration ttl);
 
-    long incrementAttempt(String email, Duration ttl);
+    // -- 인증 세션 관련 ---
+    String createVerificationSession(String email, Duration ttl);
+    Optional<String> getEmailBySession(String token);
+    void deleteSession(String token);
+
+
+    void markVerified(String email, Duration ttl);
+    boolean isVerified(String email);
 }
