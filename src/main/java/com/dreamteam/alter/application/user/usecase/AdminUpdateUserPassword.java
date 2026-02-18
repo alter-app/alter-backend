@@ -7,7 +7,7 @@ import com.dreamteam.alter.common.util.PasswordValidator;
 import com.dreamteam.alter.domain.user.context.AdminActor;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.AdminUpdateUserPasswordUseCase;
-import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
+import com.dreamteam.alter.domain.user.port.outbound.AdminUserQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,13 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class AdminUpdateUserPassword implements AdminUpdateUserPasswordUseCase {
 
-    private final UserQueryRepository userQueryRepository;
+    private final AdminUserQueryRepository adminUserQueryRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     public void execute(Long userId, AdminUpdateUserPasswordRequestDto request, AdminActor actor) {
         // 사용자 조회
-        User user = userQueryRepository.findById(userId)
+        User user = adminUserQueryRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 비밀번호 형식 검증
