@@ -1,6 +1,7 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.domain.workspace.port.inbound.ExpireSubstituteRequestsUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.GenerateNextMonthWorkspaceShiftUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.WorkspaceScheduleService;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
@@ -17,10 +18,20 @@ public class WorkspaceScheduleServiceImpl implements WorkspaceScheduleService {
     @Resource(name = "expireSubstituteRequests")
     private final ExpireSubstituteRequestsUseCase expireSubstituteRequests;
 
+    @Resource(name = "generateNextMonthWorkspaceShift")
+    private final GenerateNextMonthWorkspaceShiftUseCase generateNextMonthWorkspaceShift;
+
     @Override
     @Scheduled(cron = "0 0 0 * * *")
     @SchedulerLock(name = "expireSubstituteRequests", lockAtMostFor = "5m")
     public void expireSubstituteRequests() {
         expireSubstituteRequests.execute();
+    }
+
+    @Override
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    @SchedulerLock(name = "generateNextMonthWorkspaceShifts", lockAtMostFor = "30m")
+    public void generateNextMonthShiftsFromFixedSchedules() {
+        generateNextMonthWorkspaceShift.execute();
     }
 }

@@ -65,6 +65,11 @@ public class Workspace {
     @Column(name = "longitude", precision = 9, scale = 6, nullable = false)
     private BigDecimal longitude;
 
+    // 다음 달 고정 근무 자동 생성일 (1~31, 기본값 25)
+    @Builder.Default
+    @Column(name = "next_month_shift_gen_day", nullable = false)
+    private int nextMonthShiftGenDay = 25;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

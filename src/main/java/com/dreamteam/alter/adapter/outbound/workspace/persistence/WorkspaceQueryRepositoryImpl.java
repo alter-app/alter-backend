@@ -548,6 +548,19 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
     }
 
     @Override
+    public List<Workspace> findAllByNextMonthShiftGenDay(int day) {
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
+        return queryFactory
+            .selectFrom(qWorkspace)
+            .where(
+                qWorkspace.nextMonthShiftGenDay.eq(day),
+                qWorkspace.status.eq(WorkspaceStatus.ACTIVATED)
+            )
+            .fetch();
+    }
+
+    @Override
     public boolean existsByIdAndManagerUser(Long workspaceId, ManagerUser managerUser) {
         QWorkspace qWorkspace = QWorkspace.workspace;
 
