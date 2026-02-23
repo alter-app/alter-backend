@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -39,12 +40,20 @@ public class EmailSendLog {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "sent_at")
-    private LocalDateTime sentAt;
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    public static EmailSendLog create(String email, String code) {
+        return EmailSendLog.builder()
+                .email(email)
+                .code(code)
+                .status(EmailSendStatus.PENDING)
+                .build();
+    }
 
     public void markSent() {
         this.status = EmailSendStatus.SENT;
-        this.sentAt = LocalDateTime.now();
     }
 
     public void markFailed() {

@@ -53,6 +53,6 @@ public class CreateUserRequestDto {
 
     @NotBlank
     @Schema(description = "이메일 인증 성공 후 받은 세션 토큰")
-    private String emailVerificationToken;
+    private String emailVerificationSessionId;
 
 }

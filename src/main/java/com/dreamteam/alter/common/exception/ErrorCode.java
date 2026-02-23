@@ -21,7 +21,6 @@ public enum ErrorCode {
     SOCIAL_PROVIDER_ALREADY_LINKED(400, "A012", "이미 연동되어 있는 소셜 플랫폼입니다."),
     PASSWORD_RESET_SESSION_NOT_EXIST(400, "A013", "비밀번호 재설정 세션이 존재하지 않거나 만료되었습니다."),
     INVALID_PASSWORD_FORMAT(400, "A014", "비밀번호는 8~16자 이내 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다."),
-    EMAIL_VERIFICATION_SESSION_INVALID(400, "A015", "이메일 인증 세션이 유효하지 않거나 만료되었습니다."),
 
     ILLEGAL_ARGUMENT(400, "B001", "잘못된 요청입니다."),
     REFRESH_TOKEN_REQUIRED(400, "B002", "RefreshToken을 통해 요청해야 합니다."),
@@ -44,11 +43,7 @@ public enum ErrorCode {
     NOT_FOUND(404, "B019", "요청한 리소스를 찾을 수 없습니다."),
     CONFLICT(409, "B020", "변경할 수 없는 상태입니다."),
 
-    EMAIL_VERIFICATION_CODE_EXPIRED(400, "E001", "인증 코드가 없거나 만료되었습니다."),
-    EMAIL_VERIFICATION_CODE_MISMATCH(400, "E002", "인증 코드가 일치하지 않습니다."),
-    EMAIL_VERIFICATION_SEND_FAILED(500, "E003", "이메일 전송에 실패했습니다."),
-    EMAIL_VERIFICATION_TOO_MANY_REQUESTS(429, "E004", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
-    EMAIL_VERIFICATION_EXCEEDED_MAX_ATTEMPTS(400, "E005", "인증 시도 횟수를 초과했습니다."),
+    TOO_MANY_REQUESTS(429, "E001", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     EXTERNAL_API_ERROR(502, "C002", "외부 API 연동에 실패했습니다."),

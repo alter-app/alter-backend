@@ -162,7 +162,6 @@ public class UserPublicController implements UserPublicControllerSpec {
     public ResponseEntity<CommonApiResponse<VerifyEmailVerificationCodeResponseDto>> verifyVerificationCode(
             @Valid @RequestBody VerifyEmailVerificationCodeRequestDto request
     ) {
-        VerifyEmailVerificationCodeResponseDto response = verifyEmailVerificationCode.execute(request);
-        return ResponseEntity.ok(CommonApiResponse.of(response));
+        return ResponseEntity.ok(CommonApiResponse.of(verifyEmailVerificationCode.execute(request)));
     }
 }

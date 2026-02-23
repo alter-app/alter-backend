@@ -1,7 +1,7 @@
-package com.dreamteam.alter.adapter.outbound.aws.ses.config;
+package com.dreamteam.alter.common.config;
 
-import com.dreamteam.alter.adapter.outbound.aws.ses.properties.AwsProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
@@ -15,18 +15,22 @@ import software.amazon.awssdk.services.ses.SesClientBuilder;
 @RequiredArgsConstructor
 public class AwsSesConfig {
 
-    private final AwsProperties awsProperties;
+    @Value("${aws.region}")
+    private String region;
+
+    @Value("${aws.access-key:}")
+    private String accessKey;
+
+    @Value("${aws.secret-key:}")
+    private String secretKey;
 
     @Bean
     public SesClient sesClient() {
         SesClientBuilder builder = SesClient.builder()
-                .region(Region.of(awsProperties.getRegion()));
+                .region(Region.of(region));
 
-        if (StringUtils.hasText(awsProperties.getAccessKey()) && StringUtils.hasText(awsProperties.getSecretKey())) {
-            AwsBasicCredentials credentials = AwsBasicCredentials.create(
-                    awsProperties.getAccessKey(),
-                    awsProperties.getSecretKey()
-            );
+        if (StringUtils.hasText(accessKey) && StringUtils.hasText(secretKey)) {
+            AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
             builder.credentialsProvider(StaticCredentialsProvider.create(credentials));
         }
 

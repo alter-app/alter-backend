@@ -4,7 +4,7 @@ import com.dreamteam.alter.domain.email.entity.EmailSendLog;
 
 import java.util.Optional;
 
-public interface EmailSendLogPort {
+public interface EmailSendLogRepository {
     EmailSendLog save(EmailSendLog log);
     Optional<EmailSendLog> findById(Long id);
 }

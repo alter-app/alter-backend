@@ -3,7 +3,7 @@ package com.dreamteam.alter.domain.email.port.outbound;
 import java.time.Duration;
 import java.util.Optional;
 
-public interface EmailVerificationTokenStorePort {
+public interface EmailVerificationSessionStoreRepository {
     // --- 인증 코드 관련 ---
     void saveCode(String email, String code, Duration ttl);
     Optional<String> findCode(String email);
@@ -18,8 +18,4 @@ public interface EmailVerificationTokenStorePort {
     String createVerificationSession(String email, Duration ttl);
     Optional<String> getEmailBySession(String token);
     void deleteSession(String token);
-
-
-    void markVerified(String email, Duration ttl);
-    boolean isVerified(String email);
 }
