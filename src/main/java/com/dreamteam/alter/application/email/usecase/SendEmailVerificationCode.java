@@ -43,6 +43,9 @@ public class SendEmailVerificationCode implements SendEmailVerificationCodeUseCa
             throw new CustomException(ErrorCode.TOO_MANY_REQUESTS);
         }
 
+        // 이전 발송 실패 플래그 초기화
+        sessionStorePort.clearSendFailed(email);
+
         // Generate Code
         String code = codeGenerator.generate();
 

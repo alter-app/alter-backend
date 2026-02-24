@@ -1,11 +1,17 @@
 package com.dreamteam.alter.adapter.inbound.general.user.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificationCodeRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
 import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUseCase;
+import com.dreamteam.alter.domain.email.port.inbound.VerifyEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.port.inbound.*;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,6 +44,21 @@ public class UserSelfController implements UserSelfControllerSpec {
 
     @Resource(name = "deleteUserSelfCertificate")
     private final DeleteUserSelfCertificateUseCase deleteUserSelfCertificate;
+
+    @Resource(name = "registerEmail")
+    private final RegisterEmailUseCase registerEmail;
+
+    @Resource(name = "updateEmail")
+    private final UpdateEmailUseCase updateEmail;
+
+    @Resource(name = "removeEmail")
+    private final RemoveEmailUseCase removeEmail;
+
+    @Resource(name = "sendEmailVerificationCode")
+    private final SendEmailVerificationCodeUseCase sendEmailVerificationCode;
+
+    @Resource(name = "verifyEmailVerificationCode")
+    private final VerifyEmailVerificationCodeUseCase verifyEmailVerificationCode;
 
     @Override
     @GetMapping
@@ -97,6 +118,54 @@ public class UserSelfController implements UserSelfControllerSpec {
 
         deleteUserSelfCertificate.execute(actor, certificateId);
         return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PostMapping("/email")
+    public ResponseEntity<CommonApiResponse<Void>> registerEmail(
+        @Valid @RequestBody RegisterEmailRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        registerEmail.execute(actor, request.getEmailVerificationSessionId());
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PutMapping("/email")
+    public ResponseEntity<CommonApiResponse<Void>> updateEmail(
+        @Valid @RequestBody RegisterEmailRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        updateEmail.execute(actor, request.getEmailVerificationSessionId());
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @DeleteMapping("/email")
+    public ResponseEntity<CommonApiResponse<Void>> removeEmail() {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        removeEmail.execute(actor);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PostMapping("/email/send")
+    public ResponseEntity<CommonApiResponse<Void>> sendVerificationCode(
+            @Valid @RequestBody SendEmailVerificationCodeRequestDto request
+    ) {
+        sendEmailVerificationCode.execute(request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PostMapping("/email/verify")
+    public ResponseEntity<CommonApiResponse<VerifyEmailVerificationCodeResponseDto>> verifyVerificationCode(
+            @Valid @RequestBody VerifyEmailVerificationCodeRequestDto request
+    ) {
+        return ResponseEntity.ok(CommonApiResponse.of(verifyEmailVerificationCode.execute(request)));
     }
 
 }

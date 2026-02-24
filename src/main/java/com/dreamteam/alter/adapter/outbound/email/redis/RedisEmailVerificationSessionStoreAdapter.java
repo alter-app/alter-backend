@@ -19,6 +19,7 @@ public class RedisEmailVerificationSessionStoreAdapter implements EmailVerificat
     private static final String KEY_PREFIX_COOLDOWN = "auth:email:cooldown:";
     private static final String KEY_PREFIX_ATTEMPTS = "auth:email:attempts:";
     private static final String KEY_PREFIX_SESSION = "auth:email:session:";
+    private static final String KEY_PREFIX_SEND_FAILED = "auth:email:send-failed:";
 
 
     // --- 인증 코드 관련 ---
@@ -81,5 +82,22 @@ public class RedisEmailVerificationSessionStoreAdapter implements EmailVerificat
     @Override
     public void deleteSession(String token) {
         redisTemplate.delete(KEY_PREFIX_SESSION + token);
+    }
+
+    // --- 발송 실패 관련 ---
+
+    @Override
+    public void markSendFailed(String email) {
+        redisTemplate.opsForValue().set(KEY_PREFIX_SEND_FAILED + email, "true", Duration.ofMinutes(10));
+    }
+
+    @Override
+    public boolean isSendFailed(String email) {
+        return redisTemplate.hasKey(KEY_PREFIX_SEND_FAILED + email);
+    }
+
+    @Override
+    public void clearSendFailed(String email) {
+        redisTemplate.delete(KEY_PREFIX_SEND_FAILED + email);
     }
 }

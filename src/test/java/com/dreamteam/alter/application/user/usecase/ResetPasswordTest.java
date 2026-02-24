@@ -104,7 +104,6 @@ class ResetPasswordTest {
 
         ResetPasswordRequestDto request = new ResetPasswordRequestDto(sessionId, newPassword);
         User user = User.create(
-            "test@example.com",
             "01012345678",
             "oldPassword",
             "테스트",
@@ -147,7 +146,6 @@ class ResetPasswordTest {
 
         ResetPasswordRequestDto request = new ResetPasswordRequestDto(sessionId, invalidPassword);
         User user = User.create(
-            "test@example.com",
             "01012345678",
             "oldPassword",
             "테스트",

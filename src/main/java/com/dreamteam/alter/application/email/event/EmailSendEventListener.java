@@ -2,6 +2,7 @@ package com.dreamteam.alter.application.email.event;
 
 import com.dreamteam.alter.domain.email.port.outbound.EmailSendLogRepository;
 import com.dreamteam.alter.domain.email.port.outbound.EmailClient;
+import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -18,6 +19,7 @@ public class EmailSendEventListener {
 
     private final EmailSendLogRepository emailSendLogRepository;
     private final EmailClient emailClient;
+    private final EmailVerificationSessionStoreRepository sessionStoreRepository;
 
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -32,6 +34,9 @@ public class EmailSendEventListener {
             } catch (Exception e) {
                 log.error("Async failed to send email to: {}", logItem.getEmail(), e);
                 logItem.markFailed();
+                // 발송 실패 시 인증 코드 삭제 및 실패 상태 기록
+                sessionStoreRepository.deleteCode(logItem.getEmail());
+                sessionStoreRepository.markSendFailed(logItem.getEmail());
             }
             emailSendLogRepository.save(logItem);
         });

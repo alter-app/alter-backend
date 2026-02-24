@@ -18,4 +18,9 @@ public interface EmailVerificationSessionStoreRepository {
     String createVerificationSession(String email, Duration ttl);
     Optional<String> getEmailBySession(String token);
     void deleteSession(String token);
+
+    // --- 발송 실패 관련 ---
+    void markSendFailed(String email);
+    boolean isSendFailed(String email);
+    void clearSendFailed(String email);
 }

@@ -21,6 +21,7 @@ public enum ErrorCode {
     SOCIAL_PROVIDER_ALREADY_LINKED(400, "A012", "이미 연동되어 있는 소셜 플랫폼입니다."),
     PASSWORD_RESET_SESSION_NOT_EXIST(400, "A013", "비밀번호 재설정 세션이 존재하지 않거나 만료되었습니다."),
     INVALID_PASSWORD_FORMAT(400, "A014", "비밀번호는 8~16자 이내 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다."),
+    EMAIL_NOT_REGISTERED(400, "A015", "이메일이 등록되지 않은 사용자입니다."),
 
     ILLEGAL_ARGUMENT(400, "B001", "잘못된 요청입니다."),
     REFRESH_TOKEN_REQUIRED(400, "B002", "RefreshToken을 통해 요청해야 합니다."),
@@ -44,6 +45,7 @@ public enum ErrorCode {
     CONFLICT(409, "B020", "변경할 수 없는 상태입니다."),
 
     TOO_MANY_REQUESTS(429, "E001", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
+    EMAIL_SEND_FAILED(500, "E002", "이메일 발송에 실패했습니다. 인증 코드를 다시 발송해주세요."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     EXTERNAL_API_ERROR(502, "C002", "외부 API 연동에 실패했습니다."),

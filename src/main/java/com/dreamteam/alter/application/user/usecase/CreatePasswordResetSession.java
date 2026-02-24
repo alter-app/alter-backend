@@ -30,9 +30,19 @@ public class CreatePasswordResetSession implements CreatePasswordResetSessionUse
 
     @Override
     public CreatePasswordResetSessionResponseDto execute(CreatePasswordResetSessionRequestDto request) {
-        // 이메일과 전화번호로 사용자 확인
-        User user = userQueryRepository.findByEmailAndContact(request.getEmail(), request.getContact())
+        // 전화번호로 사용자 확인
+        User user = userQueryRepository.findByContact(request.getContact())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 이메일 등록 여부 확인
+        if (user.getEmail() == null) {
+            throw new CustomException(ErrorCode.EMAIL_NOT_REGISTERED);
+        }
+
+        // 이메일 일치 여부 확인
+        if (!user.getEmail().equals(request.getEmail())) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
 
         // 기존 세션 확인 및 삭제
         String userIndexKey = USER_INDEX_KEY_PREFIX + user.getId();

@@ -8,7 +8,6 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.util.PasswordValidator;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
-import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -35,21 +34,10 @@ public class CreateUser implements CreateUserUseCase {
     private final PasswordEncoder passwordEncoder;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
-    private final EmailVerificationSessionStoreRepository emailVerificationSessionStoreRepository;
 
     @Override
     public GenerateTokenResponseDto execute(CreateUserRequestDto request) {
 
-        // 이메일 인증 세션 검증
-        String emailVerificationSessionId = request.getEmailVerificationSessionId();
-        String verifiedEmail = emailVerificationSessionStoreRepository.getEmailBySession(emailVerificationSessionId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일 인증 세션이 유효하지 않거나 만료되었습니다."));
-
-        // 토큰의 이메일과 요청의 이메일이 일치하는지 확인 (보안 강화)
-        if (!verifiedEmail.equals(request.getEmail())) {
-            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일 인증 세션이 유효하지 않거나 만료되었습니다.");
-        }
-        
         // Redis 세션에서 휴대폰 인증 정보 확인
         String sessionIdKey = KEY_PREFIX + request.getSignupSessionId();
         String userInfoJson = redisTemplate.opsForValue().get(sessionIdKey);
@@ -61,11 +49,11 @@ public class CreateUser implements CreateUserUseCase {
         try {
             // Redis에서 사용자 정보 복원
             CreateSignupSessionRequestDto sessionUserInfo = objectMapper.readValue(
-                userInfoJson, 
+                userInfoJson,
                 CreateSignupSessionRequestDto.class
             );
 
-            // 중복 확인 (요청의 email과 세션의 contact 사용)
+            // 중복 확인
             validateDuplication(request, sessionUserInfo, sessionIdKey);
 
             // 비밀번호 형식 검증
@@ -73,9 +61,8 @@ public class CreateUser implements CreateUserUseCase {
                 throw new CustomException(ErrorCode.INVALID_PASSWORD_FORMAT);
             }
 
-            // 사용자 생성 (요청의 email과 세션의 contact 사용)
+            // 사용자 생성
             User user = userRepository.save(User.create(
-                request.getEmail(),
                 sessionUserInfo.getContact(),
                 passwordEncoder.encode(request.getPassword()),
                 request.getName(),
@@ -83,10 +70,9 @@ public class CreateUser implements CreateUserUseCase {
                 request.getGender(),
                 request.getBirthday()
             ));
-            
-            // 세션 삭제 (휴대폰 인증 세션 & 이메일 인증 세션)
+
+            // 회원가입 세션 삭제
             redisTemplate.delete(sessionIdKey);
-            emailVerificationSessionStoreRepository.deleteSession(emailVerificationSessionId);
 
             return GenerateTokenResponseDto.of(authService.generateAuthorization(user, TokenScope.APP));
         } catch (JsonProcessingException e) {
@@ -94,16 +80,7 @@ public class CreateUser implements CreateUserUseCase {
         }
     }
 
-    /**
-     * 사용자 정보의 중복 여부를 확인합니다.
-     */
     private void validateDuplication(CreateUserRequestDto request, CreateSignupSessionRequestDto sessionUserInfo, String sessionIdKey) {
-        // 이메일 중복 확인
-        if (userQueryRepository.findByEmail(request.getEmail()).isPresent()) {
-            redisTemplate.delete(sessionIdKey);
-            throw new CustomException(ErrorCode.EMAIL_DUPLICATED);
-        }
-
         // 닉네임 중복 확인
         if (userQueryRepository.findByNickname(request.getNickname()).isPresent()) {
             redisTemplate.delete(sessionIdKey);

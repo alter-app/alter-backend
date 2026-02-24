@@ -2,9 +2,6 @@ package com.dreamteam.alter.adapter.inbound.general.user.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
-import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificationCodeRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -66,10 +63,6 @@ public interface UserPublicControllerSpec {
                 schema = @Schema(implementation = ErrorResponse.class),
                 examples = {
                     @ExampleObject(
-                        name = "이메일 중복",
-                        value = "{\"code\" : \"A004\"}"
-                    ),
-                    @ExampleObject(
                         name = "소셜 플랫폼 ID 중복",
                         value = "{\"code\" : \"A005\"}"
                     ),
@@ -92,10 +85,6 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(
                         name = "비밀번호 형식 오류",
                         value = "{\"success\": false, \"code\" : \"A014\", \"message\" : \"비밀번호는 8~16자 이내 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다.\"}"
-                    ),
-                    @ExampleObject(
-                        name = "이메일 인증 세션 오류",
-                        value = "{\"success\": false, \"code\" : \"A015\", \"message\" : \"이메일 인증 세션이 유효하지 않거나 만료되었습니다.\" }"
                     )
                 }))
     })
@@ -146,6 +135,10 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(
                         name = "존재하지 않는 사용자",
                         value = "{\"success\": false, \"code\" : \"B011\", \"message\" : \"존재하지 않는 사용자입니다.\"}"
+                    ),
+                    @ExampleObject(
+                        name = "이메일 미등록 사용자",
+                        value = "{\"success\": false, \"code\" : \"A015\", \"message\" : \"이메일이 등록되지 않은 사용자입니다.\"}"
                     )
                 }))
     })
@@ -178,6 +171,10 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(
                         name = "존재하지 않는 사용자",
                         value = "{\"success\": false, \"code\" : \"B011\", \"message\" : \"존재하지 않는 사용자입니다.\"}"
+                    ),
+                    @ExampleObject(
+                        name = "이메일 미등록 사용자",
+                        value = "{\"success\": false, \"code\" : \"A015\", \"message\" : \"이메일이 등록되지 않은 사용자입니다.\"}"
                     )
                 }))
     })
@@ -221,68 +218,5 @@ public interface UserPublicControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> resetPassword(@Valid ResetPasswordRequestDto request);
-
-    @Operation(
-            summary = "이메일 인증 코드 발송",
-            description = "이메일로 6자리 인증 코드 발송"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "인증 코드 발송 성공"
-            ),
-            @ApiResponse(responseCode = "429", description = "요청이 너무 많음 (쿨다운)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "쿨다운 위반",
-                                            value = "{\"success\": false, \"code\" : \"E004\", \"message\" : \"요청이 너무 많습니다. 잠시 후 다시 시도해주세요.\"}"
-                                    )
-                            }
-                    )
-            ),
-            @ApiResponse(responseCode = "500", description = "서버 에러",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "이메일 전송 실패",
-                                            value = "{\"success\": false, \"code\" : \"E003\", \"message\" : \"이메일 전송에 실패했습니다.\"}"
-                                    )
-                            }
-                    )
-            )
-    })
-    ResponseEntity<CommonApiResponse<Void>> sendVerificationCode(@Valid SendEmailVerificationCodeRequestDto request);
-
-    @Operation(summary = "이메일 인증 코드 검증", description = "발송된 인증 코드를 검증합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "인증 코드 검증 성공"),
-            @ApiResponse(responseCode = "400", description = "실패 케이스",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "인증 코드 만료/없음",
-                                            value = "{\"success\": false, \"code\" : \"E001\", \"message\" : \"인증 코드가 없거나 만료되었습니다.\"}"
-                                    ),
-                                    @ExampleObject(
-                                            name = "인증 코드 불일치",
-                                            value = "{\"success\": false, \"code\" : \"E002\", \"message\" : \"인증 코드가 일치하지 않습니다.\"}"
-                                    ),
-                                    @ExampleObject(
-                                            name = "인증 시도 횟수 초과",
-                                            value = "{\"success\": false, \"code\" : \"E005\", \"message\" : \"인증 시도 횟수를 초과했습니다. 코드를 다시 발송해주세요.\"}"
-                                    )
-                            }
-                    )
-            )
-    })
-    ResponseEntity<CommonApiResponse<VerifyEmailVerificationCodeResponseDto>> verifyVerificationCode(@Valid VerifyEmailVerificationCodeRequestDto request);
-
 
 }

@@ -1,12 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.general.user.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificationCodeRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
-import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUseCase;
-import com.dreamteam.alter.domain.email.port.inbound.VerifyEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CreateSignupSessionUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.LoginWithPasswordUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.LoginWithSocialUseCase;
@@ -59,12 +54,6 @@ public class UserPublicController implements UserPublicControllerSpec {
 
     @Resource(name = "resetPassword")
     private final ResetPasswordUseCase resetPassword;
-
-    @Resource(name = "sendEmailVerificationCode")
-    private final SendEmailVerificationCodeUseCase sendEmailVerificationCode;
-
-    @Resource(name = "verifyEmailVerificationCode")
-    private final VerifyEmailVerificationCodeUseCase verifyEmailVerificationCode;
 
 
     @Override
@@ -148,20 +137,4 @@ public class UserPublicController implements UserPublicControllerSpec {
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
-    @Override
-    @PostMapping("/email/send")
-    public ResponseEntity<CommonApiResponse<Void>> sendVerificationCode(
-            @Valid @RequestBody SendEmailVerificationCodeRequestDto request
-    ) {
-        sendEmailVerificationCode.execute(request);
-        return ResponseEntity.ok(CommonApiResponse.empty());
-    }
-
-    @Override
-    @PostMapping("/email/verify")
-    public ResponseEntity<CommonApiResponse<VerifyEmailVerificationCodeResponseDto>> verifyVerificationCode(
-            @Valid @RequestBody VerifyEmailVerificationCodeRequestDto request
-    ) {
-        return ResponseEntity.ok(CommonApiResponse.of(verifyEmailVerificationCode.execute(request)));
-    }
 }
