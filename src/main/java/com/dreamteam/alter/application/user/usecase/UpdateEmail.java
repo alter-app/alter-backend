@@ -31,11 +31,6 @@ public class UpdateEmail implements UpdateEmailUseCase {
         User user = userQueryRepository.findById(actor.getUserId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 이미 등록된 이메일이 없으면 등록 API 사용 유도
-        if (user.getEmail() == null) {
-            throw new CustomException(ErrorCode.EMAIL_NOT_REGISTERED);
-        }
-
         // 현재 이메일과 동일하면 변경 불필요
         if (verifiedEmail.equals(user.getEmail())) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "현재 등록된 이메일과 동일합니다.");

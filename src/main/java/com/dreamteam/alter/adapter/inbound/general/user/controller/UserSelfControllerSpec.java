@@ -100,11 +100,11 @@ public interface UserSelfControllerSpec {
     ResponseEntity<CommonApiResponse<Void>> deleteUserSelfCertificate(Long certificateId);
 
     @Operation(
-        summary = "이메일 등록",
-        description = "이메일 인증 완료 후 발급된 세션 ID로 본인 계정에 이메일을 등록합니다."
+        summary = "이메일 등록/갱신",
+        description = "이메일 인증 완료 후 발급된 세션 ID로 본인 계정의 이메일을 등록 또는 변경합니다."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "이메일 등록 성공"),
+        @ApiResponse(responseCode = "200", description = "이메일 등록/갱신 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
             content = @Content(
                 mediaType = "application/json",
@@ -113,37 +113,6 @@ public interface UserSelfControllerSpec {
                     @ExampleObject(
                         name = "이메일 인증 세션 유효하지 않음",
                         value = "{\"code\" : \"B001\", \"message\" : \"이메일 인증 세션이 유효하지 않거나 만료되었습니다.\"}"
-                    ),
-                    @ExampleObject(
-                        name = "이메일 중복",
-                        value = "{\"code\" : \"A004\"}"
-                    ),
-                    @ExampleObject(
-                        name = "사용자 조회 실패",
-                        value = "{\"code\" : \"B011\"}"
-                    )
-                }))
-    })
-    ResponseEntity<CommonApiResponse<Void>> registerEmail(@RequestBody @Valid RegisterEmailRequestDto request);
-
-    @Operation(
-        summary = "이메일 갱신",
-        description = "이메일 인증 완료 후 발급된 세션 ID로 본인 계정의 이메일을 변경합니다. 기존 이메일이 등록된 경우에만 사용 가능합니다."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "이메일 갱신 성공"),
-        @ApiResponse(responseCode = "400", description = "실패 케이스",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = ErrorResponse.class),
-                examples = {
-                    @ExampleObject(
-                        name = "이메일 인증 세션 유효하지 않음",
-                        value = "{\"code\" : \"B001\", \"message\" : \"이메일 인증 세션이 유효하지 않거나 만료되었습니다.\"}"
-                    ),
-                    @ExampleObject(
-                        name = "이메일 미등록 사용자 (등록 API 사용 필요)",
-                        value = "{\"code\" : \"A015\"}"
                     ),
                     @ExampleObject(
                         name = "현재 이메일과 동일",

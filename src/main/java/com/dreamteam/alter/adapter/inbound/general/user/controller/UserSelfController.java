@@ -45,9 +45,6 @@ public class UserSelfController implements UserSelfControllerSpec {
     @Resource(name = "deleteUserSelfCertificate")
     private final DeleteUserSelfCertificateUseCase deleteUserSelfCertificate;
 
-    @Resource(name = "registerEmail")
-    private final RegisterEmailUseCase registerEmail;
-
     @Resource(name = "updateEmail")
     private final UpdateEmailUseCase updateEmail;
 
@@ -122,17 +119,6 @@ public class UserSelfController implements UserSelfControllerSpec {
 
     @Override
     @PostMapping("/email")
-    public ResponseEntity<CommonApiResponse<Void>> registerEmail(
-        @Valid @RequestBody RegisterEmailRequestDto request
-    ) {
-        AppActor actor = AppActionContext.getInstance().getActor();
-
-        registerEmail.execute(actor, request.getEmailVerificationSessionId());
-        return ResponseEntity.ok(CommonApiResponse.empty());
-    }
-
-    @Override
-    @PutMapping("/email")
     public ResponseEntity<CommonApiResponse<Void>> updateEmail(
         @Valid @RequestBody RegisterEmailRequestDto request
     ) {

@@ -103,11 +103,6 @@ public class User {
             .build();
     }
 
-    public void registerEmail(String email) {
-        this.email = email;
-        this.emailVerified = true;
-    }
-
     public void updateEmail(String email) {
         this.email = email;
         this.emailVerified = true;
