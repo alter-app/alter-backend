@@ -34,12 +34,6 @@ public class VerifyEmailVerificationCode implements VerifyEmailVerificationCodeU
         String email = request.getEmail();
         String inputCode = request.getCode();
 
-        // 발송 실패 여부 확인
-        if (sessionStoreRepository.isSendFailed(email)) {
-            sessionStoreRepository.clearSendFailed(email);
-            throw new CustomException(ErrorCode.EMAIL_SEND_FAILED);
-        }
-
         // Find Code
         String storedCode = sessionStoreRepository.findCode(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "인증 코드가 없거나 만료되었습니다."));

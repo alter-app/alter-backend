@@ -34,9 +34,8 @@ public class EmailSendEventListener {
             } catch (Exception e) {
                 log.error("Async failed to send email to: {}", logItem.getEmail(), e);
                 logItem.markFailed();
-                // 발송 실패 시 인증 코드 삭제 및 실패 상태 기록
+                // 발송 실패 시 인증 코드 삭제
                 sessionStoreRepository.deleteCode(logItem.getEmail());
-                sessionStoreRepository.markSendFailed(logItem.getEmail());
             }
             emailSendLogRepository.save(logItem);
         });
