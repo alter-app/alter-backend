@@ -17,26 +17,47 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class EmailSendEventListener {
 
+    private static final int MAX_RETRY = 2;
+    private static final long RETRY_DELAY_MS = 1000L;
+
     private final EmailSendLogRepository emailSendLogRepository;
     private final EmailClient emailClient;
     private final EmailVerificationSessionStoreRepository sessionStoreRepository;
 
-    @Async
+    @Async("emailTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleEmailSendEvent(EmailSendEvent event) {
         Long logId = event.getLogId();
 
         emailSendLogRepository.findById(logId).ifPresent(logItem -> {
-            try {
-                emailClient.sendVerificationCode(event.getEmail(), event.getCode());
-                logItem.markSent();
-            } catch (Exception e) {
-                log.error("Async failed to send email to: {}", event.getEmail(), e);
+            Exception lastException = null;
+
+            for (int attempt = 0; attempt <= MAX_RETRY; attempt++) {
+                try {
+                    emailClient.sendVerificationCode(event.getEmail(), event.getCode());
+                    logItem.markSent();
+                    lastException = null;
+                    break;
+                } catch (Exception e) {
+                    lastException = e;
+                    if (attempt < MAX_RETRY) {
+                        try {
+                            Thread.sleep(RETRY_DELAY_MS * (attempt + 1));
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (lastException != null) {
+                log.error("{}회 재시도 후 이메일 발송 실패 to: {}", MAX_RETRY + 1, event.getEmail(), lastException);
                 logItem.markFailed();
-                // 발송 실패 시 인증 코드 삭제
                 sessionStoreRepository.deleteCode(event.getEmail());
             }
+
             emailSendLogRepository.save(logItem);
         });
     }
