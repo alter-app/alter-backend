@@ -29,13 +29,13 @@ public class EmailSendEventListener {
 
         emailSendLogRepository.findById(logId).ifPresent(logItem -> {
             try {
-                emailClient.sendVerificationCode(logItem.getEmail(), logItem.getCode());
+                emailClient.sendVerificationCode(event.getEmail(), event.getCode());
                 logItem.markSent();
             } catch (Exception e) {
-                log.error("Async failed to send email to: {}", logItem.getEmail(), e);
+                log.error("Async failed to send email to: {}", event.getEmail(), e);
                 logItem.markFailed();
                 // 발송 실패 시 인증 코드 삭제
-                sessionStoreRepository.deleteCode(logItem.getEmail());
+                sessionStoreRepository.deleteCode(event.getEmail());
             }
             emailSendLogRepository.save(logItem);
         });

@@ -53,11 +53,11 @@ public class SendEmailVerificationCode implements SendEmailVerificationCodeUseCa
         sessionStorePort.markCooldown(email, Duration.ofSeconds(cooldownSeconds));
 
         // Save to DB for batch Sending (Not Sending immediately)
-        EmailSendLog log = EmailSendLog.create(email, code);
+        EmailSendLog log = EmailSendLog.create(email);
 
         // Send Email
         EmailSendLog saved = emailSendLogRepository.save(log);
 
-        eventPublisher.publishEvent(new EmailSendEvent(saved.getId()));
+        eventPublisher.publishEvent(new EmailSendEvent(saved.getId(), email, code));
     }
 }

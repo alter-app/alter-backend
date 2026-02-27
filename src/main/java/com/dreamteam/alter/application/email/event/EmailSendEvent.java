@@ -7,4 +7,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class EmailSendEvent {
     private Long logId;
+    private String email;
+    private String code;
 }

@@ -29,9 +29,6 @@ public class EmailSendLog {
     @Column(name = "email", nullable = false, length = 100)
     private String email;
 
-    @Column(name = "code", nullable = false, length = 6)
-    private String code;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private EmailSendStatus status;
@@ -44,10 +41,9 @@ public class EmailSendLog {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public static EmailSendLog create(String email, String code) {
+    public static EmailSendLog create(String email) {
         return EmailSendLog.builder()
                 .email(email)
-                .code(code)
                 .status(EmailSendStatus.PENDING)
                 .build();
     }
