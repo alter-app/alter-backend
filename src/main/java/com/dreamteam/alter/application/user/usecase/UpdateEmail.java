@@ -27,9 +27,7 @@ public class UpdateEmail implements UpdateEmailUseCase {
                 .getEmailBySession(emailVerificationSessionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일 인증 세션이 유효하지 않거나 만료되었습니다."));
 
-        // 사용자 조회
-        User user = userQueryRepository.findById(actor.getUserId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = actor.getUser();
 
         // 현재 이메일과 동일하면 변경 불필요
         if (verifiedEmail.equals(user.getEmail())) {
