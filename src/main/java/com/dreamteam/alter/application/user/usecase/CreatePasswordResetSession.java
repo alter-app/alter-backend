@@ -36,7 +36,7 @@ public class CreatePasswordResetSession implements CreatePasswordResetSessionUse
 
         // 이메일 등록 여부 확인
         if (user.getEmail() == null) {
-            throw new CustomException(ErrorCode.EMAIL_NOT_REGISTERED);
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일이 등록되지 않은 사용자입니다.");
         }
 
         // 이메일 일치 여부 확인

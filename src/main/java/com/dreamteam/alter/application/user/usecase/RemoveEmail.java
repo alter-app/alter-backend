@@ -19,7 +19,7 @@ public class RemoveEmail implements RemoveEmailUseCase {
         User user = actor.getUser();
 
         if (user.getEmail() == null) {
-            throw new CustomException(ErrorCode.EMAIL_NOT_REGISTERED);
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일이 등록되지 않은 사용자입니다.");
         }
 
         user.removeEmail();
