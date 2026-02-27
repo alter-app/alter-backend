@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class RedisEmailVerificationSessionStoreAdapter implements EmailVerificationSessionStoreRepository {
+public class EmailVerificationSessionStoreRepositoryImpl implements EmailVerificationSessionStoreRepository {
 
     private final StringRedisTemplate redisTemplate;
 
