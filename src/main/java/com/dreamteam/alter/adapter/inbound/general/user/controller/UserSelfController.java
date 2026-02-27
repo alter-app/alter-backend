@@ -138,7 +138,7 @@ public class UserSelfController implements UserSelfControllerSpec {
     }
 
     @Override
-    @PostMapping("/email/send")
+    @PostMapping("/email/verification/send")
     public ResponseEntity<CommonApiResponse<Void>> sendVerificationCode(
             @Valid @RequestBody SendEmailVerificationCodeRequestDto request
     ) {
