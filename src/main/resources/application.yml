@@ -57,10 +57,10 @@ alter:
     permit-all-urls: ${PERMIT_ALL_URLS}
   email:
     from: ${SES_FROM_EMAIL}
-    code-ttl-seconds: ${EMAIL_CODE_TTL_SECONDS:300}
-    verified-ttl-seconds: ${EMAIL_VERIFIED_TTL_SECONDS:900}
-    cooldown-seconds: ${EMAIL_COOLDOWN_SECONDS:30}
-    max-attempts: ${EMAIL_MAX_ATTEMPTS:5}
+    code-ttl-seconds: ${EMAIL_CODE_TTL_SECONDS}
+    verified-ttl-seconds: ${EMAIL_VERIFIED_TTL_SECONDS}
+    cooldown-seconds: ${EMAIL_COOLDOWN_SECONDS}
+    max-attempts: ${EMAIL_MAX_ATTEMPTS}
 firebase:
   fcm:
     project-id: ${FIREBASE_PROJECT_ID}
@@ -70,5 +70,5 @@ sgis:
   service-secret: ${SGIS_SERVICE_SECRET}
 aws:
   region: ${AWS_REGION}
-  access-key: ${AWS_ACCESS_KEY_ID:}
-  secret-key: ${AWS_SECRET_ACCESS_KEY:}
+  access-key: ${AWS_ACCESS_KEY_ID}
+  secret-key: ${AWS_SECRET_ACCESS_KEY}
