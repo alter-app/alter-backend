@@ -24,6 +24,10 @@ public class FindEmailByContact implements FindEmailByContactUseCase {
         User user = userQueryRepository.findByContact(request.getContact())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+        if (user.getEmail() == null) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일이 등록되지 않은 사용자입니다.");
+        }
+
         String maskedEmail = MaskUtil.maskEmail(user.getEmail());
 
         return FindEmailResponseDto.of(maskedEmail);

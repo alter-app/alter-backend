@@ -28,8 +28,12 @@ public class User {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "email", length = 255, nullable = false, unique = true)
+    @Column(name = "email", length = 255, nullable = true, unique = true)
     private String email;
+
+    @Builder.Default
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
 
     @Column(name = "password", length = 255, nullable = false)
     private String password;
@@ -78,7 +82,6 @@ public class User {
     private List<UserSocial> userSocials;
 
     public static User create(
-        String email,
         String contact,
         String encodedPassword,
         String name,
@@ -87,7 +90,8 @@ public class User {
         String birthday
     ) {
         return User.builder()
-            .email(email)
+            .email(null)
+            .emailVerified(false)
             .password(encodedPassword)
             .name(name)
             .nickname(nickname)
@@ -97,6 +101,16 @@ public class User {
             .role(UserRole.ROLE_USER)
             .status(UserStatus.ACTIVE)
             .build();
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+        this.emailVerified = true;
+    }
+
+    public void removeEmail() {
+        this.email = null;
+        this.emailVerified = false;
     }
 
     public void addCertificate(UserCertificate userCertificate) {

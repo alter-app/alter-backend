@@ -55,6 +55,7 @@ public class UserPublicController implements UserPublicControllerSpec {
     @Resource(name = "resetPassword")
     private final ResetPasswordUseCase resetPassword;
 
+
     @Override
     @PostMapping("/signup-session")
     public ResponseEntity<CommonApiResponse<CreateSignupSessionResponseDto>> createSignupSession(
@@ -135,4 +136,5 @@ public class UserPublicController implements UserPublicControllerSpec {
         resetPassword.execute(request);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
+
 }

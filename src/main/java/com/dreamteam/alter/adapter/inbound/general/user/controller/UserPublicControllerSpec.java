@@ -63,10 +63,6 @@ public interface UserPublicControllerSpec {
                 schema = @Schema(implementation = ErrorResponse.class),
                 examples = {
                     @ExampleObject(
-                        name = "이메일 중복",
-                        value = "{\"code\" : \"A004\"}"
-                    ),
-                    @ExampleObject(
                         name = "소셜 플랫폼 ID 중복",
                         value = "{\"code\" : \"A005\"}"
                     ),
@@ -139,6 +135,10 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(
                         name = "존재하지 않는 사용자",
                         value = "{\"success\": false, \"code\" : \"B011\", \"message\" : \"존재하지 않는 사용자입니다.\"}"
+                    ),
+                    @ExampleObject(
+                        name = "이메일 미등록 사용자",
+                        value = "{\"success\": false, \"code\" : \"A015\", \"message\" : \"이메일이 등록되지 않은 사용자입니다.\"}"
                     )
                 }))
     })
@@ -171,6 +171,10 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(
                         name = "존재하지 않는 사용자",
                         value = "{\"success\": false, \"code\" : \"B011\", \"message\" : \"존재하지 않는 사용자입니다.\"}"
+                    ),
+                    @ExampleObject(
+                        name = "이메일 미등록 사용자",
+                        value = "{\"success\": false, \"code\" : \"A015\", \"message\" : \"이메일이 등록되지 않은 사용자입니다.\"}"
                     )
                 }))
     })
