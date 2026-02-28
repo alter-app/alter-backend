@@ -13,7 +13,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "email_send_log")
+@Table(name = "email_send_logs")
 @Getter
 @Builder
 @NoArgsConstructor
@@ -34,7 +34,7 @@ public class EmailSendLog {
     private EmailSendStatus status;
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
