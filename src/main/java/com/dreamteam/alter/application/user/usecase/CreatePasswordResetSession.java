@@ -34,16 +34,6 @@ public class CreatePasswordResetSession implements CreatePasswordResetSessionUse
         User user = userQueryRepository.findByContact(request.getContact())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 이메일 등록 여부 확인
-        if (user.getEmail() == null) {
-            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일이 등록되지 않은 사용자입니다.");
-        }
-
-        // 이메일 일치 여부 확인
-        if (!user.getEmail().equals(request.getEmail())) {
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
-        }
-
         // 기존 세션 확인 및 삭제
         String userIndexKey = USER_INDEX_KEY_PREFIX + user.getId();
         String existingSessionId = redisTemplate.opsForValue().get(userIndexKey);
