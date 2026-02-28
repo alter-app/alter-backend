@@ -31,7 +31,7 @@ public interface UserPublicControllerSpec {
                 schema = @Schema(implementation = ErrorResponse.class),
                 examples = {
                     @ExampleObject(
-                        name = "이메일 또는 비밀번호가 올바르지 않을 경우",
+                        name = "전화번호 또는 비밀번호가 올바르지 않을 경우",
                         value = "{\"code\" : \"A011\", \"message\" : \"로그인 정보가 올바르지 않습니다\"}"
                     )
                 }))
@@ -146,7 +146,7 @@ public interface UserPublicControllerSpec {
 
     @Operation(
         summary = "비밀번호 재설정 세션 생성",
-        description = "이메일과 전화번호를 입력받아 사용자 유효성을 확인한 후, 비밀번호 재설정 세션을 생성합니다. 세션은 5분간 유효합니다."
+        description = "전화번호를 입력받아 사용자 유효성을 확인한 후, 비밀번호 재설정 세션을 생성합니다. 세션은 5분간 유효합니다."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -171,10 +171,6 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(
                         name = "존재하지 않는 사용자",
                         value = "{\"success\": false, \"code\" : \"B011\", \"message\" : \"존재하지 않는 사용자입니다.\"}"
-                    ),
-                    @ExampleObject(
-                        name = "이메일 미등록 사용자",
-                        value = "{\"success\": false, \"code\" : \"A015\", \"message\" : \"이메일이 등록되지 않은 사용자입니다.\"}"
                     )
                 }))
     })
