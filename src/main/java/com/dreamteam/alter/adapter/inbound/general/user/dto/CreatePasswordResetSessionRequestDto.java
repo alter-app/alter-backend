@@ -2,7 +2,6 @@ package com.dreamteam.alter.adapter.inbound.general.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,8 +13,6 @@ import lombok.NoArgsConstructor;
 public class CreatePasswordResetSessionRequestDto {
 
     @NotBlank
-    @Size(min = 10, max = 11)
-    @Schema(description = "전화번호", example = "01012345678")
-    private String contact;
+    @Schema(description = "Firebase ID Token")
+    private String firebaseIdToken;
 }
-
