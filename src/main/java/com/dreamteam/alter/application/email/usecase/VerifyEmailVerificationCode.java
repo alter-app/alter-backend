@@ -56,6 +56,6 @@ public class VerifyEmailVerificationCode implements VerifyEmailVerificationCodeU
                 email, Duration.ofSeconds(verifiedTtlSeconds)
         );
 
-        return new VerifyEmailVerificationCodeResponseDto(emailVerificationSessionId);
+        return VerifyEmailVerificationCodeResponseDto.of(emailVerificationSessionId);
     }
 }

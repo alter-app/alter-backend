@@ -124,7 +124,7 @@ public class UserSelfController implements UserSelfControllerSpec {
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        updateEmail.execute(actor, request.getEmailVerificationSessionId());
+        updateEmail.execute(actor, request);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.user.usecase;
 
+import com.dreamteam.alter.adapter.inbound.general.user.dto.RegisterEmailRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
@@ -20,11 +21,11 @@ public class UpdateEmail implements UpdateEmailUseCase {
     private final EmailVerificationSessionStoreRepository emailVerificationSessionStoreRepository;
 
     @Override
-    public void execute(AppActor actor, String emailVerificationSessionId) {
+    public void execute(AppActor actor, RegisterEmailRequestDto request) {
 
         // 이메일 인증 세션 검증
         String verifiedEmail = emailVerificationSessionStoreRepository
-                .getEmailBySession(emailVerificationSessionId)
+                .getEmailBySession(request.getSessionId())
                 .orElseThrow(() -> new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일 인증 세션이 유효하지 않거나 만료되었습니다."));
 
         User user = actor.getUser();
@@ -43,6 +44,6 @@ public class UpdateEmail implements UpdateEmailUseCase {
         user.updateEmail(verifiedEmail);
 
         // 세션 삭제
-        emailVerificationSessionStoreRepository.deleteSession(emailVerificationSessionId);
+        emailVerificationSessionStoreRepository.deleteSession(request.getSessionId());
     }
 }

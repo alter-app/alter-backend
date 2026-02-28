@@ -14,6 +14,6 @@ public class RegisterEmailRequestDto {
 
     @NotBlank
     @Schema(description = "이메일 인증 성공 후 받은 세션 ID")
-    private String emailVerificationSessionId;
+    private String sessionId;
 
 }
