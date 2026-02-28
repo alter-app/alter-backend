@@ -25,7 +25,7 @@ public class LoginWithPassword implements LoginWithPasswordUseCase {
 
     @Override
     public GenerateTokenResponseDto execute(LoginWithPasswordRequestDto request) {
-        User user = userQueryRepository.findByEmail(request.getEmail())
+        User user = userQueryRepository.findByContact(request.getContact())
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_LOGIN_INFO));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
