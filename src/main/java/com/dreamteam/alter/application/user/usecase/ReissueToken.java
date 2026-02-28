@@ -5,7 +5,10 @@ import com.dreamteam.alter.application.auth.service.AuthService;
 import com.dreamteam.alter.application.auth.token.RefreshTokenAuthentication;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.auth.entity.AuthLog;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
+import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
+import com.dreamteam.alter.domain.auth.type.AuthLogType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.ReissueTokenUseCase;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReissueToken implements ReissueTokenUseCase {
 
     private final AuthService authService;
+    private final AuthLogRepository authLogRepository;
 
     @Override
     public GenerateTokenResponseDto execute(Authentication authentication) {
@@ -45,6 +49,8 @@ public class ReissueToken implements ReissueTokenUseCase {
         } catch (JsonProcessingException e) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
+
+        authLogRepository.save(AuthLog.create(user, newAuthorization, AuthLogType.TOKEN_REISSUE));
 
         return GenerateTokenResponseDto.of(newAuthorization);
     }
