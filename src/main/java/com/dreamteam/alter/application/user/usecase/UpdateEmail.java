@@ -31,7 +31,7 @@ public class UpdateEmail implements UpdateEmailUseCase {
 
         // 현재 이메일과 동일하면 변경 불필요
         if (verifiedEmail.equals(user.getEmail())) {
-            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "현재 등록된 이메일과 동일합니다.");
+            throw new CustomException(ErrorCode.CONFLICT, "현재 등록된 이메일과 동일합니다.");
         }
 
         // 다른 사용자가 이미 사용 중인 이메일인지 확인
