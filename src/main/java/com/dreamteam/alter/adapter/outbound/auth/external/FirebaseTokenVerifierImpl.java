@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -34,7 +35,7 @@ public class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
             // 토큰 재사용 방지
             String tokenKey = USED_TOKEN_KEY_PREFIX + decodedToken.getUid() + ":" + getAuthTime(decodedToken);
             Boolean isNew = redisTemplate.opsForValue().setIfAbsent(
-                tokenKey, "1", USED_TOKEN_EXPIRATION_HOURS, TimeUnit.HOURS
+                tokenKey, idToken, USED_TOKEN_EXPIRATION_HOURS, TimeUnit.HOURS
             );
 
             if (Boolean.FALSE.equals(isNew)) {
@@ -43,7 +44,7 @@ public class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
 
             Object phoneNumber = decodedToken.getClaims().get(PHONE_NUMBER_CLAIM);
 
-            if (phoneNumber == null) {
+            if (ObjectUtils.isEmpty(phoneNumber)) {
                 throw new CustomException(ErrorCode.UNAUTHORIZED, "Firebase 토큰에 전화번호 정보가 없습니다.");
             }
 
