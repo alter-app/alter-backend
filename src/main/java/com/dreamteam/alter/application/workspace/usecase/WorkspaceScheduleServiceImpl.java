@@ -29,7 +29,7 @@ public class WorkspaceScheduleServiceImpl implements WorkspaceScheduleService {
     }
 
     @Override
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 0 * * *")
     @SchedulerLock(name = "generateNextMonthWorkspaceShifts", lockAtMostFor = "30m")
     public void generateNextMonthShiftsFromFixedSchedules() {
         generateNextMonthWorkspaceShift.execute();
