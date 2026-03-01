@@ -1,8 +1,8 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -36,6 +36,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryReposito
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerScheduleQueryRepository;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GenerateNextMonthWorkspaceShift 테스트")
@@ -112,7 +113,7 @@ class GenerateNextMonthWorkspaceShiftTest {
         // given
         // 2025년 2월은 월요일이 4번: 3일, 10일, 17일, 24일
         Workspace workspace = createMockWorkspace(1L);
-        WorkspaceWorker worker = createMockWorker(workspace);
+        WorkspaceWorker worker = createMockWorker(workspace, 10L);
         WorkspaceWorkerSchedule schedule = createMockSchedule(
             worker, DayOfWeek.MONDAY, LocalTime.of(9, 0), DayOfWeek.MONDAY, LocalTime.of(18, 0)
         );
@@ -121,8 +122,8 @@ class GenerateNextMonthWorkspaceShiftTest {
             .thenReturn(List.of(workspace));
         when(workspaceWorkerScheduleQueryRepository.findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List.of(1L)))
             .thenReturn(List.of(schedule));
-        when(workspaceShiftQueryRepository.hasConflictingSchedule(any(), any(), any()))
-            .thenReturn(false);
+        when(workspaceShiftQueryRepository.findConfirmedByWorkerIdsAndDateRange(anyList(), any(), any()))
+            .thenReturn(List.of());
 
         // when
         generateNextMonthWorkspaceShift.execute();
@@ -132,8 +133,7 @@ class GenerateNextMonthWorkspaceShiftTest {
         ArgumentCaptor<List<WorkspaceShift>> captor = ArgumentCaptor.forClass(List.class);
         verify(workspaceShiftRepository, times(1)).saveAll(captor.capture());
 
-        List<WorkspaceShift> savedShifts = captor.getValue();
-        assert savedShifts.size() == 4 : "2025년 2월에는 월요일이 4번이므로 4개의 시프트가 생성되어야 합니다. 실제: " + savedShifts.size();
+        assertThat(captor.getValue()).hasSize(4);
     }
 
     @Test
@@ -141,22 +141,27 @@ class GenerateNextMonthWorkspaceShiftTest {
     void 충돌시간대_건너뜀() {
         // given
         Workspace workspace = createMockWorkspace(1L);
-        WorkspaceWorker worker = createMockWorker(workspace);
+        WorkspaceWorker worker = createMockWorker(workspace, 10L);
         WorkspaceWorkerSchedule schedule = createMockSchedule(
             worker, DayOfWeek.MONDAY, LocalTime.of(9, 0), DayOfWeek.MONDAY, LocalTime.of(18, 0)
         );
+
+        // 첫 번째 월요일(2/3 09:00~18:00)과 겹치는 기존 확정 시프트 - 실제 엔티티로 생성해 Mockito 충돌 방지
+        WorkspaceShift conflictingShift = WorkspaceShift.create(
+            workspace,
+            LocalDateTime.of(2025, 2, 3, 10, 0),
+            LocalDateTime.of(2025, 2, 3, 12, 0),
+            "기존 근무",
+            WorkspaceShiftStatus.CONFIRMED
+        );
+        conflictingShift.assignWorker(worker);
 
         when(workspaceQueryRepository.findAllByNextMonthShiftGenDay(25))
             .thenReturn(List.of(workspace));
         when(workspaceWorkerScheduleQueryRepository.findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List.of(1L)))
             .thenReturn(List.of(schedule));
-
-        // 첫 번째 월요일(2/3)만 충돌, 나머지 3주는 정상 (주 단위 순차 호출이므로 순서 보장됨)
-        when(workspaceShiftQueryRepository.hasConflictingSchedule(any(), any(), any()))
-            .thenReturn(true)    // 2/3 - 충돌
-            .thenReturn(false)   // 2/10 - 정상
-            .thenReturn(false)   // 2/17 - 정상
-            .thenReturn(false);  // 2/24 - 정상
+        when(workspaceShiftQueryRepository.findConfirmedByWorkerIdsAndDateRange(anyList(), any(), any()))
+            .thenReturn(List.of(conflictingShift));
 
         // when
         generateNextMonthWorkspaceShift.execute();
@@ -166,8 +171,7 @@ class GenerateNextMonthWorkspaceShiftTest {
         ArgumentCaptor<List<WorkspaceShift>> captor = ArgumentCaptor.forClass(List.class);
         verify(workspaceShiftRepository, times(1)).saveAll(captor.capture());
 
-        List<WorkspaceShift> savedShifts = captor.getValue();
-        assert savedShifts.size() == 3 : "충돌 1건을 제외하면 3건이 생성되어야 합니다. 실제: " + savedShifts.size();
+        assertThat(captor.getValue()).hasSize(3);
     }
 
     @Test
@@ -175,7 +179,7 @@ class GenerateNextMonthWorkspaceShiftTest {
     void 야간근무_정상처리() {
         // given
         Workspace workspace = createMockWorkspace(1L);
-        WorkspaceWorker worker = createMockWorker(workspace);
+        WorkspaceWorker worker = createMockWorker(workspace, 10L);
         // 금요일 22:00 시작 → 토요일 06:00 종료 (야간 근무)
         WorkspaceWorkerSchedule schedule = createMockSchedule(
             worker, DayOfWeek.FRIDAY, LocalTime.of(22, 0), DayOfWeek.SATURDAY, LocalTime.of(6, 0)
@@ -185,8 +189,8 @@ class GenerateNextMonthWorkspaceShiftTest {
             .thenReturn(List.of(workspace));
         when(workspaceWorkerScheduleQueryRepository.findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List.of(1L)))
             .thenReturn(List.of(schedule));
-        when(workspaceShiftQueryRepository.hasConflictingSchedule(any(), any(), any()))
-            .thenReturn(false);
+        when(workspaceShiftQueryRepository.findConfirmedByWorkerIdsAndDateRange(anyList(), any(), any()))
+            .thenReturn(List.of());
 
         // when
         generateNextMonthWorkspaceShift.execute();
@@ -197,14 +201,12 @@ class GenerateNextMonthWorkspaceShiftTest {
         verify(workspaceShiftRepository, times(1)).saveAll(captor.capture());
 
         List<WorkspaceShift> savedShifts = captor.getValue();
-        assert savedShifts.size() == 4 : "2025년 2월에는 금요일이 4번이므로 4개의 시프트가 생성되어야 합니다. 실제: " + savedShifts.size();
+        assertThat(savedShifts).hasSize(4);
 
         // 첫 번째 시프트: 금요일 22:00 시작, 토요일 06:00 종료
-        WorkspaceShift firstShift = savedShifts.get(0);
-        assert firstShift.getStartDateTime().equals(LocalDateTime.of(2025, 2, 7, 22, 0))
-            : "시작 시간이 2/7 22:00이어야 합니다. 실제: " + firstShift.getStartDateTime();
-        assert firstShift.getEndDateTime().equals(LocalDateTime.of(2025, 2, 8, 6, 0))
-            : "종료 시간이 2/8 06:00이어야 합니다. 실제: " + firstShift.getEndDateTime();
+        WorkspaceShift firstShift = savedShifts.getFirst();
+        assertThat(firstShift.getStartDateTime()).isEqualTo(LocalDateTime.of(2025, 2, 7, 22, 0));
+        assertThat(firstShift.getEndDateTime()).isEqualTo(LocalDateTime.of(2025, 2, 8, 6, 0));
     }
 
     @Test
@@ -213,29 +215,24 @@ class GenerateNextMonthWorkspaceShiftTest {
         // given
         Workspace workspace1 = createMockWorkspace(1L);
         Workspace workspace2 = createMockWorkspace(2L);
-        WorkspaceWorker worker2 = createMockWorker(workspace2);
+        WorkspaceWorker worker1 = createMockWorker(workspace1, 10L);
+        WorkspaceWorker worker2 = createMockWorker(workspace2, 20L);
+
+        // schedule1은 generateShiftsForWorkspace 내부에서 getStartDayOfWeek() 호출 시 예외 발생 (워크스페이스1 처리 실패 시뮬레이션)
+        WorkspaceWorkerSchedule schedule1 = mock(WorkspaceWorkerSchedule.class);
+        when(schedule1.getWorkspaceWorker()).thenReturn(worker1);
+        when(schedule1.getStartDayOfWeek()).thenThrow(new RuntimeException("스케줄 처리 오류"));
+
         WorkspaceWorkerSchedule schedule2 = createMockSchedule(
             worker2, DayOfWeek.TUESDAY, LocalTime.of(10, 0), DayOfWeek.TUESDAY, LocalTime.of(19, 0)
-        );
-
-        // 워크스페이스1의 스케줄은 hasConflictingSchedule 호출 시 예외 발생하도록 설정
-        WorkspaceWorker worker1 = createMockWorker(workspace1);
-        WorkspaceWorkerSchedule schedule1 = createMockSchedule(
-            worker1, DayOfWeek.MONDAY, LocalTime.of(9, 0), DayOfWeek.MONDAY, LocalTime.of(18, 0)
         );
 
         when(workspaceQueryRepository.findAllByNextMonthShiftGenDay(25))
             .thenReturn(List.of(workspace1, workspace2));
         when(workspaceWorkerScheduleQueryRepository.findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List.of(1L, 2L)))
             .thenReturn(List.of(schedule1, schedule2));
-
-        // 워크스페이스1 처리 시 예외 발생
-        when(workspaceShiftQueryRepository.hasConflictingSchedule(eq(worker1), any(), any()))
-            .thenThrow(new RuntimeException("DB 오류"));
-
-        // 워크스페이스2는 정상
-        when(workspaceShiftQueryRepository.hasConflictingSchedule(eq(worker2), any(), any()))
-            .thenReturn(false);
+        when(workspaceShiftQueryRepository.findConfirmedByWorkerIdsAndDateRange(anyList(), any(), any()))
+            .thenReturn(List.of());
 
         // when
         generateNextMonthWorkspaceShift.execute();
@@ -249,8 +246,8 @@ class GenerateNextMonthWorkspaceShiftTest {
     void 복수근무자스케줄_모두생성() {
         // given
         Workspace workspace = createMockWorkspace(1L);
-        WorkspaceWorker worker1 = createMockWorker(workspace);
-        WorkspaceWorker worker2 = createMockWorker(workspace);
+        WorkspaceWorker worker1 = createMockWorker(workspace, 10L);
+        WorkspaceWorker worker2 = createMockWorker(workspace, 20L);
 
         WorkspaceWorkerSchedule schedule1 = createMockSchedule(
             worker1, DayOfWeek.MONDAY, LocalTime.of(9, 0), DayOfWeek.MONDAY, LocalTime.of(18, 0)
@@ -263,8 +260,8 @@ class GenerateNextMonthWorkspaceShiftTest {
             .thenReturn(List.of(workspace));
         when(workspaceWorkerScheduleQueryRepository.findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List.of(1L)))
             .thenReturn(List.of(schedule1, schedule2));
-        when(workspaceShiftQueryRepository.hasConflictingSchedule(any(), any(), any()))
-            .thenReturn(false);
+        when(workspaceShiftQueryRepository.findConfirmedByWorkerIdsAndDateRange(anyList(), any(), any()))
+            .thenReturn(List.of());
 
         // when
         generateNextMonthWorkspaceShift.execute();
@@ -274,8 +271,7 @@ class GenerateNextMonthWorkspaceShiftTest {
         ArgumentCaptor<List<WorkspaceShift>> captor = ArgumentCaptor.forClass(List.class);
         verify(workspaceShiftRepository, times(1)).saveAll(captor.capture());
 
-        List<WorkspaceShift> savedShifts = captor.getValue();
-        assert savedShifts.size() == 8 : "월요일 4건 + 수요일 4건 = 8건이 생성되어야 합니다. 실제: " + savedShifts.size();
+        assertThat(captor.getValue()).hasSize(8);
     }
 
     // --- 헬퍼 메서드 ---
@@ -286,9 +282,10 @@ class GenerateNextMonthWorkspaceShiftTest {
         return workspace;
     }
 
-    private WorkspaceWorker createMockWorker(Workspace workspace) {
+    private WorkspaceWorker createMockWorker(Workspace workspace, Long id) {
         WorkspaceWorker worker = mock(WorkspaceWorker.class);
         when(worker.getWorkspace()).thenReturn(workspace);
+        when(worker.getId()).thenReturn(id);
         return worker;
     }
 

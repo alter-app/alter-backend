@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspaceShiftUseCase {
 
+    // TODO: 포지션 삭제 시 제거 예정
     private static final String DEFAULT_POSITION = "고정 근무";
 
     private final WorkspaceQueryRepository workspaceQueryRepository;
@@ -41,7 +42,6 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
 
     @Override
     public void execute() {
-        // 서비스 타임존 기준으로 오늘 날짜의 day-of-month를 구한다
         LocalDate now = LocalDate.now();
         int todayDayOfMonth = now.getDayOfMonth();
 
@@ -49,15 +49,12 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
         List<Workspace> targetWorkspaces = workspaceQueryRepository.findAllByNextMonthShiftGenDay(todayDayOfMonth);
 
         if (targetWorkspaces.isEmpty()) {
-            log.info("[고정 근무 생성] 오늘({})에 해당하는 대상 워크스페이스가 없습니다.", now);
             return;
         }
 
         List<Long> workspaceIds = targetWorkspaces.stream()
             .map(Workspace::getId)
             .toList();
-
-        log.info("[고정 근무 생성] 대상 워크스페이스 {}개 조회 완료.", workspaceIds.size());
 
         // 대상 워크스페이스들의 활성화된 고정 스케줄을 한 번에 조회 후 워크스페이스별로 그룹화한다
         List<WorkspaceWorkerSchedule> allSchedules = workspaceWorkerScheduleQueryRepository
@@ -69,7 +66,10 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
             ));
 
         YearMonth targetMonth = YearMonth.from(now).plusMonths(1);
-        int totalCreated = 0;
+
+        Map<Long, List<WorkspaceShift>> existingShiftsByWorkerId = buildExistingShiftsMap(allSchedules, targetMonth);
+
+        List<WorkspaceShift> allShiftsToSave = new ArrayList<>();
         int totalSkipped = 0;
         int failedWorkspaceCount = 0;
 
@@ -79,22 +79,48 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
                     .getOrDefault(workspace.getId(), List.of());
 
                 if (schedules.isEmpty()) {
-                    log.info("[고정 근무 생성] 워크스페이스({}) - 활성화된 고정 스케줄 없음. 건너뜀.", workspace.getId());
                     continue;
                 }
 
-                GenerationResult result = generateShiftsForWorkspace(workspace, schedules, targetMonth);
-                totalCreated += result.created;
-                totalSkipped += result.skipped;
-
-                log.info("[고정 근무 생성] 워크스페이스({}) - 생성: {}건, 충돌 건너뜀: {}건", workspace.getId(), result.created, result.skipped);
+                GenerationResult result = generateShiftsForWorkspace(workspace, schedules, targetMonth, existingShiftsByWorkerId);
+                allShiftsToSave.addAll(result.shifts());
+                totalSkipped += result.skipped();
             } catch (Exception e) {
                 failedWorkspaceCount++;
                 log.error("[고정 근무 생성] 워크스페이스({}) 처리 중 오류 발생: {}", workspace.getId(), e.getMessage(), e);
             }
         }
 
-        log.info("[고정 근무 생성] 배치 완료 - 총 생성: {}건, 총 건너뜀: {}건, 실패 워크스페이스: {}개", totalCreated, totalSkipped, failedWorkspaceCount);
+        if (!allShiftsToSave.isEmpty()) {
+            workspaceShiftRepository.saveAll(allShiftsToSave);
+        }
+
+        log.info("[고정 근무 생성] 배치 완료 - 총 생성: {}건, 총 건너뜀: {}건, 실패 워크스페이스: {}개", allShiftsToSave.size(), totalSkipped, failedWorkspaceCount);
+    }
+
+    /**
+     * 고정 스케줄의 종료 시간이 월말을 최대 6일 넘을 수 있으므로 조회 범위에 여유를 둔다.
+     */
+    private Map<Long, List<WorkspaceShift>> buildExistingShiftsMap(
+        List<WorkspaceWorkerSchedule> allSchedules, YearMonth targetMonth) {
+        List<Long> workerIds = allSchedules.stream()
+            .map(s -> s.getWorkspaceWorker().getId())
+            .distinct()
+            .toList();
+
+        if (workerIds.isEmpty()) {
+            return Map.of();
+        }
+
+        LocalDateTime from = targetMonth.atDay(1).atStartOfDay();
+        LocalDateTime to = targetMonth.atEndOfMonth().plusDays(7).atStartOfDay();
+
+        return workspaceShiftQueryRepository
+            .findConfirmedByWorkerIdsAndDateRange(workerIds, from, to)
+            .stream()
+            .collect(Collectors.groupingBy(
+                shift -> shift.getAssignedWorkspaceWorker().getId()
+            ));
     }
 
     /**
@@ -103,12 +129,13 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
     private GenerationResult generateShiftsForWorkspace(
         Workspace workspace,
         List<WorkspaceWorkerSchedule> schedules,
-        YearMonth targetMonth
+        YearMonth targetMonth,
+        Map<Long, List<WorkspaceShift>> existingShiftsByWorkerId
     ) {
         LocalDate startDate = targetMonth.atDay(1);
         LocalDate endDate = targetMonth.atEndOfMonth();
 
-        List<WorkspaceShift> shiftsToSave = new ArrayList<>();
+        List<WorkspaceShift> shiftsToCreate = new ArrayList<>();
         int skipped = 0;
 
         for (WorkspaceWorkerSchedule schedule : schedules) {
@@ -118,19 +145,22 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
                 continue;
             }
 
+            WorkspaceWorker workspaceWorker = schedule.getWorkspaceWorker();
+            List<WorkspaceShift> existingShifts = existingShiftsByWorkerId
+                .getOrDefault(workspaceWorker.getId(), List.of());
+
             // 매주 반복하면서 시프트를 생성한다
             for (LocalDate currentStartDate = firstStartDate;
                  !currentStartDate.isAfter(endDate);
                  currentStartDate = currentStartDate.plusWeeks(1)) {
 
-                WorkspaceWorker workspaceWorker = schedule.getWorkspaceWorker();
                 LocalDateTime startDateTime = currentStartDate.atTime(schedule.getStartTime());
                 LocalDateTime endDateTime = currentStartDate
                     .plusDays(calculateDayOffset(schedule.getStartDayOfWeek(), schedule.getEndDayOfWeek()))
                     .atTime(schedule.getEndTime());
 
                 // 이미 확정된 근무와 겹치면 자동 생성하지 않는다
-                if (workspaceShiftQueryRepository.hasConflictingSchedule(workspaceWorker, startDateTime, endDateTime)) {
+                if (hasConflict(existingShifts, startDateTime, endDateTime)) {
                     skipped++;
                     continue;
                 }
@@ -143,15 +173,21 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
                     WorkspaceShiftStatus.CONFIRMED
                 );
                 shift.assignWorker(workspaceWorker);
-                shiftsToSave.add(shift);
+                shiftsToCreate.add(shift);
             }
         }
 
-        if (!shiftsToSave.isEmpty()) {
-            workspaceShiftRepository.saveAll(shiftsToSave);
-        }
+        return new GenerationResult(shiftsToCreate, skipped);
+    }
 
-        return new GenerationResult(shiftsToSave.size(), skipped);
+    // 인메모리 충돌 여부 판단: 기존 시프트 목록과 시간 범위가 겹치는지 확인한다
+    private boolean hasConflict(List<WorkspaceShift> existingShifts, LocalDateTime start, LocalDateTime end) {
+        for (WorkspaceShift existing : existingShifts) {
+            if (existing.getStartDateTime().isBefore(end) && existing.getEndDateTime().isAfter(start)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // 해당 요일이 처음으로 등장하는 날짜를 반환한다
@@ -173,5 +209,5 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
         return offset;
     }
 
-    private record GenerationResult(int created, int skipped) {}
+    private record GenerationResult(List<WorkspaceShift> shifts, int skipped) {}
 }

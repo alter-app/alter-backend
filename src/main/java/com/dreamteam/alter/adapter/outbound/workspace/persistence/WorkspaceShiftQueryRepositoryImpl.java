@@ -122,6 +122,17 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
     }
 
     @Override
+    public List<WorkspaceShift> findConfirmedByWorkerIdsAndDateRange(List<Long> workerIds, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        return queryFactory
+            .selectFrom(workspaceShift)
+            .where(workspaceShift.assignedWorkspaceWorker.id.in(workerIds)
+                .and(workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED))
+                .and(workspaceShift.startDateTime.lt(endDateTime))
+                .and(workspaceShift.endDateTime.gt(startDateTime)))
+            .fetch();
+    }
+
+    @Override
     public List<WorkspaceShift> findByUserAndWorkspaceAndMonthFrom(
         User user,
         Workspace workspace,
