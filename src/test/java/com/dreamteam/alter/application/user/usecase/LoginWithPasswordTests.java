@@ -6,6 +6,7 @@ import com.dreamteam.alter.application.auth.service.AuthService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
+import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -42,6 +43,9 @@ class LoginWithPasswordTests {
     private AuthService authService;
 
     @Mock
+    private AuthLogRepository authLogRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
@@ -51,7 +55,7 @@ class LoginWithPasswordTests {
 
     @BeforeEach
     void setUp() {
-        request = new LoginWithPasswordRequestDto("test@example.com", "password123!");
+        request = new LoginWithPasswordRequestDto("01012345678", "password123!");
     }
 
     private User createMockUser(UserStatus status, UserRole role, String encodedPassword) {
@@ -67,10 +71,10 @@ class LoginWithPasswordTests {
     class ExecuteTests {
 
         @Test
-        @DisplayName("존재하지 않는 이메일로 로그인 시 INVALID_LOGIN_INFO 예외 발생")
-        void fails_whenEmailNotFound() {
+        @DisplayName("존재하지 않는 연락처로 로그인 시 INVALID_LOGIN_INFO 예외 발생")
+        void fails_whenContactNotFound() {
             // given
-            given(userQueryRepository.findByEmail("test@example.com")).willReturn(Optional.empty());
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> loginWithPassword.execute(request))
@@ -90,7 +94,7 @@ class LoginWithPasswordTests {
             // given
             User user = mock(User.class);
             given(user.getPassword()).willReturn("encodedPassword");
-            given(userQueryRepository.findByEmail("test@example.com")).willReturn(Optional.of(user));
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.of(user));
             given(passwordEncoder.matches("password123!", "encodedPassword")).willReturn(false);
 
             // when & then
@@ -111,7 +115,7 @@ class LoginWithPasswordTests {
             User user = mock(User.class);
             given(user.getPassword()).willReturn("encodedPassword");
             given(user.getStatus()).willReturn(UserStatus.SUSPENDED);
-            given(userQueryRepository.findByEmail("test@example.com")).willReturn(Optional.of(user));
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.of(user));
             given(passwordEncoder.matches("password123!", "encodedPassword")).willReturn(true);
 
             // when & then
@@ -133,7 +137,7 @@ class LoginWithPasswordTests {
             User user = mock(User.class);
             given(user.getPassword()).willReturn("encodedPassword");
             given(user.getStatus()).willReturn(UserStatus.DELETED);
-            given(userQueryRepository.findByEmail("test@example.com")).willReturn(Optional.of(user));
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.of(user));
             given(passwordEncoder.matches("password123!", "encodedPassword")).willReturn(true);
 
             // when & then
@@ -155,7 +159,7 @@ class LoginWithPasswordTests {
             User user = createMockUser(UserStatus.ACTIVE, UserRole.ROLE_USER, "encodedPassword");
             Authorization authorization = mock(Authorization.class);
 
-            given(userQueryRepository.findByEmail("test@example.com")).willReturn(Optional.of(user));
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.of(user));
             given(passwordEncoder.matches("password123!", "encodedPassword")).willReturn(true);
             given(authService.generateAuthorization(user, TokenScope.APP)).willReturn(authorization);
 
@@ -175,7 +179,7 @@ class LoginWithPasswordTests {
             User user = createMockUser(UserStatus.ACTIVE, UserRole.ROLE_ADMIN, "encodedPassword");
             Authorization authorization = mock(Authorization.class);
 
-            given(userQueryRepository.findByEmail("test@example.com")).willReturn(Optional.of(user));
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.of(user));
             given(passwordEncoder.matches("password123!", "encodedPassword")).willReturn(true);
             given(authService.generateAuthorization(user, TokenScope.ADMIN)).willReturn(authorization);
 
@@ -194,7 +198,7 @@ class LoginWithPasswordTests {
             User user = createMockUser(UserStatus.ACTIVE, UserRole.ROLE_MANAGER, "encodedPassword");
             Authorization authorization = mock(Authorization.class);
 
-            given(userQueryRepository.findByEmail("test@example.com")).willReturn(Optional.of(user));
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.of(user));
             given(passwordEncoder.matches("password123!", "encodedPassword")).willReturn(true);
             given(authService.generateAuthorization(user, TokenScope.MANAGER)).willReturn(authorization);
 

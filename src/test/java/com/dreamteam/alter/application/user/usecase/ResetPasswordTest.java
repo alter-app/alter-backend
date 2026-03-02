@@ -109,7 +109,8 @@ class ResetPasswordTest {
             "테스트",
             "testuser",
             UserGender.GENDER_MALE,
-            "19900101"
+            "19900101",
+            null
         );
 
         @SuppressWarnings("unchecked")
@@ -151,7 +152,8 @@ class ResetPasswordTest {
             "테스트",
             "testuser",
             UserGender.GENDER_MALE,
-            "19900101"
+            "19900101",
+            null
         );
 
         @SuppressWarnings("unchecked")

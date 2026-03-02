@@ -8,6 +8,7 @@ import com.dreamteam.alter.application.auth.service.AuthService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
+import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.entity.UserSocial;
@@ -47,6 +48,9 @@ class LoginWithSocialTests {
 
     @Mock
     private AuthService authService;
+
+    @Mock
+    private AuthLogRepository authLogRepository;
 
     @InjectMocks
     private LoginWithSocial loginWithSocial;
