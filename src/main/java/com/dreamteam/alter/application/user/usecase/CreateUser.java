@@ -11,6 +11,7 @@ import com.dreamteam.alter.domain.auth.entity.Authorization;
 import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
 import com.dreamteam.alter.domain.auth.type.AuthLogType;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -36,6 +37,7 @@ public class CreateUser implements CreateUserUseCase {
     private final PasswordEncoder passwordEncoder;
     private final StringRedisTemplate redisTemplate;
     private final AuthLogRepository authLogRepository;
+    private final EmailVerificationSessionStoreRepository emailVerificationSessionStoreRepository;
 
     @Override
     public GenerateTokenResponseDto execute(CreateUserRequestDto request) {
@@ -56,6 +58,9 @@ public class CreateUser implements CreateUserUseCase {
             throw new CustomException(ErrorCode.INVALID_PASSWORD_FORMAT);
         }
 
+        // 이메일 인증 세션 검증 (선택)
+        String verifiedEmail = resolveVerifiedEmail(request);
+
         // 사용자 생성
         User user = userRepository.save(User.create(
             contact,
@@ -63,17 +68,41 @@ public class CreateUser implements CreateUserUseCase {
             request.getName(),
             request.getNickname(),
             request.getGender(),
-            request.getBirthday()
+            request.getBirthday(),
+            verifiedEmail
         ));
 
         // 회원가입 세션 삭제
         redisTemplate.delete(sessionIdKey);
         redisTemplate.delete(CONTACT_INDEX_KEY_PREFIX + contact);
 
+        // 이메일 인증 세션 삭제
+        if (ObjectUtils.isNotEmpty(verifiedEmail)) {
+            emailVerificationSessionStoreRepository.deleteSession(request.getEmailSessionId());
+        }
+
         Authorization authorization = authService.generateAuthorization(user, TokenScope.APP);
         authLogRepository.save(AuthLog.create(user, authorization, AuthLogType.LOGIN));
 
         return GenerateTokenResponseDto.of(authorization);
+    }
+
+    private String resolveVerifiedEmail(CreateUserRequestDto request) {
+        String emailSessionId = request.getEmailSessionId();
+        if (ObjectUtils.isEmpty(emailSessionId)) {
+            return null;
+        }
+
+        String verifiedEmail = emailVerificationSessionStoreRepository
+                .getEmailBySession(emailSessionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일 인증 세션이 유효하지 않거나 만료되었습니다."));
+
+        userQueryRepository.findByEmail(verifiedEmail)
+                .ifPresent(existing -> {
+                    throw new CustomException(ErrorCode.EMAIL_DUPLICATED);
+                });
+
+        return verifiedEmail;
     }
 
     private void validateDuplication(CreateUserRequestDto request, String contact, String sessionIdKey) {
