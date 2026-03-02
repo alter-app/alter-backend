@@ -1,7 +1,12 @@
 package com.dreamteam.alter.adapter.inbound.general.user.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificationCodeRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
+import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUseCase;
+import com.dreamteam.alter.domain.email.port.inbound.VerifyEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CreateSignupSessionUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.LoginWithPasswordUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.LoginWithSocialUseCase;
@@ -9,7 +14,6 @@ import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckContactDuplicationUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckNicknameDuplicationUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckEmailDuplicationUseCase;
-import com.dreamteam.alter.domain.user.port.inbound.FindEmailByContactUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CreatePasswordResetSessionUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.ResetPasswordUseCase;
 import jakarta.annotation.Resource;
@@ -46,14 +50,17 @@ public class UserPublicController implements UserPublicControllerSpec {
     @Resource(name = "checkEmailDuplication")
     private final CheckEmailDuplicationUseCase checkEmailDuplication;
 
-    @Resource(name = "findEmailByContact")
-    private final FindEmailByContactUseCase findEmailByContact;
-
     @Resource(name = "createPasswordResetSession")
     private final CreatePasswordResetSessionUseCase createPasswordResetSession;
 
     @Resource(name = "resetPassword")
     private final ResetPasswordUseCase resetPassword;
+
+    @Resource(name = "sendEmailVerificationCode")
+    private final SendEmailVerificationCodeUseCase sendEmailVerificationCode;
+
+    @Resource(name = "verifyEmailVerificationCode")
+    private final VerifyEmailVerificationCodeUseCase verifyEmailVerificationCode;
 
 
     @Override
@@ -113,14 +120,6 @@ public class UserPublicController implements UserPublicControllerSpec {
     }
 
     @Override
-    @PostMapping("/find-email")
-    public ResponseEntity<CommonApiResponse<FindEmailResponseDto>> findEmailByContact(
-        @Valid @RequestBody FindEmailRequestDto request
-    ) {
-        return ResponseEntity.ok(CommonApiResponse.of(findEmailByContact.execute(request)));
-    }
-
-    @Override
     @PostMapping("/password-reset/session")
     public ResponseEntity<CommonApiResponse<CreatePasswordResetSessionResponseDto>> createPasswordResetSession(
         @Valid @RequestBody CreatePasswordResetSessionRequestDto request
@@ -137,4 +136,20 @@ public class UserPublicController implements UserPublicControllerSpec {
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
+    @Override
+    @PostMapping("/email/verification/send")
+    public ResponseEntity<CommonApiResponse<Void>> sendSignupEmailVerificationCode(
+        @Valid @RequestBody SendEmailVerificationCodeRequestDto request
+    ) {
+        sendEmailVerificationCode.execute(request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PostMapping("/email/verification")
+    public ResponseEntity<CommonApiResponse<VerifyEmailVerificationCodeResponseDto>> verifySignupEmailVerificationCode(
+        @Valid @RequestBody VerifyEmailVerificationCodeRequestDto request
+    ) {
+        return ResponseEntity.ok(CommonApiResponse.of(verifyEmailVerificationCode.execute(request)));
+    }
 }

@@ -17,7 +17,7 @@ public class LoginUserDto {
 
     private Long id;
 
-    private String email;
+    private String contact;
 
     private UserRole role;
 
@@ -26,7 +26,7 @@ public class LoginUserDto {
             .authorizationId(authorization.getId())
             .scope(authorization.getScope())
             .id(authorization.getUser().getId())
-            .email(authorization.getUser().getEmail())
+            .contact(authorization.getUser().getContact())
             .role(role)
             .build();
     }

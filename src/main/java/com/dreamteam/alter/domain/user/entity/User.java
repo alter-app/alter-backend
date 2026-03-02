@@ -31,10 +31,6 @@ public class User {
     @Column(name = "email", length = 255, nullable = true, unique = true)
     private String email;
 
-    @Builder.Default
-    @Column(name = "email_verified", nullable = false)
-    private boolean emailVerified = false;
-
     @Column(name = "password", length = 255, nullable = false)
     private String password;
 
@@ -87,11 +83,11 @@ public class User {
         String name,
         String nickname,
         UserGender gender,
-        String birthday
+        String birthday,
+        String email
     ) {
         return User.builder()
-            .email(null)
-            .emailVerified(false)
+            .email(email)
             .password(encodedPassword)
             .name(name)
             .nickname(nickname)
@@ -105,12 +101,10 @@ public class User {
 
     public void updateEmail(String email) {
         this.email = email;
-        this.emailVerified = true;
     }
 
     public void removeEmail() {
         this.email = null;
-        this.emailVerified = false;
     }
 
     public void addCertificate(UserCertificate userCertificate) {

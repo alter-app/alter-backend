@@ -4,6 +4,8 @@ import com.dreamteam.alter.adapter.inbound.general.user.dto.CreatePasswordResetS
 import com.dreamteam.alter.adapter.inbound.general.user.dto.CreatePasswordResetSessionResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.common.util.PhoneNumberUtil;
+import com.dreamteam.alter.domain.auth.port.outbound.FirebaseTokenVerifier;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.CreatePasswordResetSessionUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -27,22 +29,17 @@ public class CreatePasswordResetSession implements CreatePasswordResetSessionUse
 
     private final UserQueryRepository userQueryRepository;
     private final StringRedisTemplate redisTemplate;
+    private final FirebaseTokenVerifier firebaseTokenVerifier;
 
     @Override
     public CreatePasswordResetSessionResponseDto execute(CreatePasswordResetSessionRequestDto request) {
+        // Firebase 토큰 검증 및 전화번호 추출
+        String verifiedPhoneNumber = firebaseTokenVerifier.verifyAndGetPhoneNumber(request.getFirebaseIdToken());
+        String contact = PhoneNumberUtil.convertE164ToLocal(verifiedPhoneNumber);
+
         // 전화번호로 사용자 확인
-        User user = userQueryRepository.findByContact(request.getContact())
+        User user = userQueryRepository.findByContact(contact)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        // 이메일 등록 여부 확인
-        if (user.getEmail() == null) {
-            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일이 등록되지 않은 사용자입니다.");
-        }
-
-        // 이메일 일치 여부 확인
-        if (!user.getEmail().equals(request.getEmail())) {
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
-        }
 
         // 기존 세션 확인 및 삭제
         String userIndexKey = USER_INDEX_KEY_PREFIX + user.getId();

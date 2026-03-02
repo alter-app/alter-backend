@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.springframework.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,11 @@ public class CreateUserRequestDto {
     @Size(max = 64)
     @Schema(description = "회원가입 세션 ID", example = "UUID")
     private String signupSessionId;
+
+    @Nullable
+    @Size(max = 64)
+    @Schema(description = "이메일 인증 세션 ID (선택)")
+    private String emailSessionId;
 
     @NotBlank
     @Size(min = 8, max = 16)

@@ -11,7 +11,6 @@ public interface UserQueryRepository {
     Optional<User> findByEmail(String email);
     Optional<User> findByNickname(String nickname);
     Optional<User> findByContact(String contact);
-    Optional<User> findByEmailAndContact(String email, String contact);
     Optional<UserSelfInfoResponse> getUserSelfInfoSummary(Long id);
     List<User> findAllById(List<Long> ids);
 }

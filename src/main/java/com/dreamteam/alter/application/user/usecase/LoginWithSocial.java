@@ -10,6 +10,10 @@ import com.dreamteam.alter.domain.user.entity.UserSocial;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.application.auth.service.AuthService;
+import com.dreamteam.alter.domain.auth.entity.AuthLog;
+import com.dreamteam.alter.domain.auth.entity.Authorization;
+import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
+import com.dreamteam.alter.domain.auth.type.AuthLogType;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.user.port.inbound.LoginWithSocialUseCase;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +28,7 @@ public class LoginWithSocial implements LoginWithSocialUseCase {
     private final SocialAuthenticationManager socialAuthenticationManager;
     private final UserSocialQueryRepository userSocialQueryRepository;
     private final AuthService authService;
+    private final AuthLogRepository authLogRepository;
 
     @Override
     public GenerateTokenResponseDto execute(SocialLoginRequestDto request) {
@@ -53,6 +58,9 @@ public class LoginWithSocial implements LoginWithSocialUseCase {
             default -> TokenScope.APP;
         };
 
-        return GenerateTokenResponseDto.of(authService.generateAuthorization(user, scope));
+        Authorization authorization = authService.generateAuthorization(user, scope);
+        authLogRepository.save(AuthLog.create(user, authorization, AuthLogType.LOGIN));
+
+        return GenerateTokenResponseDto.of(authorization);
     }
 }
