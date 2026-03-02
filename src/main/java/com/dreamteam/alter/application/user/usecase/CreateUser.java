@@ -109,12 +109,14 @@ public class CreateUser implements CreateUserUseCase {
         // 닉네임 중복 확인
         if (userQueryRepository.findByNickname(request.getNickname()).isPresent()) {
             redisTemplate.delete(sessionIdKey);
+            redisTemplate.delete(CONTACT_INDEX_KEY_PREFIX + contact);
             throw new CustomException(ErrorCode.NICKNAME_DUPLICATED);
         }
 
         // 연락처 중복 확인
         if (userQueryRepository.findByContact(contact).isPresent()) {
             redisTemplate.delete(sessionIdKey);
+            redisTemplate.delete(CONTACT_INDEX_KEY_PREFIX + contact);
             throw new CustomException(ErrorCode.USER_CONTACT_DUPLICATED);
         }
     }
