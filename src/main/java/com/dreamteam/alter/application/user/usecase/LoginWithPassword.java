@@ -32,6 +32,11 @@ public class LoginWithPassword implements LoginWithPasswordUseCase {
             throw new CustomException(ErrorCode.INVALID_LOGIN_INFO);
         }
 
+        switch (user.getStatus()) {
+            case SUSPENDED -> throw new CustomException(ErrorCode.SUSPENDED_USER);
+            case DELETED -> throw new CustomException(ErrorCode.DELETED_USER);
+        }
+
         // 기존 인가 정보 정리
         authService.revokeAllExistingAuthorizations(user);
 

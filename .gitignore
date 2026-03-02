@@ -48,7 +48,7 @@ src/main/generated/
 ### AntiGravity ###
 /.agent/
 
-### claude ###
+### Claude ###
 /.claude/
 CLAUDE.md
 /.ai/
