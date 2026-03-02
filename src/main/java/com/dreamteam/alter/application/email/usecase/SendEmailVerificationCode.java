@@ -5,10 +5,11 @@ import com.dreamteam.alter.application.email.event.EmailSendEvent;
 import com.dreamteam.alter.application.email.service.VerificationCodeGenerator;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.email.entity.EmailSendLog;
+import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.email.port.outbound.EmailSendLogRepository;
 import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -22,6 +23,7 @@ import java.time.Duration;
 @Transactional
 public class SendEmailVerificationCode implements SendEmailVerificationCodeUseCase {
 
+    private final UserQueryRepository userQueryRepository;
     private final EmailVerificationSessionStoreRepository sessionStorePort;
     private final EmailSendLogRepository emailSendLogRepository;
     private final VerificationCodeGenerator codeGenerator;
@@ -38,26 +40,23 @@ public class SendEmailVerificationCode implements SendEmailVerificationCodeUseCa
     public void execute(SendEmailVerificationCodeRequestDto request) {
         String email = request.getEmail();
 
-        // Check Cooldown
+        // 이메일 중복 확인
+        if (userQueryRepository.findByEmail(email).isPresent()) {
+            throw new CustomException(ErrorCode.EMAIL_DUPLICATED);
+        }
+
+        // 쿨다운 확인
         if (sessionStorePort.isCooldown(email)) {
             throw new CustomException(ErrorCode.TOO_MANY_REQUESTS);
         }
 
-        // Generate Code
+        // 인증 코드 생성 및 저장
         String code = codeGenerator.generate();
-
-        // Save Code (TTL)
         sessionStorePort.saveCode(email, code, Duration.ofSeconds(codeTtlSeconds));
-
-        // Mark Cooldown
         sessionStorePort.markCooldown(email, Duration.ofSeconds(cooldownSeconds));
 
-        // Save to DB for batch Sending (Not Sending immediately)
-        EmailSendLog log = EmailSendLog.create(email);
-
-        // Send Email
-        EmailSendLog saved = emailSendLogRepository.save(log);
-
+        // 이메일 발송
+        EmailSendLog saved = emailSendLogRepository.save(EmailSendLog.create(email));
         eventPublisher.publishEvent(new EmailSendEvent(saved.getId(), email, code));
     }
 }
