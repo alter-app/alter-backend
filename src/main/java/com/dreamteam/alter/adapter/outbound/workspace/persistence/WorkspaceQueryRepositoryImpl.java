@@ -548,13 +548,15 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
     }
 
     @Override
-    public List<Workspace> findAllByNextMonthShiftGenDay(int day) {
+    public List<Workspace> findAllForNextMonthShiftGeneration(int day, boolean isLastDayOfMonth) {
         QWorkspace qWorkspace = QWorkspace.workspace;
 
         return queryFactory
             .selectFrom(qWorkspace)
             .where(
-                qWorkspace.nextMonthShiftGenDay.eq(day),
+                isLastDayOfMonth
+                    ? qWorkspace.nextMonthShiftGenDay.goe(day)
+                    : qWorkspace.nextMonthShiftGenDay.eq(day),
                 qWorkspace.status.eq(WorkspaceStatus.ACTIVATED)
             )
             .fetch();

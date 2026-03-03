@@ -34,9 +34,14 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
     public void execute() {
         LocalDate now = LocalDate.now();
         int todayDayOfMonth = now.getDayOfMonth();
+        int lastDayOfMonth = now.lengthOfMonth();
+        boolean isLastDayOfMonth = todayDayOfMonth == lastDayOfMonth;
 
-        // 오늘이 고정 근무 생성일로 설정된 워크스페이스만 조회한다
-        List<Workspace> targetWorkspaces = workspaceQueryRepository.findAllByNextMonthShiftGenDay(todayDayOfMonth);
+        // 말일이면 생성일이 오늘 이후인 워크스페이스까지 포함한다.
+        List<Workspace> targetWorkspaces = workspaceQueryRepository.findAllForNextMonthShiftGeneration(
+            todayDayOfMonth,
+            isLastDayOfMonth
+        );
 
         if (targetWorkspaces.isEmpty()) {
             return;
