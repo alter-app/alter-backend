@@ -1,0 +1,80 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "ko-KR"
+early_access: false
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  sequence_diagrams: true
+  changed_files_summary: true
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    base_branches:
+      - "main"
+      - "dev"
+  path_instructions:
+    - path: "src/main/java/com/dreamteam/alter/adapter/**"
+      instructions: |
+        Review as a senior developer. This is the adapter layer in a Hexagonal Architecture.
+        Verify that:
+        - Inbound adapters (controllers) only delegate to use case ports; no business logic here.
+        - Outbound adapters (repositories, external services) implement domain port interfaces.
+        - DTOs are properly separated from domain entities.
+        - Controllers use @Getter, @RequiredArgsConstructor (no @Setter).
+        - Admin controllers use @PreAuthorize("hasAnyRole('ADMIN')") and AdminActionContext for actor retrieval.
+        - Swagger annotations are present via ControllerSpec interfaces.
+    - path: "src/main/java/com/dreamteam/alter/application/**"
+      instructions: |
+        Review as a senior developer. This is the application layer containing use cases.
+        Verify that:
+        - Use cases implement port/inbound interfaces.
+        - No direct infrastructure dependencies (no Spring Data, no HTTP clients).
+        - Read-only operations use @Transactional(readOnly = true).
+        - Write operations use @Transactional.
+        - Logging uses @Slf4j.
+        - Service beans are named properly (e.g., @Service("adminGetUserList")).
+    - path: "src/main/java/com/dreamteam/alter/domain/**"
+      instructions: |
+        Review as a senior developer. This is the domain layer.
+        Verify that:
+        - ZERO infrastructure dependencies (no Spring, no JPA annotations, no external libs).
+        - Entities encapsulate business rules and invariants.
+        - Port interfaces (inbound/outbound) are clean contracts with no implementation details.
+        - Enums in type/ package follow project conventions.
+    - path: "src/main/java/com/dreamteam/alter/common/exception/**"
+      instructions: |
+        Review as a senior developer.
+        Verify that:
+        - All exceptions use CustomException with ErrorCode enum.
+        - ErrorCode follows the format: HTTP status category + code (e.g., A001, B020).
+        - No generic RuntimeException or checked exceptions are thrown directly.
+    - path: "src/test/**"
+      instructions: |
+        Review as a senior developer. Verify test quality:
+        - Test classes follow [ClassName]Tests.java naming (plural "Tests").
+        - Test methods use descriptive names: action_condition_expectedResult.
+        - Given-When-Then pattern with explicit comments.
+        - BDD-style Mockito: given() for setup, then().should() for verification.
+        - AssertJ fluent assertions (not JUnit assertions).
+        - @ExtendWith(MockitoExtension.class) with @Mock and @InjectMocks.
+        - @Nested classes group related tests with @DisplayName.
+        - Prefer UseCase and Util class tests first.
+        - Allow controller slice tests when endpoint behavior must be verified.
+  tools:
+    ast-grep:
+      essential_rules: true
+chat:
+  auto_reply: false
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: "auto"
+  issues:
+    scope: "auto"
+  pull_requests:
+    scope: "auto"
