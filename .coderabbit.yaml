@@ -63,7 +63,8 @@ reviews:
         - AssertJ fluent assertions (not JUnit assertions).
         - @ExtendWith(MockitoExtension.class) with @Mock and @InjectMocks.
         - @Nested classes group related tests with @DisplayName.
-        - No direct controller testing; focus on UseCase and Util classes.
+        - Prefer UseCase and Util class tests first.
+        - Allow controller slice tests when endpoint behavior must be verified.
   tools:
     ast-grep:
       essential_rules: true
