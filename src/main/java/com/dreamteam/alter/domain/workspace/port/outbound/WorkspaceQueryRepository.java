@@ -73,4 +73,6 @@ public interface WorkspaceQueryRepository {
     );
 
     boolean existsByIdAndManagerUser(Long workspaceId, ManagerUser managerUser);
+
+    List<Workspace> findAllForNextMonthShiftGeneration(int day, boolean isLastDayOfMonth);
 }

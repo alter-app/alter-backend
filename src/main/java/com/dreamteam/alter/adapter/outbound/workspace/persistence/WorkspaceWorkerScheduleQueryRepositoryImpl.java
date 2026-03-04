@@ -5,12 +5,14 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
+import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspaceWorkerSchedule;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerScheduleQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerScheduleStatus;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -62,6 +64,24 @@ public class WorkspaceWorkerScheduleQueryRepositoryImpl implements WorkspaceWork
 			.where(
 				qWorkspaceWorkerSchedule.workspaceWorker.eq(workspaceWorker),
 				qWorkspaceWorkerSchedule.status.ne(WorkspaceWorkerScheduleStatus.DELETED)
+			)
+			.fetch();
+	}
+
+	@Override
+	public List<WorkspaceWorkerSchedule> findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List<Long> workspaceIds) {
+		QWorkspaceWorkerSchedule qWorkspaceWorkerSchedule = QWorkspaceWorkerSchedule.workspaceWorkerSchedule;
+		QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
+		QWorkspace qWorkspace = QWorkspace.workspace;
+
+		return queryFactory
+			.selectFrom(qWorkspaceWorkerSchedule)
+			.join(qWorkspaceWorkerSchedule.workspaceWorker, qWorkspaceWorker).fetchJoin()
+			.join(qWorkspaceWorker.workspace, qWorkspace).fetchJoin()
+			.where(
+				qWorkspace.id.in(workspaceIds),
+				qWorkspaceWorkerSchedule.status.eq(WorkspaceWorkerScheduleStatus.ACTIVATED),
+				qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED)
 			)
 			.fetch();
 	}
