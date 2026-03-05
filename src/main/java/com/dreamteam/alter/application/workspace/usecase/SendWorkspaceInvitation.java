@@ -24,7 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service("sendWorkspaceInvitation")
@@ -47,39 +50,40 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
             throw new CustomException(ErrorCode.FORBIDDEN, "해당 업장의 관리자가 아닙니다.");
         }
 
+        Map<String, User> contactToUser = userQueryRepository.findByContactIn(phoneNumbers)
+            .stream().collect(Collectors.toMap(User::getContact, Function.identity()));
+
+        Set<Long> activeWorkerUserIds = workspaceQueryRepository.findActiveWorkerUserIds(workspaceId);
+        Set<Long> pendingInvitedUserIds = businessInvitationQueryRepository.findPendingInvitedUserIds(workspaceId);
+
         List<String> unregisteredPhoneNumbers = new ArrayList<>();
         List<String> alreadyWorkerPhoneNumbers = new ArrayList<>();
         List<String> alreadyInvitedPhoneNumbers = new ArrayList<>();
-        int successCount = 0;
+        List<BusinessInvitation> invitationsToSave = new ArrayList<>();
 
         for (String phoneNumber : phoneNumbers) {
-            Optional<User> userOpt = userQueryRepository.findByContact(phoneNumber);
+            User invitedUser = contactToUser.get(phoneNumber);
 
-            if (userOpt.isEmpty()) {
+            if (invitedUser == null) {
                 unregisteredPhoneNumbers.add(phoneNumber);
                 continue;
             }
-
-            User invitedUser = userOpt.get();
-
-            if (workspaceQueryRepository.isUserActiveWorkerInWorkspace(invitedUser, workspaceId)) {
+            if (activeWorkerUserIds.contains(invitedUser.getId())) {
                 alreadyWorkerPhoneNumbers.add(phoneNumber);
                 continue;
             }
-            if (businessInvitationQueryRepository.existsPendingInvitation(workspace, invitedUser)) {
+            if (pendingInvitedUserIds.contains(invitedUser.getId())) {
                 alreadyInvitedPhoneNumbers.add(phoneNumber);
                 continue;
             }
 
-            businessInvitationRepository.save(
-                BusinessInvitation.create(workspace, invitedUser, actor.getManagerUser())
-            );
-            successCount++;
-
-            sendInvitationNotification(workspace, invitedUser);
+            invitationsToSave.add(BusinessInvitation.create(workspace, invitedUser, actor.getManagerUser()));
         }
 
-        return new SendWorkspaceInvitationResultDto(successCount, unregisteredPhoneNumbers, alreadyWorkerPhoneNumbers, alreadyInvitedPhoneNumbers);
+        businessInvitationRepository.saveAll(invitationsToSave);
+        invitationsToSave.forEach(inv -> sendInvitationNotification(workspace, inv.getInvitedUser()));
+
+        return new SendWorkspaceInvitationResultDto(invitationsToSave.size(), unregisteredPhoneNumbers, alreadyWorkerPhoneNumbers, alreadyInvitedPhoneNumbers);
     }
 
     private void sendInvitationNotification(Workspace workspace, User invitedUser) {

@@ -2,8 +2,10 @@ package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
@@ -560,6 +562,20 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspace.status.eq(WorkspaceStatus.ACTIVATED)
             )
             .fetch();
+    }
+
+    @Override
+    public Set<Long> findActiveWorkerUserIds(Long workspaceId) {
+        QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
+
+        return new HashSet<>(queryFactory
+            .select(qWorkspaceWorker.user.id)
+            .from(qWorkspaceWorker)
+            .where(
+                qWorkspaceWorker.workspace.id.eq(workspaceId),
+                qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED)
+            )
+            .fetch());
     }
 
     @Override

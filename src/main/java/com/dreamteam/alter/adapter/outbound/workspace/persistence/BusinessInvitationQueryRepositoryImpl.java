@@ -10,8 +10,10 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -54,5 +56,19 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
             .where(qBusinessInvitation.invitedUser.eq(user)
                 .and(qBusinessInvitation.status.eq(BusinessInvitationStatus.PENDING)))
             .fetch();
+    }
+
+    @Override
+    public Set<Long> findPendingInvitedUserIds(Long workspaceId) {
+        QBusinessInvitation qBusinessInvitation = QBusinessInvitation.businessInvitation;
+
+        return new HashSet<>(queryFactory
+            .select(qBusinessInvitation.invitedUser.id)
+            .from(qBusinessInvitation)
+            .where(
+                qBusinessInvitation.workspace.id.eq(workspaceId),
+                qBusinessInvitation.status.eq(BusinessInvitationStatus.PENDING)
+            )
+            .fetch());
     }
 }

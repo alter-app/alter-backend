@@ -5,6 +5,8 @@ import com.dreamteam.alter.domain.workspace.port.outbound.BusinessInvitationRepo
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RequiredArgsConstructor
 public class BusinessInvitationRepositoryImpl implements BusinessInvitationRepository {
@@ -14,5 +16,10 @@ public class BusinessInvitationRepositoryImpl implements BusinessInvitationRepos
     @Override
     public void save(BusinessInvitation invitation) {
         businessInvitationJpaRepository.save(invitation);
+    }
+
+    @Override
+    public void saveAll(List<BusinessInvitation> invitations) {
+        businessInvitationJpaRepository.saveAll(invitations);
     }
 }

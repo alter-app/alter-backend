@@ -116,4 +116,15 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
             )
             .fetch();
     }
+
+    @Override
+    public List<User> findByContactIn(List<String> contacts) {
+        QUser qUser = QUser.user;
+        return queryFactory.selectFrom(qUser)
+            .where(
+                qUser.contact.in(contacts),
+                qUser.status.eq(UserStatus.ACTIVE)
+            )
+            .fetch();
+    }
 }
