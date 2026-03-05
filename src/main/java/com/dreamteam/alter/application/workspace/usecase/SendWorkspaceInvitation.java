@@ -2,7 +2,7 @@ package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationResultDto;
-import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.application.notification.FcmNotificationEvent;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
@@ -18,6 +18,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryReposito
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +36,7 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
     private final UserQueryRepository userQueryRepository;
     private final BusinessInvitationRepository businessInvitationRepository;
     private final BusinessInvitationQueryRepository businessInvitationQueryRepository;
-    private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public SendWorkspaceInvitationResultDto execute(ManagerActor actor, Long workspaceId, List<String> phoneNumbers) {
@@ -82,17 +83,13 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
     }
 
     private void sendInvitationNotification(Workspace workspace, User invitedUser) {
-        try {
-            String title = NotificationMessageConstants.WorkspaceInvitation.INVITATION_RECEIVED_TITLE;
-            String body = String.format(
-                NotificationMessageConstants.WorkspaceInvitation.INVITATION_RECEIVED_BODY,
-                workspace.getBusinessName()
-            );
-            notificationService.sendNotification(
-                FcmNotificationRequestDto.of(invitedUser.getId(), TokenScope.APP, title, body)
-            );
-        } catch (Exception e) {
-            log.warn("업장 초대 알림 발송 실패. userId={}, error={}", invitedUser.getId(), e.getMessage());
-        }
+        String title = NotificationMessageConstants.WorkspaceInvitation.INVITATION_RECEIVED_TITLE;
+        String body = String.format(
+            NotificationMessageConstants.WorkspaceInvitation.INVITATION_RECEIVED_BODY,
+            workspace.getBusinessName()
+        );
+        eventPublisher.publishEvent(
+            new FcmNotificationEvent(FcmNotificationRequestDto.of(invitedUser.getId(), TokenScope.APP, title, body))
+        );
     }
 }

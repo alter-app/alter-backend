@@ -1,7 +1,7 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
-import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.application.notification.FcmNotificationEvent;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
@@ -15,11 +15,10 @@ import com.dreamteam.alter.domain.workspace.port.outbound.BusinessJoinRequestQue
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service("approveJoinRequest")
 @RequiredArgsConstructor
 @Transactional
@@ -27,7 +26,7 @@ public class ApproveJoinRequest implements ApproveJoinRequestUseCase {
 
     private final WorkspaceQueryRepository workspaceQueryRepository;
     private final BusinessJoinRequestQueryRepository businessJoinRequestQueryRepository;
-    private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Resource(name = "addWorkerToWorkspace")
     private CreateWorkspaceWorkerUseCase addWorkerToWorkspace;
@@ -52,17 +51,13 @@ public class ApproveJoinRequest implements ApproveJoinRequestUseCase {
 
         addWorkerToWorkspace.execute(workspace, joinRequest.getUser());
 
-        try {
-            String title = NotificationMessageConstants.JoinRequest.REQUEST_APPROVED_TITLE;
-            String body = String.format(
-                NotificationMessageConstants.JoinRequest.REQUEST_APPROVED_BODY,
-                workspace.getBusinessName()
-            );
-            notificationService.sendNotification(
-                FcmNotificationRequestDto.of(joinRequest.getUser().getId(), TokenScope.APP, title, body)
-            );
-        } catch (Exception e) {
-            log.warn("합류 요청 승인 알림 발송 실패. requestId={}, error={}", requestId, e.getMessage());
-        }
+        String title = NotificationMessageConstants.JoinRequest.REQUEST_APPROVED_TITLE;
+        String body = String.format(
+            NotificationMessageConstants.JoinRequest.REQUEST_APPROVED_BODY,
+            workspace.getBusinessName()
+        );
+        eventPublisher.publishEvent(
+            new FcmNotificationEvent(FcmNotificationRequestDto.of(joinRequest.getUser().getId(), TokenScope.APP, title, body))
+        );
     }
 }

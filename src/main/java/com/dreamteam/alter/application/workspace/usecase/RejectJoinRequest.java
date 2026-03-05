@@ -1,7 +1,7 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
-import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.application.notification.FcmNotificationEvent;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
@@ -13,11 +13,10 @@ import com.dreamteam.alter.domain.workspace.port.inbound.RejectJoinRequestUseCas
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessJoinRequestQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service("rejectJoinRequest")
 @RequiredArgsConstructor
 @Transactional
@@ -25,7 +24,7 @@ public class RejectJoinRequest implements RejectJoinRequestUseCase {
 
     private final WorkspaceQueryRepository workspaceQueryRepository;
     private final BusinessJoinRequestQueryRepository businessJoinRequestQueryRepository;
-    private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void execute(ManagerActor actor, Long workspaceId, Long requestId) {
@@ -45,17 +44,13 @@ public class RejectJoinRequest implements RejectJoinRequestUseCase {
 
         joinRequest.reject();
 
-        try {
-            String title = NotificationMessageConstants.JoinRequest.REQUEST_REJECTED_TITLE;
-            String body = String.format(
-                NotificationMessageConstants.JoinRequest.REQUEST_REJECTED_BODY,
-                workspace.getBusinessName()
-            );
-            notificationService.sendNotification(
-                FcmNotificationRequestDto.of(joinRequest.getUser().getId(), TokenScope.APP, title, body)
-            );
-        } catch (Exception e) {
-            log.warn("합류 요청 거절 알림 발송 실패. requestId={}, error={}", requestId, e.getMessage());
-        }
+        String title = NotificationMessageConstants.JoinRequest.REQUEST_REJECTED_TITLE;
+        String body = String.format(
+            NotificationMessageConstants.JoinRequest.REQUEST_REJECTED_BODY,
+            workspace.getBusinessName()
+        );
+        eventPublisher.publishEvent(
+            new FcmNotificationEvent(FcmNotificationRequestDto.of(joinRequest.getUser().getId(), TokenScope.APP, title, body))
+        );
     }
 }

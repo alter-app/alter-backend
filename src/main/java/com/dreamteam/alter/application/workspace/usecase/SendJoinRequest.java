@@ -1,7 +1,7 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
-import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.application.notification.FcmNotificationEvent;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
@@ -15,6 +15,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.BusinessJoinRequestRep
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +28,7 @@ public class SendJoinRequest implements SendJoinRequestUseCase {
     private final WorkspaceQueryRepository workspaceQueryRepository;
     private final BusinessJoinRequestQueryRepository businessJoinRequestQueryRepository;
     private final BusinessJoinRequestRepository businessJoinRequestRepository;
-    private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void execute(AppActor actor, Long workspaceId) {
@@ -45,18 +46,14 @@ public class SendJoinRequest implements SendJoinRequestUseCase {
         BusinessJoinRequest joinRequest = BusinessJoinRequest.create(workspace, actor.getUser());
         businessJoinRequestRepository.save(joinRequest);
 
-        try {
-            String title = NotificationMessageConstants.JoinRequest.REQUEST_RECEIVED_TITLE;
-            String body = String.format(
-                NotificationMessageConstants.JoinRequest.REQUEST_RECEIVED_BODY,
-                actor.getUser().getName()
-            );
-            Long managerUserId = workspace.getManagerUser().getUser().getId();
-            notificationService.sendNotification(
-                FcmNotificationRequestDto.of(managerUserId, TokenScope.MANAGER, title, body)
-            );
-        } catch (Exception e) {
-            log.warn("합류 요청 알림 발송 실패. workspaceId={}, error={}", workspaceId, e.getMessage());
-        }
+        String title = NotificationMessageConstants.JoinRequest.REQUEST_RECEIVED_TITLE;
+        String body = String.format(
+            NotificationMessageConstants.JoinRequest.REQUEST_RECEIVED_BODY,
+            actor.getUser().getName()
+        );
+        Long managerUserId = workspace.getManagerUser().getUser().getId();
+        eventPublisher.publishEvent(
+            new FcmNotificationEvent(FcmNotificationRequestDto.of(managerUserId, TokenScope.MANAGER, title, body))
+        );
     }
 }
