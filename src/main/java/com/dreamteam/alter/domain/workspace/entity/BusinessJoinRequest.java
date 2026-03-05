@@ -14,10 +14,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Table(
-    name = "business_join_requests",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"workspace_id", "user_id"})
-)
+@Table(name = "business_join_requests")
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
