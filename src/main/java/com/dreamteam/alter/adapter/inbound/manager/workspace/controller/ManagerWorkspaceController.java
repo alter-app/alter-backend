@@ -1,19 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.*;
-import com.dreamteam.alter.application.aop.ManagerActionContext;
-import com.dreamteam.alter.domain.user.context.ManagerActor;
-import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceListUseCase;
-import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceUseCase;
-import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceWorkerListUseCase;
-import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceManagerListUseCase;
-import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateFixedScheduleDateUseCase;
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -24,7 +12,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceListResponseDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceManagerListResponseDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceResponseDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListFilterDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListResponseDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.UpdateFixedScheduleDateRequestDto;
+import com.dreamteam.alter.application.aop.ManagerActionContext;
+import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceListUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceManagerListUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceWorkerListUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateFixedScheduleDateUseCase;
+
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/manager/workspaces")
@@ -96,7 +103,7 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
         @RequestBody @Valid UpdateFixedScheduleDateRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        managerUpdateFixedScheduleDate.execute(actor, workspaceId, request);
+        managerUpdateFixedScheduleDate.execute(actor, workspaceId, request.nextMonthShiftGenDay());
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }
