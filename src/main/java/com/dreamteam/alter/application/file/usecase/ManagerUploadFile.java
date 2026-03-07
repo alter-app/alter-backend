@@ -9,6 +9,7 @@ import com.dreamteam.alter.domain.user.context.ManagerActor;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service("managerUploadFile")
@@ -19,6 +20,7 @@ public class ManagerUploadFile implements ManagerUploadFileUseCase {
     private final FileUploadService fileUploadService;
 
     @Override
+    @Transactional
     public ManagerUploadFileResponseDto execute(ManagerActor actor, MultipartFile file, FileTargetType targetType, BucketType bucketType) {
         String fileId = fileUploadService.upload(file, targetType, bucketType, actor.getUserId());
         return ManagerUploadFileResponseDto.of(fileId);
