@@ -1,5 +1,7 @@
 package com.dreamteam.alter.domain.workspace.entity;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
 import jakarta.persistence.*;
@@ -111,6 +113,10 @@ public class Workspace {
     }
 
     public void updateNextMonthShiftGenDay(int day) {
+        if (day < 1 || day > 31) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "1~31 범위를 벗어난 값입니다.");
+        }
+
         this.nextMonthShiftGenDay = day;
     }
 
