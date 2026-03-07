@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.FixedWorkerScheduleResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
