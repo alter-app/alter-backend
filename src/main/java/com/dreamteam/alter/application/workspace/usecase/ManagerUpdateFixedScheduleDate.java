@@ -21,12 +21,12 @@ public class ManagerUpdateFixedScheduleDate implements ManagerUpdateFixedSchedul
 
 	@Override
 	public void execute(ManagerActor actor, Long workspaceId, int nextMonthShiftGenDay) {
+		if (workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser())) {
+			throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
+		}
+
 		Workspace workspace = workspaceQueryRepository.findById(workspaceId)
 			.orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
-
-		if (!workspace.getManagerUser().equals(actor.getManagerUser())) {
-			throw new CustomException(ErrorCode.FORBIDDEN, "관리 중인 업장이 아닙니다.");
-		}
 
 		workspace.updateNextMonthShiftGenDay(nextMonthShiftGenDay);
 	}

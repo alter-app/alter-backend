@@ -80,16 +80,6 @@ public interface ManagerWorkspaceControllerSpec {
                         value = "{\"code\" : \"B019\"}"
                     ),
                 })),
-        @ApiResponse(responseCode = "409", description = "409 Error 실패 케이스",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = ErrorResponse.class),
-                examples = {
-                    @ExampleObject(
-                        name = "관리 중인 업장이 아님",
-                        value = "{\"code\" : \"A002\"}"
-                    ),
-                })),
     })
     ResponseEntity<CommonApiResponse<Void>> updateFixedScheduleDate(
         @PathVariable Long workspaceId,
