@@ -4,12 +4,19 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.*;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 
 import java.util.List;
 
@@ -48,6 +55,45 @@ public interface ManagerWorkspaceControllerSpec {
     ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<ManagerWorkspaceManagerListResponseDto>>> getWorkspaceManagerList(
         @PathVariable Long workspaceId,
         CursorPageRequestDto pageRequest
+    );
+
+    @Operation(summary = "매니저 - 업장 고정근무 생성 기준일 수정", description = "다음 달 고정근무 스케줄 자동 생성 기준일(1~31)을 수정합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "기준일 수정 성공"),
+        @ApiResponse(responseCode = "400", description = "400 Error 실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "1~31 범위를 벗어난 값입니다.",
+                        value = "{\"code\" : \"B001\"}"
+                    ),
+                })),
+        @ApiResponse(responseCode = "404", description = "404 Error 실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "존재하지 않는 업장입니다.",
+                        value = "{\"code\" : \"B019\"}"
+                    ),
+                })),
+        @ApiResponse(responseCode = "409", description = "409 Error 실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "관리 중인 업장이 아님",
+                        value = "{\"code\" : \"A002\"}"
+                    ),
+                })),
+    })
+    ResponseEntity<CommonApiResponse<Void>> updateFixedScheduleDate(
+        @PathVariable Long workspaceId,
+        @RequestBody @Valid UpdateFixedScheduleDateRequestDto request
     );
 
     // 업장 근무자 상세 정보 조회

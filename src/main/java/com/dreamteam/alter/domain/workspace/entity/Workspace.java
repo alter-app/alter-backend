@@ -110,4 +110,8 @@ public class Workspace {
             .build();
     }
 
+    public void updateNextMonthShiftGenDay(int day) {
+        this.nextMonthShiftGenDay = day;
+    }
+
 }

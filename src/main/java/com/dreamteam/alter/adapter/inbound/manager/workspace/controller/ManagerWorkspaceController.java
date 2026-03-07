@@ -10,13 +10,17 @@ import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceList
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceWorkerListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceManagerListUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateFixedScheduleDateUseCase;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,6 +44,8 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
 
     @Resource(name = "managerGetWorkspaceManagerList")
     private final ManagerGetWorkspaceManagerListUseCase managerGetWorkspaceManagerList;
+
+    private final ManagerUpdateFixedScheduleDateUseCase managerUpdateFixedScheduleDate;
 
     @Override
     @GetMapping
@@ -82,4 +88,14 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
         return ResponseEntity.ok(CommonApiResponse.of(managerGetWorkspaceManagerList.execute(actor, workspaceId, pageRequest)));
     }
 
+    @Override
+    @PatchMapping("/{workspaceId}/fixed-schedule")
+    public ResponseEntity<CommonApiResponse<Void>> updateFixedScheduleDate(
+        @PathVariable Long workspaceId,
+        @RequestBody @Valid UpdateFixedScheduleDateRequestDto request
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        managerUpdateFixedScheduleDate.execute(actor, workspaceId, request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
 }
