@@ -1,13 +1,13 @@
-package com.dreamteam.alter.application.file.usecase;
+package com.dreamteam.alter.adapter.inbound.general.file.scheduler;
 
 import com.dreamteam.alter.domain.file.port.inbound.CleanupOrphanFilesUseCase;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service("fileScheduleService")
+@Component
 @RequiredArgsConstructor
 public class FileCleanupScheduler {
 
