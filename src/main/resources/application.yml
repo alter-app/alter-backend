@@ -7,6 +7,10 @@ server:
 spring:
   application:
     name: alter
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL}
@@ -72,3 +76,8 @@ aws:
   region: ${AWS_REGION}
   access-key: ${AWS_ACCESS_KEY_ID}
   secret-key: ${AWS_SECRET_ACCESS_KEY}
+  s3:
+    region: ${AWS_S3_REGION}
+    public-bucket: ${AWS_S3_PUBLIC_BUCKET}
+    private-bucket: ${AWS_S3_PRIVATE_BUCKET}
+    presigned-url-expiration-minutes: ${AWS_S3_PRESIGNED_URL_EXPIRATION_MINUTES}
