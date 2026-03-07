@@ -16,7 +16,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerSchedul
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+@Service("managerGetFixedWorkerScheduleList")
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ManagerGetFixedWorkerScheduleList implements ManagerGetFixedWorkerScheduleListUseCase {

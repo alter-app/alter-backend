@@ -45,6 +45,7 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
     @Resource(name = "managerGetWorkspaceManagerList")
     private final ManagerGetWorkspaceManagerListUseCase managerGetWorkspaceManagerList;
 
+    @Resource(name = "managerUpdateFixedScheduleDate")
     private final ManagerUpdateFixedScheduleDateUseCase managerUpdateFixedScheduleDate;
 
     @Override

@@ -13,7 +13,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryReposito
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+@Service("managerUpdateFixedScheduleDate")
 @RequiredArgsConstructor
 @Transactional
 public class ManagerUpdateFixedScheduleDate implements ManagerUpdateFixedScheduleDateUseCase {

@@ -25,6 +25,7 @@ import com.dreamteam.alter.domain.workspace.port.inbound.ManagerDeleteFixedWorke
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetFixedWorkerScheduleListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateFixedWorkerScheduleUseCase;
 
+import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -35,9 +36,16 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/manager/workspaces/{workspaceId}/fixed-worker-schedules")
 public class ManagerFixedWorkerScheduleController implements ManagerFixedWorkerScheduleControllerSpec {
 
+	@Resource(name = "managerCreateFixedWorkerSchedule")
 	private final ManagerCreateFixedWorkerScheduleUseCase managerCreateFixedWorkerSchedule;
+
+	@Resource(name = "managerUpdateWorkerSchedule")
 	private final ManagerUpdateFixedWorkerScheduleUseCase managerUpdateWorkerSchedule;
+
+	@Resource(name = "managerDeleteFixedWorkerSchedule")
 	private final ManagerDeleteFixedWorkerScheduleUseCase managerDeleteFixedWorkerSchedule;
+
+	@Resource(name = "managerGetFixedWorkerScheduleList")
 	private final ManagerGetFixedWorkerScheduleListUseCase managerGetFixedWorkerScheduleList;
 
 	@Override
