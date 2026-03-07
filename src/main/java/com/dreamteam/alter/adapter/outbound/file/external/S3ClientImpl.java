@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.outbound.file.external;
 
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.file.PresignedUrlResult;
 import com.dreamteam.alter.domain.file.port.outbound.S3Client;
 import com.dreamteam.alter.domain.file.type.BucketType;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 
 @Slf4j
 @Component("s3Client")
@@ -60,8 +62,9 @@ public class S3ClientImpl implements S3Client {
     }
 
     @Override
-    public String getPresignedUrl(String storedKey, BucketType bucketType) {
+    public PresignedUrlResult getPresignedUrl(String storedKey, BucketType bucketType) {
         String bucket = resolveBucket(bucketType);
+        Instant expiresAt = Instant.now().plus(Duration.ofMinutes(presignedUrlExpirationMinutes));
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
             .signatureDuration(Duration.ofMinutes(presignedUrlExpirationMinutes))
             .getObjectRequest(GetObjectRequest.builder()
@@ -70,7 +73,8 @@ public class S3ClientImpl implements S3Client {
                 .build())
             .build();
 
-        return s3Presigner.presignGetObject(presignRequest).url().toString();
+        String url = s3Presigner.presignGetObject(presignRequest).url().toString();
+        return new PresignedUrlResult(url, expiresAt);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.file.dto;
 
+import com.dreamteam.alter.domain.file.PresignedUrlResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -15,7 +16,10 @@ public class ManagerGetPresignedUrlResponseDto {
     @Schema(description = "S3 Presigned URL (유효시간 제한 있음)")
     private String presignedUrl;
 
-    public static ManagerGetPresignedUrlResponseDto of(String presignedUrl) {
-        return new ManagerGetPresignedUrlResponseDto(presignedUrl);
+    @Schema(description = "Presigned URL 만료 시각 (ISO 8601 UTC)")
+    private String expiresAt;
+
+    public static ManagerGetPresignedUrlResponseDto of(PresignedUrlResult result) {
+        return new ManagerGetPresignedUrlResponseDto(result.url(), result.expiresAt().toString());
     }
 }
