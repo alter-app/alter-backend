@@ -59,7 +59,6 @@ public class ManagerWorkspaceResponseDto {
     @Schema(description = "업장 경도", example = "126.9780")
     private BigDecimal longitude;
 
-    @NotNull
     @Schema(description = "다음달 고정근무 생성일", example = "20")
     private int nextMonthShiftGenDay;
 
