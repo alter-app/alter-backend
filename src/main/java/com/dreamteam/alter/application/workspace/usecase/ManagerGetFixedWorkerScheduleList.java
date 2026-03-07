@@ -25,14 +25,10 @@ public class ManagerGetFixedWorkerScheduleList implements ManagerGetFixedWorkerS
 	private final WorkspaceWorkerScheduleQueryRepository workspaceWorkerScheduleQueryRepository;
 
 	@Override
-	public List<FixedWorkerScheduleResponseDto> execute(ManagerActor actor, Long workspaceId) {
+	public List<WorkspaceWorkerSchedule> execute(ManagerActor actor, Long workspaceId) {
 		if (!workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser()))
 			throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
 
-		List<WorkspaceWorkerSchedule> schedules = workspaceWorkerScheduleQueryRepository.findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List.of(workspaceId));
-
-		return schedules.stream()
-			.map(FixedWorkerScheduleResponseDto::of)
-			.toList();
+		return workspaceWorkerScheduleQueryRepository.findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List.of(workspaceId));
 	}
 }

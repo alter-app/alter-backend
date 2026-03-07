@@ -4,7 +4,8 @@ import java.util.List;
 
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.FixedWorkerScheduleResponseDto;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 
 public interface ManagerGetFixedWorkerScheduleListUseCase {
-	List<FixedWorkerScheduleResponseDto> execute(ManagerActor actor, Long workspaceId);
+	List<WorkspaceWorkerSchedule> execute(ManagerActor actor, Long workspaceId);
 }

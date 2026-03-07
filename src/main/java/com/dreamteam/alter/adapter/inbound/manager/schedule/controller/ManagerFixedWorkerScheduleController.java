@@ -20,6 +20,7 @@ import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.UpdateWorkerSche
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.CreateWorkerScheduleRequestDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerCreateFixedWorkerScheduleUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerDeleteFixedWorkerScheduleUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetFixedWorkerScheduleListUseCase;
@@ -88,6 +89,12 @@ public class ManagerFixedWorkerScheduleController implements ManagerFixedWorkerS
 		@PathVariable Long workspaceId
 	) {
 		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		return ResponseEntity.ok(CommonApiResponse.of(managerGetFixedWorkerScheduleList.execute(actor, workspaceId)));
+		List<WorkspaceWorkerSchedule> schedules = managerGetFixedWorkerScheduleList.execute(actor, workspaceId);
+
+		List<FixedWorkerScheduleResponseDto> responses = schedules.stream()
+			.map(FixedWorkerScheduleResponseDto::of)
+			.toList();
+
+		return ResponseEntity.ok(CommonApiResponse.of(responses));
 	}
 }
