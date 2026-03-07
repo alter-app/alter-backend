@@ -37,6 +37,8 @@ public class ManagerWorkspaceResponse {
 
     private BigDecimal longitude;
 
+    private int nextMonthShiftGenDay;
+
     private LocalDateTime createdAt;
 
     private ReputationSummary reputationSummary;

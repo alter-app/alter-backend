@@ -97,6 +97,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                     qWorkspace.fullAddress,
                     qWorkspace.latitude,
                     qWorkspace.longitude,
+                    qWorkspace.nextMonthShiftGenDay,
                     qWorkspace.createdAt,
                     qReputationSummary
                 )
