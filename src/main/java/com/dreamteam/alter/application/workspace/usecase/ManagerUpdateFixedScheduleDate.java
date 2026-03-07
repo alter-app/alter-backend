@@ -25,7 +25,7 @@ public class ManagerUpdateFixedScheduleDate implements ManagerUpdateFixedSchedul
 		Workspace workspace = workspaceQueryRepository.findById(workspaceId)
 			.orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
-		if (workspace.getManagerUser().equals(actor.getManagerUser())) {
+		if (!workspace.getManagerUser().equals(actor.getManagerUser())) {
 			throw new CustomException(ErrorCode.FORBIDDEN, "관리 중인 업장이 아닙니다.");
 		}
 
