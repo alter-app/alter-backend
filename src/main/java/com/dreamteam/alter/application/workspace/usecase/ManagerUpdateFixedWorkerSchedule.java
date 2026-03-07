@@ -16,7 +16,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerSchedul
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
-@Service("managerUpdateWorkerSchedule")
+@Service("managerUpdateFixedWorkerSchedule")
 @RequiredArgsConstructor
 @Transactional
 public class ManagerUpdateFixedWorkerSchedule implements ManagerUpdateFixedWorkerScheduleUseCase {

@@ -40,8 +40,8 @@ public class ManagerFixedWorkerScheduleController implements ManagerFixedWorkerS
 	@Resource(name = "managerCreateFixedWorkerSchedule")
 	private final ManagerCreateFixedWorkerScheduleUseCase managerCreateFixedWorkerSchedule;
 
-	@Resource(name = "managerUpdateWorkerSchedule")
-	private final ManagerUpdateFixedWorkerScheduleUseCase managerUpdateWorkerSchedule;
+	@Resource(name = "managerUpdateFixedWorkerSchedule")
+	private final ManagerUpdateFixedWorkerScheduleUseCase managerUpdateFixedWorkerSchedule;
 
 	@Resource(name = "managerDeleteFixedWorkerSchedule")
 	private final ManagerDeleteFixedWorkerScheduleUseCase managerDeleteFixedWorkerSchedule;
@@ -68,7 +68,7 @@ public class ManagerFixedWorkerScheduleController implements ManagerFixedWorkerS
 		@RequestBody @Valid UpdateWorkerScheduleRequestDto request
 	) {
 		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		managerUpdateWorkerSchedule.execute(actor, workspaceId, workerScheduleId, request);
+		managerUpdateFixedWorkerSchedule.execute(actor, workspaceId, workerScheduleId, request);
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 
