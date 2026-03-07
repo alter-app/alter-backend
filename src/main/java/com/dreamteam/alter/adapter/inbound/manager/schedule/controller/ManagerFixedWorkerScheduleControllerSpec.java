@@ -1,11 +1,14 @@
 package com.dreamteam.alter.adapter.inbound.manager.schedule.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
+import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.FixedWorkerScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.UpdateWorkerScheduleRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.CreateWorkerScheduleRequestDto;
 
@@ -129,5 +132,23 @@ public interface ManagerFixedWorkerScheduleControllerSpec {
 	ResponseEntity<CommonApiResponse<Void>> deleteWorkerSchedule(
 		@PathVariable Long workspaceId,
 		@PathVariable Long workerScheduleId
+	);
+
+	@Operation(summary = "매니저 - 근무자 고정 스케줄 목록 조회", description = "업장의 활성화된 모든 고정 스케줄 목록을 반환합니다.")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "고정 스케줄 목록 조회 성공"),
+		@ApiResponse(responseCode = "404", description = "404 Error 실패 케이스",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = ErrorResponse.class),
+				examples = {
+					@ExampleObject(
+						name = "존재하지 않는 업장입니다.",
+						value = "{\"code\" : \"B019\"}"
+					),
+				})),
+	})
+	ResponseEntity<CommonApiResponse<List<FixedWorkerScheduleResponseDto>>> getWorkerScheduleList(
+		@PathVariable Long workspaceId
 	);
 }
