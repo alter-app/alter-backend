@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -27,11 +28,13 @@ public class PresignedUrlCacheRepositoryImpl implements PresignedUrlCacheReposit
 
     @Override
     public Optional<PresignedUrlResult> findByFileId(String fileId) {
-        String value = redisTemplate.opsForValue().get(KEY_PREFIX + fileId);
-        if (ObjectUtils.isEmpty(value)) return Optional.empty();
-
         try {
+            String value = redisTemplate.opsForValue().get(KEY_PREFIX + fileId);
+            if (ObjectUtils.isEmpty(value)) return Optional.empty();
             return Optional.of(objectMapper.readValue(value, PresignedUrlCacheEntry.class).toResult());
+        } catch (DataAccessException e) {
+            log.warn("Redis access failed for fileId={}", fileId, e);
+            return Optional.empty();
         } catch (JsonProcessingException e) {
             log.warn("Failed to deserialize presigned URL cache for fileId={}", fileId, e);
             return Optional.empty();
@@ -46,6 +49,8 @@ public class PresignedUrlCacheRepositoryImpl implements PresignedUrlCacheReposit
         try {
             String value = objectMapper.writeValueAsString(PresignedUrlCacheEntry.from(result));
             redisTemplate.opsForValue().set(KEY_PREFIX + fileId, value, ttl);
+        } catch (DataAccessException e) {
+            log.warn("Redis save failed for fileId={}", fileId, e);
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize presigned URL cache for fileId={}", fileId, e);
         }
@@ -53,6 +58,10 @@ public class PresignedUrlCacheRepositoryImpl implements PresignedUrlCacheReposit
 
     @Override
     public void deleteByFileId(String fileId) {
-        redisTemplate.delete(KEY_PREFIX + fileId);
+        try {
+            redisTemplate.delete(KEY_PREFIX + fileId);
+        } catch (DataAccessException e) {
+            log.warn("Redis delete failed for fileId={}", fileId, e);
+        }
     }
 }

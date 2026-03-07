@@ -16,8 +16,6 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -55,7 +53,7 @@ public class S3ClientImpl implements S3Client {
                 return "https://" + bucket + ".s3.amazonaws.com/" + storedKey;
             }
             return null;
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("S3 upload failed for key={}", storedKey, e);
             throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
         }
@@ -64,17 +62,22 @@ public class S3ClientImpl implements S3Client {
     @Override
     public PresignedUrlResult getPresignedUrl(String storedKey, BucketType bucketType) {
         String bucket = resolveBucket(bucketType);
-        Instant expiresAt = Instant.now().plus(Duration.ofMinutes(presignedUrlExpirationMinutes));
-        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-            .signatureDuration(Duration.ofMinutes(presignedUrlExpirationMinutes))
-            .getObjectRequest(GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(storedKey)
-                .build())
-            .build();
+        try {
+            Instant expiresAt = Instant.now().plus(Duration.ofMinutes(presignedUrlExpirationMinutes));
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(presignedUrlExpirationMinutes))
+                .getObjectRequest(GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(storedKey)
+                    .build())
+                .build();
 
-        String url = s3Presigner.presignGetObject(presignRequest).url().toString();
-        return new PresignedUrlResult(url, expiresAt);
+            String url = s3Presigner.presignGetObject(presignRequest).url().toString();
+            return new PresignedUrlResult(url, expiresAt);
+        } catch (Exception e) {
+            log.error("S3 presign failed for key={}", storedKey, e);
+            throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
     }
 
     @Override
