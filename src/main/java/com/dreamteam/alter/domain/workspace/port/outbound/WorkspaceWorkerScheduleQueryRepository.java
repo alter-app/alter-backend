@@ -11,5 +11,4 @@ public interface WorkspaceWorkerScheduleQueryRepository {
 	Optional<WorkspaceWorkerSchedule> getByIdWithWorkspaceWorker(Long workerScheduleId);
 	List<WorkspaceWorkerSchedule> getByWorkspaceWorker(WorkspaceWorker workspaceWorker);
 	List<WorkspaceWorkerSchedule> findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List<Long> workspaceIds);
-	List<WorkspaceWorkerSchedule> findAllActivatedWithWorkspaceWorkerByWorkspaceId(Long workspaceId);
 }
