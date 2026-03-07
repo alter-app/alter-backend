@@ -1,9 +1,9 @@
 package com.dreamteam.alter.adapter.inbound.admin.file.controller;
 
-import com.dreamteam.alter.adapter.inbound.admin.file.dto.AdminGetPresignedUrlResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.file.dto.AdminUploadFileResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.FilePresignedUrlResponseDto;
 import com.dreamteam.alter.domain.file.type.BucketType;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,7 +52,7 @@ public interface AdminFileControllerSpec {
                     @ExampleObject(name = "파일 없음", value = "{\"code\" : \"B021\"}")
                 }))
     })
-    ResponseEntity<CommonApiResponse<AdminGetPresignedUrlResponseDto>> getPresignedUrl(
+    ResponseEntity<CommonApiResponse<FilePresignedUrlResponseDto>> getPresignedUrl(
         @PathVariable String fileId
     );
 

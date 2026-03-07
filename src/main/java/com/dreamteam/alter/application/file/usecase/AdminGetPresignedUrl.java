@@ -1,10 +1,9 @@
 package com.dreamteam.alter.application.file.usecase;
 
-import com.dreamteam.alter.adapter.inbound.admin.file.dto.AdminGetPresignedUrlResponseDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.FilePresignedUrlResponseDto;
 import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.file.PresignedUrlResult;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.inbound.AdminGetPresignedUrlUseCase;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
@@ -22,10 +21,10 @@ public class AdminGetPresignedUrl implements AdminGetPresignedUrlUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public AdminGetPresignedUrlResponseDto execute(AdminActor actor, String fileId) {
+    public FilePresignedUrlResponseDto execute(AdminActor actor, String fileId) {
         File file = fileQueryRepository.findById(fileId)
             .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
 
-        return AdminGetPresignedUrlResponseDto.of(fileUrlService.getPresignedUrl(file));
+        return FilePresignedUrlResponseDto.of(fileUrlService.getPresignedUrl(file));
     }
 }

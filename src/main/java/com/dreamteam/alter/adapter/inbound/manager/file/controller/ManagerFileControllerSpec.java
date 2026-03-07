@@ -2,7 +2,7 @@ package com.dreamteam.alter.adapter.inbound.manager.file.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
-import com.dreamteam.alter.adapter.inbound.manager.file.dto.ManagerGetPresignedUrlResponseDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.FilePresignedUrlResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.file.dto.ManagerUploadFileResponseDto;
 import com.dreamteam.alter.domain.file.type.BucketType;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -59,7 +59,7 @@ public interface ManagerFileControllerSpec {
                     @ExampleObject(name = "파일 없음", value = "{\"code\" : \"B021\"}")
                 }))
     })
-    ResponseEntity<CommonApiResponse<ManagerGetPresignedUrlResponseDto>> getPresignedUrl(
+    ResponseEntity<CommonApiResponse<FilePresignedUrlResponseDto>> getPresignedUrl(
         @PathVariable String fileId
     );
 

@@ -1,7 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.manager.file.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.adapter.inbound.manager.file.dto.ManagerGetPresignedUrlResponseDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.FilePresignedUrlResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.file.dto.ManagerUploadFileResponseDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.file.port.inbound.ManagerDeleteFileUseCase;
@@ -46,7 +46,7 @@ public class ManagerFileController implements ManagerFileControllerSpec {
 
     @Override
     @GetMapping("/{fileId}/presigned-url")
-    public ResponseEntity<CommonApiResponse<ManagerGetPresignedUrlResponseDto>> getPresignedUrl(
+    public ResponseEntity<CommonApiResponse<FilePresignedUrlResponseDto>> getPresignedUrl(
         @PathVariable String fileId
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();

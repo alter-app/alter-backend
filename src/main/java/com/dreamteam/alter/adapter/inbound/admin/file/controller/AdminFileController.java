@@ -1,8 +1,8 @@
 package com.dreamteam.alter.adapter.inbound.admin.file.controller;
 
-import com.dreamteam.alter.adapter.inbound.admin.file.dto.AdminGetPresignedUrlResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.file.dto.AdminUploadFileResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.FilePresignedUrlResponseDto;
 import com.dreamteam.alter.application.aop.AdminActionContext;
 import com.dreamteam.alter.domain.file.port.inbound.AdminDeleteFileUseCase;
 import com.dreamteam.alter.domain.file.port.inbound.AdminGetPresignedUrlUseCase;
@@ -46,7 +46,7 @@ public class AdminFileController implements AdminFileControllerSpec {
 
     @Override
     @GetMapping("/{fileId}/presigned-url")
-    public ResponseEntity<CommonApiResponse<AdminGetPresignedUrlResponseDto>> getPresignedUrl(
+    public ResponseEntity<CommonApiResponse<FilePresignedUrlResponseDto>> getPresignedUrl(
         @PathVariable String fileId
     ) {
         AdminActor actor = AdminActionContext.getInstance().getActor();
