@@ -3,5 +3,5 @@ package com.dreamteam.alter.domain.workspace.port.inbound;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 
 public interface ManagerUpdateFixedScheduleDateUseCase {
-	void execute(ManagerActor actor, Long workspaceId, int request);
+	void execute(ManagerActor actor, Long workspaceId, int nextMonthShiftGenDay);
 }
