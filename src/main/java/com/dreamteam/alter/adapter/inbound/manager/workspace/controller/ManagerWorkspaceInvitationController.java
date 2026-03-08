@@ -45,7 +45,7 @@ public class ManagerWorkspaceInvitationController implements ManagerWorkspaceInv
         @Valid @RequestBody SendWorkspaceInvitationRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        SendWorkspaceInvitationResultDto result = sendWorkspaceInvitationUseCase.execute(actor, workspaceId, request.getPhoneNumbers());
+        SendWorkspaceInvitationResultDto result = sendWorkspaceInvitationUseCase.execute(actor, workspaceId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(CommonApiResponse.of(result));
     }
 

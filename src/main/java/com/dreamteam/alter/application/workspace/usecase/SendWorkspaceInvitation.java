@@ -1,6 +1,7 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.workspace.dto.SendWorkspaceInvitationRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationResultDto;
 import com.dreamteam.alter.application.notification.FcmNotificationEvent;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -42,7 +43,7 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
-    public SendWorkspaceInvitationResultDto execute(ManagerActor actor, Long workspaceId, List<String> phoneNumbers) {
+    public SendWorkspaceInvitationResultDto execute(ManagerActor actor, Long workspaceId, SendWorkspaceInvitationRequestDto request) {
         Workspace workspace = workspaceQueryRepository.findById(workspaceId)
             .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -50,6 +51,7 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
             throw new CustomException(ErrorCode.FORBIDDEN, "해당 업장의 관리자가 아닙니다.");
         }
 
+        List<String> phoneNumbers = request.getPhoneNumbers();
         Map<String, User> contactToUser = userQueryRepository.findByContactIn(phoneNumbers)
             .stream().collect(Collectors.toMap(User::getContact, Function.identity()));
 
