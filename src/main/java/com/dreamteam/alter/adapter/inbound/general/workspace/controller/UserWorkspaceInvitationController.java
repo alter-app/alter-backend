@@ -12,11 +12,14 @@ import com.dreamteam.alter.domain.workspace.type.BusinessInvitationStatus;
 import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @PreAuthorize("hasAnyRole('USER')")
@@ -54,20 +57,24 @@ public class UserWorkspaceInvitationController implements UserWorkspaceInvitatio
     @GetMapping("/users/me/join-requests")
     public ResponseEntity<CursorPaginatedApiResponse<MyJoinRequestResponseDto>> getMyJoinRequestList(
         CursorPageRequestDto cursorPageRequest,
-        @RequestParam(required = false) BusinessJoinRequestStatus status
+        @RequestParam(required = false) BusinessJoinRequestStatus status,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(getMyJoinRequestListUseCase.execute(actor, status, cursorPageRequest));
+        return ResponseEntity.ok(getMyJoinRequestListUseCase.execute(actor, status, from, to, cursorPageRequest));
     }
 
     @Override
     @GetMapping("/users/me/invitations")
     public ResponseEntity<CursorPaginatedApiResponse<MyInvitationResponseDto>> getMyInvitationList(
         CursorPageRequestDto cursorPageRequest,
-        @RequestParam(required = false) BusinessInvitationStatus status
+        @RequestParam(required = false) BusinessInvitationStatus status,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(getMyInvitationListUseCase.execute(actor, status, cursorPageRequest));
+        return ResponseEntity.ok(getMyInvitationListUseCase.execute(actor, status, from, to, cursorPageRequest));
     }
 
     @Override

@@ -12,6 +12,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,7 +71,7 @@ public class BusinessJoinRequestQueryRepositoryImpl implements BusinessJoinReque
     }
 
     @Override
-    public List<BusinessJoinRequest> findByUserWithCursor(User user, BusinessJoinRequestStatus status, CursorDto cursor, int pageSize) {
+    public List<BusinessJoinRequest> findByUserWithCursor(User user, BusinessJoinRequestStatus status, LocalDateTime from, LocalDateTime to, CursorDto cursor, int pageSize) {
         QBusinessJoinRequest q = QBusinessJoinRequest.businessJoinRequest;
 
         return queryFactory.selectFrom(q)
@@ -78,6 +79,8 @@ public class BusinessJoinRequestQueryRepositoryImpl implements BusinessJoinReque
             .where(
                 q.user.eq(user),
                 status != null ? q.status.eq(status) : null,
+                from != null ? q.createdAt.goe(from) : null,
+                to != null ? q.createdAt.lt(to) : null,
                 cursorCondition(q, cursor)
             )
             .orderBy(q.createdAt.desc(), q.id.desc())
@@ -86,7 +89,7 @@ public class BusinessJoinRequestQueryRepositoryImpl implements BusinessJoinReque
     }
 
     @Override
-    public List<BusinessJoinRequest> findByWorkspaceWithCursor(Workspace workspace, BusinessJoinRequestStatus status, CursorDto cursor, int pageSize) {
+    public List<BusinessJoinRequest> findByWorkspaceWithCursor(Workspace workspace, BusinessJoinRequestStatus status, LocalDateTime from, LocalDateTime to, CursorDto cursor, int pageSize) {
         QBusinessJoinRequest q = QBusinessJoinRequest.businessJoinRequest;
 
         return queryFactory.selectFrom(q)
@@ -94,6 +97,8 @@ public class BusinessJoinRequestQueryRepositoryImpl implements BusinessJoinReque
             .where(
                 q.workspace.eq(workspace),
                 status != null ? q.status.eq(status) : null,
+                from != null ? q.createdAt.goe(from) : null,
+                to != null ? q.createdAt.lt(to) : null,
                 cursorCondition(q, cursor)
             )
             .orderBy(q.createdAt.desc(), q.id.desc())

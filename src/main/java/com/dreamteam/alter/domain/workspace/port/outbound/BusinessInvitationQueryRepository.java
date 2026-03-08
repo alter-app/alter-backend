@@ -6,6 +6,7 @@ import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.type.BusinessInvitationStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -15,5 +16,5 @@ public interface BusinessInvitationQueryRepository {
     boolean existsPendingInvitation(Workspace workspace, User user);
     List<BusinessInvitation> findPendingByUser(User user);
     Set<Long> findPendingInvitedUserIds(Long workspaceId);
-    List<BusinessInvitation> findByUserWithCursor(User user, BusinessInvitationStatus status, CursorDto cursor, int pageSize);
+    List<BusinessInvitation> findByUserWithCursor(User user, BusinessInvitationStatus status, LocalDateTime from, LocalDateTime to, CursorDto cursor, int pageSize);
 }

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service("getMyInvitationList")
@@ -28,13 +29,16 @@ public class GetMyInvitationList implements GetMyInvitationListUseCase {
     private final ObjectMapper objectMapper;
 
     @Override
-    public CursorPaginatedApiResponse<MyInvitationResponseDto> execute(AppActor actor, BusinessInvitationStatus status, CursorPageRequestDto cursorPageRequest) {
+    public CursorPaginatedApiResponse<MyInvitationResponseDto> execute(AppActor actor, BusinessInvitationStatus status, LocalDate from, LocalDate to, CursorPageRequestDto cursorPageRequest) {
         CursorDto cursor = StringUtils.hasText(cursorPageRequest.cursor())
             ? CursorUtil.decodeCursor(cursorPageRequest.cursor(), CursorDto.class, objectMapper)
             : null;
 
         List<BusinessInvitation> invitations = businessInvitationQueryRepository.findByUserWithCursor(
-            actor.getUser(), status, cursor, cursorPageRequest.pageSize() + 1
+            actor.getUser(), status,
+            from != null ? from.atStartOfDay() : null,
+            to != null ? to.plusDays(1).atStartOfDay() : null,
+            cursor, cursorPageRequest.pageSize() + 1
         );
 
         boolean hasNext = invitations.size() > cursorPageRequest.pageSize();

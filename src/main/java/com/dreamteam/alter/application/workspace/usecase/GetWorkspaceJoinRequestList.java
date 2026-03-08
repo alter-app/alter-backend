@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service("getWorkspaceJoinRequestList")
@@ -33,7 +34,7 @@ public class GetWorkspaceJoinRequestList implements GetWorkspaceJoinRequestListU
     private final ObjectMapper objectMapper;
 
     @Override
-    public CursorPaginatedApiResponse<WorkspaceJoinRequestResponseDto> execute(ManagerActor actor, Long workspaceId, BusinessJoinRequestStatus status, CursorPageRequestDto cursorPageRequest) {
+    public CursorPaginatedApiResponse<WorkspaceJoinRequestResponseDto> execute(ManagerActor actor, Long workspaceId, BusinessJoinRequestStatus status, LocalDate from, LocalDate to, CursorPageRequestDto cursorPageRequest) {
         Workspace workspace = workspaceQueryRepository.findById(workspaceId)
             .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -46,7 +47,10 @@ public class GetWorkspaceJoinRequestList implements GetWorkspaceJoinRequestListU
             : null;
 
         List<BusinessJoinRequest> requests = businessJoinRequestQueryRepository.findByWorkspaceWithCursor(
-            workspace, status, cursor, cursorPageRequest.pageSize() + 1
+            workspace, status,
+            from != null ? from.atStartOfDay() : null,
+            to != null ? to.plusDays(1).atStartOfDay() : null,
+            cursor, cursorPageRequest.pageSize() + 1
         );
 
         boolean hasNext = requests.size() > cursorPageRequest.pageSize();

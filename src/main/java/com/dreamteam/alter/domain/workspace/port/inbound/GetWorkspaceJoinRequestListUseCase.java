@@ -6,6 +6,8 @@ import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRe
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 
+import java.time.LocalDate;
+
 public interface GetWorkspaceJoinRequestListUseCase {
-    CursorPaginatedApiResponse<WorkspaceJoinRequestResponseDto> execute(ManagerActor actor, Long workspaceId, BusinessJoinRequestStatus status, CursorPageRequestDto cursorPageRequest);
+    CursorPaginatedApiResponse<WorkspaceJoinRequestResponseDto> execute(ManagerActor actor, Long workspaceId, BusinessJoinRequestStatus status, LocalDate from, LocalDate to, CursorPageRequestDto cursorPageRequest);
 }

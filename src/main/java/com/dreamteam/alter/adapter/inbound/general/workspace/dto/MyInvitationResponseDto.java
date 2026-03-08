@@ -23,10 +23,10 @@ public class MyInvitationResponseDto {
     @Schema(description = "업장명", example = "스타벅스 강남점")
     private String businessName;
 
-    @Schema(description = "초대 일시", example = "2024-03-01T10:00:00")
+    @Schema(description = "초대 일시", example = "2026-03-01T10:00:00")
     private LocalDateTime invitedAt;
 
-    @Schema(description = "초대 만료 일시", example = "2024-03-08T10:00:00")
+    @Schema(description = "초대 만료 일시", example = "2026-03-08T10:00:00")
     private LocalDateTime expiresAt;
 
     public static MyInvitationResponseDto from(BusinessInvitation invitation) {

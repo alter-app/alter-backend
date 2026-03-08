@@ -30,7 +30,7 @@ public class WorkspaceJoinRequestResponseDto {
     @Schema(description = "합류 요청 상태", example = "PENDING")
     private BusinessJoinRequestStatus status;
 
-    @Schema(description = "합류 요청 일시", example = "2024-03-01T10:00:00")
+    @Schema(description = "합류 요청 일시", example = "2026-03-01T10:00:00")
     private LocalDateTime requestedAt;
 
     public static WorkspaceJoinRequestResponseDto from(BusinessJoinRequest request) {

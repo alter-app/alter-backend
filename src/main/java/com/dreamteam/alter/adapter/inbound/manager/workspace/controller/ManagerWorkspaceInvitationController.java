@@ -13,11 +13,14 @@ import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/manager/workspaces")
@@ -54,10 +57,12 @@ public class ManagerWorkspaceInvitationController implements ManagerWorkspaceInv
     public ResponseEntity<CursorPaginatedApiResponse<WorkspaceJoinRequestResponseDto>> getJoinRequestList(
         @PathVariable Long workspaceId,
         CursorPageRequestDto cursorPageRequest,
-        @RequestParam(required = false) BusinessJoinRequestStatus status
+        @RequestParam(required = false) BusinessJoinRequestStatus status,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        return ResponseEntity.ok(getWorkspaceJoinRequestListUseCase.execute(actor, workspaceId, status, cursorPageRequest));
+        return ResponseEntity.ok(getWorkspaceJoinRequestListUseCase.execute(actor, workspaceId, status, from, to, cursorPageRequest));
     }
 
     @Override

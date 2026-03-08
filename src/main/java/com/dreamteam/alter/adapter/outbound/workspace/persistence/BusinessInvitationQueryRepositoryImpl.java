@@ -12,6 +12,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -75,7 +76,7 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
     }
 
     @Override
-    public List<BusinessInvitation> findByUserWithCursor(User user, BusinessInvitationStatus status, CursorDto cursor, int pageSize) {
+    public List<BusinessInvitation> findByUserWithCursor(User user, BusinessInvitationStatus status, LocalDateTime from, LocalDateTime to, CursorDto cursor, int pageSize) {
         QBusinessInvitation q = QBusinessInvitation.businessInvitation;
 
         return queryFactory.selectFrom(q)
@@ -83,6 +84,8 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
             .where(
                 q.invitedUser.eq(user),
                 status != null ? q.status.eq(status) : null,
+                from != null ? q.createdAt.goe(from) : null,
+                to != null ? q.createdAt.lt(to) : null,
                 cursorCondition(q, cursor)
             )
             .orderBy(q.createdAt.desc(), q.id.desc())
