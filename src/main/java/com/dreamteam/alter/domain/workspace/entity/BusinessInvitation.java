@@ -71,7 +71,7 @@ public class BusinessInvitation {
     }
 
     public void decline() {
-        if (!BusinessInvitationStatus.PENDING.equals(this.status)) {
+        if (!BusinessInvitationStatus.PENDING.equals(this.status) || isExpired()) {
             throw new CustomException(ErrorCode.CONFLICT, "거절할 수 없는 상태의 초대입니다.");
         }
         this.status = BusinessInvitationStatus.DECLINED;
