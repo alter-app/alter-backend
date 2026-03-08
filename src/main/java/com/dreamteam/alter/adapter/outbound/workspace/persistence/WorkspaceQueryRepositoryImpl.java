@@ -579,6 +579,21 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
     }
 
     @Override
+    public Set<Long> findActiveWorkerUserIdsByUserIds(Long workspaceId, Set<Long> userIds) {
+        QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
+
+        return new HashSet<>(queryFactory
+            .select(qWorkspaceWorker.user.id)
+            .from(qWorkspaceWorker)
+            .where(
+                qWorkspaceWorker.workspace.id.eq(workspaceId),
+                qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
+                qWorkspaceWorker.user.id.in(userIds)
+            )
+            .fetch());
+    }
+
+    @Override
     public boolean existsByIdAndManagerUser(Long workspaceId, ManagerUser managerUser) {
         QWorkspace qWorkspace = QWorkspace.workspace;
 

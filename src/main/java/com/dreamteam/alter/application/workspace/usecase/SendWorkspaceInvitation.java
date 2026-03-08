@@ -55,8 +55,12 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
         Map<String, User> contactToUser = userQueryRepository.findByContactIn(phoneNumbers)
             .stream().collect(Collectors.toMap(User::getContact, Function.identity()));
 
-        Set<Long> activeWorkerUserIds = workspaceQueryRepository.findActiveWorkerUserIds(workspaceId);
-        Set<Long> pendingInvitedUserIds = businessInvitationQueryRepository.findPendingInvitedUserIds(workspaceId);
+        Set<Long> registeredUserIds = contactToUser.values().stream()
+            .map(User::getId)
+            .collect(Collectors.toSet());
+
+        Set<Long> activeWorkerUserIds = workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(workspaceId, registeredUserIds);
+        Set<Long> pendingInvitedUserIds = businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(workspaceId, registeredUserIds);
 
         List<String> unregisteredPhoneNumbers = new ArrayList<>();
         List<String> alreadyWorkerPhoneNumbers = new ArrayList<>();

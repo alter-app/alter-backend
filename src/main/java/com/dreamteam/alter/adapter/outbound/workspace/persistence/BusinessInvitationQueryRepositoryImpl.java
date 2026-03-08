@@ -76,6 +76,21 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
     }
 
     @Override
+    public Set<Long> findPendingInvitedUserIdsByUserIds(Long workspaceId, Set<Long> userIds) {
+        QBusinessInvitation qBusinessInvitation = QBusinessInvitation.businessInvitation;
+
+        return new HashSet<>(queryFactory
+            .select(qBusinessInvitation.invitedUser.id)
+            .from(qBusinessInvitation)
+            .where(
+                qBusinessInvitation.workspace.id.eq(workspaceId),
+                qBusinessInvitation.status.eq(BusinessInvitationStatus.PENDING),
+                qBusinessInvitation.invitedUser.id.in(userIds)
+            )
+            .fetch());
+    }
+
+    @Override
     public List<BusinessInvitation> findByUserWithCursor(User user, BusinessInvitationStatus status, LocalDateTime from, LocalDateTime to, CursorDto cursor, int pageSize) {
         QBusinessInvitation q = QBusinessInvitation.businessInvitation;
 

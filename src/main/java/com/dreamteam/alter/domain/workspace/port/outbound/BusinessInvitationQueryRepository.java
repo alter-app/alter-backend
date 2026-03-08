@@ -16,5 +16,6 @@ public interface BusinessInvitationQueryRepository {
     boolean existsPendingInvitation(Workspace workspace, User user);
     List<BusinessInvitation> findPendingByUser(User user);
     Set<Long> findPendingInvitedUserIds(Long workspaceId);
+    Set<Long> findPendingInvitedUserIdsByUserIds(Long workspaceId, Set<Long> userIds);
     List<BusinessInvitation> findByUserWithCursor(User user, BusinessInvitationStatus status, LocalDateTime from, LocalDateTime to, CursorDto cursor, int pageSize);
 }

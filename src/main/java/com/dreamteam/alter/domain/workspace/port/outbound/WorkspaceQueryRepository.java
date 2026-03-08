@@ -77,4 +77,5 @@ public interface WorkspaceQueryRepository {
 
     List<Workspace> findAllForNextMonthShiftGeneration(int day, boolean isLastDayOfMonth);
     Set<Long> findActiveWorkerUserIds(Long workspaceId);
+    Set<Long> findActiveWorkerUserIdsByUserIds(Long workspaceId, Set<Long> userIds);
 }
