@@ -1,11 +1,15 @@
 package com.dreamteam.alter.adapter.inbound.general.workspace.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.MyInvitationResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.MyJoinRequestResponseDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.*;
+import com.dreamteam.alter.domain.workspace.type.BusinessInvitationStatus;
+import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,8 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @PreAuthorize("hasAnyRole('USER')")
@@ -50,16 +52,22 @@ public class UserWorkspaceInvitationController implements UserWorkspaceInvitatio
 
     @Override
     @GetMapping("/users/me/join-requests")
-    public ResponseEntity<CommonApiResponse<List<MyJoinRequestResponseDto>>> getMyJoinRequestList() {
+    public ResponseEntity<CursorPaginatedApiResponse<MyJoinRequestResponseDto>> getMyJoinRequestList(
+        CursorPageRequestDto cursorPageRequest,
+        @RequestParam(required = false) BusinessJoinRequestStatus status
+    ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(getMyJoinRequestListUseCase.execute(actor)));
+        return ResponseEntity.ok(getMyJoinRequestListUseCase.execute(actor, status, cursorPageRequest));
     }
 
     @Override
     @GetMapping("/users/me/invitations")
-    public ResponseEntity<CommonApiResponse<List<MyInvitationResponseDto>>> getMyInvitationList() {
+    public ResponseEntity<CursorPaginatedApiResponse<MyInvitationResponseDto>> getMyInvitationList(
+        CursorPageRequestDto cursorPageRequest,
+        @RequestParam(required = false) BusinessInvitationStatus status
+    ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(getMyInvitationListUseCase.execute(actor)));
+        return ResponseEntity.ok(getMyInvitationListUseCase.execute(actor, status, cursorPageRequest));
     }
 
     @Override

@@ -1,12 +1,15 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.SendWorkspaceInvitationRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationResultDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestResponseDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.*;
+import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/manager/workspaces")
@@ -50,11 +51,13 @@ public class ManagerWorkspaceInvitationController implements ManagerWorkspaceInv
 
     @Override
     @GetMapping("/{workspaceId}/join-requests")
-    public ResponseEntity<CommonApiResponse<List<WorkspaceJoinRequestResponseDto>>> getJoinRequestList(
-        @PathVariable Long workspaceId
+    public ResponseEntity<CursorPaginatedApiResponse<WorkspaceJoinRequestResponseDto>> getJoinRequestList(
+        @PathVariable Long workspaceId,
+        CursorPageRequestDto cursorPageRequest,
+        @RequestParam(required = false) BusinessJoinRequestStatus status
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceJoinRequestListUseCase.execute(actor, workspaceId)));
+        return ResponseEntity.ok(getWorkspaceJoinRequestListUseCase.execute(actor, workspaceId, status, cursorPageRequest));
     }
 
     @Override

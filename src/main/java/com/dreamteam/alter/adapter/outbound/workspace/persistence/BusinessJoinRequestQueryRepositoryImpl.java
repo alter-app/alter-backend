@@ -1,11 +1,13 @@
 package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.BusinessJoinRequest;
 import com.dreamteam.alter.domain.workspace.entity.QBusinessJoinRequest;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessJoinRequestQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -65,5 +67,48 @@ public class BusinessJoinRequestQueryRepositoryImpl implements BusinessJoinReque
             .where(qBusinessJoinRequest.user.eq(user)
                 .and(qBusinessJoinRequest.status.eq(BusinessJoinRequestStatus.PENDING)))
             .fetch();
+    }
+
+    @Override
+    public List<BusinessJoinRequest> findByUserWithCursor(User user, BusinessJoinRequestStatus status, CursorDto cursor, int pageSize) {
+        QBusinessJoinRequest q = QBusinessJoinRequest.businessJoinRequest;
+
+        return queryFactory.selectFrom(q)
+            .join(q.workspace).fetchJoin()
+            .where(
+                q.user.eq(user),
+                status != null ? q.status.eq(status) : null,
+                cursorCondition(q, cursor)
+            )
+            .orderBy(q.createdAt.desc(), q.id.desc())
+            .limit(pageSize)
+            .fetch();
+    }
+
+    @Override
+    public List<BusinessJoinRequest> findByWorkspaceWithCursor(Workspace workspace, BusinessJoinRequestStatus status, CursorDto cursor, int pageSize) {
+        QBusinessJoinRequest q = QBusinessJoinRequest.businessJoinRequest;
+
+        return queryFactory.selectFrom(q)
+            .join(q.user).fetchJoin()
+            .where(
+                q.workspace.eq(workspace),
+                status != null ? q.status.eq(status) : null,
+                cursorCondition(q, cursor)
+            )
+            .orderBy(q.createdAt.desc(), q.id.desc())
+            .limit(pageSize)
+            .fetch();
+    }
+
+    private BooleanExpression cursorCondition(QBusinessJoinRequest q, CursorDto cursor) {
+        if (cursor == null || cursor.getId() == null) {
+            return null;
+        }
+        if (cursor.getCreatedAt() != null) {
+            return q.createdAt.lt(cursor.getCreatedAt())
+                .or(q.createdAt.eq(cursor.getCreatedAt()).and(q.id.lt(cursor.getId())));
+        }
+        return q.id.lt(cursor.getId());
     }
 }

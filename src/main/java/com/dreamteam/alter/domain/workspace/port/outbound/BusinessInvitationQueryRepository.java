@@ -1,8 +1,10 @@
 package com.dreamteam.alter.domain.workspace.port.outbound;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.dreamteam.alter.domain.workspace.type.BusinessInvitationStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,4 +15,5 @@ public interface BusinessInvitationQueryRepository {
     boolean existsPendingInvitation(Workspace workspace, User user);
     List<BusinessInvitation> findPendingByUser(User user);
     Set<Long> findPendingInvitedUserIds(Long workspaceId);
+    List<BusinessInvitation> findByUserWithCursor(User user, BusinessInvitationStatus status, CursorDto cursor, int pageSize);
 }

@@ -1,10 +1,14 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.SendWorkspaceInvitationRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationResultDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestResponseDto;
+import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,8 +16,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "MANAGER - 업장 초대/합류 요청 관리 API")
 public interface ManagerWorkspaceInvitationControllerSpec {
@@ -40,14 +43,23 @@ public interface ManagerWorkspaceInvitationControllerSpec {
         @Valid @RequestBody SendWorkspaceInvitationRequestDto request
     );
 
-    @Operation(summary = "매니저 - 업장 합류 요청 목록 조회", description = "업장에 들어온 PENDING 상태의 합류 요청 목록을 조회합니다.")
+    @Operation(summary = "매니저 - 업장 합류 요청 목록 조회", description = """
+        업장에 들어온 합류 요청 목록을 커서 기반 페이지네이션으로 조회합니다.
+
+        - `status` 필터 미입력 시 전체 상태 조회 (PENDING, APPROVED, REJECTED)
+        - `cursor` 미입력 시 첫 페이지 조회
+        - 응답의 `page.cursor`를 다음 요청의 `cursor`로 사용
+        """)
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "합류 요청 목록 조회 성공"),
         @ApiResponse(responseCode = "400", description = "존재하지 않는 업장 (B008)"),
         @ApiResponse(responseCode = "403", description = "해당 업장의 관리자가 아님 (A002)")
     })
-    ResponseEntity<CommonApiResponse<List<WorkspaceJoinRequestResponseDto>>> getJoinRequestList(
-        @PathVariable Long workspaceId
+    ResponseEntity<CursorPaginatedApiResponse<WorkspaceJoinRequestResponseDto>> getJoinRequestList(
+        @PathVariable Long workspaceId,
+        CursorPageRequestDto cursorPageRequest,
+        @Parameter(description = "상태 필터 (PENDING | APPROVED | REJECTED), 미입력 시 전체 조회")
+        @RequestParam(required = false) BusinessJoinRequestStatus status
     );
 
     @Operation(summary = "매니저 - 합류 요청 승인", description = "합류 요청을 승인하고 해당 사용자를 직원으로 등록합니다.")
