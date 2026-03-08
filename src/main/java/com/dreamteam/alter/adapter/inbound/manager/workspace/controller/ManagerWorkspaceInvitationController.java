@@ -3,7 +3,7 @@ package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.workspace.dto.SendWorkspaceInvitationRequestDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationResultDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestResponseDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;

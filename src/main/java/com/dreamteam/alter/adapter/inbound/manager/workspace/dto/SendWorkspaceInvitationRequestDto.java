@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.general.workspace.dto;
+package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

@@ -1,7 +1,7 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.workspace.dto.SendWorkspaceInvitationRequestDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationResultDto;
 import com.dreamteam.alter.application.notification.FcmNotificationEvent;
 import com.dreamteam.alter.common.exception.CustomException;
