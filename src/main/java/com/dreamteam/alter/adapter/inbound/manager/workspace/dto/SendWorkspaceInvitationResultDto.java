@@ -1,13 +1,18 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Getter
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder(access = AccessLevel.PRIVATE)
 @Schema(description = "직원 초대 발송 결과 DTO")
 public class SendWorkspaceInvitationResultDto {
 
@@ -22,4 +27,18 @@ public class SendWorkspaceInvitationResultDto {
 
     @Schema(description = "이미 초대가 진행 중인 사용자의 휴대폰 번호 목록", example = "[\"01055556666\"]")
     private List<String> alreadyInvitedPhoneNumbers;
+
+    public static SendWorkspaceInvitationResultDto of(
+        int successCount,
+        List<String> unregisteredPhoneNumbers,
+        List<String> alreadyWorkerPhoneNumbers,
+        List<String> alreadyInvitedPhoneNumbers
+    ) {
+        return SendWorkspaceInvitationResultDto.builder()
+            .successCount(successCount)
+            .unregisteredPhoneNumbers(unregisteredPhoneNumbers)
+            .alreadyWorkerPhoneNumbers(alreadyWorkerPhoneNumbers)
+            .alreadyInvitedPhoneNumbers(alreadyInvitedPhoneNumbers)
+            .build();
+    }
 }

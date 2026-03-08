@@ -3,13 +3,18 @@ package com.dreamteam.alter.adapter.inbound.general.workspace.dto;
 import com.dreamteam.alter.domain.workspace.entity.BusinessJoinRequest;
 import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder(access = AccessLevel.PRIVATE)
 @Schema(description = "내가 보낸 합류 요청 응답 DTO")
 public class MyJoinRequestResponseDto {
 
@@ -26,11 +31,11 @@ public class MyJoinRequestResponseDto {
     private LocalDateTime requestedAt;
 
     public static MyJoinRequestResponseDto from(BusinessJoinRequest request) {
-        return new MyJoinRequestResponseDto(
-            request.getId(),
-            request.getWorkspace().getBusinessName(),
-            request.getStatus(),
-            request.getCreatedAt()
-        );
+        return MyJoinRequestResponseDto.builder()
+            .joinRequestId(request.getId())
+            .businessName(request.getWorkspace().getBusinessName())
+            .status(request.getStatus())
+            .requestedAt(request.getCreatedAt())
+            .build();
     }
 }

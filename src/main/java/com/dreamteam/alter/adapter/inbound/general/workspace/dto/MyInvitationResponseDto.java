@@ -2,13 +2,18 @@ package com.dreamteam.alter.adapter.inbound.general.workspace.dto;
 
 import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder(access = AccessLevel.PRIVATE)
 @Schema(description = "내가 받은 업장 초대 응답 DTO")
 public class MyInvitationResponseDto {
 
@@ -25,11 +30,11 @@ public class MyInvitationResponseDto {
     private LocalDateTime expiresAt;
 
     public static MyInvitationResponseDto from(BusinessInvitation invitation) {
-        return new MyInvitationResponseDto(
-            invitation.getId(),
-            invitation.getWorkspace().getBusinessName(),
-            invitation.getCreatedAt(),
-            invitation.getExpiresAt()
-        );
+        return MyInvitationResponseDto.builder()
+            .invitationId(invitation.getId())
+            .businessName(invitation.getWorkspace().getBusinessName())
+            .invitedAt(invitation.getCreatedAt())
+            .expiresAt(invitation.getExpiresAt())
+            .build();
     }
 }

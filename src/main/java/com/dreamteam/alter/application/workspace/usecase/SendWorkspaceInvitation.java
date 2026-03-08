@@ -85,7 +85,7 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
         businessInvitationRepository.saveAll(invitationsToSave);
         invitationsToSave.forEach(inv -> sendInvitationNotification(workspace, inv.getInvitedUser()));
 
-        return new SendWorkspaceInvitationResultDto(invitationsToSave.size(), unregisteredPhoneNumbers, alreadyWorkerPhoneNumbers, alreadyInvitedPhoneNumbers);
+        return SendWorkspaceInvitationResultDto.of(invitationsToSave.size(), unregisteredPhoneNumbers, alreadyWorkerPhoneNumbers, alreadyInvitedPhoneNumbers);
     }
 
     private void sendInvitationNotification(Workspace workspace, User invitedUser) {
