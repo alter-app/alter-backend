@@ -3,21 +3,16 @@ package com.dreamteam.alter.adapter.inbound.general.workspace.controller;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
+import com.dreamteam.alter.adapter.inbound.general.workspace.dto.MyInvitationListFilterDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.MyInvitationResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.workspace.dto.MyJoinRequestListFilterDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.MyJoinRequestResponseDto;
-import com.dreamteam.alter.domain.workspace.type.BusinessInvitationStatus;
-import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import java.time.LocalDate;
 
 @Tag(name = "USER - 업장 초대/합류 요청 API")
 public interface UserWorkspaceInvitationControllerSpec {
@@ -42,12 +37,7 @@ public interface UserWorkspaceInvitationControllerSpec {
     })
     ResponseEntity<CursorPaginatedApiResponse<MyJoinRequestResponseDto>> getMyJoinRequestList(
         CursorPageRequestDto cursorPageRequest,
-        @Parameter(description = "상태 필터 (PENDING | APPROVED | REJECTED), 미입력 시 전체 조회")
-        @RequestParam(required = false) BusinessJoinRequestStatus status,
-        @Parameter(description = "조회 시작일 (ISO: 2026-03-01), 미입력 시 제한 없음")
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-        @Parameter(description = "조회 종료일 (ISO: 2026-03-31, 해당일 포함), 미입력 시 제한 없음")
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+        MyJoinRequestListFilterDto filter
     );
 
     @Operation(summary = "알바생 - 내가 받은 초대 목록 조회", description = """
@@ -62,12 +52,7 @@ public interface UserWorkspaceInvitationControllerSpec {
     })
     ResponseEntity<CursorPaginatedApiResponse<MyInvitationResponseDto>> getMyInvitationList(
         CursorPageRequestDto cursorPageRequest,
-        @Parameter(description = "상태 필터 (PENDING | ACCEPTED | DECLINED | EXPIRED), 미입력 시 전체 조회")
-        @RequestParam(required = false) BusinessInvitationStatus status,
-        @Parameter(description = "조회 시작일 (ISO: 2026-03-01), 미입력 시 제한 없음")
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-        @Parameter(description = "조회 종료일 (ISO: 2026-03-31, 해당일 포함), 미입력 시 제한 없음")
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+        MyInvitationListFilterDto filter
     );
 
     @Operation(summary = "알바생 - 업장 초대 수락", description = "받은 업장 초대를 수락합니다.")

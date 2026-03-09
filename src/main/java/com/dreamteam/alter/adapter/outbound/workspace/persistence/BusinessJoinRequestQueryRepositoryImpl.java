@@ -10,6 +10,7 @@ import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -49,25 +50,39 @@ public class BusinessJoinRequestQueryRepositoryImpl implements BusinessJoinReque
     }
 
     @Override
-    public List<BusinessJoinRequest> findPendingByWorkspace(Workspace workspace) {
-        QBusinessJoinRequest qBusinessJoinRequest = QBusinessJoinRequest.businessJoinRequest;
+    public long countByUser(User user, BusinessJoinRequestStatus status, LocalDateTime from, LocalDateTime to) {
+        QBusinessJoinRequest q = QBusinessJoinRequest.businessJoinRequest;
 
-        return queryFactory.selectFrom(qBusinessJoinRequest)
-            .join(qBusinessJoinRequest.user).fetchJoin()
-            .where(qBusinessJoinRequest.workspace.eq(workspace)
-                .and(qBusinessJoinRequest.status.eq(BusinessJoinRequestStatus.PENDING)))
-            .fetch();
+        Long count = queryFactory
+            .select(q.count())
+            .from(q)
+            .where(
+                q.user.eq(user),
+                statusCondition(q, status),
+                dateFromCondition(q, from),
+                dateToCondition(q, to)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isNotEmpty(count) ? count : 0;
     }
 
     @Override
-    public List<BusinessJoinRequest> findPendingByUser(User user) {
-        QBusinessJoinRequest qBusinessJoinRequest = QBusinessJoinRequest.businessJoinRequest;
+    public long countByWorkspace(Workspace workspace, BusinessJoinRequestStatus status, LocalDateTime from, LocalDateTime to) {
+        QBusinessJoinRequest q = QBusinessJoinRequest.businessJoinRequest;
 
-        return queryFactory.selectFrom(qBusinessJoinRequest)
-            .join(qBusinessJoinRequest.workspace).fetchJoin()
-            .where(qBusinessJoinRequest.user.eq(user)
-                .and(qBusinessJoinRequest.status.eq(BusinessJoinRequestStatus.PENDING)))
-            .fetch();
+        Long count = queryFactory
+            .select(q.count())
+            .from(q)
+            .where(
+                q.workspace.eq(workspace),
+                statusCondition(q, status),
+                dateFromCondition(q, from),
+                dateToCondition(q, to)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isNotEmpty(count) ? count : 0;
     }
 
     @Override
@@ -78,9 +93,9 @@ public class BusinessJoinRequestQueryRepositoryImpl implements BusinessJoinReque
             .join(q.workspace).fetchJoin()
             .where(
                 q.user.eq(user),
-                status != null ? q.status.eq(status) : null,
-                from != null ? q.createdAt.goe(from) : null,
-                to != null ? q.createdAt.lt(to) : null,
+                statusCondition(q, status),
+                dateFromCondition(q, from),
+                dateToCondition(q, to),
                 cursorCondition(q, cursor)
             )
             .orderBy(q.createdAt.desc(), q.id.desc())
@@ -96,14 +111,35 @@ public class BusinessJoinRequestQueryRepositoryImpl implements BusinessJoinReque
             .join(q.user).fetchJoin()
             .where(
                 q.workspace.eq(workspace),
-                status != null ? q.status.eq(status) : null,
-                from != null ? q.createdAt.goe(from) : null,
-                to != null ? q.createdAt.lt(to) : null,
+                statusCondition(q, status),
+                dateFromCondition(q, from),
+                dateToCondition(q, to),
                 cursorCondition(q, cursor)
             )
             .orderBy(q.createdAt.desc(), q.id.desc())
             .limit(pageSize)
             .fetch();
+    }
+
+    private BooleanExpression statusCondition(QBusinessJoinRequest q, BusinessJoinRequestStatus status) {
+        if (status == null) {
+            return null;
+        }
+        return q.status.eq(status);
+    }
+
+    private BooleanExpression dateFromCondition(QBusinessJoinRequest q, LocalDateTime from) {
+        if (from == null) {
+            return null;
+        }
+        return q.createdAt.goe(from);
+    }
+
+    private BooleanExpression dateToCondition(QBusinessJoinRequest q, LocalDateTime to) {
+        if (to == null) {
+            return null;
+        }
+        return q.createdAt.lt(to);
     }
 
     private BooleanExpression cursorCondition(QBusinessJoinRequest q, CursorDto cursor) {

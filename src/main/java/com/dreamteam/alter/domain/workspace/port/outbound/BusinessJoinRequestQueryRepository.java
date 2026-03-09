@@ -13,8 +13,8 @@ import java.util.Optional;
 public interface BusinessJoinRequestQueryRepository {
     Optional<BusinessJoinRequest> findById(Long id);
     boolean existsPendingRequest(Workspace workspace, User user);
-    List<BusinessJoinRequest> findPendingByWorkspace(Workspace workspace);
-    List<BusinessJoinRequest> findPendingByUser(User user);
+    long countByUser(User user, BusinessJoinRequestStatus status, LocalDateTime from, LocalDateTime to);
+    long countByWorkspace(Workspace workspace, BusinessJoinRequestStatus status, LocalDateTime from, LocalDateTime to);
     List<BusinessJoinRequest> findByUserWithCursor(User user, BusinessJoinRequestStatus status, LocalDateTime from, LocalDateTime to, CursorDto cursor, int pageSize);
     List<BusinessJoinRequest> findByWorkspaceWithCursor(Workspace workspace, BusinessJoinRequestStatus status, LocalDateTime from, LocalDateTime to, CursorDto cursor, int pageSize);
 }

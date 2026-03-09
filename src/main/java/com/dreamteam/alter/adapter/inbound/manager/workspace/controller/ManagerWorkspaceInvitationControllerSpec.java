@@ -5,21 +5,16 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationResultDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestListFilterDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestResponseDto;
-import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import java.time.LocalDate;
 
 @Tag(name = "MANAGER - 업장 초대/합류 요청 관리 API")
 public interface ManagerWorkspaceInvitationControllerSpec {
@@ -61,12 +56,7 @@ public interface ManagerWorkspaceInvitationControllerSpec {
     ResponseEntity<CursorPaginatedApiResponse<WorkspaceJoinRequestResponseDto>> getJoinRequestList(
         @PathVariable Long workspaceId,
         CursorPageRequestDto cursorPageRequest,
-        @Parameter(description = "상태 필터 (PENDING | APPROVED | REJECTED), 미입력 시 전체 조회")
-        @RequestParam(required = false) BusinessJoinRequestStatus status,
-        @Parameter(description = "조회 시작일 (ISO: 2026-03-01), 미입력 시 제한 없음")
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-        @Parameter(description = "조회 종료일 (ISO: 2026-03-31, 해당일 포함), 미입력 시 제한 없음")
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+        WorkspaceJoinRequestListFilterDto filter
     );
 
     @Operation(summary = "매니저 - 합류 요청 승인", description = "합류 요청을 승인하고 해당 사용자를 직원으로 등록합니다.")

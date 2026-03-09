@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestListFilterDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -17,11 +18,12 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryReposito
 import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service("getWorkspaceJoinRequestList")
@@ -34,7 +36,7 @@ public class GetWorkspaceJoinRequestList implements GetWorkspaceJoinRequestListU
     private final ObjectMapper objectMapper;
 
     @Override
-    public CursorPaginatedApiResponse<WorkspaceJoinRequestResponseDto> execute(ManagerActor actor, Long workspaceId, BusinessJoinRequestStatus status, LocalDate from, LocalDate to, CursorPageRequestDto cursorPageRequest) {
+    public CursorPaginatedApiResponse<WorkspaceJoinRequestResponseDto> execute(ManagerActor actor, Long workspaceId, WorkspaceJoinRequestListFilterDto filter, CursorPageRequestDto cursorPageRequest) {
         Workspace workspace = workspaceQueryRepository.findById(workspaceId)
             .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -42,16 +44,26 @@ public class GetWorkspaceJoinRequestList implements GetWorkspaceJoinRequestListU
             throw new CustomException(ErrorCode.FORBIDDEN, "해당 업장의 관리자가 아닙니다.");
         }
 
+        BusinessJoinRequestStatus status = ObjectUtils.isNotEmpty(filter) ? filter.getStatus() : null;
+        LocalDateTime from = ObjectUtils.isNotEmpty(filter) && filter.getFrom() != null ? filter.getFrom().atStartOfDay() : null;
+        LocalDateTime to = ObjectUtils.isNotEmpty(filter) && filter.getTo() != null ? filter.getTo().plusDays(1).atStartOfDay() : null;
+
+        long totalCount = businessJoinRequestQueryRepository.countByWorkspace(workspace, status, from, to);
+        if (totalCount == 0) {
+            return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(cursorPageRequest.pageSize(), (int) totalCount));
+        }
+
         CursorDto cursor = StringUtils.hasText(cursorPageRequest.cursor())
             ? CursorUtil.decodeCursor(cursorPageRequest.cursor(), CursorDto.class, objectMapper)
             : null;
 
         List<BusinessJoinRequest> requests = businessJoinRequestQueryRepository.findByWorkspaceWithCursor(
-            workspace, status,
-            from != null ? from.atStartOfDay() : null,
-            to != null ? to.plusDays(1).atStartOfDay() : null,
-            cursor, cursorPageRequest.pageSize() + 1
+            workspace, status, from, to, cursor, cursorPageRequest.pageSize() + 1
         );
+
+        if (ObjectUtils.isEmpty(requests)) {
+            return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(cursorPageRequest.pageSize(), (int) totalCount));
+        }
 
         boolean hasNext = requests.size() > cursorPageRequest.pageSize();
         List<BusinessJoinRequest> pageItems = hasNext
@@ -69,7 +81,7 @@ public class GetWorkspaceJoinRequestList implements GetWorkspaceJoinRequestListU
             .toList();
 
         return CursorPaginatedApiResponse.of(
-            CursorPageResponseDto.of(nextCursor, cursorPageRequest.pageSize(), data.size()),
+            CursorPageResponseDto.of(nextCursor, cursorPageRequest.pageSize(), (int) totalCount),
             data
         );
     }

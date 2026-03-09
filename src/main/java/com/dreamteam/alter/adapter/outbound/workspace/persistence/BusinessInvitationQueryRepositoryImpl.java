@@ -9,6 +9,7 @@ import com.dreamteam.alter.domain.workspace.type.BusinessInvitationStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -50,6 +51,24 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
     }
 
     @Override
+    public long countByUser(User user, BusinessInvitationStatus status, LocalDateTime from, LocalDateTime to) {
+        QBusinessInvitation q = QBusinessInvitation.businessInvitation;
+
+        Long count = queryFactory
+            .select(q.count())
+            .from(q)
+            .where(
+                q.invitedUser.eq(user),
+                statusCondition(q, status),
+                dateFromCondition(q, from),
+                dateToCondition(q, to)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isNotEmpty(count) ? count : 0;
+    }
+
+    @Override
     public List<BusinessInvitation> findByUserWithCursor(User user, BusinessInvitationStatus status, LocalDateTime from, LocalDateTime to, CursorDto cursor, int pageSize) {
         QBusinessInvitation q = QBusinessInvitation.businessInvitation;
 
@@ -57,14 +76,35 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
             .join(q.workspace).fetchJoin()
             .where(
                 q.invitedUser.eq(user),
-                status != null ? q.status.eq(status) : null,
-                from != null ? q.createdAt.goe(from) : null,
-                to != null ? q.createdAt.lt(to) : null,
+                statusCondition(q, status),
+                dateFromCondition(q, from),
+                dateToCondition(q, to),
                 cursorCondition(q, cursor)
             )
             .orderBy(q.createdAt.desc(), q.id.desc())
             .limit(pageSize)
             .fetch();
+    }
+
+    private BooleanExpression statusCondition(QBusinessInvitation q, BusinessInvitationStatus status) {
+        if (status == null) {
+            return null;
+        }
+        return q.status.eq(status);
+    }
+
+    private BooleanExpression dateFromCondition(QBusinessInvitation q, LocalDateTime from) {
+        if (from == null) {
+            return null;
+        }
+        return q.createdAt.goe(from);
+    }
+
+    private BooleanExpression dateToCondition(QBusinessInvitation q, LocalDateTime to) {
+        if (to == null) {
+            return null;
+        }
+        return q.createdAt.lt(to);
     }
 
     private BooleanExpression cursorCondition(QBusinessInvitation q, CursorDto cursor) {
