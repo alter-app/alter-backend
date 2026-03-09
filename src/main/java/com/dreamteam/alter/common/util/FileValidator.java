@@ -50,6 +50,6 @@ public class FileValidator {
         if (fileName == null || !fileName.contains(".")) {
             return "";
         }
-        return "." + fileName.substring(fileName.lastIndexOf('.') + 1);
+        return "." + fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
     }
 }

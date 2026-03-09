@@ -7,10 +7,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.retry.RetryMode;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+
+import java.time.Duration;
 
 @Configuration
 @RequiredArgsConstructor
@@ -27,8 +31,15 @@ public class AwsS3Config {
 
     @Bean
     public S3Client awsS3Client() {
+        ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
+            .retryStrategy(RetryMode.STANDARD)
+            .apiCallAttemptTimeout(Duration.ofSeconds(10))
+            .apiCallTimeout(Duration.ofSeconds(30))
+            .build();
+
         S3ClientBuilder builder = S3Client.builder()
-            .region(Region.of(region));
+            .region(Region.of(region))
+            .overrideConfiguration(overrideConfig);
 
         if (StringUtils.hasText(accessKey) && StringUtils.hasText(secretKey)) {
             AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);

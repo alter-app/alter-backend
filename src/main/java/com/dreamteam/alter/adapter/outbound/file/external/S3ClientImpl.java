@@ -24,6 +24,8 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class S3ClientImpl implements S3Client {
 
+    private static final String PUBLIC_URL_FORMAT = "https://%s.s3.%s.amazonaws.com/%s";
+
     private final software.amazon.awssdk.services.s3.S3Client awsS3Client;
     private final S3Presigner s3Presigner;
 
@@ -32,6 +34,9 @@ public class S3ClientImpl implements S3Client {
 
     @Value("${aws.s3.private-bucket}")
     private String privateBucket;
+
+    @Value("${aws.s3.region}")
+    private String bucketRegion;
 
     @Value("${aws.s3.presigned-url-expiration-minutes:30}")
     private long presignedUrlExpirationMinutes;
@@ -50,7 +55,7 @@ public class S3ClientImpl implements S3Client {
             awsS3Client.putObject(request, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
             if (bucketType == BucketType.PUBLIC) {
-                return "https://" + bucket + ".s3.amazonaws.com/" + storedKey;
+                return PUBLIC_URL_FORMAT.formatted(bucket, bucketRegion, storedKey);
             }
             return null;
         } catch (Exception e) {
@@ -76,7 +81,7 @@ public class S3ClientImpl implements S3Client {
             return new PresignedUrlResult(url, expiresAt);
         } catch (Exception e) {
             log.error("S3 presign failed for key={}", storedKey, e);
-            throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 
