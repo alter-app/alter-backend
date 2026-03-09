@@ -13,7 +13,6 @@ import com.dreamteam.alter.domain.workspace.port.inbound.ApproveJoinRequestUseCa
 import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceWorkerUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessJoinRequestQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -27,9 +26,7 @@ public class ApproveJoinRequest implements ApproveJoinRequestUseCase {
     private final WorkspaceQueryRepository workspaceQueryRepository;
     private final BusinessJoinRequestQueryRepository businessJoinRequestQueryRepository;
     private final ApplicationEventPublisher eventPublisher;
-
-    @Resource(name = "addWorkerToWorkspace")
-    private CreateWorkspaceWorkerUseCase addWorkerToWorkspace;
+    private final CreateWorkspaceWorkerUseCase addWorkerToWorkspace;
 
     @Override
     public void execute(ManagerActor actor, Long workspaceId, Long requestId) {

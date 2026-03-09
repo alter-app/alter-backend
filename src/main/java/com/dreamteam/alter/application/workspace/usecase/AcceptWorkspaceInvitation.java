@@ -11,17 +11,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.annotation.Resource;
-
 @Service("acceptWorkspaceInvitation")
 @RequiredArgsConstructor
 @Transactional
 public class AcceptWorkspaceInvitation implements AcceptWorkspaceInvitationUseCase {
 
     private final BusinessInvitationQueryRepository businessInvitationQueryRepository;
-
-    @Resource(name = "addWorkerToWorkspace")
-    private CreateWorkspaceWorkerUseCase addWorkerToWorkspace;
+    private final CreateWorkspaceWorkerUseCase addWorkerToWorkspace;
 
     @Override
     public void execute(AppActor actor, Long invitationId) {
