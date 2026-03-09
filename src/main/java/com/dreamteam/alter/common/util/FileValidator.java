@@ -3,6 +3,7 @@ package com.dreamteam.alter.common.util;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Paths;
@@ -47,9 +48,11 @@ public class FileValidator {
     }
 
     public static String extractExtension(String fileName) {
-        if (fileName == null || !fileName.contains(".")) {
+        if (ObjectUtils.isEmpty(fileName) || !fileName.contains(".")) {
             return "";
         }
-        return "." + fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+
+        String ext = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+        return ext.isEmpty() ? "" : "." + ext;
     }
 }
