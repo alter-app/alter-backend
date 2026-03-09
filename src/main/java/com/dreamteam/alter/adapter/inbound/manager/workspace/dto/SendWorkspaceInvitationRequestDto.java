@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Set;
 
 @Getter
 @NoArgsConstructor
@@ -16,5 +16,5 @@ public class SendWorkspaceInvitationRequestDto {
 
     @NotEmpty
     @Schema(description = "초대할 직원의 휴대폰 번호 목록", example = "[\"01012345678\", \"01087654321\"]")
-    private List<@NotBlank @Size(min = 10, max = 11) String> phoneNumbers;
+    private Set<@NotBlank @Size(min = 10, max = 11) String> phoneNumbers;
 }

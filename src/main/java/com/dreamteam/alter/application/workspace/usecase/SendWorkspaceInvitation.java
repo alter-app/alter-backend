@@ -51,7 +51,7 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
             throw new CustomException(ErrorCode.FORBIDDEN, "해당 업장의 관리자가 아닙니다.");
         }
 
-        List<String> phoneNumbers = request.getPhoneNumbers();
+        Set<String> phoneNumbers = request.getPhoneNumbers();
         Map<String, User> contactToUser = userQueryRepository.findByContactIn(phoneNumbers)
             .stream().collect(Collectors.toMap(User::getContact, Function.identity()));
 
