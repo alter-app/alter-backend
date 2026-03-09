@@ -67,3 +67,8 @@ aws:
   region: mockocko
   access-key: mockmockmockmock
   secret-key: mockmockmockmock
+  s3:
+    region: mockocko
+    public-bucket: mock-public-bucket
+    private-bucket: mock-private-bucket
+    presigned-url-expiration-minutes: 30

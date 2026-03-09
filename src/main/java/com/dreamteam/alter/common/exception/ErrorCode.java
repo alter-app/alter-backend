@@ -42,11 +42,18 @@ public enum ErrorCode {
     WORKSPACE_WORKER_ALREADY_EXISTS(400, "B018", "이미 근무중인 사용자입니다."),
     NOT_FOUND(404, "B019", "요청한 리소스를 찾을 수 없습니다."),
     CONFLICT(409, "B020", "변경할 수 없는 상태입니다."),
+    FILE_NOT_FOUND(404, "B021", "존재하지 않는 파일입니다."),
+    INVALID_FILE(400, "B022", "유효하지 않은 파일입니다."),
+    INVALID_FILE_TYPE(400, "B023", "허용되지 않는 파일 형식입니다."),
+    FILE_SIZE_EXCEEDED(400, "B024", "파일 크기가 제한을 초과합니다."),
+    FILE_ALREADY_ATTACHED(409, "B025", "이미 연결된 파일입니다."),
 
     TOO_MANY_REQUESTS(429, "E001", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
 
     INTERNAL_SERVER_ERROR(400, "C001", "서버 내부 오류입니다."),
     EXTERNAL_API_ERROR(502, "C002", "외부 API 연동에 실패했습니다."),
+    FILE_UPLOAD_FAILED(500, "C003", "파일 업로드에 실패했습니다."),
+    FILE_DELETE_FAILED(500, "C004", "파일 삭제에 실패했습니다."),
     ;
 
     private final int status;

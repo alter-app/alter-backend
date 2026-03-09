@@ -9,8 +9,10 @@ import com.dreamteam.alter.domain.auth.exception.SignupRequiredException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.List;
 
@@ -63,6 +65,20 @@ public class GlobalExceptionHandler {
 
         ErrorCode errorCode = ErrorCode.ILLEGAL_ARGUMENT;
         return ResponseEntity.status(errorCode.getStatus()).body(ErrorResponse.of(errorCode, details));
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleMissingServletRequestPartException(MissingServletRequestPartException e) {
+        ErrorCode errorCode = ErrorCode.ILLEGAL_ARGUMENT;
+        return ResponseEntity.status(errorCode.getStatus())
+            .body(ErrorResponse.of(errorCode, "Multipart가 누락됐습니다."));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
+        ErrorCode errorCode = ErrorCode.ILLEGAL_ARGUMENT;
+        return ResponseEntity.status(errorCode.getStatus())
+            .body(ErrorResponse.of(errorCode, "파라미터가 누락됐습니다."));
     }
 
 }
