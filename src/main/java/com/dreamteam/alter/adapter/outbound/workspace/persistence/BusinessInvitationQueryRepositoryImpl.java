@@ -1,6 +1,8 @@
 package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
+import com.dreamteam.alter.adapter.inbound.general.workspace.dto.MyInvitationListFilterDto;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
 import com.dreamteam.alter.domain.workspace.entity.QBusinessInvitation;
@@ -12,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -51,7 +52,7 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
     }
 
     @Override
-    public long countByUser(User user, BusinessInvitationStatus status, LocalDateTime from, LocalDateTime to) {
+    public long countByUser(User user, MyInvitationListFilterDto filter) {
         QBusinessInvitation q = QBusinessInvitation.businessInvitation;
 
         Long count = queryFactory
@@ -59,9 +60,9 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
             .from(q)
             .where(
                 q.invitedUser.eq(user),
-                statusCondition(q, status),
-                dateFromCondition(q, from),
-                dateToCondition(q, to)
+                statusCondition(q, filter),
+                dateFromCondition(q, filter),
+                dateToCondition(q, filter)
             )
             .fetchOne();
 
@@ -69,42 +70,42 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
     }
 
     @Override
-    public List<BusinessInvitation> findByUserWithCursor(User user, BusinessInvitationStatus status, LocalDateTime from, LocalDateTime to, CursorDto cursor, int pageSize) {
+    public List<BusinessInvitation> findByUserWithCursor(CursorPageRequest<CursorDto> pageRequest, User user, MyInvitationListFilterDto filter) {
         QBusinessInvitation q = QBusinessInvitation.businessInvitation;
 
         return queryFactory.selectFrom(q)
             .join(q.workspace).fetchJoin()
             .where(
                 q.invitedUser.eq(user),
-                statusCondition(q, status),
-                dateFromCondition(q, from),
-                dateToCondition(q, to),
-                cursorCondition(q, cursor)
+                statusCondition(q, filter),
+                dateFromCondition(q, filter),
+                dateToCondition(q, filter),
+                cursorCondition(q, pageRequest.cursor())
             )
             .orderBy(q.createdAt.desc(), q.id.desc())
-            .limit(pageSize)
+            .limit(pageRequest.pageSize())
             .fetch();
     }
 
-    private BooleanExpression statusCondition(QBusinessInvitation q, BusinessInvitationStatus status) {
-        if (status == null) {
+    private BooleanExpression statusCondition(QBusinessInvitation q, MyInvitationListFilterDto filter) {
+        if (filter == null || filter.getStatus() == null) {
             return null;
         }
-        return q.status.eq(status);
+        return q.status.eq(filter.getStatus());
     }
 
-    private BooleanExpression dateFromCondition(QBusinessInvitation q, LocalDateTime from) {
-        if (from == null) {
+    private BooleanExpression dateFromCondition(QBusinessInvitation q, MyInvitationListFilterDto filter) {
+        if (filter == null || filter.getFrom() == null) {
             return null;
         }
-        return q.createdAt.goe(from);
+        return q.createdAt.goe(filter.getFrom().atStartOfDay());
     }
 
-    private BooleanExpression dateToCondition(QBusinessInvitation q, LocalDateTime to) {
-        if (to == null) {
+    private BooleanExpression dateToCondition(QBusinessInvitation q, MyInvitationListFilterDto filter) {
+        if (filter == null || filter.getTo() == null) {
             return null;
         }
-        return q.createdAt.lt(to);
+        return q.createdAt.lt(filter.getTo().plusDays(1).atStartOfDay());
     }
 
     private BooleanExpression cursorCondition(QBusinessInvitation q, CursorDto cursor) {
