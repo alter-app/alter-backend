@@ -3,9 +3,9 @@ package com.dreamteam.alter.domain.user.port.outbound;
 import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.UserSelfInfoResponse;
 import com.dreamteam.alter.domain.user.entity.User;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface UserQueryRepository {
     Optional<User> findById(Long id);
@@ -14,5 +14,5 @@ public interface UserQueryRepository {
     Optional<User> findByContact(String contact);
     Optional<UserSelfInfoResponse> getUserSelfInfoSummary(Long id);
     List<User> findAllById(List<Long> ids);
-    List<User> findByContactIn(Collection<String> contacts);
+    List<User> findByContactIn(Set<String> contacts);
 }
