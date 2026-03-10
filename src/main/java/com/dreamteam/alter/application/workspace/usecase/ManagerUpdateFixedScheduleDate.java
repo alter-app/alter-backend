@@ -29,6 +29,6 @@ public class ManagerUpdateFixedScheduleDate implements ManagerUpdateFixedSchedul
 		Workspace workspace = workspaceQueryRepository.findById(workspaceId)
 			.orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
-		workspace.updateNextMonthShiftGenDay(request.nextMonthShiftGenDay());
+		workspace.updateNextMonthShiftGenDay(request.getNextMonthShiftGenDay());
 	}
 }
