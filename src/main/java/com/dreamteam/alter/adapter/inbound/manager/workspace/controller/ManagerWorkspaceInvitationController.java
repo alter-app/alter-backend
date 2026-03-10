@@ -4,7 +4,6 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationRequestDto;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationResultDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestListFilterDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestResponseDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
@@ -13,7 +12,6 @@ import com.dreamteam.alter.domain.workspace.port.inbound.*;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -40,13 +38,13 @@ public class ManagerWorkspaceInvitationController implements ManagerWorkspaceInv
 
     @Override
     @PostMapping("/{workspaceId}/invitations")
-    public ResponseEntity<CommonApiResponse<SendWorkspaceInvitationResultDto>> sendInvitation(
+    public ResponseEntity<CommonApiResponse<Void>> sendInvitation(
         @PathVariable Long workspaceId,
         @Valid @RequestBody SendWorkspaceInvitationRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        SendWorkspaceInvitationResultDto result = sendWorkspaceInvitationUseCase.execute(actor, workspaceId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(CommonApiResponse.of(result));
+        sendWorkspaceInvitationUseCase.execute(actor, workspaceId, request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
     @Override

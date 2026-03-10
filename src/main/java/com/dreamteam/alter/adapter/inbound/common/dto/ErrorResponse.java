@@ -47,4 +47,13 @@ public record ErrorResponse<T>(
         );
     }
 
+    public static <T> ErrorResponse<T> of(ErrorCode errorCode, String message, T data) {
+        return new ErrorResponse<>(
+            String.valueOf(LocalDateTime.now()),
+            errorCode.getCode(),
+            message,
+            data
+        );
+    }
+
 }

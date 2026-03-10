@@ -4,7 +4,6 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationRequestDto;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationResultDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestListFilterDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,19 +23,17 @@ public interface ManagerWorkspaceInvitationControllerSpec {
         description = """
             여러 휴대폰 번호로 사용자들을 업장에 초대합니다.
 
-            **부분 성공 처리:**
-            - 가입된 사용자에게는 초대가 발송되며 successCount에 집계됩니다.
-            - 미가입 번호는 unregisteredPhoneNumbers 목록에 포함되어 반환됩니다.
-            - 이미 해당 업장에 근무 중인 사용자는 alreadyWorkerPhoneNumbers 목록에 포함됩니다.
-            - 이미 초대가 진행 중인 사용자는 alreadyInvitedPhoneNumbers 목록에 포함됩니다.
+            **All-or-Nothing 처리:**
+            - 모든 번호가 발송 가능한 경우에만 초대가 일괄 발송됩니다.
+            - 발송 불가 번호(미가입, 이미 근무중, 이미 초대중)가 1개라도 있으면 에러를 반환하며, 에러 응답의 data에 발송 불가 번호 목록이 포함됩니다.
             """
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "초대 발송 완료 (successCount: 성공 수, unregisteredPhoneNumbers: 미가입 번호, alreadyWorkerPhoneNumbers: 이미 근무 중, alreadyInvitedPhoneNumbers: 이미 초대 진행 중)"),
-        @ApiResponse(responseCode = "400", description = "존재하지 않는 업장 (B008) | phoneNumbers가 비어 있음"),
+        @ApiResponse(responseCode = "200", description = "초대 발송 완료"),
+        @ApiResponse(responseCode = "400", description = "존재하지 않는 업장 (B008) | phoneNumbers가 비어 있음 | 발송 불가 번호 포함 (B001, data: 발송 불가 번호 목록)"),
         @ApiResponse(responseCode = "403", description = "해당 업장의 관리자가 아님 (A002)")
     })
-    ResponseEntity<CommonApiResponse<SendWorkspaceInvitationResultDto>> sendInvitation(
+    ResponseEntity<CommonApiResponse<Void>> sendInvitation(
         @PathVariable Long workspaceId,
         @Valid @RequestBody SendWorkspaceInvitationRequestDto request
     );

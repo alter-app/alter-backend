@@ -2,7 +2,6 @@ package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationRequestDto;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.SendWorkspaceInvitationResultDto;
 import com.dreamteam.alter.application.notification.FcmNotificationEvent;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -12,6 +11,7 @@ import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableException;
 import com.dreamteam.alter.domain.workspace.port.inbound.SendWorkspaceInvitationUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessInvitationQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessInvitationRepository;
@@ -43,7 +43,7 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
-    public SendWorkspaceInvitationResultDto execute(ManagerActor actor, Long workspaceId, SendWorkspaceInvitationRequestDto request) {
+    public void execute(ManagerActor actor, Long workspaceId, SendWorkspaceInvitationRequestDto request) {
         Workspace workspace = workspaceQueryRepository.findById(workspaceId)
             .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -62,34 +62,28 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
         Set<Long> activeWorkerUserIds = workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(workspaceId, registeredUserIds);
         Set<Long> pendingInvitedUserIds = businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(workspaceId, registeredUserIds);
 
-        List<String> unregisteredPhoneNumbers = new ArrayList<>();
-        List<String> alreadyWorkerPhoneNumbers = new ArrayList<>();
-        List<String> alreadyInvitedPhoneNumbers = new ArrayList<>();
+        List<String> unavailablePhoneNumbers = new ArrayList<>();
         List<BusinessInvitation> invitationsToSave = new ArrayList<>();
 
         for (String phoneNumber : phoneNumbers) {
             User invitedUser = contactToUser.get(phoneNumber);
 
-            if (invitedUser == null) {
-                unregisteredPhoneNumbers.add(phoneNumber);
-                continue;
-            }
-            if (activeWorkerUserIds.contains(invitedUser.getId())) {
-                alreadyWorkerPhoneNumbers.add(phoneNumber);
-                continue;
-            }
-            if (pendingInvitedUserIds.contains(invitedUser.getId())) {
-                alreadyInvitedPhoneNumbers.add(phoneNumber);
+            if (invitedUser == null
+                || activeWorkerUserIds.contains(invitedUser.getId())
+                || pendingInvitedUserIds.contains(invitedUser.getId())) {
+                unavailablePhoneNumbers.add(phoneNumber);
                 continue;
             }
 
             invitationsToSave.add(BusinessInvitation.create(workspace, invitedUser, actor.getManagerUser()));
         }
 
+        if (!unavailablePhoneNumbers.isEmpty()) {
+            throw new InvitationUnavailableException(unavailablePhoneNumbers);
+        }
+
         businessInvitationRepository.saveAll(invitationsToSave);
         invitationsToSave.forEach(inv -> sendInvitationNotification(workspace, inv.getInvitedUser()));
-
-        return SendWorkspaceInvitationResultDto.of(invitationsToSave.size(), unregisteredPhoneNumbers, alreadyWorkerPhoneNumbers, alreadyInvitedPhoneNumbers);
     }
 
     private void sendInvitationNotification(Workspace workspace, User invitedUser) {
