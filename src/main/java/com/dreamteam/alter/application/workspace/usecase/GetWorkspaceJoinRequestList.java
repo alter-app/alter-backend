@@ -1,9 +1,6 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.*;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestListFilterDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceJoinRequestResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -15,15 +12,12 @@ import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceJoinRequestListUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessJoinRequestQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
-import com.dreamteam.alter.domain.workspace.type.BusinessJoinRequestStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service("getWorkspaceJoinRequestList")
@@ -44,45 +38,34 @@ public class GetWorkspaceJoinRequestList implements GetWorkspaceJoinRequestListU
             throw new CustomException(ErrorCode.FORBIDDEN, "해당 업장의 관리자가 아닙니다.");
         }
 
-        BusinessJoinRequestStatus status = ObjectUtils.isNotEmpty(filter) ? filter.getStatus() : null;
-        LocalDateTime from = ObjectUtils.isNotEmpty(filter) && filter.getFrom() != null ? filter.getFrom().atStartOfDay() : null;
-        LocalDateTime to = ObjectUtils.isNotEmpty(filter) && filter.getTo() != null ? filter.getTo().plusDays(1).atStartOfDay() : null;
+        CursorDto cursorDto = null;
+        if (ObjectUtils.isNotEmpty(cursorPageRequest.cursor())) {
+            cursorDto = CursorUtil.decodeCursor(cursorPageRequest.cursor(), CursorDto.class, objectMapper);
+        }
+        CursorPageRequest<CursorDto> pageRequest = CursorPageRequest.of(cursorDto, cursorPageRequest.pageSize());
 
-        long totalCount = businessJoinRequestQueryRepository.countByWorkspace(workspace, status, from, to);
-        if (totalCount == 0) {
-            return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(cursorPageRequest.pageSize(), (int) totalCount));
+        long count = businessJoinRequestQueryRepository.countByWorkspace(workspace, filter);
+        if (count == 0) {
+            return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(cursorPageRequest.pageSize(), (int) count));
         }
 
-        CursorDto cursor = StringUtils.hasText(cursorPageRequest.cursor())
-            ? CursorUtil.decodeCursor(cursorPageRequest.cursor(), CursorDto.class, objectMapper)
-            : null;
+        List<BusinessJoinRequest> requests = businessJoinRequestQueryRepository.findByWorkspaceWithCursor(pageRequest, workspace, filter);
+        if (ObjectUtils.isEmpty(requests)) {
+            return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(cursorPageRequest.pageSize(), (int) count));
+        }
 
-        List<BusinessJoinRequest> requests = businessJoinRequestQueryRepository.findByWorkspaceWithCursor(
-            workspace, status, from, to, cursor, cursorPageRequest.pageSize() + 1
+        BusinessJoinRequest last = requests.getLast();
+        CursorPageResponseDto pageResponseDto = CursorPageResponseDto.of(
+            CursorUtil.encodeCursor(new CursorDto(last.getId(), last.getCreatedAt()), objectMapper),
+            pageRequest.pageSize(),
+            (int) count
         );
 
-        if (ObjectUtils.isEmpty(requests)) {
-            return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(cursorPageRequest.pageSize(), (int) totalCount));
-        }
-
-        boolean hasNext = requests.size() > cursorPageRequest.pageSize();
-        List<BusinessJoinRequest> pageItems = hasNext
-            ? requests.subList(0, cursorPageRequest.pageSize())
-            : requests;
-
-        String nextCursor = hasNext
-            ? CursorUtil.encodeCursor(
-                new CursorDto(pageItems.getLast().getId(), pageItems.getLast().getCreatedAt()),
-                objectMapper)
-            : null;
-
-        List<WorkspaceJoinRequestResponseDto> data = pageItems.stream()
-            .map(WorkspaceJoinRequestResponseDto::from)
-            .toList();
-
         return CursorPaginatedApiResponse.of(
-            CursorPageResponseDto.of(nextCursor, cursorPageRequest.pageSize(), (int) totalCount),
-            data
+            pageResponseDto,
+            requests.stream()
+                .map(WorkspaceJoinRequestResponseDto::from)
+                .toList()
         );
     }
 }
