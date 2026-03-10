@@ -103,7 +103,7 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
         @RequestBody @Valid UpdateFixedScheduleDateRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        managerUpdateFixedScheduleDate.execute(actor, workspaceId, request.nextMonthShiftGenDay());
+        managerUpdateFixedScheduleDate.execute(actor, workspaceId, request);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }
