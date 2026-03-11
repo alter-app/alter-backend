@@ -59,6 +59,9 @@ public class ManagerWorkspaceResponseDto {
     @Schema(description = "업장 경도", example = "126.9780")
     private BigDecimal longitude;
 
+    @Schema(description = "다음달 고정근무 생성일", example = "20")
+    private int nextMonthShiftGenDay;
+
     @NotNull
     @Schema(description = "업장 등록 일시", example = "2023-10-01T12:00:00")
     private LocalDateTime createdAt;
@@ -78,6 +81,7 @@ public class ManagerWorkspaceResponseDto {
             .fullAddress(entity.getFullAddress())
             .latitude(entity.getLatitude())
             .longitude(entity.getLongitude())
+            .nextMonthShiftGenDay(entity.getNextMonthShiftGenDay())
             .createdAt(entity.getCreatedAt())
             .reputationSummary(SelfReputationSummaryDto.from(entity.getReputationSummary()))
             .build();

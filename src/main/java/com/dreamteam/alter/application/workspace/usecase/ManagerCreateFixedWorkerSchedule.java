@@ -20,7 +20,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerSchedul
 
 import lombok.RequiredArgsConstructor;
 
-@Service
+@Service("managerCreateFixedWorkerSchedule")
 @RequiredArgsConstructor
 @Transactional
 public class ManagerCreateFixedWorkerSchedule implements ManagerCreateFixedWorkerScheduleUseCase {
