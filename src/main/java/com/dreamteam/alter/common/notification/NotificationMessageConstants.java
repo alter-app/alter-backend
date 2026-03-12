@@ -67,5 +67,25 @@ public final class NotificationMessageConstants {
         public static final String NEW_MESSAGE_TITLE = "새로운 메시지";
         public static final String NEW_MESSAGE_BODY = "%s: %s";
     }
-    
+
+    /**
+     * 업장 초대 관련 알림 메시지
+     */
+    public static final class WorkspaceInvitation {
+        public static final String INVITATION_RECEIVED_TITLE = "업장 초대가 도착했어요!";
+        public static final String INVITATION_RECEIVED_BODY = "%s 업장에서 회원님을 초대했습니다.";
+    }
+
+    /**
+     * 합류 요청 관련 알림 메시지
+     */
+    public static final class JoinRequest {
+        public static final String REQUEST_RECEIVED_TITLE = "합류 요청이 도착했어요!";
+        public static final String REQUEST_RECEIVED_BODY = "%s님이 합류 요청을 보냈습니다.";
+        public static final String REQUEST_APPROVED_TITLE = "합류 요청이 승인되었어요!";
+        public static final String REQUEST_APPROVED_BODY = "%s 업장의 합류 요청이 승인되었습니다.";
+        public static final String REQUEST_REJECTED_TITLE = "합류 요청이 거절되었어요.";
+        public static final String REQUEST_REJECTED_BODY = "%s 업장의 합류 요청이 거절되었습니다.";
+    }
+
 }

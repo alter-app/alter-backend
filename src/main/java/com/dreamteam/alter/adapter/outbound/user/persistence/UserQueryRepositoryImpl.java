@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -112,6 +113,17 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
         return queryFactory.selectFrom(qUser)
             .where(
                 qUser.id.in(ids),
+                qUser.status.eq(UserStatus.ACTIVE)
+            )
+            .fetch();
+    }
+
+    @Override
+    public List<User> findByContactIn(Set<String> contacts) {
+        QUser qUser = QUser.user;
+        return queryFactory.selectFrom(qUser)
+            .where(
+                qUser.contact.in(contacts),
                 qUser.status.eq(UserStatus.ACTIVE)
             )
             .fetch();

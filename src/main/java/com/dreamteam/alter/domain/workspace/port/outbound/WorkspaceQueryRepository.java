@@ -16,6 +16,7 @@ import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface WorkspaceQueryRepository {
     Optional<Workspace> findById(Long id);
@@ -75,4 +76,6 @@ public interface WorkspaceQueryRepository {
     boolean existsByIdAndManagerUser(Long workspaceId, ManagerUser managerUser);
 
     List<Workspace> findAllForNextMonthShiftGeneration(int day, boolean isLastDayOfMonth);
+    Set<Long> findActiveWorkerUserIds(Long workspaceId);
+    Set<Long> findActiveWorkerUserIdsByUserIds(Long workspaceId, Set<Long> userIds);
 }
