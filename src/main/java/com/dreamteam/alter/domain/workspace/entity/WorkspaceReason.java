@@ -11,6 +11,8 @@ import com.dreamteam.alter.domain.workspace.type.WorkspaceReasonStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -41,6 +43,7 @@ public class WorkspaceReason {
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	private Workspace workspace;
 
+	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false)
 	private WorkspaceReasonStatus status;
 
