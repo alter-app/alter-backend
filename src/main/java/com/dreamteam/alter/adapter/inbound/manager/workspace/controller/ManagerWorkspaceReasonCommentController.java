@@ -39,7 +39,7 @@ public class ManagerWorkspaceReasonCommentController implements ManagerWorkspace
 
 	@Override
 	@PostMapping
-	public ResponseEntity<CommonApiResponse<Void>> createWorkspaceReason(
+	public ResponseEntity<CommonApiResponse<Void>> createWorkspaceReasonComment(
 		@PathVariable Long workspaceId,
 		@PathVariable Long reasonId,
 		@Valid @RequestBody CreateWorkspaceReasonCommentRequestDto request

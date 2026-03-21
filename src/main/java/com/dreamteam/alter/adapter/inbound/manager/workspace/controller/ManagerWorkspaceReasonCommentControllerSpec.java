@@ -23,7 +23,7 @@ public interface ManagerWorkspaceReasonCommentControllerSpec {
         @ApiResponse(responseCode = "403", description = "해당 업장의 관리자가 아님 (A002)"),
         @ApiResponse(responseCode = "404", description = "존재하지 않는 사유 (B019)")
     })
-    ResponseEntity<CommonApiResponse<Void>> createWorkspaceReason(
+    ResponseEntity<CommonApiResponse<Void>> createWorkspaceReasonComment(
         @PathVariable Long workspaceId,
         @PathVariable Long reasonId,
         @Valid @RequestBody CreateWorkspaceReasonCommentRequestDto request
