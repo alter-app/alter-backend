@@ -20,10 +20,6 @@ public class CreateWorkspaceRequestDto {
 	private String bizName;
 
 	@NotBlank
-	@Schema(description = "대표자 이름", example = "홍길동")
-	private String ownName;
-
-	@NotBlank
 	@Schema(description = "사업자 등록번호", example = "123-45-12345")
 	private String brn;
 
