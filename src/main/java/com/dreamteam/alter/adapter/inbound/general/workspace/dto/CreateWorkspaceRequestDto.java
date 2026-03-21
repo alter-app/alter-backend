@@ -58,4 +58,15 @@ public class CreateWorkspaceRequestDto {
 	@NotBlank
 	@Schema(description = "업장 연락처", example = "02-1234-5678")
 	private String contact;
+
+	@NotBlank
+	@Schema(description = "사업자등록증명원 파일 ID", example = "01959b4e-4e5f-7c3a-8d9e-0f1a2b3c4d5e")
+	private String workspaceCertFileId;
+
+	@NotBlank
+	@Schema(description = "대표자 신분증 사본 파일 ID", example = "01959b4e-4e5f-7c3a-8d9e-0f1a2b3c4d5e")
+	private String workspaceOwnIdentityFileId;
+
+	@Schema(description = "위임 확인서 파일 ID", example = "01959b4e-4e5f-7c3a-8d9e-0f1a2b3c4d5e")
+	private String workspaceWarrantFileId;
 }

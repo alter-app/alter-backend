@@ -14,7 +14,7 @@ public class WorkspaceRepositoryImpl implements WorkspaceRepository {
 	private final WorkspaceJpaRepository workspaceJpaRepository;
 
 	@Override
-	public void save(Workspace workspace) {
-		workspaceJpaRepository.save(workspace);
+	public Long save(Workspace workspace) {
+		return workspaceJpaRepository.save(workspace).getId();
 	}
 }
