@@ -1,6 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,6 +14,7 @@ import lombok.NoArgsConstructor;
 public class CreateWorkspaceReasonCommentRequestDto {
 
 	@Schema(description = "댓글 내용", example = "왜 반려죠")
+	@Max(255)
 	@NotBlank
 	private String comment;
 }
