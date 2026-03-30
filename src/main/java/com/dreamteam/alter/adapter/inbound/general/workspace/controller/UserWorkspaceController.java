@@ -11,7 +11,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
-import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceRequestUseCase;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class UserWorkspaceController implements UserWorkspaceControllerSpec {
 
     @Resource(name = "createWorkspace")
-    private final CreateWorkspaceUseCase createWorkspace;
+    private final CreateWorkspaceRequestUseCase createWorkspace;
 
     @Override
     @PostMapping

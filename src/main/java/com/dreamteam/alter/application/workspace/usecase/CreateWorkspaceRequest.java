@@ -10,39 +10,28 @@ import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspace
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.context.AppActor;
-import com.dreamteam.alter.domain.user.entity.ManagerUser;
-import com.dreamteam.alter.domain.user.port.outbound.ManagerUserRepository;
-import com.dreamteam.alter.domain.user.type.ManagerUserStatus;
-import com.dreamteam.alter.domain.workspace.entity.Workspace;
-import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceUseCase;
-import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRepository;
-import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
+import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
+import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceRequestUseCase;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestRepository;
 
 import lombok.RequiredArgsConstructor;
 
 @Service("createWorkspace")
 @RequiredArgsConstructor
 @Transactional
-public class CreateWorkspace implements CreateWorkspaceUseCase {
+public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 
-	private final ManagerUserRepository managerUserRepository;
-	private final WorkspaceRepository workspaceRepository;
+	private final WorkspaceRequestRepository workspaceRequestRepository;
 	private final AttachFilesUseCase attachFiles;
 
 	@Override
 	public void execute(AppActor actor, CreateWorkspaceRequestDto request) {
-		ManagerUser managerUser = managerUserRepository.save(
-			ManagerUser.create(actor.getUser(), ManagerUserStatus.PENDING)
-		);
-
-		Workspace workspace = Workspace.create(
-			managerUser,
+		WorkspaceRequest workspaceRequest = WorkspaceRequest.create(
+			actor.getUser(),
 			request.getBrn(),
 			request.getBizName(),
 			request.getType(),
 			request.getContact(),
-			null,
-			WorkspaceStatus.PENDING,
 			request.getAddress(),
 			request.getProvince(),
 			request.getDistrict(),
@@ -51,8 +40,7 @@ public class CreateWorkspace implements CreateWorkspaceUseCase {
 			request.getLongitude()
 		);
 
-		String savedWorkspaceId = workspaceRepository.save(workspace).toString();
-		Long userId = actor.getUserId();
+		Long savedWorkspaceRequestId = workspaceRequestRepository.save(workspaceRequest);
 
 		Map<String, FileTargetType> fileMap = new HashMap<>();
 		fileMap.put(request.getWorkspaceCertFileId(), FileTargetType.WORKSPACE_CERTIFICATE);
@@ -60,6 +48,6 @@ public class CreateWorkspace implements CreateWorkspaceUseCase {
 		if (request.getWorkspaceWarrantFileId() != null) {
 			fileMap.put(request.getWorkspaceWarrantFileId(), FileTargetType.WORKSPACE_WARRANT);
 		}
-		attachFiles.executeMap(fileMap, savedWorkspaceId, userId);
+		attachFiles.executeMap(fileMap, savedWorkspaceRequestId.toString(), actor.getUserId());
 	}
 }
