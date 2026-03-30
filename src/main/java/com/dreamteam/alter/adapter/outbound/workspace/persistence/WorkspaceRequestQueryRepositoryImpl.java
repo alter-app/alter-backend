@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestListResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestResponse;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspaceRequest;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
 import com.querydsl.core.types.Projections;
@@ -51,5 +52,29 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 			.where(qWorkspaceRequest.user.id.eq(userId))
 			.orderBy(qWorkspaceRequest.createdAt.desc())
 			.fetch();
+	}
+
+	@Override
+	public WorkspaceRequestResponse getWorkspaceRequest(Long userId, Long workspaceRequestId) {
+		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
+
+		return queryFactory
+			.select(Projections.constructor(
+				WorkspaceRequestResponse.class,
+				qWorkspaceRequest.id,
+				qWorkspaceRequest.businessRegistrationNo,
+				qWorkspaceRequest.businessName,
+				qWorkspaceRequest.businessType,
+				qWorkspaceRequest.contact,
+				qWorkspaceRequest.fullAddress,
+				qWorkspaceRequest.latitude,
+				qWorkspaceRequest.longitude,
+				qWorkspaceRequest.status,
+				qWorkspaceRequest.createdAt,
+				qWorkspaceRequest.updatedAt
+			))
+			.from(qWorkspaceRequest)
+			.where(qWorkspaceRequest.user.id.eq(userId))
+			.fetchOne();
 	}
 }
