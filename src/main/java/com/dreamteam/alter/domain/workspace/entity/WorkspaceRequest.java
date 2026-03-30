@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(name = "workspaces")
+@Table(name = "workspace_requests")
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
