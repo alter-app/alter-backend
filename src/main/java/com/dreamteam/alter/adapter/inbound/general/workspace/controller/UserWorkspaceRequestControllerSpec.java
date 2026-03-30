@@ -1,7 +1,11 @@
 package com.dreamteam.alter.adapter.inbound.general.workspace.controller;
 
+import java.util.List;
+
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestListResponseDto;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,7 +25,13 @@ public interface UserWorkspaceRequestControllerSpec {
         @ApiResponse(responseCode = "404", description = "존재하지 않는 파일입니다. (FILE_NOT_FOUND)"),
         @ApiResponse(responseCode = "409", description = "이미 연결된 파일입니다. (FILE_ALREADY_ATTACHED)")
     })
-    ResponseEntity<CommonApiResponse<Void>> createWorkspace(
+    ResponseEntity<CommonApiResponse<Void>> createWorkspaceRequest(
         @RequestBody @Valid CreateWorkspaceRequestDto request
     );
+
+    @Operation(summary = "업장 등록 신청 목록 조회")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "업장 등록 신청 목록 조회 성공"),
+    })
+    ResponseEntity<CommonApiResponse<List<WorkspaceRequestListResponseDto>>> getWorkspaceRequestList();
 }

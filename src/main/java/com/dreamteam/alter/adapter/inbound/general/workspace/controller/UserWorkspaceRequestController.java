@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/app/workspaces")
 @RequiredArgsConstructor
 @Validated
-public class UserWorkspaceRequestRequestController implements UserWorkspaceRequestControllerSpec {
+public class UserWorkspaceRequestController implements UserWorkspaceRequestControllerSpec {
 
     @Resource(name = "createWorkspaceRequest")
     private final CreateWorkspaceRequestUseCase createWorkspaceRequest;
@@ -36,7 +36,7 @@ public class UserWorkspaceRequestRequestController implements UserWorkspaceReque
 
     @Override
     @PostMapping
-    public ResponseEntity<CommonApiResponse<Void>> createWorkspace(
+    public ResponseEntity<CommonApiResponse<Void>> createWorkspaceRequest(
         @RequestBody @Valid CreateWorkspaceRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
@@ -44,8 +44,9 @@ public class UserWorkspaceRequestRequestController implements UserWorkspaceReque
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
+    @Override
     @GetMapping
-    public ResponseEntity<CommonApiResponse<List<WorkspaceRequestListResponseDto>>> getWorkspaces() {
+    public ResponseEntity<CommonApiResponse<List<WorkspaceRequestListResponseDto>>> getWorkspaceRequestList() {
         AppActor actor = AppActionContext.getInstance().getActor();
         return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceRequestList.execute(actor)));
     }
