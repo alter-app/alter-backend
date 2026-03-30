@@ -39,9 +39,9 @@ public class WorkspaceReason {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@JoinColumn(name = "workspace_id", nullable = false)
+	@JoinColumn(name = "workspace_request_id", nullable = false)
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	private Workspace workspace;
+	private WorkspaceRequest workspaceRequest;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false)
@@ -58,9 +58,9 @@ public class WorkspaceReason {
 	@Column(name = "updated_at", nullable = false)
 	private LocalDateTime updatedAt;
 
-	public static WorkspaceReason create(Workspace workspace, WorkspaceReasonStatus status, String reason) {
+	public static WorkspaceReason create(WorkspaceRequest workspaceRequest, WorkspaceReasonStatus status, String reason) {
 		return WorkspaceReason.builder()
-			.workspace(workspace)
+			.workspaceRequest(workspaceRequest)
 			.status(status)
 			.reason(reason)
 			.build();

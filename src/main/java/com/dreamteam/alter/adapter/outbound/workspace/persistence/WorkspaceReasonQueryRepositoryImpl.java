@@ -18,14 +18,14 @@ public class WorkspaceReasonQueryRepositoryImpl implements WorkspaceReasonQueryR
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Optional<WorkspaceReason> findByIdAndWorkspaceId(Long reasonId, Long workspaceId) {
+    public Optional<WorkspaceReason> findByIdAndWorkspaceRequestId(Long reasonId, Long workspaceRequestId) {
         QWorkspaceReason qWorkspaceReason = QWorkspaceReason.workspaceReason;
         return Optional.ofNullable(
             queryFactory
                 .selectFrom(qWorkspaceReason)
                 .where(
                     qWorkspaceReason.id.eq(reasonId),
-                    qWorkspaceReason.workspace.id.eq(workspaceId)
+                    qWorkspaceReason.workspaceRequest.id.eq(workspaceRequestId)
                 )
                 .fetchOne()
         );

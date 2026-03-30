@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
+package com.dreamteam.alter.adapter.inbound.general.workspace.controller;
 
 import java.util.List;
 
@@ -14,10 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "MANAGER - 업장 승인/반려 사유 코멘트 API")
-public interface ManagerWorkspaceReasonCommentControllerSpec {
+@Tag(name = "APP - 업장 승인/반려 사유 코멘트 API")
+public interface UserWorkspaceReasonCommentControllerSpec {
 
-    @Operation(summary = "매니저 - 승인/반려 사유 코멘트 등록")
+    @Operation(summary = "유저 - 승인/반려 사유 코멘트 등록")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "코멘트 등록 성공"),
         @ApiResponse(responseCode = "403", description = "해당 업장의 관리자가 아님 (A002)"),
@@ -29,7 +29,7 @@ public interface ManagerWorkspaceReasonCommentControllerSpec {
         @Valid @RequestBody CreateWorkspaceReasonCommentRequestDto request
     );
 
-    @Operation(summary = "매니저 - 승인/반려 사유 코멘트 목록 조회")
+    @Operation(summary = "유저 - 승인/반려 사유 코멘트 목록 조회")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "코멘트 목록 조회 성공"),
         @ApiResponse(responseCode = "403", description = "해당 업장의 관리자가 아님 (A002)"),

@@ -1,9 +1,8 @@
-package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
+package com.dreamteam.alter.adapter.inbound.general.workspace.controller;
 
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.CreateWorkspaceReasonCommentRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.WorkspaceReasonCommentResponseDto;
-import com.dreamteam.alter.application.aop.ManagerActionContext;
-import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceReasonCommentUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceReasonCommentsUseCase;
 
@@ -25,11 +24,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/manager/workspaces/{workspaceId}/reasons/{reasonId}/comments")
-@PreAuthorize("hasAnyRole('MANAGER')")
+@RequestMapping("/app/workspace-requests/{workspaceRequestId}/reasons/{reasonId}/comments")
 @RequiredArgsConstructor
 @Validated
-public class ManagerWorkspaceReasonCommentController implements ManagerWorkspaceReasonCommentControllerSpec {
+public class UserWorkspaceReasonCommentController implements UserWorkspaceReasonCommentControllerSpec {
 
 	@Resource(name = "createWorkspaceReasonComment")
 	private final CreateWorkspaceReasonCommentUseCase createWorkspaceReasonComment;
@@ -40,23 +38,23 @@ public class ManagerWorkspaceReasonCommentController implements ManagerWorkspace
 	@Override
 	@PostMapping
 	public ResponseEntity<CommonApiResponse<Void>> createWorkspaceReasonComment(
-		@PathVariable Long workspaceId,
+		@PathVariable Long workspaceRequestId,
 		@PathVariable Long reasonId,
 		@Valid @RequestBody CreateWorkspaceReasonCommentRequestDto request
 	) {
-		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		createWorkspaceReasonComment.execute(actor, workspaceId, reasonId, request);
+		AppActor actor = AppActionContext.getInstance().getActor();
+		createWorkspaceReasonComment.execute(actor, workspaceRequestId, reasonId, request);
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 
 	@Override
 	@GetMapping
 	public ResponseEntity<CommonApiResponse<List<WorkspaceReasonCommentResponseDto>>> getWorkspaceReasonComments(
-		@PathVariable Long workspaceId,
+		@PathVariable Long workspaceRequestId,
 		@PathVariable Long reasonId
 	) {
-		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceReasonComments.execute(actor, workspaceId, reasonId)));
+		AppActor actor = AppActionContext.getInstance().getActor();
+		return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceReasonComments.execute(actor, workspaceRequestId, reasonId)));
 	}
 
 }

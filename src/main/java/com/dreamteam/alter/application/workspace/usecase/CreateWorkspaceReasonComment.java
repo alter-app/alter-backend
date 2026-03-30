@@ -6,13 +6,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.CreateWorkspaceReasonCommentRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceReason;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceReasonComment;
 import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceReasonCommentUseCase;
-import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceReasonCommentRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceReasonQueryRepository;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,20 +21,19 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class CreateWorkspaceReasonComment implements CreateWorkspaceReasonCommentUseCase {
 
-    private final WorkspaceQueryRepository workspaceQueryRepository;
+    private final WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
     private final WorkspaceReasonQueryRepository workspaceReasonQueryRepository;
     private final WorkspaceReasonCommentRepository workspaceReasonCommentRepository;
 
     @Override
-    public void execute(ManagerActor actor, Long workspaceId, Long reasonId, CreateWorkspaceReasonCommentRequestDto request) {
-        if (!workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser())) {
+    public void execute(AppActor actor, Long workspaceRequestId, Long reasonId, CreateWorkspaceReasonCommentRequestDto request) {
+        if (!workspaceRequestQueryRepository.existsByIdAndUserId(workspaceRequestId, actor.getUserId())) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
-        WorkspaceReason reason = workspaceReasonQueryRepository.findByIdAndWorkspaceId(reasonId, workspaceId)
+        WorkspaceReason reason = workspaceReasonQueryRepository.findByIdAndWorkspaceRequestId(reasonId, workspaceRequestId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        WorkspaceReasonComment comment = WorkspaceReasonComment.create(reason, request.getComment());
-        workspaceReasonCommentRepository.save(comment);
+        workspaceReasonCommentRepository.save(WorkspaceReasonComment.create(reason, request.getComment()));
     }
 }

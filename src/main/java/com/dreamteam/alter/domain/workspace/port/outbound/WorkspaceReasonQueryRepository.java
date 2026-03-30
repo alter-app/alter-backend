@@ -5,5 +5,5 @@ import java.util.Optional;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceReason;
 
 public interface WorkspaceReasonQueryRepository {
-    Optional<WorkspaceReason> findByIdAndWorkspaceId(Long reasonId, Long workspaceId);
+    Optional<WorkspaceReason> findByIdAndWorkspaceRequestId(Long reasonId, Long workspaceRequestId);
 }
