@@ -22,23 +22,18 @@ import lombok.NoArgsConstructor;
 @Schema(description = "업장 등록 신청 목록 조회 응답 DTO")
 public class WorkspaceRequestListResponseDto {
 
-	@NotNull
 	@Schema(description = "업장 등록 신청 ID", example = "1")
 	private Long id;
 
-	@NotBlank
 	@Schema(description = "업장 이름", example = "세븐일레븐")
 	private String businessName;
 
-	@NotBlank
 	@Schema(description = "업장 전체 주소", example = "서울특별시 강남구 테헤란로 123")
 	private String fullAddress;
 
-	@NotNull
 	@Schema(description = "등록일", example = "2026-03-01T10:00:00")
 	private LocalDateTime createdAt;
 
-	@NotNull
 	@Schema(description = "업장 등록 신청 상태")
 	private DescribedEnumDto<WorkspaceRequestStatus> status;
 
