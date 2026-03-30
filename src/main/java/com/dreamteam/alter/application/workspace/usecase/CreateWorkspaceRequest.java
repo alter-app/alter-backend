@@ -16,7 +16,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestReposi
 
 import lombok.RequiredArgsConstructor;
 
-@Service("createWorkspace")
+@Service("createWorkspaceRequest")
 @RequiredArgsConstructor
 @Transactional
 public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {

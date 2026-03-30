@@ -10,8 +10,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "APP - 업장 API")
-public interface UserWorkspaceControllerSpec {
+@Tag(name = "APP - 업장 등록 API")
+public interface UserWorkspaceRequestControllerSpec {
 
     @Operation(summary = "업장 등록 신청")
     @ApiResponses(value = {

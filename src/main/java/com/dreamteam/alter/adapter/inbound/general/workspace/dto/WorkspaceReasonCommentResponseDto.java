@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
+package com.dreamteam.alter.adapter.inbound.general.workspace.dto;
 
 import java.time.LocalDateTime;
 
