@@ -48,6 +48,15 @@ public class WorkspaceRequestResponseDto {
 	@Schema(description = "업장 경도", example = "126.9780")
 	private BigDecimal longitude;
 
+	@Schema(description = "사업자등록증명원 파일 ID", example = "01959b4e-4e5f-7c3a-8d9e-0f1a2b3c4d5e")
+	private String workspaceCertFileId;
+
+	@Schema(description = "대표자 신분증 사본 파일 ID", example = "01959b4e-4e5f-7c3a-8d9e-0f1a2b3c4d5e")
+	private String workspaceOwnIdentityFileId;
+
+	@Schema(description = "위임 확인서 파일 ID", example = "01959b4e-4e5f-7c3a-8d9e-0f1a2b3c4d5e")
+	private String workspaceWarrantFileId;
+
 	@Schema(description = "업장 등록 신청 일시", example = "2023-10-01T12:00:00")
 	private LocalDateTime createdAt;
 
@@ -65,6 +74,9 @@ public class WorkspaceRequestResponseDto {
 			.fullAddress(workspaceRequest.getFullAddress())
 			.latitude(workspaceRequest.getLatitude())
 			.longitude(workspaceRequest.getLongitude())
+			.workspaceCertFileId(workspaceRequest.getWorkspaceCertFileId())
+			.workspaceOwnIdentityFileId(workspaceRequest.getWorkspaceOwnIdentityFileId())
+			.workspaceWarrantFileId(workspaceRequest.getWorkspaceWarrantFileId())
 			.createdAt(workspaceRequest.getCreatedAt())
 			.updatedAt(workspaceRequest.getUpdatedAt())
 			.build();
