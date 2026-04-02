@@ -12,6 +12,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceReasonCommentRequestDto;
 import com.dreamteam.alter.domain.workspace.port.inbound.AdminCreateWorkspaceReasonCommentUseCase;
 
+import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AdminWorkspaceReasonCommentController implements AdminWorkspaceReasonCommentControllerSpec{
 
+	@Resource(name = "adminCreateWorkspaceReasonComment")
 	private final AdminCreateWorkspaceReasonCommentUseCase adminCreateWorkspaceReasonComment;
 
 	@Override
