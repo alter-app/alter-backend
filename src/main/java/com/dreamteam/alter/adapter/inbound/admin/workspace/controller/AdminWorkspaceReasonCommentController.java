@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminCreateWorkspaceReasonCommentRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceReasonCommentRequestDto;
 import com.dreamteam.alter.domain.workspace.port.inbound.AdminCreateWorkspaceReasonCommentUseCase;
 
 import jakarta.annotation.Resource;
@@ -30,7 +30,7 @@ public class AdminWorkspaceReasonCommentController implements AdminWorkspaceReas
 	public ResponseEntity<CommonApiResponse<Void>> createComment(
 		@PathVariable Long workspaceRequestId,
 		@PathVariable Long reasonId,
-		@RequestBody @Valid CreateWorkspaceReasonCommentRequestDto request
+		@RequestBody @Valid AdminCreateWorkspaceReasonCommentRequestDto request
 	) {
 		adminCreateWorkspaceReasonComment.execute(workspaceRequestId, reasonId, request.getComment());
 		return ResponseEntity.ok(CommonApiResponse.empty());

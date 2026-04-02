@@ -4,8 +4,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminCreateWorkspaceReasonCommentRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceReasonCommentRequestDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,6 +26,6 @@ public interface AdminWorkspaceReasonCommentControllerSpec {
 	ResponseEntity<CommonApiResponse<Void>> createComment(
 		@Parameter(description = "업장 등록 신청 ID", example = "1") @PathVariable Long workspaceRequestId,
 		@Parameter(description = "반려 사유 ID", example = "1") @PathVariable Long reasonId,
-		@Valid @RequestBody CreateWorkspaceReasonCommentRequestDto request
+		@Valid @RequestBody AdminCreateWorkspaceReasonCommentRequestDto request
 	);
 }
