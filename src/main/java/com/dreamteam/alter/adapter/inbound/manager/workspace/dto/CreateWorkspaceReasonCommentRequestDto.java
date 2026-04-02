@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "매니저 - 승인/반려 사유 댓글 등록 DTO")
+@Schema(description = "유저 - 승인/반려 사유 댓글 등록 DTO")
 public class CreateWorkspaceReasonCommentRequestDto {
 
 	@Schema(description = "댓글 내용", example = "왜 반려죠")

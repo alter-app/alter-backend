@@ -13,6 +13,7 @@ import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceReasonCo
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceReasonCommentRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceReasonQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
+import com.dreamteam.alter.domain.workspace.type.CommentOwner;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,6 +35,6 @@ public class CreateWorkspaceReasonComment implements CreateWorkspaceReasonCommen
         WorkspaceReason reason = workspaceReasonQueryRepository.findByIdAndWorkspaceRequestId(reasonId, workspaceRequestId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        workspaceReasonCommentRepository.save(WorkspaceReasonComment.create(reason, request.getComment()));
+        workspaceReasonCommentRepository.save(WorkspaceReasonComment.create(reason, CommentOwner.USER, request.getComment()));
     }
 }

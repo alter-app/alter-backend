@@ -6,9 +6,13 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.dreamteam.alter.domain.workspace.type.CommentOwner;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,6 +43,10 @@ public class WorkspaceReasonComment {
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	private WorkspaceReason workspaceReason;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "comment_owner", nullable = false)
+	private CommentOwner commentOwner;
+
 	@Column(name = "comment", nullable = false)
 	private String comment;
 
@@ -50,9 +58,14 @@ public class WorkspaceReasonComment {
 	@Column(name = "updated_at", nullable = false)
 	private LocalDateTime updatedAt;
 
-	public static WorkspaceReasonComment create(WorkspaceReason workspaceReason, String comment) {
+	public static WorkspaceReasonComment create(
+		WorkspaceReason workspaceReason,
+		CommentOwner commentOwner,
+		String comment
+	) {
 		return WorkspaceReasonComment.builder()
 			.workspaceReason(workspaceReason)
+			.commentOwner(commentOwner)
 			.comment(comment)
 			.build();
 	}
