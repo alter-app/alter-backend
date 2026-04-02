@@ -1,6 +1,7 @@
 package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
@@ -10,6 +11,7 @@ import com.dreamteam.alter.domain.file.entity.QFile;
 import com.dreamteam.alter.domain.file.type.FileStatus;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspaceRequest;
+import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
@@ -109,5 +111,16 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 			.where(qWorkspaceRequest.user.id.eq(userId)
 				.and(qWorkspaceRequest.id.eq(workspaceRequestId)))
 			.fetchOne();
+	}
+
+	@Override
+	public Optional<WorkspaceRequest> findById(Long workspaceRequestId) {
+		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
+
+		return Optional.ofNullable(
+			queryFactory.selectFrom(qWorkspaceRequest)
+				.where(qWorkspaceRequest.id.eq(workspaceRequestId))
+				.fetchOne()
+		);
 	}
 }

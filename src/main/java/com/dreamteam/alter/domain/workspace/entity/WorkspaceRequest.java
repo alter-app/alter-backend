@@ -7,6 +7,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceRequestStatus;
 
@@ -114,5 +116,13 @@ public class WorkspaceRequest {
 			.latitude(latitude)
 			.longitude(longitude)
 			.build();
+	}
+
+	public void approve() {
+		if (WorkspaceRequestStatus.ACTIVATED.equals(status)) {
+			throw new CustomException(ErrorCode.CONFLICT, "이미 승인된 요청입니다.");
+		}
+
+		this.status = WorkspaceRequestStatus.ACTIVATED;
 	}
 }

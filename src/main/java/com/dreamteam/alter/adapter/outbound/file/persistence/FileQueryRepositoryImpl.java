@@ -68,4 +68,19 @@ public class FileQueryRepositoryImpl implements FileQueryRepository {
             )
             .fetch();
     }
+
+    @Override
+    public Optional<File> findByTargetTypeAndTargetId(FileTargetType targetType, String targetId) {
+        QFile qFile = QFile.file;
+        return Optional.ofNullable(
+            queryFactory
+            .selectFrom(qFile)
+            .where(
+                qFile.targetType.eq(targetType),
+                qFile.targetId.eq(targetId),
+                qFile.status.eq(FileStatus.ATTACHED)
+            )
+            .fetchOne()
+        );
+    }
 }
