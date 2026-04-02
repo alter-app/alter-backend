@@ -22,6 +22,7 @@ public class AdminWorkspaceRequestController implements AdminWorkspaceRequestCon
 	@Resource(name = "approveWorkspaceRequest")
 	private final ApproveWorkspaceRequestUseCase approveWorkspaceRequest;
 
+	@Override
 	@PostMapping("/{workspaceRequestId}/approve")
 	public ResponseEntity<CommonApiResponse<Void>> approve(@PathVariable Long workspaceRequestId) {
 		approveWorkspaceRequest.execute(workspaceRequestId);

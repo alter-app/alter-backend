@@ -125,4 +125,8 @@ public class WorkspaceRequest {
 
 		this.status = WorkspaceRequestStatus.ACTIVATED;
 	}
+
+	public void reject() {
+		this.status = WorkspaceRequestStatus.REVOKED;
+	}
 }

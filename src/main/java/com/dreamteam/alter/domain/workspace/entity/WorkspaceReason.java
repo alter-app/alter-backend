@@ -43,10 +43,6 @@ public class WorkspaceReason {
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	private WorkspaceRequest workspaceRequest;
 
-	@Enumerated(EnumType.STRING)
-	@Column(name = "status", nullable = false)
-	private WorkspaceReasonStatus status;
-
 	@Column(name = "reason", nullable = false)
 	private String reason;
 
@@ -58,10 +54,9 @@ public class WorkspaceReason {
 	@Column(name = "updated_at", nullable = false)
 	private LocalDateTime updatedAt;
 
-	public static WorkspaceReason create(WorkspaceRequest workspaceRequest, WorkspaceReasonStatus status, String reason) {
+	public static WorkspaceReason create(WorkspaceRequest workspaceRequest, String reason) {
 		return WorkspaceReason.builder()
 			.workspaceRequest(workspaceRequest)
-			.status(status)
 			.reason(reason)
 			.build();
 	}
