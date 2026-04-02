@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
+package com.dreamteam.alter.adapter.inbound.general.workspace.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "유저 - 승인/반려 사유 댓글 등록 DTO")
+@Schema(description = "유저 - 반려 사유 댓글 등록 DTO")
 public class CreateWorkspaceReasonCommentRequestDto {
 
 	@Schema(description = "댓글 내용", example = "왜 반려죠")

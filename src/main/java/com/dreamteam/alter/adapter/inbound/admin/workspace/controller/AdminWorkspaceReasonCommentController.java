@@ -8,30 +8,29 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.CreateWorkspaceReasonDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceReasonUseCase;
+import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceReasonCommentRequestDto;
+import com.dreamteam.alter.domain.workspace.port.inbound.AdminCreateWorkspaceReasonCommentUseCase;
 
-import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/admin/workspace-requests/{workspaceRequestId}/reasons")
+@RequestMapping("/admin/workspace-requests/{workspaceRequestId}/reasons/{reasonId}/comments")
 @PreAuthorize("hasAnyRole('ADMIN')")
 @RequiredArgsConstructor
-public class AdminWorkspaceReasonController implements AdminWorkspaceReasonControllerSpec{
+public class AdminWorkspaceReasonCommentController implements AdminWorkspaceReasonCommentControllerSpec{
 
-	@Resource(name = "createWorkspaceReason")
-	private final CreateWorkspaceReasonUseCase createWorkspaceReason;
+	private final AdminCreateWorkspaceReasonCommentUseCase adminCreateWorkspaceReasonComment;
 
 	@Override
 	@PostMapping
-	public ResponseEntity<CommonApiResponse<Void>> createReason(
+	public ResponseEntity<CommonApiResponse<Void>> createComment(
 		@PathVariable Long workspaceRequestId,
-		@RequestBody @Valid CreateWorkspaceReasonDto request
+		@PathVariable Long reasonId,
+		@RequestBody @Valid CreateWorkspaceReasonCommentRequestDto request
 	) {
-		createWorkspaceReason.execute(workspaceRequestId, request.getReason());
+		adminCreateWorkspaceReasonComment.execute(workspaceRequestId, reasonId, request.getComment());
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 }

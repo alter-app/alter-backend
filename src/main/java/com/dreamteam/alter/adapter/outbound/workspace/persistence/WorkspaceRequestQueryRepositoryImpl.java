@@ -42,6 +42,19 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 	}
 
 	@Override
+	public boolean existsById(Long workspaceRequestId) {
+		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
+
+		Integer result = queryFactory
+			.selectOne()
+			.from(qWorkspaceRequest)
+			.where(qWorkspaceRequest.id.eq(workspaceRequestId))
+			.fetchFirst();
+
+		return result != null;
+	}
+
+	@Override
 	public List<WorkspaceRequestListResponse> getWorkspaceRequestList(Long userId) {
 		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
 

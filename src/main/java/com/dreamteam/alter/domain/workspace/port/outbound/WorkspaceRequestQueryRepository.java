@@ -9,6 +9,7 @@ import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
 
 public interface WorkspaceRequestQueryRepository {
 	boolean existsByIdAndUserId(Long workspaceRequestId, Long userId);
+	boolean existsById(Long workspaceRequestId);
 
 	List<WorkspaceRequestListResponse> getWorkspaceRequestList(Long userId);
 
