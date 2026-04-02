@@ -14,5 +14,5 @@ public interface WorkspaceRequestQueryRepository {
 
 	WorkspaceRequestResponse getWorkspaceRequest(Long userId, Long workspaceRequestId);
 
-	Optional<WorkspaceRequest> findById(Long workspaceRequestId);
+	Optional<WorkspaceRequest> findByIdWithUser(Long workspaceRequestId);
 }

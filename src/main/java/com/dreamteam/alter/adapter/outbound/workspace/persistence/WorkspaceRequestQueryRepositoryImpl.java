@@ -114,11 +114,12 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 	}
 
 	@Override
-	public Optional<WorkspaceRequest> findById(Long workspaceRequestId) {
+	public Optional<WorkspaceRequest> findByIdWithUser(Long workspaceRequestId) {
 		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
 
 		return Optional.ofNullable(
 			queryFactory.selectFrom(qWorkspaceRequest)
+				.join(qWorkspaceRequest.user).fetchJoin()
 				.where(qWorkspaceRequest.id.eq(workspaceRequestId))
 				.fetchOne()
 		);

@@ -11,9 +11,15 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
+import com.dreamteam.alter.domain.user.entity.ManagerUser;
+import com.dreamteam.alter.domain.user.port.outbound.ManagerUserRepository;
+import com.dreamteam.alter.domain.user.type.ManagerUserStatus;
+import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
 import com.dreamteam.alter.domain.workspace.port.inbound.ApproveWorkspaceRequestUseCase;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,16 +28,38 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ApproveWorkspaceRequest implements ApproveWorkspaceRequestUseCase {
 
+	private final WorkspaceRepository workspaceRepository;
+	private final ManagerUserRepository managerUserRepository;
 	private final WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
 	private final FileQueryRepository fileQueryRepository;
 	private final FileDeleteService fileDeleteService;
 
 	@Override
 	public void execute(Long workspaceRequestId) {
-		WorkspaceRequest workspaceRequest = workspaceRequestQueryRepository.findById(workspaceRequestId)
+		WorkspaceRequest workspaceRequest = workspaceRequestQueryRepository.findByIdWithUser(workspaceRequestId)
 			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 업장 등록 요청을 찾을 수 없습니다."));
 
 		workspaceRequest.approve();
+
+		ManagerUser managerUser = managerUserRepository.save(ManagerUser.create(workspaceRequest.getUser(), ManagerUserStatus.ACTIVATED));
+
+		Workspace workspace = Workspace.create(
+			managerUser,
+			workspaceRequest.getBusinessRegistrationNo(),
+			workspaceRequest.getBusinessName(),
+			workspaceRequest.getBusinessType(),
+			workspaceRequest.getContact(),
+			null,
+			WorkspaceStatus.ACTIVATED,
+			workspaceRequest.getFullAddress(),
+			workspaceRequest.getProvince(),
+			workspaceRequest.getDistrict(),
+			workspaceRequest.getTown(),
+			workspaceRequest.getLatitude(),
+			workspaceRequest.getLongitude()
+		);
+
+		workspaceRepository.save(workspace);
 
 		Optional<File> file = fileQueryRepository.findByTargetTypeAndTargetId(
 			FileTargetType.WORKSPACE_OWN_IDENTITY, String.valueOf(workspaceRequestId));
