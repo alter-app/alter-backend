@@ -24,14 +24,14 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class UserWorkspaceReasonController {
 
-	@Resource(name = "getWorkspaceReasons")
-	private final GetWorkspaceReasonListUseCase getWorkspaceReasons;
+	@Resource(name = "getWorkspaceReasonList")
+	private final GetWorkspaceReasonListUseCase getWorkspaceReasonList;
 
 	@GetMapping
 	public ResponseEntity<CommonApiResponse<List<WorkspaceReasonResponseDto>>> getWorkspaceReasonList(
 		@PathVariable Long workspaceRequestId
 	) {
 		AppActor actor = AppActionContext.getInstance().getActor();
-		return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceReasons.execute(actor, workspaceRequestId)));
+		return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceReasonList.execute(actor, workspaceRequestId)));
 	}
 }
