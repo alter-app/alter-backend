@@ -3,8 +3,12 @@ package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.AdminWorkspaceRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestResponse;
 import com.dreamteam.alter.domain.file.entity.QFile;
@@ -14,6 +18,7 @@ import com.dreamteam.alter.domain.workspace.entity.QWorkspaceRequest;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -136,5 +141,48 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 				.where(qWorkspaceRequest.id.eq(workspaceRequestId))
 				.fetchOne()
 		);
+	}
+
+	@Override
+	public long countAll() {
+		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
+
+		Long count = queryFactory
+			.select(qWorkspaceRequest.count())
+			.from(qWorkspaceRequest)
+			.fetchOne();
+
+		return count != null ? count : 0L;
+	}
+
+	@Override
+	public List<AdminWorkspaceRequestListResponse> getAdminWorkspaceRequestListWithCursor(
+		CursorPageRequest<CursorDto> pageRequest
+	) {
+		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
+
+		return queryFactory
+			.select(Projections.constructor(
+				AdminWorkspaceRequestListResponse.class,
+				qWorkspaceRequest.id,
+				qWorkspaceRequest.businessName,
+				qWorkspaceRequest.fullAddress,
+				qWorkspaceRequest.createdAt,
+				qWorkspaceRequest.status
+			))
+			.from(qWorkspaceRequest)
+			.where(cursorCondition(qWorkspaceRequest, pageRequest.cursor()))
+			.orderBy(qWorkspaceRequest.createdAt.desc(), qWorkspaceRequest.id.desc())
+			.limit(pageRequest.pageSize())
+			.fetch();
+	}
+
+	private BooleanExpression cursorCondition(QWorkspaceRequest qWorkspaceRequest, CursorDto cursor) {
+		if (ObjectUtils.isEmpty(cursor)) {
+			return null;
+		}
+		return qWorkspaceRequest.createdAt.lt(cursor.getCreatedAt())
+			.or(qWorkspaceRequest.createdAt.eq(cursor.getCreatedAt())
+				.and(qWorkspaceRequest.id.lt(cursor.getId())));
 	}
 }
