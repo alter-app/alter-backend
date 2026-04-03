@@ -3,7 +3,7 @@ package com.dreamteam.alter.adapter.inbound.admin.workspace.dto;
 import java.time.LocalDateTime;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.AdminWorkspaceRequestListResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestListResponse;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceRequestStatus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -35,7 +35,7 @@ public class AdminWorkspaceRequestListResponseDto {
 	@Schema(description = "업장 등록 신청 상태")
 	private DescribedEnumDto<WorkspaceRequestStatus> status;
 
-	public static AdminWorkspaceRequestListResponseDto from(AdminWorkspaceRequestListResponse entity) {
+	public static AdminWorkspaceRequestListResponseDto from(WorkspaceRequestListResponse entity) {
 		return AdminWorkspaceRequestListResponseDto.builder()
 			.id(entity.getId())
 			.businessName(entity.getBusinessName())

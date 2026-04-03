@@ -12,7 +12,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.AdminWorkspaceRequestListResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestListResponse;
 import com.dreamteam.alter.common.util.CursorUtil;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetAdminWorkspaceRequestListUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
@@ -41,13 +41,13 @@ public class GetAdminWorkspaceRequestList implements GetAdminWorkspaceRequestLis
 			return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(request.pageSize(), (int) count));
 		}
 
-		List<AdminWorkspaceRequestListResponse> requests =
-			workspaceRequestQueryRepository.getAdminWorkspaceRequestListWithCursor(pageRequest);
+		List<WorkspaceRequestListResponse> requests =
+			workspaceRequestQueryRepository.getWorkspaceRequestListWithCursor(pageRequest);
 		if (ObjectUtils.isEmpty(requests)) {
 			return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(request.pageSize(), (int) count));
 		}
 
-		AdminWorkspaceRequestListResponse last = requests.getLast();
+		WorkspaceRequestListResponse last = requests.getLast();
 		CursorPageResponseDto pageResponseDto = CursorPageResponseDto.of(
 			CursorUtil.encodeCursor(new CursorDto(last.getId(), last.getCreatedAt()), objectMapper),
 			pageRequest.pageSize(),

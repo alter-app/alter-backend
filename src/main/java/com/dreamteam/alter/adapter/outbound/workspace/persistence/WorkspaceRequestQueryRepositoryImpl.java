@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.AdminWorkspaceRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestResponse;
 import com.dreamteam.alter.domain.file.entity.QFile;
@@ -156,14 +155,14 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 	}
 
 	@Override
-	public List<AdminWorkspaceRequestListResponse> getAdminWorkspaceRequestListWithCursor(
+	public List<WorkspaceRequestListResponse> getWorkspaceRequestListWithCursor(
 		CursorPageRequest<CursorDto> pageRequest
 	) {
 		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
 
 		return queryFactory
 			.select(Projections.constructor(
-				AdminWorkspaceRequestListResponse.class,
+				WorkspaceRequestListResponse.class,
 				qWorkspaceRequest.id,
 				qWorkspaceRequest.businessName,
 				qWorkspaceRequest.fullAddress,
@@ -175,6 +174,58 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 			.orderBy(qWorkspaceRequest.createdAt.desc(), qWorkspaceRequest.id.desc())
 			.limit(pageRequest.pageSize())
 			.fetch();
+	}
+
+	@Override
+	public WorkspaceRequestResponse getWorkspaceRequest(Long workspaceRequestId) {
+		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
+		QFile certFile = new QFile("certFile");
+		QFile ownIdentityFile = new QFile("ownIdentityFile");
+		QFile warrantFile = new QFile("warrantFile");
+		String targetId = workspaceRequestId.toString();
+
+		return queryFactory
+			.select(Projections.constructor(
+				WorkspaceRequestResponse.class,
+				qWorkspaceRequest.id,
+				qWorkspaceRequest.businessRegistrationNo,
+				qWorkspaceRequest.businessName,
+				qWorkspaceRequest.businessType,
+				qWorkspaceRequest.contact,
+				qWorkspaceRequest.fullAddress,
+				qWorkspaceRequest.latitude,
+				qWorkspaceRequest.longitude,
+				qWorkspaceRequest.status,
+				JPAExpressions
+					.select(certFile.id)
+					.from(certFile)
+					.where(
+						certFile.targetId.eq(targetId),
+						certFile.targetType.eq(FileTargetType.WORKSPACE_CERTIFICATE),
+						certFile.status.eq(FileStatus.ATTACHED)
+					),
+				JPAExpressions
+					.select(ownIdentityFile.id)
+					.from(ownIdentityFile)
+					.where(
+						ownIdentityFile.targetId.eq(targetId),
+						ownIdentityFile.targetType.eq(FileTargetType.WORKSPACE_OWN_IDENTITY),
+						ownIdentityFile.status.eq(FileStatus.ATTACHED)
+					),
+				JPAExpressions
+					.select(warrantFile.id)
+					.from(warrantFile)
+					.where(
+						warrantFile.targetId.eq(targetId),
+						warrantFile.targetType.eq(FileTargetType.WORKSPACE_WARRANT),
+						warrantFile.status.eq(FileStatus.ATTACHED)
+					),
+				qWorkspaceRequest.createdAt,
+				qWorkspaceRequest.updatedAt
+			))
+			.from(qWorkspaceRequest)
+			.where(qWorkspaceRequest.id.eq(workspaceRequestId))
+			.fetchOne();
 	}
 
 	private BooleanExpression cursorCondition(QWorkspaceRequest qWorkspaceRequest, CursorDto cursor) {

@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.AdminWorkspaceRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestResponse;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
@@ -22,7 +21,9 @@ public interface WorkspaceRequestQueryRepository {
 
 	long countAll();
 
-	List<AdminWorkspaceRequestListResponse> getAdminWorkspaceRequestListWithCursor(
+	List<WorkspaceRequestListResponse> getWorkspaceRequestListWithCursor(
 		CursorPageRequest<CursorDto> pageRequest
 	);
+
+	WorkspaceRequestResponse getWorkspaceRequest(Long workspaceRequestId);
 }

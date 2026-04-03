@@ -1,6 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.admin.workspace.controller;
 
 import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminWorkspaceRequestListResponseDto;
+import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminWorkspaceRequestResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
@@ -21,6 +22,15 @@ public interface AdminWorkspaceRequestControllerSpec {
     })
     ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<AdminWorkspaceRequestListResponseDto>>> getWorkspaceRequestList(
         CursorPageRequestDto request
+    );
+
+    @Operation(summary = "업장 등록 신청 상세 조회", description = "관리자가 업장 등록 신청 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "업장 등록 신청 상세 조회 성공"),
+        @ApiResponse(responseCode = "404", description = "존재하지 않는 업장 등록 신청")
+    })
+    ResponseEntity<CommonApiResponse<AdminWorkspaceRequestResponseDto>> getWorkspaceRequest(
+        @Parameter(description = "업장 등록 신청 ID", example = "1") @PathVariable Long workspaceRequestId
     );
 
     @Operation(summary = "업장 등록 신청 승인", description = "관리자가 업장 등록 신청을 승인합니다.")

@@ -9,11 +9,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminWorkspaceRequestListResponseDto;
+import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminWorkspaceRequestResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.domain.workspace.port.inbound.ApproveWorkspaceRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetAdminWorkspaceRequestListUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.GetAdminWorkspaceRequestUseCase;
 
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,9 @@ public class AdminWorkspaceRequestController implements AdminWorkspaceRequestCon
 	@Resource(name = "getAdminWorkspaceRequestList")
 	private final GetAdminWorkspaceRequestListUseCase getAdminWorkspaceRequestList;
 
+	@Resource(name = "getAdminWorkspaceRequest")
+	private final GetAdminWorkspaceRequestUseCase getAdminWorkspaceRequest;
+
 	@Resource(name = "approveWorkspaceRequest")
 	private final ApproveWorkspaceRequestUseCase approveWorkspaceRequest;
 
@@ -36,6 +41,14 @@ public class AdminWorkspaceRequestController implements AdminWorkspaceRequestCon
 		CursorPageRequestDto request
 	) {
 		return ResponseEntity.ok(CommonApiResponse.of(getAdminWorkspaceRequestList.execute(request)));
+	}
+
+	@Override
+	@GetMapping("/{workspaceRequestId}")
+	public ResponseEntity<CommonApiResponse<AdminWorkspaceRequestResponseDto>> getWorkspaceRequest(
+		@PathVariable Long workspaceRequestId
+	) {
+		return ResponseEntity.ok(CommonApiResponse.of(getAdminWorkspaceRequest.execute(workspaceRequestId)));
 	}
 
 	@Override
