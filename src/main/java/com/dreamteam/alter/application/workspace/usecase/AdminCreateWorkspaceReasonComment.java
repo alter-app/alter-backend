@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceReasonCommentRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.user.context.AdminActor;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceReason;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceReasonComment;
@@ -27,7 +28,7 @@ public class AdminCreateWorkspaceReasonComment implements AdminCreateWorkspaceRe
 	private final WorkspaceReasonCommentRepository workspaceReasonCommentRepository;
 
 	@Override
-	public void execute(Long workspaceRequestId, Long reasonId, String comment) {
+	public void execute(AdminActor actor, Long workspaceRequestId, Long reasonId, String comment) {
 		if (!workspaceRequestQueryRepository.existsById(workspaceRequestId)) {
 			throw new CustomException(ErrorCode.FORBIDDEN);
 		}
@@ -35,6 +36,6 @@ public class AdminCreateWorkspaceReasonComment implements AdminCreateWorkspaceRe
 		WorkspaceReason reason = workspaceReasonQueryRepository.findByIdAndWorkspaceRequestId(reasonId, workspaceRequestId)
 			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-		workspaceReasonCommentRepository.save(WorkspaceReasonComment.create(reason, CommentOwner.ADMIN, comment));
+		workspaceReasonCommentRepository.save(WorkspaceReasonComment.create(reason, actor.getUser(), CommentOwner.ADMIN, comment));
 	}
 }

@@ -34,7 +34,7 @@ public class GetWorkspaceReasonComments implements GetWorkspaceReasonCommentsUse
 		workspaceReasonQueryRepository.findByIdAndWorkspaceRequestId(reasonId, workspaceRequestId)
 			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-		return workspaceReasonCommentQueryRepository.getCommentsByReasonId(reasonId)
+		return workspaceReasonCommentQueryRepository.getWorkspaceReasonCommentList(reasonId)
 			.stream()
 			.map(WorkspaceReasonCommentResponseDto::from)
 			.toList();

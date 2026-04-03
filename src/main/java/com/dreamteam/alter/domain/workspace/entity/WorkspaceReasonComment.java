@@ -6,6 +6,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.type.CommentOwner;
 
 import jakarta.persistence.Column;
@@ -19,6 +20,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -43,6 +45,10 @@ public class WorkspaceReasonComment {
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	private WorkspaceReason workspaceReason;
 
+	@JoinColumn(name = "user_id", nullable = false)
+	@OneToMany(fetch = FetchType.LAZY)
+	private User user;
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "comment_owner", nullable = false)
 	private CommentOwner commentOwner;
@@ -60,11 +66,13 @@ public class WorkspaceReasonComment {
 
 	public static WorkspaceReasonComment create(
 		WorkspaceReason workspaceReason,
+		User user,
 		CommentOwner commentOwner,
 		String comment
 	) {
 		return WorkspaceReasonComment.builder()
 			.workspaceReason(workspaceReason)
+			.user(user)
 			.commentOwner(commentOwner)
 			.comment(comment)
 			.build();

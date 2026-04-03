@@ -35,6 +35,6 @@ public class CreateWorkspaceReasonComment implements CreateWorkspaceReasonCommen
         WorkspaceReason reason = workspaceReasonQueryRepository.findByIdAndWorkspaceRequestId(reasonId, workspaceRequestId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        workspaceReasonCommentRepository.save(WorkspaceReasonComment.create(reason, CommentOwner.USER, request.getComment()));
+        workspaceReasonCommentRepository.save(WorkspaceReasonComment.create(reason, actor.getUser(), CommentOwner.USER, request.getComment()));
     }
 }
