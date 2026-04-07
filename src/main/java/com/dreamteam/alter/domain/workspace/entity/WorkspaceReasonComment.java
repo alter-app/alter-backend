@@ -47,7 +47,7 @@ public class WorkspaceReasonComment {
 	private WorkspaceReason workspaceReason;
 
 	@JoinColumn(name = "user_id", nullable = false)
-	@OneToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.LAZY)
 	private User user;
 
 	@Enumerated(EnumType.STRING)
