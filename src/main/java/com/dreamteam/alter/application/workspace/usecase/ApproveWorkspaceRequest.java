@@ -12,6 +12,7 @@ import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
+import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserRepository;
 import com.dreamteam.alter.domain.user.type.ManagerUserStatus;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
@@ -29,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class ApproveWorkspaceRequest implements ApproveWorkspaceRequestUseCase {
 
 	private final WorkspaceRepository workspaceRepository;
+	private final ManagerUserQueryRepository managerUserQueryRepository;
 	private final ManagerUserRepository managerUserRepository;
 	private final WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
 	private final FileQueryRepository fileQueryRepository;
@@ -41,7 +43,8 @@ public class ApproveWorkspaceRequest implements ApproveWorkspaceRequestUseCase {
 
 		workspaceRequest.approve();
 
-		ManagerUser managerUser = managerUserRepository.save(ManagerUser.create(workspaceRequest.getUser(), ManagerUserStatus.ACTIVATED));
+		ManagerUser managerUser = managerUserQueryRepository.findByUserId(workspaceRequest.getUser().getId())
+			.orElseGet(() -> managerUserRepository.save(ManagerUser.create(workspaceRequest.getUser(), ManagerUserStatus.ACTIVATED)));
 
 		Workspace workspace = Workspace.create(
 			managerUser,
