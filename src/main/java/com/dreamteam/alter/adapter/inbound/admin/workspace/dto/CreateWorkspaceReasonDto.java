@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.inbound.admin.workspace.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class CreateWorkspaceReasonDto {
 
 	@NotBlank
-	@Max(value = 255)
+	@Size(max = 255)
 	@Schema(description = "사유", example = "사업자등록증 기간 지남")
 	private String reason;
 }
