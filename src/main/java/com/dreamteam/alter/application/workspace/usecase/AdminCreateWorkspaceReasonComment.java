@@ -30,7 +30,7 @@ public class AdminCreateWorkspaceReasonComment implements AdminCreateWorkspaceRe
 	@Override
 	public void execute(AdminActor actor, Long workspaceRequestId, Long reasonId, String comment) {
 		if (!workspaceRequestQueryRepository.existsById(workspaceRequestId)) {
-			throw new CustomException(ErrorCode.FORBIDDEN);
+			throw new CustomException(ErrorCode.NOT_FOUND);
 		}
 
 		WorkspaceReason reason = workspaceReasonQueryRepository.findByIdAndWorkspaceRequestId(reasonId, workspaceRequestId)
