@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminWorkspaceRequestListResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminWorkspaceRequestResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
 import com.dreamteam.alter.domain.workspace.port.inbound.ApproveWorkspaceRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetAdminWorkspaceRequestListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetAdminWorkspaceRequestUseCase;
@@ -37,8 +37,8 @@ public class AdminWorkspaceRequestController implements AdminWorkspaceRequestCon
 
 	@Override
 	@GetMapping
-	public ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<AdminWorkspaceRequestListResponseDto>>> getWorkspaceRequestList(
-		CursorPageRequestDto request
+	public ResponseEntity<CommonApiResponse<PaginatedResponseDto<AdminWorkspaceRequestListResponseDto>>> getWorkspaceRequestList(
+		PageRequestDto request
 	) {
 		return ResponseEntity.ok(CommonApiResponse.of(getAdminWorkspaceRequestList.execute(request)));
 	}

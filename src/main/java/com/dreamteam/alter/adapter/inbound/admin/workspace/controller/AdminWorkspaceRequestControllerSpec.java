@@ -3,8 +3,8 @@ package com.dreamteam.alter.adapter.inbound.admin.workspace.controller;
 import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminWorkspaceRequestListResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminWorkspaceRequestResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Tag(name = "ADMIN - 업장 등록 신청 관리 API")
 public interface AdminWorkspaceRequestControllerSpec {
 
-    @Operation(summary = "업장 등록 신청 목록 조회", description = "관리자가 업장 등록 신청 목록을 커서 페이징으로 조회합니다.")
+    @Operation(summary = "업장 등록 신청 목록 조회", description = "관리자가 업장 등록 신청 목록을 페이징으로 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "업장 등록 신청 목록 조회 성공")
     })
-    ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<AdminWorkspaceRequestListResponseDto>>> getWorkspaceRequestList(
-        CursorPageRequestDto request
+    ResponseEntity<CommonApiResponse<PaginatedResponseDto<AdminWorkspaceRequestListResponseDto>>> getWorkspaceRequestList(
+        PageRequestDto request
     );
 
     @Operation(summary = "업장 등록 신청 상세 조회", description = "관리자가 업장 등록 신청 상세 정보를 조회합니다.")

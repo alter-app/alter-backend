@@ -2,21 +2,16 @@ package com.dreamteam.alter.application.workspace.usecase;
 
 import java.util.List;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminWorkspaceRequestListResponseDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.PageResponseDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestListResponse;
-import com.dreamteam.alter.common.util.CursorUtil;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetAdminWorkspaceRequestListUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,35 +21,20 @@ import lombok.RequiredArgsConstructor;
 public class GetAdminWorkspaceRequestList implements GetAdminWorkspaceRequestListUseCase {
 
 	private final WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
-	private final ObjectMapper objectMapper;
 
 	@Override
-	public CursorPaginatedApiResponse<AdminWorkspaceRequestListResponseDto> execute(CursorPageRequestDto request) {
-		CursorDto cursorDto = null;
-		if (ObjectUtils.isNotEmpty(request.cursor())) {
-			cursorDto = CursorUtil.decodeCursor(request.cursor(), CursorDto.class, objectMapper);
-		}
-		CursorPageRequest<CursorDto> pageRequest = CursorPageRequest.of(cursorDto, request.pageSize());
-
+	public PaginatedResponseDto<AdminWorkspaceRequestListResponseDto> execute(PageRequestDto request) {
 		long count = workspaceRequestQueryRepository.countAll();
+		PageResponseDto pageResponseDto = PageResponseDto.of(request, (int) count);
+
 		if (count == 0) {
-			return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(request.pageSize(), (int) count));
+			return PaginatedResponseDto.empty(pageResponseDto);
 		}
 
 		List<WorkspaceRequestListResponse> requests =
-			workspaceRequestQueryRepository.getWorkspaceRequestListWithCursor(pageRequest);
-		if (ObjectUtils.isEmpty(requests)) {
-			return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(request.pageSize(), (int) count));
-		}
+			workspaceRequestQueryRepository.getWorkspaceRequestListWithOffset(request);
 
-		WorkspaceRequestListResponse last = requests.getLast();
-		CursorPageResponseDto pageResponseDto = CursorPageResponseDto.of(
-			CursorUtil.encodeCursor(new CursorDto(last.getId(), last.getCreatedAt()), objectMapper),
-			pageRequest.pageSize(),
-			(int) count
-		);
-
-		return CursorPaginatedApiResponse.of(
+		return PaginatedResponseDto.of(
 			pageResponseDto,
 			requests.stream()
 				.map(AdminWorkspaceRequestListResponseDto::from)

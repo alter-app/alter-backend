@@ -3,8 +3,7 @@ package com.dreamteam.alter.domain.workspace.port.outbound;
 import java.util.List;
 import java.util.Optional;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
+import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestResponse;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
@@ -21,9 +20,7 @@ public interface WorkspaceRequestQueryRepository {
 
 	long countAll();
 
-	List<WorkspaceRequestListResponse> getWorkspaceRequestListWithCursor(
-		CursorPageRequest<CursorDto> pageRequest
-	);
+	List<WorkspaceRequestListResponse> getWorkspaceRequestListWithOffset(PageRequestDto request);
 
 	WorkspaceRequestResponse getWorkspaceRequest(Long workspaceRequestId);
 }

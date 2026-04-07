@@ -3,11 +3,9 @@ package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
+import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestResponse;
 import com.dreamteam.alter.domain.file.entity.QFile;
@@ -155,9 +153,7 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 	}
 
 	@Override
-	public List<WorkspaceRequestListResponse> getWorkspaceRequestListWithCursor(
-		CursorPageRequest<CursorDto> pageRequest
-	) {
+	public List<WorkspaceRequestListResponse> getWorkspaceRequestListWithOffset(PageRequestDto request) {
 		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
 
 		return queryFactory
@@ -170,9 +166,9 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 				qWorkspaceRequest.status
 			))
 			.from(qWorkspaceRequest)
-			.where(cursorCondition(qWorkspaceRequest, pageRequest.cursor()))
 			.orderBy(qWorkspaceRequest.createdAt.desc(), qWorkspaceRequest.id.desc())
-			.limit(pageRequest.pageSize())
+			.offset(request.getOffset())
+			.limit(request.getLimit())
 			.fetch();
 	}
 
@@ -228,12 +224,4 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 			.fetchOne();
 	}
 
-	private BooleanExpression cursorCondition(QWorkspaceRequest qWorkspaceRequest, CursorDto cursor) {
-		if (ObjectUtils.isEmpty(cursor)) {
-			return null;
-		}
-		return qWorkspaceRequest.createdAt.lt(cursor.getCreatedAt())
-			.or(qWorkspaceRequest.createdAt.eq(cursor.getCreatedAt())
-				.and(qWorkspaceRequest.id.lt(cursor.getId())));
-	}
 }
