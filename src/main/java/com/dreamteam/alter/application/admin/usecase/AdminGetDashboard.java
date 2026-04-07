@@ -3,6 +3,7 @@ package com.dreamteam.alter.application.admin.usecase;
 import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardRequestDto;
 import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardResponseDto;
 import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardUseCase;
+import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardCacheRepository;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardQueryRepository;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardQueryRepository.PeriodCount;
 import com.dreamteam.alter.domain.admin.type.DashboardPeriod;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Optional;
 
 @Service("adminGetDashboard")
 @RequiredArgsConstructor
@@ -22,10 +24,15 @@ import java.util.List;
 public class AdminGetDashboard implements AdminGetDashboardUseCase {
 
     private final AdminDashboardQueryRepository adminDashboardQueryRepository;
+    private final AdminDashboardCacheRepository adminDashboardCacheRepository;
 
     @Override
     public AdminDashboardResponseDto execute(AdminDashboardRequestDto request) {
         int year = request.getYear() != null ? request.getYear() : LocalDate.now().getYear();
+
+        // 캐시 조회
+        Optional<AdminDashboardResponseDto> cached = adminDashboardCacheRepository.find(request.getPeriod(), year);
+        if (cached.isPresent()) return cached.get();
         DashboardPeriod period = request.getPeriod();
 
         // 차트 데이터
@@ -65,7 +72,12 @@ public class AdminGetDashboard implements AdminGetDashboardUseCase {
             toDataPoints(userCounts)
         );
 
-        return AdminDashboardResponseDto.of(workspaceChart, memberChart, weeklyReportCount, weeklyActiveUserCount);
+        AdminDashboardResponseDto result = AdminDashboardResponseDto.of(workspaceChart, memberChart, weeklyReportCount, weeklyActiveUserCount);
+
+        // 캐시 저장
+        adminDashboardCacheRepository.save(request.getPeriod(), year, result);
+
+        return result;
     }
 
     private double calcGrowthRate(long current, long previous) {
