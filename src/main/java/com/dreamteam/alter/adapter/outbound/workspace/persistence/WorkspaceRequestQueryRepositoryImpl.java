@@ -98,7 +98,7 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 				qWorkspaceRequest.longitude,
 				qWorkspaceRequest.status,
 				JPAExpressions
-					.select(certFile.id)
+					.select(certFile.fileUrl)
 					.from(certFile)
 					.where(
 						certFile.targetId.eq(targetId),
@@ -106,7 +106,7 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 						certFile.status.eq(FileStatus.ATTACHED)
 					),
 				JPAExpressions
-					.select(ownIdentityFile.id)
+					.select(ownIdentityFile.fileUrl)
 					.from(ownIdentityFile)
 					.where(
 						ownIdentityFile.targetId.eq(targetId),
@@ -114,7 +114,7 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 						ownIdentityFile.status.eq(FileStatus.ATTACHED)
 					),
 				JPAExpressions
-					.select(warrantFile.id)
+					.select(warrantFile.fileUrl)
 					.from(warrantFile)
 					.where(
 						warrantFile.targetId.eq(targetId),
@@ -197,7 +197,7 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 				qWorkspaceRequest.longitude,
 				qWorkspaceRequest.status,
 				JPAExpressions
-					.select(certFile.id)
+					.select(certFile.fileUrl)
 					.from(certFile)
 					.where(
 						certFile.targetId.eq(targetId),
@@ -205,7 +205,7 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 						certFile.status.eq(FileStatus.ATTACHED)
 					),
 				JPAExpressions
-					.select(ownIdentityFile.id)
+					.select(ownIdentityFile.fileUrl)
 					.from(ownIdentityFile)
 					.where(
 						ownIdentityFile.targetId.eq(targetId),
@@ -213,7 +213,7 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 						ownIdentityFile.status.eq(FileStatus.ATTACHED)
 					),
 				JPAExpressions
-					.select(warrantFile.id)
+					.select(warrantFile.fileUrl)
 					.from(warrantFile)
 					.where(
 						warrantFile.targetId.eq(targetId),

@@ -48,13 +48,13 @@ public class AdminWorkspaceRequestResponseDto {
 	@Schema(description = "업장 경도", example = "126.9780")
 	private BigDecimal longitude;
 
-	@Schema(description = "사업자등록증명원 파일 ID", example = "01959b4e-4e5f-7c3a-8d9e-0f1a2b3c4d5e")
+	@Schema(description = "사업자등록증명원 파일 URL (S3)")
 	private String workspaceCertFileId;
 
-	@Schema(description = "대표자 신분증 사본 파일 ID", example = "01959b4e-4e5f-7c3a-8d9e-0f1a2b3c4d5e")
+	@Schema(description = "대표자 신분증 사본 파일 URL (S3)")
 	private String workspaceOwnIdentityFileId;
 
-	@Schema(description = "위임 확인서 파일 ID", example = "01959b4e-4e5f-7c3a-8d9e-0f1a2b3c4d5e")
+	@Schema(description = "위임 확인서 파일 URL (S3)")
 	private String workspaceWarrantFileId;
 
 	@Schema(description = "업장 등록 신청 일시", example = "2023-10-01T12:00:00")
@@ -74,9 +74,9 @@ public class AdminWorkspaceRequestResponseDto {
 			.fullAddress(entity.getFullAddress())
 			.latitude(entity.getLatitude())
 			.longitude(entity.getLongitude())
-			.workspaceCertFileId(entity.getWorkspaceCertFileId())
-			.workspaceOwnIdentityFileId(entity.getWorkspaceOwnIdentityFileId())
-			.workspaceWarrantFileId(entity.getWorkspaceWarrantFileId())
+			.workspaceCertFileId(entity.getWorkspaceCertFileUrl())
+			.workspaceOwnIdentityFileId(entity.getWorkspaceOwnIdentityFileUrl())
+			.workspaceWarrantFileId(entity.getWorkspaceWarrantFileUrl())
 			.createdAt(entity.getCreatedAt())
 			.updatedAt(entity.getUpdatedAt())
 			.build();

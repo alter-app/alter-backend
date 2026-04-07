@@ -23,9 +23,9 @@ public class WorkspaceRequestResponse {
 	private BigDecimal latitude;
 	private BigDecimal longitude;
 	private WorkspaceRequestStatus status;
-	private String workspaceCertFileId;
-	private String workspaceOwnIdentityFileId;
-	private String workspaceWarrantFileId;
+	private String workspaceCertFileUrl;
+	private String workspaceOwnIdentityFileUrl;
+	private String workspaceWarrantFileUrl;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 }
