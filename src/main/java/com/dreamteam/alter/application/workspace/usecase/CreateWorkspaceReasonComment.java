@@ -29,7 +29,7 @@ public class CreateWorkspaceReasonComment implements CreateWorkspaceReasonCommen
     @Override
     public void execute(AppActor actor, Long workspaceRequestId, Long reasonId, CreateWorkspaceReasonCommentRequestDto request) {
         if (!workspaceRequestQueryRepository.existsByIdAndUserId(workspaceRequestId, actor.getUserId())) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
+            throw new CustomException(ErrorCode.NOT_FOUND);
         }
 
         WorkspaceReason reason = workspaceReasonQueryRepository.findByIdAndWorkspaceRequestId(reasonId, workspaceRequestId)
