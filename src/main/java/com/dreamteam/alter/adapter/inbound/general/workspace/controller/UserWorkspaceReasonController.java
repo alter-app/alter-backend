@@ -22,12 +22,13 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/app/workspace-requests/{workspaceRequestId}/reasons")
 @RequiredArgsConstructor
 @Validated
-public class UserWorkspaceReasonController {
+public class UserWorkspaceReasonController implements UserWorkspaceReasonControllerSpec {
 
 	@Resource(name = "getWorkspaceReasonList")
 	private final GetWorkspaceReasonListUseCase getWorkspaceReasonList;
 
 	@GetMapping
+	@Override
 	public ResponseEntity<CommonApiResponse<List<WorkspaceReasonResponseDto>>> getWorkspaceReasonList(
 		@PathVariable Long workspaceRequestId
 	) {
