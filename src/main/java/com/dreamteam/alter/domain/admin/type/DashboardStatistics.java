@@ -15,19 +15,19 @@ public class DashboardStatistics {
     private DashboardChartData workspaceChart;
     private DashboardChartData memberChart;
     private long weeklyReportCount;
-    private long weeklyActiveUserCount;
+    private long weeklyNewWorkerCount;
 
     public static DashboardStatistics of(
         DashboardChartData workspaceChart,
         DashboardChartData memberChart,
         long weeklyReportCount,
-        long weeklyActiveUserCount
+        long weeklyNewWorkerCount
     ) {
         return DashboardStatistics.builder()
             .workspaceChart(workspaceChart)
             .memberChart(memberChart)
             .weeklyReportCount(weeklyReportCount)
-            .weeklyActiveUserCount(weeklyActiveUserCount)
+            .weeklyNewWorkerCount(weeklyNewWorkerCount)
             .build();
     }
 }

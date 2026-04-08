@@ -94,7 +94,7 @@ public class AdminDashboardQueryRepositoryImpl implements AdminDashboardQueryRep
     }
 
     @Override
-    public long countActiveUsersBetween(LocalDateTime from, LocalDateTime to) {
+    public long countNewWorkersBetween(LocalDateTime from, LocalDateTime to) {
         Long count = queryFactory
             .select(workspaceWorker.user.id.countDistinct())
             .from(workspaceWorker)

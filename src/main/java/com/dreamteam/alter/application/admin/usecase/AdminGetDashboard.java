@@ -55,7 +55,7 @@ public class AdminGetDashboard implements AdminGetDashboardUseCase {
         LocalDateTime weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).atTime(23, 59, 59);
 
         long weeklyReportCount = adminDashboardQueryRepository.countReportsBetween(weekStart, weekEnd);
-        long weeklyActiveUserCount = adminDashboardQueryRepository.countActiveUsersBetween(weekStart, weekEnd);
+        long weeklyNewWorkerCount = adminDashboardQueryRepository.countNewWorkersBetween(weekStart, weekEnd);
 
         // 도메인 모델 조립
         DashboardChartData workspaceChart = DashboardChartData.of(
@@ -66,7 +66,7 @@ public class AdminGetDashboard implements AdminGetDashboardUseCase {
         );
 
         DashboardStatistics result = DashboardStatistics.of(
-            workspaceChart, memberChart, weeklyReportCount, weeklyActiveUserCount
+            workspaceChart, memberChart, weeklyReportCount, weeklyNewWorkerCount
         );
 
         // 캐시 저장

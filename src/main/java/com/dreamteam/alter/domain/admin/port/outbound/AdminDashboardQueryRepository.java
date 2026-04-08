@@ -13,7 +13,7 @@ public interface AdminDashboardQueryRepository {
 
     long countReportsBetween(LocalDateTime from, LocalDateTime to);
 
-    long countActiveUsersBetween(LocalDateTime from, LocalDateTime to);
+    long countNewWorkersBetween(LocalDateTime from, LocalDateTime to);
 
     long countWorkspacesInYear(int year);
 

@@ -28,15 +28,15 @@ public class AdminDashboardResponseDto {
     @Schema(description = "주간 신고 수", example = "42")
     private Long weeklyReportCount;
 
-    @Schema(description = "주간 활성 사용자 수", example = "128")
-    private Long weeklyActiveUserCount;
+    @Schema(description = "주간 신규 합류자 수", example = "128")
+    private Long weeklyNewWorkerCount;
 
     public static AdminDashboardResponseDto from(DashboardStatistics statistics) {
         return AdminDashboardResponseDto.builder()
             .workspaceChart(ChartData.from(statistics.getWorkspaceChart()))
             .memberChart(ChartData.from(statistics.getMemberChart()))
             .weeklyReportCount(statistics.getWeeklyReportCount())
-            .weeklyActiveUserCount(statistics.getWeeklyActiveUserCount())
+            .weeklyNewWorkerCount(statistics.getWeeklyNewWorkerCount())
             .build();
     }
 
