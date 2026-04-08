@@ -1,8 +1,8 @@
 package com.dreamteam.alter.adapter.outbound.admin.redis;
 
-import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardResponseDto;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardCacheRepository;
 import com.dreamteam.alter.domain.admin.type.DashboardPeriod;
+import com.dreamteam.alter.domain.admin.type.DashboardStatistics;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +27,11 @@ public class AdminDashboardCacheRepositoryImpl implements AdminDashboardCacheRep
     private static final Duration TTL = Duration.ofMinutes(5);
 
     @Override
-    public Optional<AdminDashboardResponseDto> find(DashboardPeriod period, int year) {
+    public Optional<DashboardStatistics> find(DashboardPeriod period, int year) {
         try {
             String value = redisTemplate.opsForValue().get(buildKey(period, year));
             if (ObjectUtils.isEmpty(value)) return Optional.empty();
-            return Optional.of(objectMapper.readValue(value, AdminDashboardResponseDto.class));
+            return Optional.of(objectMapper.readValue(value, DashboardStatistics.class));
         } catch (DataAccessException e) {
             log.warn("Redis access failed for dashboard cache period={}, year={}", period, year, e);
             return Optional.empty();
@@ -42,7 +42,7 @@ public class AdminDashboardCacheRepositoryImpl implements AdminDashboardCacheRep
     }
 
     @Override
-    public void save(DashboardPeriod period, int year, AdminDashboardResponseDto data) {
+    public void save(DashboardPeriod period, int year, DashboardStatistics data) {
         try {
             String value = objectMapper.writeValueAsString(data);
             redisTemplate.opsForValue().set(buildKey(period, year), value, TTL);

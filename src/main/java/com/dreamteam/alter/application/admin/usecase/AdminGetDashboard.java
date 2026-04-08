@@ -1,12 +1,13 @@
 package com.dreamteam.alter.application.admin.usecase;
 
-import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardRequestDto;
-import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardResponseDto;
 import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardUseCase;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardCacheRepository;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardQueryRepository;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardQueryRepository.PeriodCount;
+import com.dreamteam.alter.domain.admin.type.DashboardChartData;
+import com.dreamteam.alter.domain.admin.type.DashboardDataPoint;
 import com.dreamteam.alter.domain.admin.type.DashboardPeriod;
+import com.dreamteam.alter.domain.admin.type.DashboardStatistics;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,26 +28,25 @@ public class AdminGetDashboard implements AdminGetDashboardUseCase {
     private final AdminDashboardCacheRepository adminDashboardCacheRepository;
 
     @Override
-    public AdminDashboardResponseDto execute(AdminDashboardRequestDto request) {
-        int year = request.getYear() != null ? request.getYear() : LocalDate.now().getYear();
+    public DashboardStatistics execute(DashboardPeriod period, Integer year) {
+        int resolvedYear = year != null ? year : LocalDate.now().getYear();
 
         // 캐시 조회
-        Optional<AdminDashboardResponseDto> cached = adminDashboardCacheRepository.find(request.getPeriod(), year);
+        Optional<DashboardStatistics> cached = adminDashboardCacheRepository.find(period, resolvedYear);
         if (cached.isPresent()) return cached.get();
-        DashboardPeriod period = request.getPeriod();
 
         // 차트 데이터
-        List<PeriodCount> workspaceCounts = adminDashboardQueryRepository.countWorkspacesByPeriod(period, year);
-        List<PeriodCount> userCounts = adminDashboardQueryRepository.countUsersByPeriod(period, year);
+        List<PeriodCount> workspaceCounts = adminDashboardQueryRepository.countWorkspacesByPeriod(period, resolvedYear);
+        List<PeriodCount> userCounts = adminDashboardQueryRepository.countUsersByPeriod(period, resolvedYear);
 
         // 전년 대비 증감률
         double workspaceGrowthRate = calcGrowthRate(
-            adminDashboardQueryRepository.countWorkspacesInYear(year),
-            adminDashboardQueryRepository.countWorkspacesInYear(year - 1)
+            adminDashboardQueryRepository.countWorkspacesInYear(resolvedYear),
+            adminDashboardQueryRepository.countWorkspacesInYear(resolvedYear - 1)
         );
         double userGrowthRate = calcGrowthRate(
-            adminDashboardQueryRepository.countUsersInYear(year),
-            adminDashboardQueryRepository.countUsersInYear(year - 1)
+            adminDashboardQueryRepository.countUsersInYear(resolvedYear),
+            adminDashboardQueryRepository.countUsersInYear(resolvedYear - 1)
         );
 
         // 주간 범위 (이번 주 월요일 00:00 ~ 일요일 23:59:59)
@@ -57,25 +57,20 @@ public class AdminGetDashboard implements AdminGetDashboardUseCase {
         long weeklyReportCount = adminDashboardQueryRepository.countReportsBetween(weekStart, weekEnd);
         long weeklyActiveUserCount = adminDashboardQueryRepository.countActiveUsersBetween(weekStart, weekEnd);
 
-        // 응답 조립
-        AdminDashboardResponseDto.ChartData workspaceChart = AdminDashboardResponseDto.ChartData.of(
-            period,
-            year,
-            workspaceGrowthRate,
-            toDataPoints(workspaceCounts)
+        // 도메인 모델 조립
+        DashboardChartData workspaceChart = DashboardChartData.of(
+            period, resolvedYear, workspaceGrowthRate, toDataPoints(workspaceCounts)
+        );
+        DashboardChartData memberChart = DashboardChartData.of(
+            period, resolvedYear, userGrowthRate, toDataPoints(userCounts)
         );
 
-        AdminDashboardResponseDto.ChartData memberChart = AdminDashboardResponseDto.ChartData.of(
-            period,
-            year,
-            userGrowthRate,
-            toDataPoints(userCounts)
+        DashboardStatistics result = DashboardStatistics.of(
+            workspaceChart, memberChart, weeklyReportCount, weeklyActiveUserCount
         );
-
-        AdminDashboardResponseDto result = AdminDashboardResponseDto.of(workspaceChart, memberChart, weeklyReportCount, weeklyActiveUserCount);
 
         // 캐시 저장
-        adminDashboardCacheRepository.save(request.getPeriod(), year, result);
+        adminDashboardCacheRepository.save(period, resolvedYear, result);
 
         return result;
     }
@@ -88,9 +83,9 @@ public class AdminGetDashboard implements AdminGetDashboardUseCase {
         return Math.round(rate * 10.0) / 10.0;
     }
 
-    private List<AdminDashboardResponseDto.DataPoint> toDataPoints(List<PeriodCount> counts) {
+    private List<DashboardDataPoint> toDataPoints(List<PeriodCount> counts) {
         return counts.stream()
-            .map(pc -> AdminDashboardResponseDto.DataPoint.of(pc.label(), pc.count()))
+            .map(pc -> DashboardDataPoint.of(pc.label(), pc.count()))
             .toList();
     }
 }

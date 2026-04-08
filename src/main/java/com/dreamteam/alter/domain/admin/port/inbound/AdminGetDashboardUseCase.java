@@ -1,8 +1,8 @@
 package com.dreamteam.alter.domain.admin.port.inbound;
 
-import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardRequestDto;
-import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardResponseDto;
+import com.dreamteam.alter.domain.admin.type.DashboardPeriod;
+import com.dreamteam.alter.domain.admin.type.DashboardStatistics;
 
 public interface AdminGetDashboardUseCase {
-    AdminDashboardResponseDto execute(AdminDashboardRequestDto request);
+    DashboardStatistics execute(DashboardPeriod period, Integer year);
 }

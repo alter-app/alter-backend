@@ -1,6 +1,8 @@
 package com.dreamteam.alter.adapter.inbound.admin.dashboard.dto;
 
+import com.dreamteam.alter.domain.admin.type.DashboardChartData;
 import com.dreamteam.alter.domain.admin.type.DashboardPeriod;
+import com.dreamteam.alter.domain.admin.type.DashboardStatistics;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -29,17 +31,12 @@ public class AdminDashboardResponseDto {
     @Schema(description = "주간 활성 사용자 수", example = "128")
     private Long weeklyActiveUserCount;
 
-    public static AdminDashboardResponseDto of(
-        ChartData workspaceChart,
-        ChartData memberChart,
-        Long weeklyReportCount,
-        Long weeklyActiveUserCount
-    ) {
+    public static AdminDashboardResponseDto from(DashboardStatistics statistics) {
         return AdminDashboardResponseDto.builder()
-            .workspaceChart(workspaceChart)
-            .memberChart(memberChart)
-            .weeklyReportCount(weeklyReportCount)
-            .weeklyActiveUserCount(weeklyActiveUserCount)
+            .workspaceChart(ChartData.from(statistics.getWorkspaceChart()))
+            .memberChart(ChartData.from(statistics.getMemberChart()))
+            .weeklyReportCount(statistics.getWeeklyReportCount())
+            .weeklyActiveUserCount(statistics.getWeeklyActiveUserCount())
             .build();
     }
 
@@ -62,12 +59,14 @@ public class AdminDashboardResponseDto {
         @Schema(description = "기간별 데이터 포인트 목록")
         private List<DataPoint> dataPoints;
 
-        public static ChartData of(DashboardPeriod period, int year, Double yearOverYearGrowthRate, List<DataPoint> dataPoints) {
+        public static ChartData from(DashboardChartData chartData) {
             return ChartData.builder()
-                .period(period)
-                .year(year)
-                .yearOverYearGrowthRate(yearOverYearGrowthRate)
-                .dataPoints(dataPoints)
+                .period(chartData.getPeriod())
+                .year(chartData.getYear())
+                .yearOverYearGrowthRate(chartData.getYearOverYearGrowthRate())
+                .dataPoints(chartData.getDataPoints().stream()
+                    .map(dp -> DataPoint.of(dp.getLabel(), dp.getCount()))
+                    .toList())
                 .build();
         }
     }

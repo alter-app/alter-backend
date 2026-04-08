@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardReq
 import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardUseCase;
+import com.dreamteam.alter.domain.admin.type.DashboardStatistics;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ public class AdminDashboardController implements AdminDashboardControllerSpec {
     public ResponseEntity<CommonApiResponse<AdminDashboardResponseDto>> getDashboard(
         @Valid @ModelAttribute AdminDashboardRequestDto request
     ) {
-        return ResponseEntity.ok(CommonApiResponse.of(adminGetDashboardUseCase.execute(request)));
+        DashboardStatistics statistics = adminGetDashboardUseCase.execute(request.getPeriod(), request.getYear());
+        return ResponseEntity.ok(CommonApiResponse.of(AdminDashboardResponseDto.from(statistics)));
     }
 }
