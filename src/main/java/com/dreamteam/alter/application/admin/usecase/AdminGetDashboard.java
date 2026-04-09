@@ -51,10 +51,11 @@ public class AdminGetDashboard implements AdminGetDashboardUseCase {
             adminDashboardQueryRepository.countUsersInYear(resolvedYear - 1)
         );
 
-        // 주간 범위 (이번 주 월요일 00:00 ~ 일요일 23:59:59)
+        // 주간 범위 [이번 주 월요일 00:00, 다음 주 월요일 00:00) 반개구간
         LocalDate today = LocalDate.now();
-        LocalDateTime weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay();
-        LocalDateTime weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).atTime(23, 59, 59);
+        LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDateTime weekStart = monday.atStartOfDay();
+        LocalDateTime weekEnd = monday.plusWeeks(1).atStartOfDay();
 
         long weeklyReportCount = adminDashboardQueryRepository.countReportsBetween(weekStart, weekEnd);
         long weeklyNewWorkerCount = adminDashboardQueryRepository.countNewWorkersBetween(weekStart, weekEnd);

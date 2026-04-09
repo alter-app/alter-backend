@@ -86,7 +86,7 @@ public class AdminDashboardQueryRepositoryImpl implements AdminDashboardQueryRep
             .from(report)
             .where(
                 report.createdAt.goe(from),
-                report.createdAt.loe(to)
+                report.createdAt.lt(to)
             )
             .fetchOne();
 
@@ -101,7 +101,7 @@ public class AdminDashboardQueryRepositoryImpl implements AdminDashboardQueryRep
             .where(
                 workspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
                 workspaceWorker.createdAt.goe(from),
-                workspaceWorker.createdAt.loe(to)
+                workspaceWorker.createdAt.lt(to)
             )
             .fetchOne();
 

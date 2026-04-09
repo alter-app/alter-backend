@@ -11,8 +11,10 @@ public interface AdminDashboardQueryRepository {
 
     List<PeriodCount> countUsersByPeriod(DashboardPeriod period, int year);
 
+    /** [from, to) 반개구간으로 조회 */
     long countReportsBetween(LocalDateTime from, LocalDateTime to);
 
+    /** [from, to) 반개구간으로 조회 */
     long countNewWorkersBetween(LocalDateTime from, LocalDateTime to);
 
     long countWorkspacesInYear(int year);
