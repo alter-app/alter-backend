@@ -39,13 +39,15 @@ public class AdminGetDashboard implements AdminGetDashboardUseCase {
         List<PeriodCount> workspaceCounts = adminDashboardQueryRepository.countWorkspacesByPeriod(period, resolvedYear);
         List<PeriodCount> userCounts = adminDashboardQueryRepository.countUsersByPeriod(period, resolvedYear);
 
-        // 전년 대비 증감률
+        // 전년 대비 증감률 (올해 총 수는 period별 집계 합산, 전년도는 별도 쿼리)
+        long workspaceCurrentTotal = workspaceCounts.stream().mapToLong(PeriodCount::count).sum();
+        long userCurrentTotal = userCounts.stream().mapToLong(PeriodCount::count).sum();
         double workspaceGrowthRate = calcGrowthRate(
-            adminDashboardQueryRepository.countWorkspacesInYear(resolvedYear),
+            workspaceCurrentTotal,
             adminDashboardQueryRepository.countWorkspacesInYear(resolvedYear - 1)
         );
         double userGrowthRate = calcGrowthRate(
-            adminDashboardQueryRepository.countUsersInYear(resolvedYear),
+            userCurrentTotal,
             adminDashboardQueryRepository.countUsersInYear(resolvedYear - 1)
         );
 
