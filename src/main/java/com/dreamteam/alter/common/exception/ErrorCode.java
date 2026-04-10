@@ -54,6 +54,8 @@ public enum ErrorCode {
     EXTERNAL_API_ERROR(502, "C002", "외부 API 연동에 실패했습니다."),
     FILE_UPLOAD_FAILED(500, "C003", "파일 업로드에 실패했습니다."),
     FILE_DELETE_FAILED(500, "C004", "파일 삭제에 실패했습니다."),
+    CACHE_READ_ERROR(500, "C005", "캐시 조회에 실패했습니다."),
+    CACHE_WRITE_ERROR(500, "C006", "캐시 저장에 실패했습니다."),
     ;
 
     private final int status;

@@ -1,5 +1,7 @@
 package com.dreamteam.alter.adapter.outbound.admin.redis;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardCacheRepository;
 import com.dreamteam.alter.domain.admin.type.DashboardPeriod;
 import com.dreamteam.alter.domain.admin.type.DashboardStatistics;
@@ -33,11 +35,11 @@ public class AdminDashboardCacheRepositoryImpl implements AdminDashboardCacheRep
             if (ObjectUtils.isEmpty(value)) return Optional.empty();
             return Optional.of(objectMapper.readValue(value, DashboardStatistics.class));
         } catch (DataAccessException e) {
-            log.warn("Redis access failed for dashboard cache period={}, year={}", period, year, e);
-            return Optional.empty();
+            log.error("Redis access failed for dashboard cache period={}, year={}", period, year, e);
+            throw new CustomException(ErrorCode.CACHE_READ_ERROR);
         } catch (JsonProcessingException e) {
-            log.warn("Failed to deserialize dashboard cache period={}, year={}", period, year, e);
-            return Optional.empty();
+            log.error("Failed to deserialize dashboard cache period={}, year={}", period, year, e);
+            throw new CustomException(ErrorCode.CACHE_READ_ERROR);
         }
     }
 
@@ -47,9 +49,11 @@ public class AdminDashboardCacheRepositoryImpl implements AdminDashboardCacheRep
             String value = objectMapper.writeValueAsString(data);
             redisTemplate.opsForValue().set(buildKey(period, year), value, TTL);
         } catch (DataAccessException e) {
-            log.warn("Redis save failed for dashboard cache period={}, year={}", period, year, e);
+            log.error("Redis save failed for dashboard cache period={}, year={}", period, year, e);
+            throw new CustomException(ErrorCode.CACHE_WRITE_ERROR);
         } catch (JsonProcessingException e) {
-            log.warn("Failed to serialize dashboard cache period={}, year={}", period, year, e);
+            log.error("Failed to serialize dashboard cache period={}, year={}", period, year, e);
+            throw new CustomException(ErrorCode.CACHE_WRITE_ERROR);
         }
     }
 
