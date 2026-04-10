@@ -1,10 +1,12 @@
 package com.dreamteam.alter.adapter.inbound.admin.dashboard.controller;
 
+import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardChartResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardRequestDto;
-import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardResponseDto;
+import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardWeeklySummaryResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
-import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardUseCase;
-import com.dreamteam.alter.domain.admin.type.DashboardStatistics;
+import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardChartUseCase;
+import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardWeeklySummaryUseCase;
+import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,14 +24,31 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 public class AdminDashboardController implements AdminDashboardControllerSpec {
 
-    private final AdminGetDashboardUseCase adminGetDashboardUseCase;
+    @Resource(name = "adminGetDashboardChart")
+    private AdminGetDashboardChartUseCase adminGetDashboardChartUseCase;
+
+    @Resource(name = "adminGetDashboardWeeklySummary")
+    private AdminGetDashboardWeeklySummaryUseCase adminGetDashboardWeeklySummaryUseCase;
 
     @Override
-    @GetMapping
-    public ResponseEntity<CommonApiResponse<AdminDashboardResponseDto>> getDashboard(
+    @GetMapping("/chart")
+    public ResponseEntity<CommonApiResponse<AdminDashboardChartResponseDto>> getDashboardChart(
         @Valid @ModelAttribute AdminDashboardRequestDto request
     ) {
-        DashboardStatistics statistics = adminGetDashboardUseCase.execute(request.getPeriod(), request.getYear());
-        return ResponseEntity.ok(CommonApiResponse.of(AdminDashboardResponseDto.from(statistics)));
+        return ResponseEntity.ok(CommonApiResponse.of(
+            AdminDashboardChartResponseDto.from(
+                adminGetDashboardChartUseCase.execute(request.getPeriod(), request.getYear())
+            )
+        ));
+    }
+
+    @Override
+    @GetMapping("/weekly-summary")
+    public ResponseEntity<CommonApiResponse<AdminDashboardWeeklySummaryResponseDto>> getDashboardWeeklySummary() {
+        return ResponseEntity.ok(CommonApiResponse.of(
+            AdminDashboardWeeklySummaryResponseDto.from(
+                adminGetDashboardWeeklySummaryUseCase.execute()
+            )
+        ));
     }
 }

@@ -10,22 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-public class DashboardStatistics {
+public class DashboardWeeklySummary {
 
-    private DashboardChartData workspaceChart;
-    private DashboardChartData memberChart;
     private long weeklyReportCount;
     private long weeklyNewWorkerCount;
 
-    public static DashboardStatistics of(
-        DashboardChartData workspaceChart,
-        DashboardChartData memberChart,
-        long weeklyReportCount,
-        long weeklyNewWorkerCount
-    ) {
-        return DashboardStatistics.builder()
-            .workspaceChart(workspaceChart)
-            .memberChart(memberChart)
+    public static DashboardWeeklySummary of(long weeklyReportCount, long weeklyNewWorkerCount) {
+        return DashboardWeeklySummary.builder()
             .weeklyReportCount(weeklyReportCount)
             .weeklyNewWorkerCount(weeklyNewWorkerCount)
             .build();

@@ -1,38 +1,35 @@
 package com.dreamteam.alter.application.admin.usecase;
 
-import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardUseCase;
+import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardChartUseCase;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardCacheRepository;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardQueryRepository;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardQueryRepository.PeriodCount;
 import com.dreamteam.alter.domain.admin.type.DashboardChartData;
+import com.dreamteam.alter.domain.admin.type.DashboardChartStatistics;
 import com.dreamteam.alter.domain.admin.type.DashboardDataPoint;
 import com.dreamteam.alter.domain.admin.type.DashboardPeriod;
-import com.dreamteam.alter.domain.admin.type.DashboardStatistics;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
 
-@Service("adminGetDashboard")
+@Service("adminGetDashboardChart")
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class AdminGetDashboard implements AdminGetDashboardUseCase {
+public class AdminGetDashboardChart implements AdminGetDashboardChartUseCase {
 
     private final AdminDashboardQueryRepository adminDashboardQueryRepository;
     private final AdminDashboardCacheRepository adminDashboardCacheRepository;
 
     @Override
-    public DashboardStatistics execute(DashboardPeriod period, Integer year) {
+    public DashboardChartStatistics execute(DashboardPeriod period, Integer year) {
         int resolvedYear = year != null ? year : LocalDate.now().getYear();
 
         // 캐시 조회
-        Optional<DashboardStatistics> cached = adminDashboardCacheRepository.find(period, resolvedYear);
+        Optional<DashboardChartStatistics> cached = adminDashboardCacheRepository.find(period, resolvedYear);
         if (cached.isPresent()) return cached.get();
 
         // 차트 데이터
@@ -51,15 +48,6 @@ public class AdminGetDashboard implements AdminGetDashboardUseCase {
             adminDashboardQueryRepository.countUsersInYear(resolvedYear - 1)
         );
 
-        // 주간 범위 [이번 주 월요일 00:00, 다음 주 월요일 00:00) 반개구간
-        LocalDate today = LocalDate.now();
-        LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        LocalDateTime weekStart = monday.atStartOfDay();
-        LocalDateTime weekEnd = monday.plusWeeks(1).atStartOfDay();
-
-        long weeklyReportCount = adminDashboardQueryRepository.countReportsBetween(weekStart, weekEnd);
-        long weeklyNewWorkerCount = adminDashboardQueryRepository.countNewWorkersBetween(weekStart, weekEnd);
-
         // 도메인 모델 조립
         DashboardChartData workspaceChart = DashboardChartData.of(
             period, resolvedYear, workspaceGrowthRate, toDataPoints(workspaceCounts)
@@ -68,9 +56,7 @@ public class AdminGetDashboard implements AdminGetDashboardUseCase {
             period, resolvedYear, userGrowthRate, toDataPoints(userCounts)
         );
 
-        DashboardStatistics result = DashboardStatistics.of(
-            workspaceChart, memberChart, weeklyReportCount, weeklyNewWorkerCount
-        );
+        DashboardChartStatistics result = DashboardChartStatistics.of(workspaceChart, memberChart);
 
         // 캐시 저장
         adminDashboardCacheRepository.save(period, resolvedYear, result);

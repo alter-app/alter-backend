@@ -4,7 +4,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardCacheRepository;
 import com.dreamteam.alter.domain.admin.type.DashboardPeriod;
-import com.dreamteam.alter.domain.admin.type.DashboardStatistics;
+import com.dreamteam.alter.domain.admin.type.DashboardChartStatistics;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +29,11 @@ public class AdminDashboardCacheRepositoryImpl implements AdminDashboardCacheRep
     private static final Duration TTL = Duration.ofMinutes(5);
 
     @Override
-    public Optional<DashboardStatistics> find(DashboardPeriod period, int year) {
+    public Optional<DashboardChartStatistics> find(DashboardPeriod period, int year) {
         try {
             String value = redisTemplate.opsForValue().get(buildKey(period, year));
             if (ObjectUtils.isEmpty(value)) return Optional.empty();
-            return Optional.of(objectMapper.readValue(value, DashboardStatistics.class));
+            return Optional.of(objectMapper.readValue(value, DashboardChartStatistics.class));
         } catch (DataAccessException e) {
             log.error("Redis access failed for dashboard cache period={}, year={}", period, year, e);
             throw new CustomException(ErrorCode.CACHE_READ_ERROR);
@@ -44,7 +44,7 @@ public class AdminDashboardCacheRepositoryImpl implements AdminDashboardCacheRep
     }
 
     @Override
-    public void save(DashboardPeriod period, int year, DashboardStatistics data) {
+    public void save(DashboardPeriod period, int year, DashboardChartStatistics data) {
         try {
             String value = objectMapper.writeValueAsString(data);
             redisTemplate.opsForValue().set(buildKey(period, year), value, TTL);
