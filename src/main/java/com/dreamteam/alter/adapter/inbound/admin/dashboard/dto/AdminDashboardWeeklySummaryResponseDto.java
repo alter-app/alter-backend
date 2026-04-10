@@ -16,10 +16,10 @@ import lombok.NoArgsConstructor;
 public class AdminDashboardWeeklySummaryResponseDto {
 
     @Schema(description = "주간 신고 수", example = "42")
-    private Long weeklyReportCount;
+    private long weeklyReportCount;
 
     @Schema(description = "주간 신규 합류자 수", example = "128")
-    private Long weeklyNewWorkerCount;
+    private long weeklyNewWorkerCount;
 
     public static AdminDashboardWeeklySummaryResponseDto from(DashboardWeeklySummary summary) {
         return AdminDashboardWeeklySummaryResponseDto.builder()
