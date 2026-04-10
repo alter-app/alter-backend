@@ -53,3 +53,4 @@ src/main/generated/
 CLAUDE.md
 /.ai/
 .mcp.json
+.omc
