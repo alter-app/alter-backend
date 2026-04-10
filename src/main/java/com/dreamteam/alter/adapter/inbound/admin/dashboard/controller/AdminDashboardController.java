@@ -6,9 +6,9 @@ import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardWee
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardChartUseCase;
 import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardWeeklySummaryUseCase;
-import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -24,11 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 public class AdminDashboardController implements AdminDashboardControllerSpec {
 
-    @Resource(name = "adminGetDashboardChart")
-    private AdminGetDashboardChartUseCase adminGetDashboardChartUseCase;
+    @Qualifier("adminGetDashboardChart")
+    private final AdminGetDashboardChartUseCase adminGetDashboardChartUseCase;
 
-    @Resource(name = "adminGetDashboardWeeklySummary")
-    private AdminGetDashboardWeeklySummaryUseCase adminGetDashboardWeeklySummaryUseCase;
+    @Qualifier("adminGetDashboardWeeklySummary")
+    private final AdminGetDashboardWeeklySummaryUseCase adminGetDashboardWeeklySummaryUseCase;
 
     @Override
     @GetMapping("/chart")
