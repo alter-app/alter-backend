@@ -215,4 +215,25 @@ public interface UserSelfControllerSpec {
     })
     ResponseEntity<CommonApiResponse<VerifyEmailVerificationCodeResponseDto>> verifyVerificationCode(@RequestBody @Valid VerifyEmailVerificationCodeRequestDto request);
 
+    @Operation(summary = "비밀번호 변경", description = "비밀번호가 설정된 사용자는 currentPassword 필수. 소셜 전용 사용자는 생략 가능.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "현재 비밀번호 불일치",
+                        value = "{\"code\": \"A017\", \"message\": \"현재 비밀번호가 올바르지 않습니다.\"}"
+                    ),
+                    @ExampleObject(
+                        name = "비밀번호 형식 오류",
+                        value = "{\"code\": \"A014\", \"message\": \"비밀번호는 8~16자 이내 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다.\"}"
+                    )
+                }
+            ))
+    })
+    ResponseEntity<CommonApiResponse<Void>> updatePassword(@RequestBody @Valid UpdatePasswordRequestDto request);
+
 }
