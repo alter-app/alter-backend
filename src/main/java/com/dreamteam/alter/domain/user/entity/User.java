@@ -31,7 +31,7 @@ public class User {
     @Column(name = "email", length = 255, nullable = true, unique = true)
     private String email;
 
-    @Column(name = "password", length = 255, nullable = false)
+    @Column(name = "password", length = 255, nullable = true)
     private String password;
 
     @Column(name = "name", length = 12, nullable = false)
@@ -89,6 +89,27 @@ public class User {
         return User.builder()
             .email(email)
             .password(encodedPassword)
+            .name(name)
+            .nickname(nickname)
+            .contact(contact)
+            .birthday(birthday)
+            .gender(gender)
+            .role(UserRole.ROLE_USER)
+            .status(UserStatus.ACTIVE)
+            .build();
+    }
+
+    public static User createWithSocial(
+        String contact,
+        String name,
+        String nickname,
+        UserGender gender,
+        String birthday,
+        String email
+    ) {
+        return User.builder()
+            .email(email)
+            .password(null)
             .name(name)
             .nickname(nickname)
             .contact(contact)
