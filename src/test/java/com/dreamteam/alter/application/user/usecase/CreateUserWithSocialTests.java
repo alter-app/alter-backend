@@ -10,7 +10,6 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
 import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
-import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
@@ -34,7 +33,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -66,9 +64,6 @@ class CreateUserWithSocialTests {
     @Mock
     private StringRedisTemplate redisTemplate;
 
-    @Mock
-    private EmailVerificationSessionStoreRepository emailVerificationSessionStoreRepository;
-
     @InjectMocks
     private CreateUserWithSocial createUserWithSocial;
 
@@ -82,7 +77,6 @@ class CreateUserWithSocialTests {
     void setUp() {
         request = new CreateUserWithSocialRequestDto(
             "signup-session-id",
-            null,
             SocialProvider.KAKAO,
             null,
             "auth-code",
@@ -100,14 +94,32 @@ class CreateUserWithSocialTests {
         SocialAuthInfo authInfo = mock(SocialAuthInfo.class);
         given(authInfo.getProvider()).willReturn(SocialProvider.KAKAO);
         given(authInfo.getSocialId()).willReturn("kakao-social-id");
+        given(authInfo.getEmail()).willReturn("social@example.com");
         given(authInfo.getRefreshToken()).willReturn("kakao-refresh-token");
         return authInfo;
     }
 
-    private SocialAuthInfo createSocialAuthInfoWithoutToken() {
+    private SocialAuthInfo createSocialAuthInfoForDuplicateSocialId() {
         SocialAuthInfo authInfo = mock(SocialAuthInfo.class);
         given(authInfo.getProvider()).willReturn(SocialProvider.KAKAO);
         given(authInfo.getSocialId()).willReturn("kakao-social-id");
+        return authInfo;
+    }
+
+    private SocialAuthInfo createSocialAuthInfoForDuplicateEmail() {
+        SocialAuthInfo authInfo = mock(SocialAuthInfo.class);
+        given(authInfo.getProvider()).willReturn(SocialProvider.KAKAO);
+        given(authInfo.getSocialId()).willReturn("kakao-social-id");
+        given(authInfo.getEmail()).willReturn("social@example.com");
+        return authInfo;
+    }
+
+    private SocialAuthInfo createSocialAuthInfoWithoutEmail() {
+        SocialAuthInfo authInfo = mock(SocialAuthInfo.class);
+        given(authInfo.getProvider()).willReturn(SocialProvider.KAKAO);
+        given(authInfo.getSocialId()).willReturn("kakao-social-id");
+        given(authInfo.getEmail()).willReturn(null);
+        given(authInfo.getRefreshToken()).willReturn("kakao-refresh-token");
         return authInfo;
     }
 
@@ -175,7 +187,7 @@ class CreateUserWithSocialTests {
             given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
             given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
 
-            SocialAuthInfo authInfo = createSocialAuthInfoWithoutToken();
+            SocialAuthInfo authInfo = createSocialAuthInfoForDuplicateSocialId();
             given(socialAuthenticationManager.authenticate(any())).willReturn(authInfo);
             given(userSocialQueryRepository.existsBySocialProviderAndSocialId(SocialProvider.KAKAO, "kakao-social-id"))
                 .willReturn(true);
@@ -190,7 +202,30 @@ class CreateUserWithSocialTests {
         }
 
         @Test
-        @DisplayName("유효한 입력으로 소셜 회원가입 성공")
+        @DisplayName("소셜 계정 이메일이 이미 가입된 경우 EMAIL_DUPLICATED 예외 발생")
+        void fails_whenSocialEmailAlreadyExists() {
+            // given
+            given(valueOperations.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
+            given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
+
+            SocialAuthInfo authInfo = createSocialAuthInfoForDuplicateEmail();
+            given(socialAuthenticationManager.authenticate(any())).willReturn(authInfo);
+            given(userSocialQueryRepository.existsBySocialProviderAndSocialId(SocialProvider.KAKAO, "kakao-social-id"))
+                .willReturn(false);
+            given(userQueryRepository.findByEmail("social@example.com")).willReturn(Optional.of(mock(User.class)));
+
+            // when & then
+            assertThatThrownBy(() -> createUserWithSocial.execute(request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.EMAIL_DUPLICATED));
+
+            then(userRepository).should(never()).save(any());
+        }
+
+        @Test
+        @DisplayName("유효한 입력으로 소셜 회원가입 성공 - 소셜 계정 이메일 자동 저장")
         void succeeds_withValidSocialSignup() {
             // given
             given(valueOperations.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
@@ -198,6 +233,39 @@ class CreateUserWithSocialTests {
             given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
 
             SocialAuthInfo authInfo = createSocialAuthInfo();
+            given(socialAuthenticationManager.authenticate(any())).willReturn(authInfo);
+            given(userSocialQueryRepository.existsBySocialProviderAndSocialId(SocialProvider.KAKAO, "kakao-social-id"))
+                .willReturn(false);
+            given(userQueryRepository.findByEmail("social@example.com")).willReturn(Optional.empty());
+
+            User savedUser = mock(User.class);
+            given(userRepository.save(any(User.class))).willReturn(savedUser);
+
+            Authorization authorization = mock(Authorization.class);
+            given(authService.generateAuthorization(eq(savedUser), eq(TokenScope.APP))).willReturn(authorization);
+
+            // when
+            GenerateTokenResponseDto result = createUserWithSocial.execute(request);
+
+            // then
+            assertThat(result).isNotNull();
+            then(userRepository).should().save(any(User.class));
+            then(userQueryRepository).should().findByEmail("social@example.com");
+            then(authService).should().generateAuthorization(savedUser, TokenScope.APP);
+            then(authLogRepository).should().save(any());
+            then(redisTemplate).should().delete("SIGNUP:PENDING:signup-session-id");
+            then(redisTemplate).should().delete("SIGNUP:CONTACT:01012345678");
+        }
+
+        @Test
+        @DisplayName("소셜 계정에 이메일이 없을 경우 이메일 없이 회원가입 성공")
+        void succeeds_withNoEmailFromSocialAccount() {
+            // given
+            given(valueOperations.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
+            given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
+
+            SocialAuthInfo authInfo = createSocialAuthInfoWithoutEmail();
             given(socialAuthenticationManager.authenticate(any())).willReturn(authInfo);
             given(userSocialQueryRepository.existsBySocialProviderAndSocialId(SocialProvider.KAKAO, "kakao-social-id"))
                 .willReturn(false);
@@ -214,55 +282,7 @@ class CreateUserWithSocialTests {
             // then
             assertThat(result).isNotNull();
             then(userRepository).should().save(any(User.class));
-            then(authService).should().generateAuthorization(savedUser, TokenScope.APP);
-            then(authLogRepository).should().save(any());
-            then(redisTemplate).should().delete("SIGNUP:PENDING:signup-session-id");
-            then(redisTemplate).should().delete("SIGNUP:CONTACT:01012345678");
-        }
-
-        @Test
-        @DisplayName("이메일 세션이 제공된 경우 이메일 인증 처리 및 세션 삭제")
-        void succeeds_withEmailSessionProvided() {
-            // given
-            CreateUserWithSocialRequestDto requestWithEmail = new CreateUserWithSocialRequestDto(
-                "signup-session-id",
-                "email-session-id",
-                SocialProvider.KAKAO,
-                null,
-                "auth-code",
-                PlatformType.WEB,
-                "김철수",
-                "유땡땡",
-                UserGender.GENDER_MALE,
-                "19900101"
-            );
-
-            given(valueOperations.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
-            given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
-            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
-
-            SocialAuthInfo authInfo = createSocialAuthInfo();
-            given(socialAuthenticationManager.authenticate(any())).willReturn(authInfo);
-            given(userSocialQueryRepository.existsBySocialProviderAndSocialId(SocialProvider.KAKAO, "kakao-social-id"))
-                .willReturn(false);
-
-            given(emailVerificationSessionStoreRepository.getEmailBySession("email-session-id"))
-                .willReturn(Optional.of("test@example.com"));
-            given(userQueryRepository.findByEmail("test@example.com")).willReturn(Optional.empty());
-
-            User savedUser = mock(User.class);
-            given(userRepository.save(any(User.class))).willReturn(savedUser);
-
-            Authorization authorization = mock(Authorization.class);
-            given(authService.generateAuthorization(eq(savedUser), eq(TokenScope.APP))).willReturn(authorization);
-
-            // when
-            GenerateTokenResponseDto result = createUserWithSocial.execute(requestWithEmail);
-
-            // then
-            assertThat(result).isNotNull();
-            then(emailVerificationSessionStoreRepository).should().getEmailBySession("email-session-id");
-            then(emailVerificationSessionStoreRepository).should().deleteSession("email-session-id");
+            then(userQueryRepository).should(never()).findByEmail(any());
         }
     }
 }

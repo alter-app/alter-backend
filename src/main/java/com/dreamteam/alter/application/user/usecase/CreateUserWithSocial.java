@@ -13,7 +13,6 @@ import com.dreamteam.alter.domain.auth.entity.Authorization;
 import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
 import com.dreamteam.alter.domain.auth.type.AuthLogType;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
-import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.entity.UserSocial;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserWithSocialUseCase;
@@ -41,7 +40,6 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
     private final AuthService authService;
     private final AuthLogRepository authLogRepository;
     private final StringRedisTemplate redisTemplate;
-    private final EmailVerificationSessionStoreRepository emailVerificationSessionStoreRepository;
 
     @Override
     public GenerateTokenResponseDto execute(CreateUserWithSocialRequestDto request) {
@@ -73,8 +71,12 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
             throw new CustomException(ErrorCode.SOCIAL_ID_DUPLICATED);
         }
 
-        // 이메일 인증 세션 검증 (선택)
-        String verifiedEmail = resolveVerifiedEmail(request);
+        // 소셜 계정 이메일 중복 확인
+        String email = socialAuthInfo.getEmail();
+        if (ObjectUtils.isNotEmpty(email)) {
+            userQueryRepository.findByEmail(email)
+                .ifPresent(existing -> { throw new CustomException(ErrorCode.EMAIL_DUPLICATED); });
+        }
 
         // 사용자 생성
         User user = userRepository.save(User.createWithSocial(
@@ -83,7 +85,7 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
             request.getNickname(),
             request.getGender(),
             request.getBirthday(),
-            verifiedEmail
+            email
         ));
 
         // 소셜 계정 연동
@@ -99,33 +101,10 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
         redisTemplate.delete(sessionIdKey);
         redisTemplate.delete(CONTACT_INDEX_KEY_PREFIX + contact);
 
-        // 이메일 인증 세션 삭제
-        if (ObjectUtils.isNotEmpty(verifiedEmail)) {
-            emailVerificationSessionStoreRepository.deleteSession(request.getEmailSessionId());
-        }
-
         Authorization authorization = authService.generateAuthorization(user, TokenScope.APP);
         authLogRepository.save(AuthLog.create(user, authorization, AuthLogType.LOGIN));
 
         return GenerateTokenResponseDto.of(authorization);
-    }
-
-    private String resolveVerifiedEmail(CreateUserWithSocialRequestDto request) {
-        String emailSessionId = request.getEmailSessionId();
-        if (ObjectUtils.isEmpty(emailSessionId)) {
-            return null;
-        }
-
-        String verifiedEmail = emailVerificationSessionStoreRepository
-            .getEmailBySession(emailSessionId)
-            .orElseThrow(() -> new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일 인증 세션이 유효하지 않거나 만료되었습니다."));
-
-        userQueryRepository.findByEmail(verifiedEmail)
-            .ifPresent(existing -> {
-                throw new CustomException(ErrorCode.EMAIL_DUPLICATED);
-            });
-
-        return verifiedEmail;
     }
 
     private void validateDuplication(CreateUserWithSocialRequestDto request, String contact, String sessionIdKey) {
