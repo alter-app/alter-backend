@@ -19,6 +19,32 @@ public class UserSocialQueryRepositoryImpl implements UserSocialQueryRepository 
     private final JPAQueryFactory queryFactory;
 
     @Override
+    public Optional<UserSocial> findByUserIdAndSocialProvider(Long userId, SocialProvider socialProvider) {
+        QUserSocial qUserSocial = QUserSocial.userSocial;
+
+        UserSocial userSocial = queryFactory.selectFrom(qUserSocial)
+            .where(
+                qUserSocial.user.id.eq(userId),
+                qUserSocial.socialProvider.eq(socialProvider)
+            )
+            .fetchOne();
+
+        return Optional.ofNullable(userSocial);
+    }
+
+    @Override
+    public long countByUserId(Long userId) {
+        QUserSocial qUserSocial = QUserSocial.userSocial;
+
+        Long count = queryFactory.select(qUserSocial.count())
+            .from(qUserSocial)
+            .where(qUserSocial.user.id.eq(userId))
+            .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
+    @Override
     public Optional<UserSocial> findBySocialProviderAndSocialId(SocialProvider socialProvider, String socialId) {
         QUserSocial qUserSocial = QUserSocial.userSocial;
         QUser qUser = QUser.user;

@@ -2,9 +2,12 @@ package com.dreamteam.alter.adapter.inbound.general.user.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.LinkSocialAccountRequestDto;
-import com.dreamteam.alter.application.user.usecase.LinkSocialAccount;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UnlinkSocialAccountRequestDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.port.inbound.LinkSocialAccountUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.UnlinkSocialAccountUseCase;
+import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +18,11 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserSocialController implements UserSocialControllerSpec {
 
-    private final LinkSocialAccount linkSocialAccount;
+    @Resource(name = "linkSocialAccount")
+    private final LinkSocialAccountUseCase linkSocialAccount;
+
+    @Resource(name = "unlinkSocialAccount")
+    private final UnlinkSocialAccountUseCase unlinkSocialAccount;
 
     @Override
     @PostMapping("/link")
@@ -23,8 +30,17 @@ public class UserSocialController implements UserSocialControllerSpec {
         @Valid @RequestBody LinkSocialAccountRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        
         linkSocialAccount.execute(actor, request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @DeleteMapping("/unlink")
+    public ResponseEntity<CommonApiResponse<Void>> unlinkSocialAccount(
+        @Valid @RequestBody UnlinkSocialAccountRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        unlinkSocialAccount.execute(actor, request);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }
