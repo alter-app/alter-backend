@@ -1,5 +1,6 @@
 package com.dreamteam.alter.domain.admin.type;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +10,10 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class DashboardChartData {
 
     private DashboardPeriod period;
