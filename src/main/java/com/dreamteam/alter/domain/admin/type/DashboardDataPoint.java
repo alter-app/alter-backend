@@ -1,5 +1,7 @@
 package com.dreamteam.alter.domain.admin.type;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,6 +18,12 @@ public class DashboardDataPoint {
     private long count;
 
     public static DashboardDataPoint of(String label, long count) {
+        if (label == null || label.isBlank()) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT);
+        }
+        if (count < 0) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT);
+        }
         return DashboardDataPoint.builder()
             .label(label)
             .count(count)
