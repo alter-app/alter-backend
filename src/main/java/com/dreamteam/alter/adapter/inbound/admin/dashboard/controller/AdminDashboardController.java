@@ -42,7 +42,7 @@ public class AdminDashboardController implements AdminDashboardControllerSpec {
         AdminActor actor = AdminActionContext.getInstance().getActor();
         return ResponseEntity.ok(CommonApiResponse.of(
             AdminDashboardChartResponseDto.from(
-                adminGetDashboardChartUseCase.execute(actor, request.getPeriod(), request.getYear())
+                adminGetDashboardChartUseCase.execute(actor, request.getPeriod().toDomain(), request.getYear())
             )
         ));
     }

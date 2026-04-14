@@ -1,7 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.admin.dashboard.dto;
 
 import com.dreamteam.alter.domain.admin.type.DashboardChartData;
-import com.dreamteam.alter.domain.admin.type.DashboardPeriod;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -19,7 +18,7 @@ import java.util.List;
 public class AdminDashboardChartDataDto {
 
     @Schema(description = "조회 기간 단위", example = "MONTHLY")
-    private DashboardPeriod period;
+    private AdminDashboardPeriod period;
 
     @Schema(description = "조회 연도", example = "2024")
     private int year;
@@ -32,7 +31,7 @@ public class AdminDashboardChartDataDto {
 
     public static AdminDashboardChartDataDto from(DashboardChartData chartData) {
         return AdminDashboardChartDataDto.builder()
-            .period(chartData.getPeriod())
+            .period(AdminDashboardPeriod.from(chartData.getPeriod()))
             .year(chartData.getYear())
             .yearOverYearGrowthRate(chartData.getYearOverYearGrowthRate())
             .dataPoints(chartData.getDataPoints().stream()
