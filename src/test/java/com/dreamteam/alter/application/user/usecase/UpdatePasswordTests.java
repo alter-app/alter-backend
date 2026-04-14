@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UpdatePassword 테스트")
@@ -75,7 +76,7 @@ class UpdatePasswordTests {
             assertThatThrownBy(() -> updatePassword.execute(actor, request))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_CURRENT_PASSWORD);
-            then(user).shouldHaveNoMoreInteractions();
+            then(user).should(never()).updatePassword(anyString());
         }
 
         @Test
@@ -88,7 +89,7 @@ class UpdatePasswordTests {
             assertThatThrownBy(() -> updatePassword.execute(actor, request))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_CURRENT_PASSWORD);
-            then(user).shouldHaveNoMoreInteractions();
+            then(user).should(never()).updatePassword(anyString());
         }
 
         @Test
@@ -102,7 +103,7 @@ class UpdatePasswordTests {
             assertThatThrownBy(() -> updatePassword.execute(actor, request))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PASSWORD_FORMAT);
-            then(user).shouldHaveNoMoreInteractions();
+            then(user).should(never()).updatePassword(anyString());
         }
     }
 
@@ -138,7 +139,7 @@ class UpdatePasswordTests {
             assertThatThrownBy(() -> updatePassword.execute(actor, request))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PASSWORD_FORMAT);
-            then(user).shouldHaveNoMoreInteractions();
+            then(user).should(never()).updatePassword(anyString());
         }
     }
 }

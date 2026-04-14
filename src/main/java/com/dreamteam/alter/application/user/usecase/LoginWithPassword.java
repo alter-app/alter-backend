@@ -1,22 +1,23 @@
 package com.dreamteam.alter.application.user.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.user.dto.LoginWithPasswordRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
-import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
-import com.dreamteam.alter.domain.user.entity.User;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.LoginWithPasswordRequestDto;
+import com.dreamteam.alter.application.auth.service.AuthService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.application.auth.service.AuthService;
 import com.dreamteam.alter.domain.auth.entity.AuthLog;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
 import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
 import com.dreamteam.alter.domain.auth.type.AuthLogType;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.LoginWithPasswordUseCase;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 @Service("loginWithPassword")
 @RequiredArgsConstructor
@@ -33,7 +34,7 @@ public class LoginWithPassword implements LoginWithPasswordUseCase {
         User user = userQueryRepository.findByContact(request.getContact())
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_LOGIN_INFO));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        if (ObjectUtils.isEmpty(user.getPassword()) || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_LOGIN_INFO);
         }
 
