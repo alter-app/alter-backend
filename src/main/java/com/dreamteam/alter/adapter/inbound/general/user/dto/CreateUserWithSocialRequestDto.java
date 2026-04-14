@@ -5,6 +5,7 @@ import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.dreamteam.alter.domain.user.type.UserGender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -57,4 +58,15 @@ public class CreateUserWithSocialRequestDto {
     @Schema(description = "생년월일", example = "YYYYMMDD")
     private String birthday;
 
+    @AssertTrue(message = "WEB 플랫폼은 authorizationCode가 필수입니다")
+    private boolean isWebPlatformValid() {
+        if (platformType != PlatformType.WEB) return true;
+        return authorizationCode != null && !authorizationCode.isBlank();
+    }
+
+    @AssertTrue(message = "NATIVE 플랫폼은 oauthToken이 필수입니다")
+    private boolean isNativePlatformValid() {
+        if (platformType != PlatformType.NATIVE) return true;
+        return oauthToken != null;
+    }
 }

@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialAuthInfo;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.CreateUserWithSocialRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.SocialLoginRequestDto;
+import com.dreamteam.alter.adapter.outbound.user.persistence.SignupSessionCacheRepository;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
 import com.dreamteam.alter.application.auth.service.AuthService;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -21,9 +22,10 @@ import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Arrays;
+import java.util.List;
 
 @Service("createUserWithSocial")
 @RequiredArgsConstructor
@@ -39,14 +41,14 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
     private final SocialAuthenticationManager socialAuthenticationManager;
     private final AuthService authService;
     private final AuthLogRepository authLogRepository;
-    private final StringRedisTemplate redisTemplate;
+    private final SignupSessionCacheRepository cacheRepository;
 
     @Override
     public GenerateTokenResponseDto execute(CreateUserWithSocialRequestDto request) {
 
         // Redis 세션에서 휴대폰 인증 정보 확인
         String sessionIdKey = KEY_PREFIX + request.getSignupSessionId();
-        String contact = redisTemplate.opsForValue().get(sessionIdKey);
+        String contact = cacheRepository.get(sessionIdKey);
 
         if (ObjectUtils.isEmpty(contact)) {
             throw new CustomException(ErrorCode.SIGNUP_SESSION_NOT_EXIST);
@@ -98,8 +100,8 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
         user.addUserSocial(userSocial);
 
         // 회원가입 세션 삭제
-        redisTemplate.delete(sessionIdKey);
-        redisTemplate.delete(CONTACT_INDEX_KEY_PREFIX + contact);
+        String contactKey = CONTACT_INDEX_KEY_PREFIX + contact;
+        cacheRepository.deleteAll(Arrays.asList(sessionIdKey, contactKey));
 
         Authorization authorization = authService.generateAuthorization(user, TokenScope.APP);
         authLogRepository.save(AuthLog.create(user, authorization, AuthLogType.LOGIN));
@@ -108,17 +110,18 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
     }
 
     private void validateDuplication(CreateUserWithSocialRequestDto request, String contact, String sessionIdKey) {
+        String contactKey = CONTACT_INDEX_KEY_PREFIX + contact;
+        List<String> keysToDelete = Arrays.asList(sessionIdKey, contactKey);
+
         // 닉네임 중복 확인
         if (userQueryRepository.findByNickname(request.getNickname()).isPresent()) {
-            redisTemplate.delete(sessionIdKey);
-            redisTemplate.delete(CONTACT_INDEX_KEY_PREFIX + contact);
+            cacheRepository.deleteAll(keysToDelete);
             throw new CustomException(ErrorCode.NICKNAME_DUPLICATED);
         }
 
         // 연락처 중복 확인
         if (userQueryRepository.findByContact(contact).isPresent()) {
-            redisTemplate.delete(sessionIdKey);
-            redisTemplate.delete(CONTACT_INDEX_KEY_PREFIX + contact);
+            cacheRepository.deleteAll(keysToDelete);
             throw new CustomException(ErrorCode.USER_CONTACT_DUPLICATED);
         }
     }
