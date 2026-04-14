@@ -3,6 +3,7 @@ package com.dreamteam.alter.application.admin.usecase;
 import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardWeeklySummaryUseCase;
 import com.dreamteam.alter.domain.admin.port.outbound.AdminDashboardQueryRepository;
 import com.dreamteam.alter.domain.admin.type.DashboardWeeklySummary;
+import com.dreamteam.alter.domain.user.context.AdminActor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +21,7 @@ public class AdminGetDashboardWeeklySummary implements AdminGetDashboardWeeklySu
     private final AdminDashboardQueryRepository adminDashboardQueryRepository;
 
     @Override
-    public DashboardWeeklySummary execute() {
+    public DashboardWeeklySummary execute(AdminActor actor) {
         // 주간 범위 [이번 주 월요일 00:00, 다음 주 월요일 00:00) 반개구간
         LocalDate today = LocalDate.now();
         LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));

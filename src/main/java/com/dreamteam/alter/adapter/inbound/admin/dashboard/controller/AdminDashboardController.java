@@ -4,9 +4,12 @@ import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardCha
 import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardRequestDto;
 import com.dreamteam.alter.adapter.inbound.admin.dashboard.dto.AdminDashboardWeeklySummaryResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.application.aop.AdminActionContext;
 import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardChartUseCase;
 import com.dreamteam.alter.domain.admin.port.inbound.AdminGetDashboardWeeklySummaryUseCase;
+import com.dreamteam.alter.domain.user.context.AdminActor;
 import jakarta.validation.Valid;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/admin/dashboard")
 @PreAuthorize("hasAnyRole('ADMIN')")
 @RequiredArgsConstructor
+@Getter
 @Validated
 public class AdminDashboardController implements AdminDashboardControllerSpec {
 
@@ -35,9 +39,10 @@ public class AdminDashboardController implements AdminDashboardControllerSpec {
     public ResponseEntity<CommonApiResponse<AdminDashboardChartResponseDto>> getDashboardChart(
         @Valid @ModelAttribute AdminDashboardRequestDto request
     ) {
+        AdminActor actor = AdminActionContext.getInstance().getActor();
         return ResponseEntity.ok(CommonApiResponse.of(
             AdminDashboardChartResponseDto.from(
-                adminGetDashboardChartUseCase.execute(request.getPeriod(), request.getYear())
+                adminGetDashboardChartUseCase.execute(actor, request.getPeriod(), request.getYear())
             )
         ));
     }
@@ -45,9 +50,10 @@ public class AdminDashboardController implements AdminDashboardControllerSpec {
     @Override
     @GetMapping("/weekly-summary")
     public ResponseEntity<CommonApiResponse<AdminDashboardWeeklySummaryResponseDto>> getDashboardWeeklySummary() {
+        AdminActor actor = AdminActionContext.getInstance().getActor();
         return ResponseEntity.ok(CommonApiResponse.of(
             AdminDashboardWeeklySummaryResponseDto.from(
-                adminGetDashboardWeeklySummaryUseCase.execute()
+                adminGetDashboardWeeklySummaryUseCase.execute(actor)
             )
         ));
     }

@@ -8,6 +8,7 @@ import com.dreamteam.alter.domain.admin.type.DashboardChartData;
 import com.dreamteam.alter.domain.admin.type.DashboardChartStatistics;
 import com.dreamteam.alter.domain.admin.type.DashboardDataPoint;
 import com.dreamteam.alter.domain.admin.type.DashboardPeriod;
+import com.dreamteam.alter.domain.user.context.AdminActor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +26,7 @@ public class AdminGetDashboardChart implements AdminGetDashboardChartUseCase {
     private final AdminDashboardCacheRepository adminDashboardCacheRepository;
 
     @Override
-    public DashboardChartStatistics execute(DashboardPeriod period, Integer year) {
+    public DashboardChartStatistics execute(AdminActor actor, DashboardPeriod period, Integer year) {
         int resolvedYear = year != null ? year : LocalDate.now().getYear();
 
         // 캐시 조회
