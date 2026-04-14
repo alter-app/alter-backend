@@ -16,4 +16,6 @@ public interface UserSocialQueryRepository {
     boolean existsByUserAndSocialProvider(Long userId, SocialProvider socialProvider);
 
     long countByUserId(Long userId);
+
+    long countByUserIdForUpdate(Long userId);
 }

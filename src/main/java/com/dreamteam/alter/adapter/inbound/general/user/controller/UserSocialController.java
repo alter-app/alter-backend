@@ -7,6 +7,7 @@ import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.port.inbound.LinkSocialAccountUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.UnlinkSocialAccountUseCase;
+import com.dreamteam.alter.domain.user.type.SocialProvider;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,12 +36,12 @@ public class UserSocialController implements UserSocialControllerSpec {
     }
 
     @Override
-    @DeleteMapping("/unlink")
+    @DeleteMapping("/unlink/{provider}")
     public ResponseEntity<CommonApiResponse<Void>> unlinkSocialAccount(
-        @Valid @RequestBody UnlinkSocialAccountRequestDto request
+        @PathVariable SocialProvider provider
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        unlinkSocialAccount.execute(actor, request);
+        unlinkSocialAccount.execute(actor, new UnlinkSocialAccountRequestDto(provider));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }

@@ -31,7 +31,7 @@ public class UnlinkSocialAccount implements UnlinkSocialAccountUseCase {
             .orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_ACCOUNT_NOT_LINKED));
 
         if (ObjectUtils.isEmpty(user.getPassword())) {
-            long count = userSocialQueryRepository.countByUserId(user.getId());
+            long count = userSocialQueryRepository.countByUserIdForUpdate(user.getId());
             if (count <= 1) {
                 throw new CustomException(ErrorCode.SOCIAL_UNLINK_NOT_ALLOWED);
             }

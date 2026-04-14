@@ -22,9 +22,11 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UnlinkSocialAccount 테스트")
@@ -86,14 +88,16 @@ class UnlinkSocialAccountTests {
             // when & then
             assertThatNoException().isThrownBy(() -> unlinkSocialAccount.execute(actor, request));
             then(userSocialRepository).should().delete(userSocial);
+            then(userSocialQueryRepository).should(never()).countByUserIdForUpdate(any());
         }
 
         @Test
-        @DisplayName("소셜 계정이 1개뿐이어도 해제 가능하다 (제약은 비밀번호 없는 사용자에만 적용)")
+        @DisplayName("소셜 계정이 1개뿐이어도 비밀번호 있는 사용자는 해제 가능하다")
         void execute_withSingleSocial_succeeds() {
             // when & then
             assertThatNoException().isThrownBy(() -> unlinkSocialAccount.execute(actor, request));
             then(userSocialRepository).should().delete(userSocial);
+            then(userSocialQueryRepository).should(never()).countByUserIdForUpdate(any());
         }
     }
 
@@ -112,7 +116,7 @@ class UnlinkSocialAccountTests {
         @DisplayName("소셜 계정이 2개일 때 1개 해제 성공")
         void execute_withMultipleSocials_succeeds() {
             // given
-            given(userSocialQueryRepository.countByUserId(1L)).willReturn(2L);
+            given(userSocialQueryRepository.countByUserIdForUpdate(1L)).willReturn(2L);
 
             // when & then
             assertThatNoException().isThrownBy(() -> unlinkSocialAccount.execute(actor, request));
@@ -123,7 +127,7 @@ class UnlinkSocialAccountTests {
         @DisplayName("마지막 소셜 계정(1개) 해제 시도 시 SOCIAL_UNLINK_NOT_ALLOWED 예외 발생")
         void execute_withSingleSocial_throwsException() {
             // given
-            given(userSocialQueryRepository.countByUserId(1L)).willReturn(1L);
+            given(userSocialQueryRepository.countByUserIdForUpdate(1L)).willReturn(1L);
 
             // when & then
             assertThatThrownBy(() -> unlinkSocialAccount.execute(actor, request))

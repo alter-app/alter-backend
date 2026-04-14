@@ -7,9 +7,11 @@ import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.dreamteam.alter.domain.user.type.UserStatus;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -27,7 +29,7 @@ public class UserSocialQueryRepositoryImpl implements UserSocialQueryRepository 
                 qUserSocial.user.id.eq(userId),
                 qUserSocial.socialProvider.eq(socialProvider)
             )
-            .fetchOne();
+            .fetchFirst();
 
         return Optional.ofNullable(userSocial);
     }
@@ -80,7 +82,7 @@ public class UserSocialQueryRepositoryImpl implements UserSocialQueryRepository 
     @Override
     public boolean existsByUserAndSocialProvider(Long userId, SocialProvider socialProvider) {
         QUserSocial qUserSocial = QUserSocial.userSocial;
-        
+
         Long count = queryFactory.select(qUserSocial.count())
             .from(qUserSocial)
             .where(
@@ -89,7 +91,17 @@ public class UserSocialQueryRepositoryImpl implements UserSocialQueryRepository 
                 qUserSocial.socialProvider.eq(socialProvider)
             )
             .fetchOne();
-            
+
         return count != null && count > 0;
+    }
+
+    @Override
+    public long countByUserIdForUpdate(Long userId) {
+        QUserSocial q = QUserSocial.userSocial;
+        List<UserSocial> rows = queryFactory.selectFrom(q)
+            .where(q.user.id.eq(userId))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetch();
+        return rows.size();
     }
 }
