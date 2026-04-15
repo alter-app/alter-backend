@@ -7,6 +7,7 @@ import com.dreamteam.alter.adapter.inbound.general.user.dto.SocialLoginRequestDt
 import com.dreamteam.alter.adapter.outbound.user.persistence.SignupSessionCacheRepository;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
 import com.dreamteam.alter.application.auth.service.AuthService;
+import com.dreamteam.alter.application.user.event.SignupCompletedEvent;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.entity.AuthLog;
@@ -22,6 +23,7 @@ import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
@@ -42,6 +44,7 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
     private final AuthService authService;
     private final AuthLogRepository authLogRepository;
     private final SignupSessionCacheRepository cacheRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public GenerateTokenResponseDto execute(CreateUserWithSocialRequestDto request) {
@@ -99,9 +102,8 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
         );
         user.addUserSocial(userSocial);
 
-        // 회원가입 세션 삭제
-        String contactKey = CONTACT_INDEX_KEY_PREFIX + contact;
-        cacheRepository.deleteAll(Arrays.asList(sessionIdKey, contactKey));
+        // 회원가입 세션 삭제 (커밋 후 이벤트로 처리)
+        eventPublisher.publishEvent(new SignupCompletedEvent(request.getSignupSessionId(), contact));
 
         Authorization authorization = authService.generateAuthorization(user, TokenScope.APP);
         authLogRepository.save(AuthLog.create(user, authorization, AuthLogType.LOGIN));
