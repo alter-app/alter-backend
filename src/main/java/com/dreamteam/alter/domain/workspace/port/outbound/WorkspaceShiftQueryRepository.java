@@ -5,6 +5,7 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
+import com.dreamteam.alter.domain.workspace.model.WorkspaceShiftTodayResponse;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface WorkspaceShiftQueryRepository {
+    List<WorkspaceShiftTodayResponse> getTodayShiftList(Long workspaceId);
+
     List<WorkspaceShift> findByUserAndDateRange(User user, int year, int month);
     List<WorkspaceShift> findByUserAndWeeklyRange(User user, LocalDate startDate, LocalDate endDate);
     List<WorkspaceShift> findByUserAndDate(User user, int year, int month, int day);

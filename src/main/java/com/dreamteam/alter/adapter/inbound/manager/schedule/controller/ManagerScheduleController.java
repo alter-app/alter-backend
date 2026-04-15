@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.AssignWorkerRequ
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.CreateWorkScheduleRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerWorkScheduleInquiryRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerScheduleResponseDto;
+import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerTodayScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.UpdateWorkScheduleRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.UpdateWorkerRequestDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
@@ -48,6 +49,9 @@ public class ManagerScheduleController implements ManagerScheduleControllerSpec 
     @Resource(name = "managerRemoveWorkerFromSchedule")
     private final ManagerRemoveWorkerUseCase managerRemoveWorker;
 
+    @Resource(name = "managerGetTodayWorkScheduleList")
+    private final ManagerGetDailyScheduleListUseCase managerGetTodayScheduleList;
+
     @Override
     @PostMapping
     public ResponseEntity<CommonApiResponse<Void>> createSchedule(
@@ -66,6 +70,15 @@ public class ManagerScheduleController implements ManagerScheduleControllerSpec 
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
 
         return ResponseEntity.ok(CommonApiResponse.of(managerGetScheduleList.execute(actor, request.getWorkspaceId(), request.getYear(), request.getMonth())));
+    }
+
+    @Override
+    @GetMapping("/today")
+    public ResponseEntity<CommonApiResponse<List<ManagerTodayScheduleResponseDto>>> getTodayScheduleList(
+        @RequestParam Long workspaceId
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        return ResponseEntity.ok(CommonApiResponse.of(managerGetTodayScheduleList.execute(actor, workspaceId)));
     }
 
     @Override

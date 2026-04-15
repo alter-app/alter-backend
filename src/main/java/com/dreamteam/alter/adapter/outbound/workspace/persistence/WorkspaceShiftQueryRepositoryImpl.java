@@ -1,12 +1,16 @@
 package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 
+import com.dreamteam.alter.domain.file.type.FileStatus;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
+import com.dreamteam.alter.domain.workspace.model.WorkspaceShiftTodayResponse;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -16,13 +20,46 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.dreamteam.alter.domain.file.entity.QFile.file;
+import static com.dreamteam.alter.domain.user.entity.QUser.user;
 import static com.dreamteam.alter.domain.workspace.entity.QWorkspaceShift.workspaceShift;
+import static com.dreamteam.alter.domain.workspace.entity.QWorkspaceWorker.workspaceWorker;
 
 @Repository
 @RequiredArgsConstructor
 public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public List<WorkspaceShiftTodayResponse> getTodayShiftList(
+        Long workspaceId
+    ) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        return queryFactory
+            .select(Projections.constructor(WorkspaceShiftTodayResponse.class,
+                workspaceShift.id,
+                user.name,
+                file.fileUrl,
+                workspaceShift.startDateTime,
+                workspaceShift.endDateTime
+            ))
+            .from(workspaceShift)
+            .leftJoin(workspaceShift.assignedWorkspaceWorker, workspaceWorker)
+            .leftJoin(workspaceWorker.user, user)
+            .leftJoin(file).on(
+                file.targetType.eq(FileTargetType.USER_PROFILE)
+                    .and(file.targetId.eq(user.id.stringValue()))
+                    .and(file.status.eq(FileStatus.ATTACHED))
+            )
+            .where(workspaceShift.workspace.id.eq(workspaceId)
+                .and(workspaceShift.startDateTime.goe(startOfDay))
+                .and(workspaceShift.startDateTime.lt(endOfDay))
+                .and(workspaceShift.status.ne(WorkspaceShiftStatus.DELETED)))
+            .orderBy(workspaceShift.startDateTime.asc())
+            .fetch();
+    }
 
     @Override
     public List<WorkspaceShift> findByUserAndDateRange(User user, int year, int month) {
