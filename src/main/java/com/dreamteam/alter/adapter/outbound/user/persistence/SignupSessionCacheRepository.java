@@ -3,8 +3,6 @@ package com.dreamteam.alter.adapter.outbound.user.persistence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.util.List;
 
@@ -26,12 +24,10 @@ public class SignupSessionCacheRepository {
         return redisTemplate.opsForValue().get(key);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void delete(String key) {
         redisTemplate.delete(key);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteAll(List<String> keys) {
         if (!keys.isEmpty()) {
             redisTemplate.delete(keys);
