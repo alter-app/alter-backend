@@ -8,6 +8,7 @@ import com.dreamteam.alter.adapter.outbound.user.persistence.SignupSessionCacheR
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
 import com.dreamteam.alter.application.auth.service.AuthService;
 import com.dreamteam.alter.application.user.event.SignupCompletedEvent;
+import com.dreamteam.alter.common.constants.SignupSessionConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.entity.AuthLog;
@@ -34,9 +35,6 @@ import java.util.List;
 @Transactional
 public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
 
-    private static final String KEY_PREFIX = "SIGNUP:PENDING:";
-    private static final String CONTACT_INDEX_KEY_PREFIX = "SIGNUP:CONTACT:";
-
     private final UserRepository userRepository;
     private final UserQueryRepository userQueryRepository;
     private final UserSocialQueryRepository userSocialQueryRepository;
@@ -50,7 +48,7 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
     public GenerateTokenResponseDto execute(CreateUserWithSocialRequestDto request) {
 
         // Redis 세션에서 휴대폰 인증 정보 확인
-        String sessionIdKey = KEY_PREFIX + request.getSignupSessionId();
+        String sessionIdKey = SignupSessionConstants.Session.KEY_PREFIX + request.getSignupSessionId();
         String contact = cacheRepository.get(sessionIdKey);
 
         if (ObjectUtils.isEmpty(contact)) {
@@ -112,7 +110,7 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
     }
 
     private void validateDuplication(CreateUserWithSocialRequestDto request, String contact, String sessionIdKey) {
-        String contactKey = CONTACT_INDEX_KEY_PREFIX + contact;
+        String contactKey = SignupSessionConstants.Session.CONTACT_INDEX_KEY_PREFIX + contact;
         List<String> keysToDelete = Arrays.asList(sessionIdKey, contactKey);
 
         // 닉네임 중복 확인
