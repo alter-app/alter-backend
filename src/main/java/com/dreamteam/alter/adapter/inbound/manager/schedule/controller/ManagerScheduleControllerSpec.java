@@ -54,7 +54,8 @@ public interface ManagerScheduleControllerSpec {
 
     @Operation(summary = "금일 스케줄 목록 조회", description = "특정 워크스페이스의 오늘 날짜 스케줄 목록을 조회합니다.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "금일 스케줄 목록 조회 성공")
+        @ApiResponse(responseCode = "200", description = "금일 스케줄 목록 조회 성공"),
+        @ApiResponse(responseCode = "404", description = "해당 워크스페이스 찾을 수 없음")
     })
     ResponseEntity<CommonApiResponse<List<ManagerTodayScheduleResponseDto>>> getTodayScheduleList(
         @Parameter(description = "워크스페이스 ID", example = "1", required = true)
