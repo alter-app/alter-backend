@@ -35,18 +35,6 @@ public class UserSocialQueryRepositoryImpl implements UserSocialQueryRepository 
     }
 
     @Override
-    public long countByUserId(Long userId) {
-        QUserSocial qUserSocial = QUserSocial.userSocial;
-
-        Long count = queryFactory.select(qUserSocial.count())
-            .from(qUserSocial)
-            .where(qUserSocial.user.id.eq(userId))
-            .fetchOne();
-
-        return count != null ? count : 0L;
-    }
-
-    @Override
     public Optional<UserSocial> findBySocialProviderAndSocialId(SocialProvider socialProvider, String socialId) {
         QUserSocial qUserSocial = QUserSocial.userSocial;
         QUser qUser = QUser.user;
@@ -98,10 +86,11 @@ public class UserSocialQueryRepositoryImpl implements UserSocialQueryRepository 
     @Override
     public long countByUserIdForUpdate(Long userId) {
         QUserSocial q = QUserSocial.userSocial;
-        List<UserSocial> rows = queryFactory.selectFrom(q)
+        List<Long> ids = queryFactory.select(q.id)
+            .from(q)
             .where(q.user.id.eq(userId))
             .setLockMode(LockModeType.PESSIMISTIC_WRITE)
             .fetch();
-        return rows.size();
+        return ids.size();
     }
 }

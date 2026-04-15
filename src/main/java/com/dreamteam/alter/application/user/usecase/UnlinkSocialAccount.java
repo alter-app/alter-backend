@@ -10,9 +10,9 @@ import com.dreamteam.alter.domain.user.port.inbound.UnlinkSocialAccountUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.ObjectUtils;
 
 @Service("unlinkSocialAccount")
 @RequiredArgsConstructor

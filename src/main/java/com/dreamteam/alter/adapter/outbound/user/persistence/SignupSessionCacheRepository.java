@@ -12,10 +12,6 @@ public class SignupSessionCacheRepository {
 
     private final StringRedisTemplate redisTemplate;
 
-    public void save(String key, String value) {
-        redisTemplate.opsForValue().set(key, value);
-    }
-
     public void save(String key, String value, Duration ttl) {
         redisTemplate.opsForValue().set(key, value, ttl);
     }
