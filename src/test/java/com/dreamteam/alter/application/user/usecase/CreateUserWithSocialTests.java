@@ -6,8 +6,10 @@ import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenRespons
 import com.dreamteam.alter.adapter.outbound.user.persistence.SignupSessionCacheRepository;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
 import com.dreamteam.alter.application.auth.service.AuthService;
+import com.dreamteam.alter.application.user.event.SignupCompletedEvent;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.auth.entity.AuthLog;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
 import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
@@ -26,6 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
@@ -34,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -63,6 +67,9 @@ class CreateUserWithSocialTests {
 
     @Mock
     private SignupSessionCacheRepository cacheRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private CreateUserWithSocial createUserWithSocial;
@@ -213,6 +220,7 @@ class CreateUserWithSocialTests {
 
             Authorization authorization = mock(Authorization.class);
             given(authService.generateAuthorization(eq(savedUser), eq(TokenScope.APP))).willReturn(authorization);
+            given(authLogRepository.save(any())).willReturn(mock(AuthLog.class));
 
             // when
             GenerateTokenResponseDto result = createUserWithSocial.execute(request);
@@ -223,7 +231,7 @@ class CreateUserWithSocialTests {
             then(userQueryRepository).should().findByEmail("social@example.com");
             then(authService).should().generateAuthorization(savedUser, TokenScope.APP);
             then(authLogRepository).should().save(any());
-            then(cacheRepository).should().deleteAll(anyList());
+            then(eventPublisher).should().publishEvent(isA(SignupCompletedEvent.class));
         }
 
         @Test
@@ -244,6 +252,7 @@ class CreateUserWithSocialTests {
 
             Authorization authorization = mock(Authorization.class);
             given(authService.generateAuthorization(eq(savedUser), eq(TokenScope.APP))).willReturn(authorization);
+            given(authLogRepository.save(any())).willReturn(mock(AuthLog.class));
 
             // when
             GenerateTokenResponseDto result = createUserWithSocial.execute(request);
@@ -252,7 +261,7 @@ class CreateUserWithSocialTests {
             assertThat(result).isNotNull();
             then(userRepository).should().save(any(User.class));
             then(userQueryRepository).should(never()).findByEmail(any());
-            then(cacheRepository).should().deleteAll(anyList());
+            then(eventPublisher).should().publishEvent(isA(SignupCompletedEvent.class));
         }
     }
 }
