@@ -24,7 +24,7 @@ public class AdminDashboardCacheRepositoryImpl implements AdminDashboardCacheRep
     private final ObjectMapper objectMapper;
 
     private static final String KEY_PREFIX = "admin:dashboard:";
-    private static final Duration TTL = Duration.ofMinutes(5);
+    private static final Duration TTL = Duration.ofHours(1);
 
     @Override
     public Optional<DashboardChartStatistics> find(DashboardPeriod period, int year) {
