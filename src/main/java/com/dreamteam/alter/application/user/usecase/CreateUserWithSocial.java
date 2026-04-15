@@ -6,43 +6,28 @@ import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenRespons
 import com.dreamteam.alter.adapter.inbound.general.user.dto.SocialLoginRequestDto;
 import com.dreamteam.alter.adapter.outbound.user.persistence.SignupSessionCacheRepository;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
-import com.dreamteam.alter.application.auth.service.AuthService;
-import com.dreamteam.alter.application.user.event.SignupCompletedEvent;
 import com.dreamteam.alter.common.constants.SignupSessionConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.auth.entity.AuthLog;
-import com.dreamteam.alter.domain.auth.entity.Authorization;
-import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
-import com.dreamteam.alter.domain.auth.type.AuthLogType;
-import com.dreamteam.alter.domain.auth.type.TokenScope;
-import com.dreamteam.alter.domain.user.entity.User;
-import com.dreamteam.alter.domain.user.entity.UserSocial;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserWithSocialUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
-import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Arrays;
 import java.util.List;
 
 @Service("createUserWithSocial")
 @RequiredArgsConstructor
-@Transactional
 public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
 
-    private final UserRepository userRepository;
     private final UserQueryRepository userQueryRepository;
     private final UserSocialQueryRepository userSocialQueryRepository;
     private final SocialAuthenticationManager socialAuthenticationManager;
-    private final AuthService authService;
-    private final AuthLogRepository authLogRepository;
     private final SignupSessionCacheRepository cacheRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final CreateUserWithSocialTx createUserWithSocialTx;
 
     @Override
     public GenerateTokenResponseDto execute(CreateUserWithSocialRequestDto request) {
@@ -78,35 +63,19 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
         String email = socialAuthInfo.getEmail();
         if (ObjectUtils.isNotEmpty(email)) {
             userQueryRepository.findByEmail(email)
-                .ifPresent(existing -> { throw new CustomException(ErrorCode.EMAIL_DUPLICATED); });
+                .ifPresent(existing -> {
+                    throw new CustomException(ErrorCode.EMAIL_DUPLICATED);
+                });
         }
 
-        // 사용자 생성
-        User user = userRepository.save(User.createWithSocial(
-            contact,
-            request.getName(),
-            request.getNickname(),
-            request.getGender(),
-            request.getBirthday(),
-            email
-        ));
+        // 사용자 및 소셜 계정 엔티티 저장
+        GenerateTokenResponseDto response = createUserWithSocialTx.process(contact, request, socialAuthInfo);
 
-        // 소셜 계정 연동
-        UserSocial userSocial = UserSocial.create(
-            user,
-            socialAuthInfo.getProvider(),
-            socialAuthInfo.getSocialId(),
-            socialAuthInfo.getRefreshToken()
-        );
-        user.addUserSocial(userSocial);
+        // 회원가입 세션 삭제
+        String contactKey = SignupSessionConstants.Session.CONTACT_INDEX_KEY_PREFIX + contact;
+        cacheRepository.deleteAll(Arrays.asList(sessionIdKey, contactKey));
 
-        // 회원가입 세션 삭제 (커밋 후 이벤트로 처리)
-        eventPublisher.publishEvent(new SignupCompletedEvent(request.getSignupSessionId(), contact));
-
-        Authorization authorization = authService.generateAuthorization(user, TokenScope.APP);
-        authLogRepository.save(AuthLog.create(user, authorization, AuthLogType.LOGIN));
-
-        return GenerateTokenResponseDto.of(authorization);
+        return response;
     }
 
     private void validateDuplication(CreateUserWithSocialRequestDto request, String contact, String sessionIdKey) {
@@ -114,13 +83,15 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
         List<String> keysToDelete = Arrays.asList(sessionIdKey, contactKey);
 
         // 닉네임 중복 확인
-        if (userQueryRepository.findByNickname(request.getNickname()).isPresent()) {
+        if (userQueryRepository.findByNickname(request.getNickname())
+            .isPresent()) {
             cacheRepository.deleteAll(keysToDelete);
             throw new CustomException(ErrorCode.NICKNAME_DUPLICATED);
         }
 
         // 연락처 중복 확인
-        if (userQueryRepository.findByContact(contact).isPresent()) {
+        if (userQueryRepository.findByContact(contact)
+            .isPresent()) {
             cacheRepository.deleteAll(keysToDelete);
             throw new CustomException(ErrorCode.USER_CONTACT_DUPLICATED);
         }

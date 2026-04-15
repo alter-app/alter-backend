@@ -5,17 +5,10 @@ import com.dreamteam.alter.adapter.inbound.general.user.dto.CreateUserWithSocial
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
 import com.dreamteam.alter.adapter.outbound.user.persistence.SignupSessionCacheRepository;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
-import com.dreamteam.alter.application.auth.service.AuthService;
-import com.dreamteam.alter.application.user.event.SignupCompletedEvent;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.auth.entity.AuthLog;
-import com.dreamteam.alter.domain.auth.entity.Authorization;
-import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
-import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
-import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
 import com.dreamteam.alter.domain.user.type.PlatformType;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
@@ -28,7 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
@@ -37,7 +29,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -46,9 +37,6 @@ import static org.mockito.Mockito.never;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CreateUserWithSocial 테스트")
 class CreateUserWithSocialTests {
-
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private UserQueryRepository userQueryRepository;
@@ -60,16 +48,10 @@ class CreateUserWithSocialTests {
     private SocialAuthenticationManager socialAuthenticationManager;
 
     @Mock
-    private AuthService authService;
-
-    @Mock
-    private AuthLogRepository authLogRepository;
-
-    @Mock
     private SignupSessionCacheRepository cacheRepository;
 
     @Mock
-    private ApplicationEventPublisher eventPublisher;
+    private CreateUserWithSocialTx createUserWithSocialTx;
 
     @InjectMocks
     private CreateUserWithSocial createUserWithSocial;
@@ -116,7 +98,7 @@ class CreateUserWithSocialTests {
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
                     .isEqualTo(ErrorCode.SIGNUP_SESSION_NOT_EXIST));
 
-            then(userRepository).should(never()).save(any());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any());
         }
 
         @Test
@@ -133,7 +115,7 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.NICKNAME_DUPLICATED));
 
             then(cacheRepository).should().deleteAll(anyList());
-            then(userRepository).should(never()).save(any());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any());
         }
 
         @Test
@@ -151,7 +133,7 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.USER_CONTACT_DUPLICATED));
 
             then(cacheRepository).should().deleteAll(anyList());
-            then(userRepository).should(never()).save(any());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any());
         }
 
         @Test
@@ -174,7 +156,7 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.SOCIAL_ID_DUPLICATED));
 
             then(cacheRepository).should(never()).deleteAll(anyList());
-            then(userRepository).should(never()).save(any());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any());
         }
 
         @Test
@@ -198,70 +180,33 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.EMAIL_DUPLICATED));
 
             then(cacheRepository).should(never()).deleteAll(anyList());
-            then(userRepository).should(never()).save(any());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any());
         }
 
         @Test
-        @DisplayName("유효한 입력으로 소셜 회원가입 성공 - 소셜 계정 이메일 자동 저장")
+        @DisplayName("유효한 입력으로 소셜 회원가입 성공")
         void execute_withValidInput_succeeds() {
-            // given
+            // given - 기본 세션 및 검증
             given(cacheRepository.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
             given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
             given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
 
-            SocialAuthInfo authInfo = createSocialAuthInfo("kakao-social-id", "social@example.com", "kakao-refresh-token");
+            // 소셜 인증 및 중복 확인
+            SocialAuthInfo authInfo = createSocialAuthInfo("kakao-social-id", null, null);
             given(socialAuthenticationManager.authenticate(any())).willReturn(authInfo);
-            given(userSocialQueryRepository.existsBySocialProviderAndSocialId(SocialProvider.KAKAO, "kakao-social-id"))
-                .willReturn(false);
-            given(userQueryRepository.findByEmail("social@example.com")).willReturn(Optional.empty());
+            given(userSocialQueryRepository.existsBySocialProviderAndSocialId(SocialProvider.KAKAO, "kakao-social-id")).willReturn(false);
 
-            User savedUser = mock(User.class);
-            given(userRepository.save(any(User.class))).willReturn(savedUser);
-
-            Authorization authorization = mock(Authorization.class);
-            given(authService.generateAuthorization(eq(savedUser), eq(TokenScope.APP))).willReturn(authorization);
-            given(authLogRepository.save(any())).willReturn(mock(AuthLog.class));
+            // TX 저장
+            GenerateTokenResponseDto mockResponse = mock(GenerateTokenResponseDto.class);
+            given(createUserWithSocialTx.process(any(), any(), any())).willReturn(mockResponse);
 
             // when
             GenerateTokenResponseDto result = createUserWithSocial.execute(request);
 
             // then
-            assertThat(result).isNotNull();
-            then(userRepository).should().save(any(User.class));
-            then(userQueryRepository).should().findByEmail("social@example.com");
-            then(authService).should().generateAuthorization(savedUser, TokenScope.APP);
-            then(authLogRepository).should().save(any());
-            then(eventPublisher).should().publishEvent(isA(SignupCompletedEvent.class));
-        }
-
-        @Test
-        @DisplayName("소셜 계정에 이메일이 없을 경우 이메일 없이 회원가입 성공")
-        void execute_withNoEmailFromSocial_succeeds() {
-            // given
-            given(cacheRepository.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
-            given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
-            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
-
-            SocialAuthInfo authInfo = createSocialAuthInfo("kakao-social-id", null, "kakao-refresh-token");
-            given(socialAuthenticationManager.authenticate(any())).willReturn(authInfo);
-            given(userSocialQueryRepository.existsBySocialProviderAndSocialId(SocialProvider.KAKAO, "kakao-social-id"))
-                .willReturn(false);
-
-            User savedUser = mock(User.class);
-            given(userRepository.save(any(User.class))).willReturn(savedUser);
-
-            Authorization authorization = mock(Authorization.class);
-            given(authService.generateAuthorization(eq(savedUser), eq(TokenScope.APP))).willReturn(authorization);
-            given(authLogRepository.save(any())).willReturn(mock(AuthLog.class));
-
-            // when
-            GenerateTokenResponseDto result = createUserWithSocial.execute(request);
-
-            // then
-            assertThat(result).isNotNull();
-            then(userRepository).should().save(any(User.class));
-            then(userQueryRepository).should(never()).findByEmail(any());
-            then(eventPublisher).should().publishEvent(isA(SignupCompletedEvent.class));
+            assertThat(result).isEqualTo(mockResponse);
+            then(createUserWithSocialTx).should().process(eq("01012345678"), eq(request), any());
+            then(cacheRepository).should().deleteAll(anyList());
         }
     }
 }
