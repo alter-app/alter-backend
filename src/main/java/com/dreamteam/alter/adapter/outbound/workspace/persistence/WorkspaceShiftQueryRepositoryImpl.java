@@ -56,7 +56,7 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
             .where(workspaceShift.workspace.id.eq(workspaceId)
                 .and(workspaceShift.startDateTime.goe(startOfDay))
                 .and(workspaceShift.startDateTime.lt(endOfDay))
-                .and(workspaceShift.status.ne(WorkspaceShiftStatus.DELETED)))
+                .and(workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)))
             .orderBy(workspaceShift.startDateTime.asc())
             .fetch();
     }
