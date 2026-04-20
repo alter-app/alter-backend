@@ -40,6 +40,7 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
         return queryFactory
             .select(Projections.constructor(WorkspaceShiftTodayResponse.class,
                 workspaceShift.id,
+                workspaceWorker.id,
                 user.name,
                 file.fileUrl,
                 workspaceShift.startDateTime,
@@ -57,7 +58,6 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
                 .and(workspaceShift.startDateTime.goe(startOfDay))
                 .and(workspaceShift.startDateTime.lt(endOfDay))
                 .and(workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)))
-            .groupBy(user.id)
             .orderBy(workspaceShift.startDateTime.asc())
             .fetch();
     }

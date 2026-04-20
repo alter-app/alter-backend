@@ -16,6 +16,9 @@ public class ManagerTodayScheduleResponseDto {
     @Schema(description = "스케줄 ID", example = "1")
     private Long shiftId;
 
+    @Schema(description = "근무자 ID", example = "1")
+    private Long workerId;
+
     @Schema(description = "근무자 이름", example = "홍길동")
     private String workerName;
 
