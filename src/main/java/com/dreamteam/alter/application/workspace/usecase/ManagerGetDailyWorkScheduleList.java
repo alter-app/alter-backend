@@ -29,8 +29,6 @@ public class ManagerGetDailyWorkScheduleList implements ManagerGetDailyScheduleL
             throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
         }
 
-        return workspaceShiftQueryRepository.getTodayShiftList(workspaceId).stream()
-            .map(ManagerTodayScheduleResponseDto::of)
-            .toList();
+        return ManagerTodayScheduleResponseDto.from(workspaceShiftQueryRepository.getTodayShiftList(workspaceId));
     }
 }
