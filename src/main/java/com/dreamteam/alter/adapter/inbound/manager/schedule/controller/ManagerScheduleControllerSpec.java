@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.AssignWorkerRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.CreateWorkScheduleRequestDto;
+import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerTodayScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerWorkScheduleInquiryRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.UpdateWorkScheduleRequestDto;
@@ -49,6 +50,16 @@ public interface ManagerScheduleControllerSpec {
     })
     ResponseEntity<CommonApiResponse<List<ManagerScheduleResponseDto>>> getScheduleList(
         ManagerWorkScheduleInquiryRequestDto request
+    );
+
+    @Operation(summary = "금일 스케줄 목록 조회", description = "특정 워크스페이스의 오늘 날짜 스케줄 목록을 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "금일 스케줄 목록 조회 성공"),
+        @ApiResponse(responseCode = "404", description = "해당 워크스페이스 찾을 수 없음")
+    })
+    ResponseEntity<CommonApiResponse<List<ManagerTodayScheduleResponseDto>>> getTodayScheduleList(
+        @Parameter(description = "워크스페이스 ID", example = "1", required = true)
+        @RequestParam Long workspaceId
     );
 
     @Operation(summary = "스케줄 수정", description = "기존 스케줄의 정보를 수정합니다.")
