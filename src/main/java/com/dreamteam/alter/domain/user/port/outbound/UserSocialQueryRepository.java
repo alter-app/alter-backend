@@ -8,8 +8,12 @@ import java.util.Optional;
 public interface UserSocialQueryRepository {
     
     Optional<UserSocial> findBySocialProviderAndSocialId(SocialProvider socialProvider, String socialId);
-    
+
+    Optional<UserSocial> findByUserIdAndSocialProvider(Long userId, SocialProvider socialProvider);
+
     boolean existsBySocialProviderAndSocialId(SocialProvider socialProvider, String socialId);
-    
+
     boolean existsByUserAndSocialProvider(Long userId, SocialProvider socialProvider);
+
+    long countByUserIdForUpdate(Long userId);
 }

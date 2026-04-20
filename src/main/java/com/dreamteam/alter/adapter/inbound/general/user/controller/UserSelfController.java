@@ -57,6 +57,9 @@ public class UserSelfController implements UserSelfControllerSpec {
     @Resource(name = "verifyEmailVerificationCode")
     private final VerifyEmailVerificationCodeUseCase verifyEmailVerificationCode;
 
+    @Resource(name = "updatePassword")
+    private final UpdatePasswordUseCase updatePassword;
+
     @Override
     @GetMapping
     public ResponseEntity<CommonApiResponse<UserSelfInfoResponseDto>> getUserSelfInfo() {
@@ -152,6 +155,16 @@ public class UserSelfController implements UserSelfControllerSpec {
             @Valid @RequestBody VerifyEmailVerificationCodeRequestDto request
     ) {
         return ResponseEntity.ok(CommonApiResponse.of(verifyEmailVerificationCode.execute(request)));
+    }
+
+    @Override
+    @PutMapping("/password")
+    public ResponseEntity<CommonApiResponse<Void>> updatePassword(
+        @Valid @RequestBody UpdatePasswordRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        updatePassword.execute(actor, request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
 }

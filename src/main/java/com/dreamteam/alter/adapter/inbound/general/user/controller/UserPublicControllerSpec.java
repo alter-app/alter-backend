@@ -93,6 +93,23 @@ public interface UserPublicControllerSpec {
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> createUser(@Valid CreateUserRequestDto request);
 
+    @Operation(summary = "소셜 계정으로 회원가입을 수행한다")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "소셜 회원 가입 및 로그인 성공 (JWT 응답)"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(name = "회원 가입 세션이 존재하지 않음",  value = "{\"code\" : \"A006\"}"),
+                    @ExampleObject(name = "사용자 닉네임 중복",            value = "{\"code\" : \"A008\"}"),
+                    @ExampleObject(name = "사용자 휴대폰 번호 중복",         value = "{\"code\" : \"A009\"}"),
+                    @ExampleObject(name = "소셜 플랫폼 ID 중복",           value = "{\"code\" : \"A005\"}"),
+                    @ExampleObject(name = "소셜 토큰 만료 (재 로그인 필요)", value = "{\"code\" : \"A007\"}")
+                }))
+    })
+    ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> createUserWithSocial(@Valid CreateUserWithSocialRequestDto request);
+
     @Operation(summary = "사용자 닉네임 중복 체크")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "닉네임 중복 체크 성공")

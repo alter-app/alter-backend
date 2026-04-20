@@ -11,6 +11,7 @@ import com.dreamteam.alter.domain.user.port.inbound.CreateSignupSessionUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.LoginWithPasswordUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.LoginWithSocialUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.CreateUserWithSocialUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckContactDuplicationUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckNicknameDuplicationUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CheckEmailDuplicationUseCase;
@@ -40,6 +41,9 @@ public class UserPublicController implements UserPublicControllerSpec {
 
     @Resource(name = "createUser")
     private final CreateUserUseCase createUser;
+
+    @Resource(name = "createUserWithSocial")
+    private final CreateUserWithSocialUseCase createUserWithSocial;
 
     @Resource(name = "checkContactDuplication")
     private final CheckContactDuplicationUseCase checkContactDuplication;
@@ -93,6 +97,14 @@ public class UserPublicController implements UserPublicControllerSpec {
         @Valid @RequestBody CreateUserRequestDto request
     ) {
         return ResponseEntity.ok(CommonApiResponse.of(createUser.execute(request)));
+    }
+
+    @Override
+    @PostMapping("/signup-social")
+    public ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> createUserWithSocial(
+        @Valid @RequestBody CreateUserWithSocialRequestDto request
+    ) {
+        return ResponseEntity.ok(CommonApiResponse.of(createUserWithSocial.execute(request)));
     }
 
     @Override

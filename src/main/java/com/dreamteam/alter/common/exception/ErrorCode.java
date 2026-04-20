@@ -21,6 +21,9 @@ public enum ErrorCode {
     SOCIAL_PROVIDER_ALREADY_LINKED(400, "A012", "이미 연동되어 있는 소셜 플랫폼입니다."),
     PASSWORD_RESET_SESSION_NOT_EXIST(400, "A013", "비밀번호 재설정 세션이 존재하지 않거나 만료되었습니다."),
     INVALID_PASSWORD_FORMAT(400, "A014", "비밀번호는 8~16자 이내 영문, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다."),
+    SOCIAL_ACCOUNT_NOT_LINKED(400, "A015", "연동되지 않은 소셜 플랫폼입니다."),
+    SOCIAL_UNLINK_NOT_ALLOWED(400, "A016", "비밀번호가 설정되지 않은 경우 마지막 소셜 계정은 해제할 수 없습니다."),
+    INVALID_CURRENT_PASSWORD(400, "A017", "현재 비밀번호가 올바르지 않습니다."),
 
     ILLEGAL_ARGUMENT(400, "B001", "잘못된 요청입니다."),
     REFRESH_TOKEN_REQUIRED(400, "B002", "RefreshToken을 통해 요청해야 합니다."),
