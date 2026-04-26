@@ -26,7 +26,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/app/workspace-requests")
+@RequestMapping("/common/workspace-requests")
 @RequiredArgsConstructor
 @Validated
 public class UserWorkspaceRequestController implements UserWorkspaceRequestControllerSpec {

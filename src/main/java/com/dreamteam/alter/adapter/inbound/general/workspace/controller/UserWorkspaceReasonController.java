@@ -19,7 +19,7 @@ import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/app/workspace-requests/{workspaceRequestId}/reasons")
+@RequestMapping("/common/workspace-requests/{workspaceRequestId}/reasons")
 @RequiredArgsConstructor
 @Validated
 public class UserWorkspaceReasonController implements UserWorkspaceReasonControllerSpec {
