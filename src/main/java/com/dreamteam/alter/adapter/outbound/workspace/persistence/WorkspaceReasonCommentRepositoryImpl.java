@@ -14,7 +14,7 @@ public class WorkspaceReasonCommentRepositoryImpl implements WorkspaceReasonComm
     private final WorkspaceReasonCommentJpaRepository workspaceReasonCommentJpaRepository;
 
     @Override
-    public void save(WorkspaceReasonComment comment) {
-        workspaceReasonCommentJpaRepository.save(comment);
+    public WorkspaceReasonComment save(WorkspaceReasonComment comment) {
+        return workspaceReasonCommentJpaRepository.save(comment);
     }
 }
