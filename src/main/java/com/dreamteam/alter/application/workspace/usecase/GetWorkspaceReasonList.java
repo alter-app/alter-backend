@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceReasonResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceReasonListUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceReasonQueryRepository;
