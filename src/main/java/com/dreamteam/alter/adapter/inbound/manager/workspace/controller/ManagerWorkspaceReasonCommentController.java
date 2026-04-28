@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.general.workspace.controller;
+package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 
 import java.util.List;
 
@@ -15,7 +15,9 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceReasonCommentRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceReasonCommentResponseDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceReasonCommentUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceReasonCommentsUseCase;
 
@@ -24,10 +26,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/app/workspace-requests/{workspaceRequestId}/reasons/{reasonId}/comments")
+@RequestMapping("/manager/workspace-requests/{workspaceRequestId}/reasons/{reasonId}/comments")
 @RequiredArgsConstructor
 @Validated
-public class UserWorkspaceReasonCommentController implements UserWorkspaceReasonCommentControllerSpec {
+public class ManagerWorkspaceReasonCommentController implements ManagerWorkspaceReasonCommentControllerSpec {
 
 	@Resource(name = "createWorkspaceReasonComment")
 	private final CreateWorkspaceReasonCommentUseCase createWorkspaceReasonComment;
@@ -42,8 +44,8 @@ public class UserWorkspaceReasonCommentController implements UserWorkspaceReason
 		@PathVariable Long reasonId,
 		@Valid @RequestBody CreateWorkspaceReasonCommentRequestDto request
 	) {
-		AppActor actor = AppActionContext.getInstance().getActor();
-		createWorkspaceReasonComment.execute(actor.getUser(), workspaceRequestId, reasonId, request);
+		ManagerActor actor = ManagerActionContext.getInstance().getActor();
+		createWorkspaceReasonComment.execute(actor.getManagerUser().getUser(), workspaceRequestId, reasonId, request);
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 
@@ -53,8 +55,8 @@ public class UserWorkspaceReasonCommentController implements UserWorkspaceReason
 		@PathVariable Long workspaceRequestId,
 		@PathVariable Long reasonId
 	) {
-		AppActor actor = AppActionContext.getInstance().getActor();
-		return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceReasonComments.execute(actor.getUser(), workspaceRequestId, reasonId)));
+		ManagerActor actor = ManagerActionContext.getInstance().getActor();
+		return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceReasonComments.execute(actor.getManagerUser().getUser(), workspaceRequestId, reasonId)));
 	}
 
 }

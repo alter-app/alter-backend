@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestListResponseDto;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestListUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
 
@@ -20,8 +21,8 @@ public class GetWorkspaceRequestList implements GetWorkspaceRequestListUseCase {
 	private final WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
 
 	@Override
-	public List<WorkspaceRequestListResponseDto> execute(AppActor actor) {
-		return workspaceRequestQueryRepository.getWorkspaceRequestList(actor.getUserId()).stream()
+	public List<WorkspaceRequestListResponseDto> execute(User user) {
+		return workspaceRequestQueryRepository.getWorkspaceRequestList(user.getId()).stream()
 			.map(WorkspaceRequestListResponseDto::of)
 			.toList();
 	}

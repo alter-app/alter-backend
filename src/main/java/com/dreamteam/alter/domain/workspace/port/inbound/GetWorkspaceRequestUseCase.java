@@ -2,7 +2,8 @@ package com.dreamteam.alter.domain.workspace.port.inbound;
 
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestResponseDto;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.entity.User;
 
 public interface GetWorkspaceRequestUseCase {
-	WorkspaceRequestResponseDto execute(AppActor actor, Long workspaceRequestId);
+	WorkspaceRequestResponseDto execute(User user, Long workspaceRequestId);
 }

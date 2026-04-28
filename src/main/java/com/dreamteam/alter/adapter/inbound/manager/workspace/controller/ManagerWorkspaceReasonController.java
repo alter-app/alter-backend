@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.general.workspace.controller;
+package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 
 import java.util.List;
 
@@ -12,17 +12,19 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceReasonResponseDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceReasonListUseCase;
 
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/app/workspace-requests/{workspaceRequestId}/reasons")
+@RequestMapping("/manager/workspace-requests/{workspaceRequestId}/reasons")
 @RequiredArgsConstructor
 @Validated
-public class UserWorkspaceReasonController implements UserWorkspaceReasonControllerSpec {
+public class ManagerWorkspaceReasonController implements ManagerWorkspaceReasonControllerSpec {
 
 	@Resource(name = "getWorkspaceReasonList")
 	private final GetWorkspaceReasonListUseCase getWorkspaceReasonList;
@@ -32,7 +34,7 @@ public class UserWorkspaceReasonController implements UserWorkspaceReasonControl
 	public ResponseEntity<CommonApiResponse<List<WorkspaceReasonResponseDto>>> getWorkspaceReasonList(
 		@PathVariable Long workspaceRequestId
 	) {
-		AppActor actor = AppActionContext.getInstance().getActor();
-		return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceReasonList.execute(actor.getUser(), workspaceRequestId)));
+		ManagerActor actor = ManagerActionContext.getInstance().getActor();
+		return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceReasonList.execute(actor.getManagerUser().getUser(), workspaceRequestId)));
 	}
 }

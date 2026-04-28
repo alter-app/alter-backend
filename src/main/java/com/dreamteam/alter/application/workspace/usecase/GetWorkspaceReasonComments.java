@@ -17,6 +17,7 @@ import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceReasonCommentsUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceReasonCommentQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceReasonQueryRepository;
@@ -36,8 +37,8 @@ public class GetWorkspaceReasonComments implements GetWorkspaceReasonCommentsUse
 	private final FileUrlService fileUrlService;
 
 	@Override
-	public List<WorkspaceReasonCommentResponseDto> execute(AppActor actor, Long workspaceRequestId, Long reasonId) {
-		if (!workspaceRequestQueryRepository.existsByIdAndUserId(workspaceRequestId, actor.getUserId())) {
+	public List<WorkspaceReasonCommentResponseDto> execute(User user, Long workspaceRequestId, Long reasonId) {
+		if (!workspaceRequestQueryRepository.existsByIdAndUserId(workspaceRequestId, user.getId())) {
 			throw new CustomException(ErrorCode.FORBIDDEN);
 		}
 

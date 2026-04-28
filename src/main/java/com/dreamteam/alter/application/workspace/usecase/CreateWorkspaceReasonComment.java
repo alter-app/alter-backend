@@ -9,6 +9,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceReason;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceReasonComment;
 import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceReasonCommentUseCase;
@@ -30,8 +31,8 @@ public class CreateWorkspaceReasonComment implements CreateWorkspaceReasonCommen
     private final AttachFilesUseCase attachFiles;
 
     @Override
-    public void execute(AppActor actor, Long workspaceRequestId, Long reasonId, CreateWorkspaceReasonCommentRequestDto request) {
-        if (!workspaceRequestQueryRepository.existsByIdAndUserId(workspaceRequestId, actor.getUserId())) {
+    public void execute(User user, Long workspaceRequestId, Long reasonId, CreateWorkspaceReasonCommentRequestDto request) {
+        if (!workspaceRequestQueryRepository.existsByIdAndUserId(workspaceRequestId, user.getId())) {
             throw new CustomException(ErrorCode.NOT_FOUND);
         }
 
@@ -39,7 +40,7 @@ public class CreateWorkspaceReasonComment implements CreateWorkspaceReasonCommen
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         WorkspaceReasonComment comment = workspaceReasonCommentRepository.save(
-            WorkspaceReasonComment.create(reason, actor.getUser(), CommentOwner.USER, request.getComment())
+            WorkspaceReasonComment.create(reason, user, CommentOwner.USER, request.getComment())
         );
 
         if (request.getFileIds() != null && !request.getFileIds().isEmpty()) {
@@ -47,7 +48,7 @@ public class CreateWorkspaceReasonComment implements CreateWorkspaceReasonCommen
                 request.getFileIds(),
                 FileTargetType.WORKSPACE_REASON_COMMENT,
                 comment.getId().toString(),
-                actor.getUserId()
+                user.getId()
             );
         }
     }

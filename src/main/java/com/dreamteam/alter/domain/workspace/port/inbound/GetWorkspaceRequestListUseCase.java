@@ -4,7 +4,8 @@ import java.util.List;
 
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestListResponseDto;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.entity.User;
 
 public interface GetWorkspaceRequestListUseCase {
-	List<WorkspaceRequestListResponseDto> execute(AppActor actor);
+	List<WorkspaceRequestListResponseDto> execute(User user);
 }
