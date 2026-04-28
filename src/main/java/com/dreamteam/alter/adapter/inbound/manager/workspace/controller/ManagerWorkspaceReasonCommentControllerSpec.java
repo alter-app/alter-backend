@@ -26,7 +26,7 @@ public interface ManagerWorkspaceReasonCommentControllerSpec {
         @ApiResponse(responseCode = "404", description = "존재하지 않는 사유 (B019)")
     })
     ResponseEntity<CommonApiResponse<Void>> createWorkspaceReasonComment(
-        @PathVariable Long workspaceId,
+        @PathVariable Long workspaceRequestId,
         @PathVariable Long reasonId,
         @Valid @RequestBody CreateWorkspaceReasonCommentRequestDto request
     );
@@ -38,7 +38,7 @@ public interface ManagerWorkspaceReasonCommentControllerSpec {
         @ApiResponse(responseCode = "404", description = "존재하지 않는 사유 (B019)")
     })
     ResponseEntity<CommonApiResponse<List<WorkspaceReasonCommentResponseDto>>> getWorkspaceReasonComments(
-        @PathVariable Long workspaceId,
+        @PathVariable Long workspaceRequestId,
         @PathVariable Long reasonId
     );
 }
