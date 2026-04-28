@@ -24,7 +24,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/common/workspace-requests/{workspaceRequestId}/reasons/{reasonId}/comments")
+@RequestMapping("/app/workspace-requests/{workspaceRequestId}/reasons/{reasonId}/comments")
 @RequiredArgsConstructor
 @Validated
 public class UserWorkspaceReasonCommentController implements UserWorkspaceReasonCommentControllerSpec {
