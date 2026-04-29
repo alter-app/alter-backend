@@ -12,6 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -71,11 +72,13 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("id DESC")
     @SQLRestriction("status != 'DELETED'")
-    private List<UserCertificate> certificates;
+    @Builder.Default
+    private List<UserCertificate> certificates = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<UserSocial> userSocials;
+    @Builder.Default
+    private List<UserSocial> userSocials = new ArrayList<>();
 
     public static User create(
         String contact,
