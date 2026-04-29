@@ -72,11 +72,13 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("id DESC")
     @SQLRestriction("status != 'DELETED'")
-    private List<UserCertificate> certificates;
+    @Builder.Default
+    private List<UserCertificate> certificates = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<UserSocial> userSocials;
+    @Builder.Default
+    private List<UserSocial> userSocials = new ArrayList<>();
 
     public static User create(
         String contact,
@@ -97,8 +99,6 @@ public class User {
             .gender(gender)
             .role(UserRole.ROLE_USER)
             .status(UserStatus.ACTIVE)
-            .userSocials(new ArrayList<>())
-            .certificates(new ArrayList<>())
             .build();
     }
 
@@ -120,8 +120,6 @@ public class User {
             .gender(gender)
             .role(UserRole.ROLE_USER)
             .status(UserStatus.ACTIVE)
-            .userSocials(new ArrayList<>())
-            .certificates(new ArrayList<>())
             .build();
     }
 
