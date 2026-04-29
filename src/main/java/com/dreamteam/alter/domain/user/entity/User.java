@@ -12,6 +12,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -96,6 +97,8 @@ public class User {
             .gender(gender)
             .role(UserRole.ROLE_USER)
             .status(UserStatus.ACTIVE)
+            .userSocials(new ArrayList<>())
+            .certificates(new ArrayList<>())
             .build();
     }
 
@@ -117,6 +120,8 @@ public class User {
             .gender(gender)
             .role(UserRole.ROLE_USER)
             .status(UserStatus.ACTIVE)
+            .userSocials(new ArrayList<>())
+            .certificates(new ArrayList<>())
             .build();
     }
 
