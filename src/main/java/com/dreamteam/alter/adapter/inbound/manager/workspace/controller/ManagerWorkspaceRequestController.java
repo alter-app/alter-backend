@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.general.workspace.controller;
+package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 
 import java.util.List;
 
@@ -16,7 +16,9 @@ import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspace
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestResponseDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestUseCase;
@@ -26,10 +28,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/app/workspace-requests")
+@RequestMapping("/manager/workspace-requests")
 @RequiredArgsConstructor
 @Validated
-public class UserWorkspaceRequestController implements UserWorkspaceRequestControllerSpec {
+public class ManagerWorkspaceRequestController implements ManagerWorkspaceRequestControllerSpec {
 
     @Resource(name = "createWorkspaceRequest")
     private final CreateWorkspaceRequestUseCase createWorkspaceRequest;
@@ -45,16 +47,16 @@ public class UserWorkspaceRequestController implements UserWorkspaceRequestContr
     public ResponseEntity<CommonApiResponse<Void>> createWorkspaceRequest(
         @RequestBody @Valid CreateWorkspaceRequestDto request
     ) {
-        AppActor actor = AppActionContext.getInstance().getActor();
-        createWorkspaceRequest.execute(actor.getUser(), request);
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        createWorkspaceRequest.execute(actor.getManagerUser().getUser(), request);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
     @Override
     @GetMapping
     public ResponseEntity<CommonApiResponse<List<WorkspaceRequestListResponseDto>>> getWorkspaceRequestList() {
-        AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceRequestList.execute(actor.getUser())));
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceRequestList.execute(actor.getManagerUser().getUser())));
     }
 
     @Override
@@ -62,7 +64,7 @@ public class UserWorkspaceRequestController implements UserWorkspaceRequestContr
     public ResponseEntity<CommonApiResponse<WorkspaceRequestResponseDto>> getWorkspaceRequestDetail(
         @PathVariable Long workspaceRequestId
     ) {
-        AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceRequest.execute(actor.getUser(), workspaceRequestId)));
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceRequest.execute(actor.getManagerUser().getUser(), workspaceRequestId)));
     }
 }

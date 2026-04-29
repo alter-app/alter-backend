@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceReasonResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceReasonListUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceReasonQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
@@ -24,8 +24,8 @@ public class GetWorkspaceReasonList implements GetWorkspaceReasonListUseCase {
 	private final WorkspaceReasonQueryRepository workspaceReasonQueryRepository;
 
 	@Override
-	public List<WorkspaceReasonResponseDto> execute(AppActor actor, Long workspaceRequestId) {
-		if (!workspaceRequestQueryRepository.existsByIdAndUserId(workspaceRequestId, actor.getUserId())) {
+	public List<WorkspaceReasonResponseDto> execute(User user, Long workspaceRequestId) {
+		if (!workspaceRequestQueryRepository.existsByIdAndUserId(workspaceRequestId, user.getId())) {
 			throw new CustomException(ErrorCode.FORBIDDEN);
 		}
 

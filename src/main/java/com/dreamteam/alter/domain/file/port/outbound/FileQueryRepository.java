@@ -11,6 +11,7 @@ public interface FileQueryRepository {
     Optional<File> findById(String id);
     List<File> findAllByIdIn(List<String> ids);
     List<File> findAllByTargetTypeAndTargetId(FileTargetType targetType, String targetId);
+    List<File> findAllByTargetTypeAndTargetIdIn(FileTargetType targetType, List<String> targetIds);
     List<File> findOrphanFiles(LocalDateTime before);
 
 	Optional<File> findByTargetTypeAndTargetId(FileTargetType fileTargetType, String targetId);

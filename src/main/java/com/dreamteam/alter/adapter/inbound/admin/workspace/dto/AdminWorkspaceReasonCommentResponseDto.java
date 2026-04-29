@@ -1,7 +1,9 @@
 package com.dreamteam.alter.adapter.inbound.admin.workspace.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceReasonCommentListResponse;
 import com.dreamteam.alter.domain.workspace.type.CommentOwner;
 
@@ -34,18 +36,28 @@ public class AdminWorkspaceReasonCommentResponseDto {
 	@Schema(description = "댓글 내용", example = "자료 누락")
 	private String comment;
 
+	@Schema(description = "첨부파일 목록")
+	private List<FileResponseDto> files;
+
 	@Schema(description = "댓글 생성시각", example = "2026-03-01T10:00:00")
 	private LocalDateTime createdAt;
 
 	public static AdminWorkspaceReasonCommentResponseDto from(WorkspaceReasonCommentListResponse entity) {
+		return from(entity, List.of());
+	}
+
+	public static AdminWorkspaceReasonCommentResponseDto from(
+		WorkspaceReasonCommentListResponse entity,
+		List<FileResponseDto> files
+	) {
 		return AdminWorkspaceReasonCommentResponseDto.builder()
 			.id(entity.getId())
 			.workspaceReasonId(entity.getWorkspaceReasonId())
 			.userId(entity.getUserId())
 			.commentOwner(entity.getCommentOwner())
 			.comment(entity.getComment())
+			.files(files)
 			.createdAt(entity.getCreatedAt())
 			.build();
 	}
 }
-

@@ -8,7 +8,7 @@ import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceReques
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestResponse;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
 
@@ -22,8 +22,8 @@ public class GetWorkspaceRequest implements GetWorkspaceRequestUseCase {
 	private final WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
 
 	@Override
-	public WorkspaceRequestResponseDto execute(AppActor actor, Long workspaceRequestId) {
-		WorkspaceRequestResponse workspaceRequest = workspaceRequestQueryRepository.getWorkspaceRequest(actor.getUserId(), workspaceRequestId);
+	public WorkspaceRequestResponseDto execute(User user, Long workspaceRequestId) {
+		WorkspaceRequestResponse workspaceRequest = workspaceRequestQueryRepository.getWorkspaceRequest(user.getId(), workspaceRequestId);
 
 		if (ObjectUtils.isEmpty(workspaceRequest)) {
 			throw new CustomException(ErrorCode.NOT_FOUND, "등록 신청한 업장을 찾을 수 없습니다.");

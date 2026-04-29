@@ -58,6 +58,24 @@ public class FileQueryRepositoryImpl implements FileQueryRepository {
     }
 
     @Override
+    public List<File> findAllByTargetTypeAndTargetIdIn(FileTargetType targetType, List<String> targetIds) {
+        if (targetIds == null || targetIds.isEmpty()) {
+            return List.of();
+        }
+
+        QFile qFile = QFile.file;
+        return queryFactory
+            .selectFrom(qFile)
+            .where(
+                qFile.targetType.eq(targetType),
+                qFile.targetId.in(targetIds),
+                qFile.status.eq(FileStatus.ATTACHED)
+            )
+            .orderBy(qFile.createdAt.asc(), qFile.id.asc())
+            .fetch();
+    }
+
+    @Override
     public List<File> findOrphanFiles(LocalDateTime before) {
         QFile qFile = QFile.file;
         return queryFactory
