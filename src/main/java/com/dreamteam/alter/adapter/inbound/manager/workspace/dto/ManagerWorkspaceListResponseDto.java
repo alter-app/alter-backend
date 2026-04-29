@@ -26,6 +26,10 @@ public class ManagerWorkspaceListResponseDto {
     private String businessName;
 
     @NotBlank
+    @Schema(description = "업종", example = "카페")
+    private String businessType;
+
+    @NotBlank
     @Schema(description = "업장 전체 주소", example = "서울특별시 강남구 테헤란로 123")
     private String fullAddress;
 
@@ -39,12 +43,13 @@ public class ManagerWorkspaceListResponseDto {
 
     public static ManagerWorkspaceListResponseDto of(ManagerWorkspaceListResponse entity) {
         return ManagerWorkspaceListResponseDto.builder()
-                .id(entity.getId())
-                .businessName(entity.getBusinessName())
-                .fullAddress(entity.getFullAddress())
-                .createdAt(entity.getCreatedAt())
-                .status(DescribedEnumDto.of(entity.getStatus(), WorkspaceStatus.describe()))
-                .build();
+            .id(entity.getId())
+            .businessName(entity.getBusinessName())
+            .businessType(entity.getBusinessType())
+            .fullAddress(entity.getFullAddress())
+            .createdAt(entity.getCreatedAt())
+            .status(DescribedEnumDto.of(entity.getStatus(), WorkspaceStatus.describe()))
+            .build();
     }
 
 }

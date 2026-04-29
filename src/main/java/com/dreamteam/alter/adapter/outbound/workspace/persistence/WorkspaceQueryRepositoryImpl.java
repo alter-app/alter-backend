@@ -70,6 +70,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 ManagerWorkspaceListResponse.class,
                 qWorkspace.id,
                 qWorkspace.businessName,
+                qWorkspace.businessType,
                 qWorkspace.fullAddress,
                 qWorkspace.createdAt,
                 qWorkspace.status

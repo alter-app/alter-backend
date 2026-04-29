@@ -16,6 +16,8 @@ public class ManagerWorkspaceListResponse {
 
     private String businessName;
 
+    private String businessType;
+
     private String fullAddress;
 
     private LocalDateTime createdAt;
