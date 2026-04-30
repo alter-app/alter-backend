@@ -1,8 +1,7 @@
 package com.dreamteam.alter.domain.user.port.inbound;
 
-import com.dreamteam.alter.adapter.inbound.general.user.dto.UnlinkSocialAccountRequestDto;
-import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.command.UnlinkSocialAccountCommand;
 
 public interface UnlinkSocialAccountUseCase {
-    void execute(AppActor actor, UnlinkSocialAccountRequestDto request);
+    void execute(UnlinkSocialAccountCommand command);
 }

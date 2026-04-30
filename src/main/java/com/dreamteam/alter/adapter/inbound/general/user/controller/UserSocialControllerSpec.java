@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.inbound.general.user.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.LinkSocialAccountRequestDto;
+import com.dreamteam.alter.domain.user.port.inbound.dto.SocialAccountStatusDto;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,6 +14,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.List;
 
 @Tag(name = "사용자 - 소셜 계정 연동")
 public interface UserSocialControllerSpec {
@@ -62,4 +65,10 @@ public interface UserSocialControllerSpec {
             ))
     })
     ResponseEntity<CommonApiResponse<Void>> unlinkSocialAccount(@PathVariable SocialProvider provider);
+
+    @Operation(summary = "소셜 계정 연동 상태 조회")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "소셜 계정 연동 상태 조회 성공")
+    })
+    ResponseEntity<CommonApiResponse<List<SocialAccountStatusDto>>> getLinkedSocialAccounts();
 }

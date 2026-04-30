@@ -3,6 +3,7 @@ package com.dreamteam.alter.domain.user.entity;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -34,6 +35,10 @@ public class UserSocial {
 
     @Column(name = "refresh_token", length = Integer.MAX_VALUE, nullable = false)
     private String refreshToken;
+
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
