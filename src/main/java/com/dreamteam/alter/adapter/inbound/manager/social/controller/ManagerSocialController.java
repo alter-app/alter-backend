@@ -1,6 +1,8 @@
 package com.dreamteam.alter.adapter.inbound.manager.social.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.SocialAccountStatusResponseDto;
+import com.dreamteam.alter.adapter.inbound.common.mapper.SocialAccountStatusResponseMapper;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.LinkSocialAccountRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.user.mapper.LinkSocialAccountCommandMapper;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
@@ -9,7 +11,6 @@ import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.port.inbound.GetLinkedSocialAccountsUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.LinkSocialAccountUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.UnlinkSocialAccountUseCase;
-import com.dreamteam.alter.domain.user.port.inbound.dto.SocialAccountStatusDto;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -59,8 +60,11 @@ public class ManagerSocialController implements ManagerSocialControllerSpec {
 
     @Override
     @GetMapping("/status")
-    public ResponseEntity<CommonApiResponse<List<SocialAccountStatusDto>>> getLinkedSocialAccounts() {
+    public ResponseEntity<CommonApiResponse<List<SocialAccountStatusResponseDto>>> getLinkedSocialAccounts() {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(getLinkedSocialAccounts.execute(actor.getManagerUser().getUser())));
+        List<SocialAccountStatusResponseDto> response = getLinkedSocialAccounts.execute(actor.getManagerUser().getUser()).stream()
+            .map(SocialAccountStatusResponseMapper::toResponse)
+            .toList();
+        return ResponseEntity.ok(CommonApiResponse.of(response));
     }
 }

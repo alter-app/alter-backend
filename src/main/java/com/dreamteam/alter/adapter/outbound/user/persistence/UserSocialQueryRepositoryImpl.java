@@ -1,22 +1,22 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
-import com.dreamteam.alter.domain.user.entity.QUserSocial;
 import com.dreamteam.alter.domain.user.entity.QUser;
+import com.dreamteam.alter.domain.user.entity.QUserSocial;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.entity.UserSocial;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.dreamteam.alter.domain.user.type.UserStatus;
-import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -56,19 +56,18 @@ public class UserSocialQueryRepositoryImpl implements UserSocialQueryRepository 
     }
 
     @Override
-    public Map<SocialProvider, LocalDateTime> findLinkedSocialAccountsByUserId(Long userId) {
+    public Map<SocialProvider, LocalDateTime> findLinkedSocialAccountsByUserId(User user) {
         QUserSocial qUserSocial = QUserSocial.userSocial;
 
-        List<Tuple> tuples = queryFactory.select(qUserSocial.socialProvider, qUserSocial.createdAt)
+        return queryFactory.select(qUserSocial.socialProvider, qUserSocial.createdAt)
             .from(qUserSocial)
-            .where(qUserSocial.user.id.eq(userId))
-            .fetch();
-
-        Map<SocialProvider, LocalDateTime> result = new HashMap<>();
-        for (Tuple tuple : tuples) {
-            result.put(tuple.get(qUserSocial.socialProvider), tuple.get(qUserSocial.createdAt));
-        }
-        return result;
+            .where(qUserSocial.user.eq(user))
+            .fetch()
+            .stream()
+            .collect(Collectors.toMap(
+                tuple -> tuple.get(qUserSocial.socialProvider),
+                tuple -> tuple.get(qUserSocial.createdAt)
+            ));
     }
 
     @Override

@@ -5,9 +5,12 @@ import com.dreamteam.alter.adapter.inbound.general.user.dto.OauthLoginTokenDto;
 import com.dreamteam.alter.domain.user.command.LinkSocialAccountCommand;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.vo.OauthToken;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 
-public class LinkSocialAccountCommandMapper {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class LinkSocialAccountCommandMapper {
 
     public static LinkSocialAccountCommand toCommand(User user, LinkSocialAccountRequestDto request) {
         OauthLoginTokenDto dto = request.getOauthToken();

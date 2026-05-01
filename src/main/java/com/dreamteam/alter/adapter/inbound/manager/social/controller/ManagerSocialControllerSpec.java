@@ -2,8 +2,8 @@ package com.dreamteam.alter.adapter.inbound.manager.social.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.SocialAccountStatusResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.LinkSocialAccountRequestDto;
-import com.dreamteam.alter.domain.user.port.inbound.dto.SocialAccountStatusDto;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -71,5 +71,5 @@ public interface ManagerSocialControllerSpec {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "소셜 계정 연동 상태 조회 성공")
     })
-    ResponseEntity<CommonApiResponse<List<SocialAccountStatusDto>>> getLinkedSocialAccounts();
+    ResponseEntity<CommonApiResponse<List<SocialAccountStatusResponseDto>>> getLinkedSocialAccounts();
 }
