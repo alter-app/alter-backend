@@ -1,8 +1,8 @@
 package com.dreamteam.alter.application.user.usecase;
 
 import com.dreamteam.alter.domain.user.entity.User;
-import com.dreamteam.alter.domain.user.port.inbound.dto.SocialAccountStatusDto;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
+import com.dreamteam.alter.domain.user.result.SocialAccountStatusResult;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +38,6 @@ class GetLinkedSocialAccountsTests {
     @BeforeEach
     void setUp() {
         user = mock(User.class);
-        given(user.getId()).willReturn(1L);
     }
 
     private User command() {
@@ -50,37 +49,37 @@ class GetLinkedSocialAccountsTests {
     void execute_returnsStatusForAllProviders() {
         // given
         LocalDateTime kakaoLinkedAt = LocalDateTime.of(2026, 4, 1, 12, 34, 56);
-        given(userSocialQueryRepository.findLinkedSocialAccountsByUserId(1L))
+        given(userSocialQueryRepository.findLinkedSocialAccountsByUserId(user))
             .willReturn(Map.of(SocialProvider.KAKAO, kakaoLinkedAt));
 
         // when
-        List<SocialAccountStatusDto> result = getLinkedSocialAccounts.execute(command());
+        List<SocialAccountStatusResult> result = getLinkedSocialAccounts.execute(command());
 
         // then
         assertThat(result).hasSize(SocialProvider.values().length);
 
-        Map<SocialProvider, SocialAccountStatusDto> dtoMap = result.stream()
-            .collect(Collectors.toMap(SocialAccountStatusDto::getProvider, dto -> dto));
+        Map<SocialProvider, SocialAccountStatusResult> resultMap = result.stream()
+            .collect(Collectors.toMap(SocialAccountStatusResult::provider, r -> r));
 
-        assertThat(dtoMap.get(SocialProvider.KAKAO).isLinked()).isTrue();
-        assertThat(dtoMap.get(SocialProvider.KAKAO).getLinkedAt()).isEqualTo(kakaoLinkedAt);
-        assertThat(dtoMap.get(SocialProvider.APPLE).isLinked()).isFalse();
-        assertThat(dtoMap.get(SocialProvider.APPLE).getLinkedAt()).isNull();
+        assertThat(resultMap.get(SocialProvider.KAKAO).linked()).isTrue();
+        assertThat(resultMap.get(SocialProvider.KAKAO).linkedAt()).isEqualTo(kakaoLinkedAt);
+        assertThat(resultMap.get(SocialProvider.APPLE).linked()).isFalse();
+        assertThat(resultMap.get(SocialProvider.APPLE).linkedAt()).isNull();
     }
 
     @Test
     @DisplayName("연동된 소셜 계정이 없으면 모두 linked=false, linkedAt=null 로 반환한다")
     void execute_withNoLinkedAccounts_returnsAllFalse() {
         // given
-        given(userSocialQueryRepository.findLinkedSocialAccountsByUserId(1L))
+        given(userSocialQueryRepository.findLinkedSocialAccountsByUserId(user))
             .willReturn(Map.of());
 
         // when
-        List<SocialAccountStatusDto> result = getLinkedSocialAccounts.execute(command());
+        List<SocialAccountStatusResult> result = getLinkedSocialAccounts.execute(command());
 
         // then
         assertThat(result).hasSize(SocialProvider.values().length);
-        assertThat(result).allMatch(dto -> !dto.isLinked() && dto.getLinkedAt() == null);
+        assertThat(result).allMatch(r -> !r.linked() && r.linkedAt() == null);
     }
 
     @Test
@@ -92,15 +91,15 @@ class GetLinkedSocialAccountsTests {
         for (SocialProvider provider : SocialProvider.values()) {
             linked.put(provider, now);
         }
-        given(userSocialQueryRepository.findLinkedSocialAccountsByUserId(1L)).willReturn(linked);
+        given(userSocialQueryRepository.findLinkedSocialAccountsByUserId(user)).willReturn(linked);
 
         // when
-        List<SocialAccountStatusDto> result = getLinkedSocialAccounts.execute(command());
+        List<SocialAccountStatusResult> result = getLinkedSocialAccounts.execute(command());
 
         // then
         assertThat(result).hasSize(SocialProvider.values().length);
-        assertThat(result).allMatch(dto -> dto.isLinked() && now.equals(dto.getLinkedAt()));
-        assertThat(result.stream().map(SocialAccountStatusDto::getProvider).toList())
+        assertThat(result).allMatch(r -> r.linked() && now.equals(r.linkedAt()));
+        assertThat(result.stream().map(SocialAccountStatusResult::provider).toList())
             .containsExactlyInAnyOrder(Arrays.stream(SocialProvider.values()).toArray(SocialProvider[]::new));
     }
 }

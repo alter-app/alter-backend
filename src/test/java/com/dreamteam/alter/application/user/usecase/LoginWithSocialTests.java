@@ -10,6 +10,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.entity.Authorization;
 import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.auth.vo.SocialAuthRequest;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.entity.UserSocial;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
@@ -97,7 +98,7 @@ class LoginWithSocialTests {
         void fails_whenUserSocialNotFound() {
             // given
             SocialAuthInfo authInfo = createSocialAuthInfoWithoutRefreshToken();
-            given(socialAuthenticationManager.authenticate(request)).willReturn(authInfo);
+            given(socialAuthenticationManager.authenticate(any(SocialAuthRequest.class))).willReturn(authInfo);
             given(userSocialQueryRepository.findBySocialProviderAndSocialId(
                 SocialProvider.KAKAO, "social-123"
             )).willReturn(Optional.empty());
@@ -122,7 +123,7 @@ class LoginWithSocialTests {
             given(user.getStatus()).willReturn(UserStatus.SUSPENDED);
             UserSocial userSocial = createMockUserSocial(user);
 
-            given(socialAuthenticationManager.authenticate(request)).willReturn(authInfo);
+            given(socialAuthenticationManager.authenticate(any(SocialAuthRequest.class))).willReturn(authInfo);
             given(userSocialQueryRepository.findBySocialProviderAndSocialId(
                 SocialProvider.KAKAO, "social-123"
             )).willReturn(Optional.of(userSocial));
@@ -148,7 +149,7 @@ class LoginWithSocialTests {
             given(user.getStatus()).willReturn(UserStatus.DELETED);
             UserSocial userSocial = createMockUserSocial(user);
 
-            given(socialAuthenticationManager.authenticate(request)).willReturn(authInfo);
+            given(socialAuthenticationManager.authenticate(any(SocialAuthRequest.class))).willReturn(authInfo);
             given(userSocialQueryRepository.findBySocialProviderAndSocialId(
                 SocialProvider.KAKAO, "social-123"
             )).willReturn(Optional.of(userSocial));
@@ -176,7 +177,7 @@ class LoginWithSocialTests {
             UserSocial userSocial = createMockUserSocial(user);
             Authorization authorization = mock(Authorization.class);
 
-            given(socialAuthenticationManager.authenticate(request)).willReturn(authInfo);
+            given(socialAuthenticationManager.authenticate(any(SocialAuthRequest.class))).willReturn(authInfo);
             given(userSocialQueryRepository.findBySocialProviderAndSocialId(
                 SocialProvider.KAKAO, "social-123"
             )).willReturn(Optional.of(userSocial));
@@ -203,7 +204,7 @@ class LoginWithSocialTests {
             UserSocial userSocial = createMockUserSocial(user);
             Authorization authorization = mock(Authorization.class);
 
-            given(socialAuthenticationManager.authenticate(request)).willReturn(authInfo);
+            given(socialAuthenticationManager.authenticate(any(SocialAuthRequest.class))).willReturn(authInfo);
             given(userSocialQueryRepository.findBySocialProviderAndSocialId(
                 SocialProvider.KAKAO, "social-123"
             )).willReturn(Optional.of(userSocial));
