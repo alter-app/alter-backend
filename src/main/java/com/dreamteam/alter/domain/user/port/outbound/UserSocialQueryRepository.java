@@ -14,7 +14,7 @@ public interface UserSocialQueryRepository {
 
     Optional<UserSocial> findByUserIdAndSocialProvider(Long userId, SocialProvider socialProvider);
 
-    Map<SocialProvider, LocalDateTime> findLinkedSocialAccountsByUserId(User user);
+    Map<SocialProvider, LocalDateTime> findLinkedSocialAccountsByUser(User user);
 
     boolean existsBySocialProviderAndSocialId(SocialProvider socialProvider, String socialId);
 

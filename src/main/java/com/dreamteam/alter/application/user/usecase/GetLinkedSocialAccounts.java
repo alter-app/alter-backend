@@ -24,7 +24,7 @@ public class GetLinkedSocialAccounts implements GetLinkedSocialAccountsUseCase {
     @Override
     public List<SocialAccountStatusResult> execute(User user) {
         Map<SocialProvider, LocalDateTime> linked = userSocialQueryRepository
-            .findLinkedSocialAccountsByUserId(user);
+            .findLinkedSocialAccountsByUser(user);
 
         return Arrays.stream(SocialProvider.values())
             .map(provider -> new SocialAccountStatusResult(

@@ -49,7 +49,7 @@ class GetLinkedSocialAccountsTests {
     void execute_returnsStatusForAllProviders() {
         // given
         LocalDateTime kakaoLinkedAt = LocalDateTime.of(2026, 4, 1, 12, 34, 56);
-        given(userSocialQueryRepository.findLinkedSocialAccountsByUserId(user))
+        given(userSocialQueryRepository.findLinkedSocialAccountsByUser(user))
             .willReturn(Map.of(SocialProvider.KAKAO, kakaoLinkedAt));
 
         // when
@@ -71,7 +71,7 @@ class GetLinkedSocialAccountsTests {
     @DisplayName("연동된 소셜 계정이 없으면 모두 linked=false, linkedAt=null 로 반환한다")
     void execute_withNoLinkedAccounts_returnsAllFalse() {
         // given
-        given(userSocialQueryRepository.findLinkedSocialAccountsByUserId(user))
+        given(userSocialQueryRepository.findLinkedSocialAccountsByUser(user))
             .willReturn(Map.of());
 
         // when
@@ -91,7 +91,7 @@ class GetLinkedSocialAccountsTests {
         for (SocialProvider provider : SocialProvider.values()) {
             linked.put(provider, now);
         }
-        given(userSocialQueryRepository.findLinkedSocialAccountsByUserId(user)).willReturn(linked);
+        given(userSocialQueryRepository.findLinkedSocialAccountsByUser(user)).willReturn(linked);
 
         // when
         List<SocialAccountStatusResult> result = getLinkedSocialAccounts.execute(command());

@@ -56,7 +56,7 @@ public class UserSocialQueryRepositoryImpl implements UserSocialQueryRepository 
     }
 
     @Override
-    public Map<SocialProvider, LocalDateTime> findLinkedSocialAccountsByUserId(User user) {
+    public Map<SocialProvider, LocalDateTime> findLinkedSocialAccountsByUser(User user) {
         QUserSocial qUserSocial = QUserSocial.userSocial;
 
         return queryFactory.select(qUserSocial.socialProvider, qUserSocial.createdAt)
