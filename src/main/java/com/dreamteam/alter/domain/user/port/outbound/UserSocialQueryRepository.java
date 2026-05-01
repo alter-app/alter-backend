@@ -1,5 +1,6 @@
 package com.dreamteam.alter.domain.user.port.outbound;
 
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.entity.UserSocial;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 
@@ -13,7 +14,7 @@ public interface UserSocialQueryRepository {
 
     Optional<UserSocial> findByUserIdAndSocialProvider(Long userId, SocialProvider socialProvider);
 
-    Map<SocialProvider, LocalDateTime> findLinkedSocialAccountsByUserId(Long userId);
+    Map<SocialProvider, LocalDateTime> findLinkedSocialAccountsByUserId(User user);
 
     boolean existsBySocialProviderAndSocialId(SocialProvider socialProvider, String socialId);
 
