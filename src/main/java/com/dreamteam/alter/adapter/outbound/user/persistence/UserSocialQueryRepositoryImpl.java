@@ -1,7 +1,8 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
-import com.dreamteam.alter.domain.user.entity.QUserSocial;
 import com.dreamteam.alter.domain.user.entity.QUser;
+import com.dreamteam.alter.domain.user.entity.QUserSocial;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.entity.UserSocial;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
@@ -11,8 +12,11 @@ import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -49,6 +53,21 @@ public class UserSocialQueryRepositoryImpl implements UserSocialQueryRepository 
             .fetchOne();
             
         return Optional.ofNullable(userSocial);
+    }
+
+    @Override
+    public Map<SocialProvider, LocalDateTime> findLinkedSocialAccountsByUser(User user) {
+        QUserSocial qUserSocial = QUserSocial.userSocial;
+
+        return queryFactory.select(qUserSocial.socialProvider, qUserSocial.createdAt)
+            .from(qUserSocial)
+            .where(qUserSocial.user.eq(user))
+            .fetch()
+            .stream()
+            .collect(Collectors.toMap(
+                tuple -> tuple.get(qUserSocial.socialProvider),
+                tuple -> tuple.get(qUserSocial.createdAt)
+            ));
     }
 
     @Override

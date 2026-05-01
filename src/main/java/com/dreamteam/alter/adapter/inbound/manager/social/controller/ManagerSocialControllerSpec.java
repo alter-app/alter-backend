@@ -1,6 +1,7 @@
-package com.dreamteam.alter.adapter.inbound.general.user.controller;
+package com.dreamteam.alter.adapter.inbound.manager.social.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.SocialAccountStatusResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.LinkSocialAccountRequestDto;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
@@ -17,8 +18,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
-@Tag(name = "사용자 - 소셜 계정 연동")
-public interface UserSocialControllerSpec {
+@Tag(name = "MANAGER - 소셜 계정 관리")
+public interface ManagerSocialControllerSpec {
 
     @Operation(summary = "소셜 계정 연동")
     @ApiResponses(value = {
@@ -26,7 +27,7 @@ public interface UserSocialControllerSpec {
         @ApiResponse(responseCode = "400", description = "실패 케이스",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse.class),
+                schema = @Schema(implementation = ErrorResponse.class),
                 examples = {
                     @ExampleObject(
                         name = "이미 연동된 소셜 플랫폼",
@@ -51,7 +52,7 @@ public interface UserSocialControllerSpec {
         @ApiResponse(responseCode = "400", description = "실패 케이스",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse.class),
+                schema = @Schema(implementation = ErrorResponse.class),
                 examples = {
                     @ExampleObject(
                         name = "연동되지 않은 소셜 플랫폼",

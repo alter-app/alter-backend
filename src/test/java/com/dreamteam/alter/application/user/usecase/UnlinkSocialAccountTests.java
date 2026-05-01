@@ -1,8 +1,8 @@
 package com.dreamteam.alter.application.user.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.user.dto.UnlinkSocialAccountRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.user.command.UnlinkSocialAccountCommand;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.entity.UserSocial;
@@ -41,20 +41,20 @@ class UnlinkSocialAccountTests {
     @InjectMocks
     private UnlinkSocialAccount unlinkSocialAccount;
 
-    private AppActor actor;
     private User user;
     private UserSocial userSocial;
-    private UnlinkSocialAccountRequestDto request;
 
     @BeforeEach
     void setUp() {
         user = mock(User.class);
-        actor = mock(AppActor.class);
         userSocial = mock(UserSocial.class);
-        request = new UnlinkSocialAccountRequestDto(SocialProvider.KAKAO);
-
-        given(actor.getUser()).willReturn(user);
         given(user.getId()).willReturn(1L);
+    }
+
+    private UnlinkSocialAccountCommand command() {
+        AppActor actor = mock(AppActor.class);
+        given(actor.getUser()).willReturn(user);
+        return UnlinkSocialAccountCommand.from(actor.getUser(), SocialProvider.KAKAO);
     }
 
     @Test
@@ -65,7 +65,7 @@ class UnlinkSocialAccountTests {
             .willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> unlinkSocialAccount.execute(actor, request))
+        assertThatThrownBy(() -> unlinkSocialAccount.execute(command()))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SOCIAL_ACCOUNT_NOT_LINKED);
         then(userSocialRepository).shouldHaveNoInteractions();
@@ -86,7 +86,7 @@ class UnlinkSocialAccountTests {
         @DisplayName("연동된 소셜 계정을 정상 해제한다")
         void execute_withLinkedSocial_succeeds() {
             // when & then
-            assertThatNoException().isThrownBy(() -> unlinkSocialAccount.execute(actor, request));
+            assertThatNoException().isThrownBy(() -> unlinkSocialAccount.execute(command()));
             then(userSocialRepository).should().delete(userSocial);
             then(userSocialQueryRepository).should(never()).countByUserIdForUpdate(any());
         }
@@ -95,7 +95,7 @@ class UnlinkSocialAccountTests {
         @DisplayName("소셜 계정이 1개뿐이어도 비밀번호 있는 사용자는 해제 가능하다")
         void execute_withSingleSocial_succeeds() {
             // when & then
-            assertThatNoException().isThrownBy(() -> unlinkSocialAccount.execute(actor, request));
+            assertThatNoException().isThrownBy(() -> unlinkSocialAccount.execute(command()));
             then(userSocialRepository).should().delete(userSocial);
             then(userSocialQueryRepository).should(never()).countByUserIdForUpdate(any());
         }
@@ -119,7 +119,7 @@ class UnlinkSocialAccountTests {
             given(userSocialQueryRepository.countByUserIdForUpdate(1L)).willReturn(2L);
 
             // when & then
-            assertThatNoException().isThrownBy(() -> unlinkSocialAccount.execute(actor, request));
+            assertThatNoException().isThrownBy(() -> unlinkSocialAccount.execute(command()));
             then(userSocialRepository).should().delete(userSocial);
         }
 
@@ -130,7 +130,7 @@ class UnlinkSocialAccountTests {
             given(userSocialQueryRepository.countByUserIdForUpdate(1L)).willReturn(1L);
 
             // when & then
-            assertThatThrownBy(() -> unlinkSocialAccount.execute(actor, request))
+            assertThatThrownBy(() -> unlinkSocialAccount.execute(command()))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SOCIAL_UNLINK_NOT_ALLOWED);
             then(userSocialRepository).shouldHaveNoInteractions();

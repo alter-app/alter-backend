@@ -1,9 +1,8 @@
 package com.dreamteam.alter.application.user.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.user.dto.UnlinkSocialAccountRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.command.UnlinkSocialAccountCommand;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.entity.UserSocial;
 import com.dreamteam.alter.domain.user.port.inbound.UnlinkSocialAccountUseCase;
@@ -23,11 +22,11 @@ public class UnlinkSocialAccount implements UnlinkSocialAccountUseCase {
     private final UserSocialRepository userSocialRepository;
 
     @Override
-    public void execute(AppActor actor, UnlinkSocialAccountRequestDto request) {
-        User user = actor.getUser();
+    public void execute(UnlinkSocialAccountCommand command) {
+        User user = command.getUser();
 
         UserSocial userSocial = userSocialQueryRepository
-            .findByUserIdAndSocialProvider(user.getId(), request.getProvider())
+            .findByUserIdAndSocialProvider(user.getId(), command.getProvider())
             .orElseThrow(() -> new CustomException(ErrorCode.SOCIAL_ACCOUNT_NOT_LINKED));
 
         if (ObjectUtils.isEmpty(user.getPassword())) {

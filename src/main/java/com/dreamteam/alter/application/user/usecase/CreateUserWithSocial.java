@@ -3,15 +3,16 @@ package com.dreamteam.alter.application.user.usecase;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialAuthInfo;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.CreateUserWithSocialRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.SocialLoginRequestDto;
 import com.dreamteam.alter.adapter.outbound.user.persistence.SignupSessionCacheRepository;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
 import com.dreamteam.alter.common.constants.SignupSessionConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.auth.vo.SocialAuthRequest;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserWithSocialUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
+import com.dreamteam.alter.domain.user.vo.OauthToken;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
@@ -44,9 +45,12 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
         validateDuplication(request, contact, sessionIdKey);
 
         // 소셜 인증
-        SocialLoginRequestDto socialAuthRequest = new SocialLoginRequestDto(
+        OauthToken oauthToken = request.getOauthToken() != null
+            ? OauthToken.of(request.getOauthToken().getAccessToken(), request.getOauthToken().getRefreshToken())
+            : null;
+        SocialAuthRequest socialAuthRequest = new SocialAuthRequest(
             request.getProvider(),
-            request.getOauthToken(),
+            oauthToken,
             request.getAuthorizationCode(),
             request.getPlatformType()
         );

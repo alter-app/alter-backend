@@ -1,13 +1,13 @@
-package com.dreamteam.alter.adapter.inbound.general.user.controller;
+package com.dreamteam.alter.adapter.inbound.manager.social.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.SocialAccountStatusResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.mapper.SocialAccountStatusResponseMapper;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.LinkSocialAccountRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.user.mapper.LinkSocialAccountCommandMapper;
-import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.command.UnlinkSocialAccountCommand;
-import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.port.inbound.GetLinkedSocialAccountsUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.LinkSocialAccountUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.UnlinkSocialAccountUseCase;
@@ -16,14 +16,18 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/app/users/social")
+@RequestMapping("/manager/social")
+@PreAuthorize("hasAnyRole('MANAGER')")
 @RequiredArgsConstructor
-public class UserSocialController implements UserSocialControllerSpec {
+@Validated
+public class ManagerSocialController implements ManagerSocialControllerSpec {
 
     @Resource(name = "linkSocialAccount")
     private final LinkSocialAccountUseCase linkSocialAccount;
@@ -39,8 +43,8 @@ public class UserSocialController implements UserSocialControllerSpec {
     public ResponseEntity<CommonApiResponse<Void>> linkSocialAccount(
         @Valid @RequestBody LinkSocialAccountRequestDto request
     ) {
-        AppActor actor = AppActionContext.getInstance().getActor();
-        linkSocialAccount.execute(LinkSocialAccountCommandMapper.toCommand(actor.getUser(), request));
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        linkSocialAccount.execute(LinkSocialAccountCommandMapper.toCommand(actor.getManagerUser().getUser(), request));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -49,16 +53,16 @@ public class UserSocialController implements UserSocialControllerSpec {
     public ResponseEntity<CommonApiResponse<Void>> unlinkSocialAccount(
         @PathVariable SocialProvider provider
     ) {
-        AppActor actor = AppActionContext.getInstance().getActor();
-        unlinkSocialAccount.execute(UnlinkSocialAccountCommand.from(actor.getUser(), provider));
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        unlinkSocialAccount.execute(UnlinkSocialAccountCommand.from(actor.getManagerUser().getUser(), provider));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
     @Override
     @GetMapping("/status")
     public ResponseEntity<CommonApiResponse<List<SocialAccountStatusResponseDto>>> getLinkedSocialAccounts() {
-        AppActor actor = AppActionContext.getInstance().getActor();
-        List<SocialAccountStatusResponseDto> response = getLinkedSocialAccounts.execute(actor.getUser()).stream()
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        List<SocialAccountStatusResponseDto> response = getLinkedSocialAccounts.execute(actor.getManagerUser().getUser()).stream()
             .map(SocialAccountStatusResponseMapper::toResponse)
             .toList();
         return ResponseEntity.ok(CommonApiResponse.of(response));
