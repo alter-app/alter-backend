@@ -2,8 +2,8 @@ package com.dreamteam.alter.application.user.usecase;
 
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.GetLinkedSocialAccountsUseCase;
-import com.dreamteam.alter.domain.user.port.inbound.dto.SocialAccountStatusDto;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
+import com.dreamteam.alter.domain.user.result.SocialAccountStatusResult;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,12 +22,12 @@ public class GetLinkedSocialAccounts implements GetLinkedSocialAccountsUseCase {
     private final UserSocialQueryRepository userSocialQueryRepository;
 
     @Override
-    public List<SocialAccountStatusDto> execute(User user) {
+    public List<SocialAccountStatusResult> execute(User user) {
         Map<SocialProvider, LocalDateTime> linked = userSocialQueryRepository
-            .findLinkedSocialAccountsByUserId(user.getId());
+            .findLinkedSocialAccountsByUserId(user);
 
         return Arrays.stream(SocialProvider.values())
-            .map(provider -> SocialAccountStatusDto.of(
+            .map(provider -> new SocialAccountStatusResult(
                 provider,
                 linked.containsKey(provider),
                 linked.get(provider)

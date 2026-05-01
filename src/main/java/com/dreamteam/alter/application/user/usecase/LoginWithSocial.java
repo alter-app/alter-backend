@@ -4,9 +4,11 @@ import com.dreamteam.alter.adapter.inbound.general.auth.dto.SocialAuthInfo;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.SocialLoginRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
+import com.dreamteam.alter.domain.auth.vo.SocialAuthRequest;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.entity.UserSocial;
+import com.dreamteam.alter.domain.user.vo.OauthToken;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.application.auth.service.AuthService;
@@ -32,7 +34,16 @@ public class LoginWithSocial implements LoginWithSocialUseCase {
 
     @Override
     public GenerateTokenResponseDto execute(SocialLoginRequestDto request) {
-        SocialAuthInfo socialAuthInfo = socialAuthenticationManager.authenticate(request);
+        OauthToken oauthToken = request.getOauthToken() != null
+            ? OauthToken.of(request.getOauthToken().getAccessToken(), request.getOauthToken().getRefreshToken())
+            : null;
+        SocialAuthRequest socialAuthRequest = new SocialAuthRequest(
+            request.getProvider(),
+            oauthToken,
+            request.getAuthorizationCode(),
+            request.getPlatformType()
+        );
+        SocialAuthInfo socialAuthInfo = socialAuthenticationManager.authenticate(socialAuthRequest);
 
         UserSocial userSocial = userSocialQueryRepository.findBySocialProviderAndSocialId(
                 socialAuthInfo.getProvider(),
