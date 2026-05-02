@@ -1,7 +1,7 @@
 package com.dreamteam.alter.domain.email.port.inbound;
 
-import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificationCodeRequestDto;
+import com.dreamteam.alter.domain.email.command.SendEmailVerificationCodeCommand;
 
 public interface SendEmailVerificationCodeUseCase {
-    void execute(SendEmailVerificationCodeRequestDto request);
+    void execute(SendEmailVerificationCodeCommand command);
 }

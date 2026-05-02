@@ -1,11 +1,11 @@
 package com.dreamteam.alter.application.email.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.email.command.VerifyEmailVerificationCodeCommand;
 import com.dreamteam.alter.domain.email.port.inbound.VerifyEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
+import com.dreamteam.alter.domain.email.result.VerifyEmailVerificationCodeResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,9 +30,9 @@ public class VerifyEmailVerificationCode implements VerifyEmailVerificationCodeU
     private int maxAttempts;
 
     @Override
-    public VerifyEmailVerificationCodeResponseDto execute(VerifyEmailVerificationCodeRequestDto request) {
-        String email = request.getEmail();
-        String inputCode = request.getCode();
+    public VerifyEmailVerificationCodeResult execute(VerifyEmailVerificationCodeCommand command) {
+        String email = command.email();
+        String inputCode = command.code();
 
         // Find Code
         String storedCode = sessionStoreRepository.findCode(email)
@@ -56,6 +56,6 @@ public class VerifyEmailVerificationCode implements VerifyEmailVerificationCodeU
                 email, Duration.ofSeconds(verifiedTtlSeconds)
         );
 
-        return VerifyEmailVerificationCodeResponseDto.of(emailVerificationSessionId);
+        return new VerifyEmailVerificationCodeResult(emailVerificationSessionId);
     }
 }

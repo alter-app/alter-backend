@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.general.email.dto;
+package com.dreamteam.alter.adapter.inbound.manager.email.dto;
 
 import com.dreamteam.alter.domain.email.result.VerifyEmailVerificationCodeResult;
 import io.swagger.v3.oas.annotations.media.Schema;

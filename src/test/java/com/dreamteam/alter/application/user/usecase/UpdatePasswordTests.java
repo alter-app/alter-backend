@@ -1,9 +1,8 @@
 package com.dreamteam.alter.application.user.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.user.dto.UpdatePasswordRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
-import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.command.UpdatePasswordCommand;
 import com.dreamteam.alter.domain.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,14 +32,11 @@ class UpdatePasswordTests {
     @InjectMocks
     private UpdatePassword updatePassword;
 
-    private AppActor actor;
     private User user;
 
     @BeforeEach
     void setUp() {
         user = mock(User.class);
-        actor = mock(AppActor.class);
-        given(actor.getUser()).willReturn(user);
     }
 
     @Nested
@@ -56,12 +52,12 @@ class UpdatePasswordTests {
         @DisplayName("올바른 현재 비밀번호와 유효한 새 비밀번호로 변경 성공")
         void execute_withCorrectCurrentPassword_succeeds() {
             // given
-            UpdatePasswordRequestDto request = new UpdatePasswordRequestDto("currentPass1!", "newPass1!");
+            UpdatePasswordCommand command = new UpdatePasswordCommand(user, "currentPass1!", "newPass1!");
             given(passwordEncoder.matches("currentPass1!", "encodedCurrentPassword")).willReturn(true);
             given(passwordEncoder.encode("newPass1!")).willReturn("encodedNewPassword");
 
             // when & then
-            assertThatNoException().isThrownBy(() -> updatePassword.execute(actor, request));
+            assertThatNoException().isThrownBy(() -> updatePassword.execute(command));
             then(user).should().updatePassword("encodedNewPassword");
         }
 
@@ -69,11 +65,11 @@ class UpdatePasswordTests {
         @DisplayName("틀린 현재 비밀번호 입력 시 INVALID_CURRENT_PASSWORD 예외 발생")
         void execute_withWrongCurrentPassword_throwsException() {
             // given
-            UpdatePasswordRequestDto request = new UpdatePasswordRequestDto("wrongPass1!", "newPass1!");
+            UpdatePasswordCommand command = new UpdatePasswordCommand(user, "wrongPass1!", "newPass1!");
             given(passwordEncoder.matches("wrongPass1!", "encodedCurrentPassword")).willReturn(false);
 
             // when & then
-            assertThatThrownBy(() -> updatePassword.execute(actor, request))
+            assertThatThrownBy(() -> updatePassword.execute(command))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_CURRENT_PASSWORD);
             then(user).should(never()).updatePassword(anyString());
@@ -83,10 +79,10 @@ class UpdatePasswordTests {
         @DisplayName("현재 비밀번호를 null로 전송 시 INVALID_CURRENT_PASSWORD 예외 발생")
         void execute_withNullCurrentPassword_throwsException() {
             // given
-            UpdatePasswordRequestDto request = new UpdatePasswordRequestDto(null, "newPass1!");
+            UpdatePasswordCommand command = new UpdatePasswordCommand(user, null, "newPass1!");
 
             // when & then
-            assertThatThrownBy(() -> updatePassword.execute(actor, request))
+            assertThatThrownBy(() -> updatePassword.execute(command))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_CURRENT_PASSWORD);
             then(user).should(never()).updatePassword(anyString());
@@ -96,11 +92,11 @@ class UpdatePasswordTests {
         @DisplayName("유효하지 않은 새 비밀번호 형식으로 변경 시 INVALID_PASSWORD_FORMAT 예외 발생")
         void execute_withInvalidNewPasswordFormat_throwsException() {
             // given
-            UpdatePasswordRequestDto request = new UpdatePasswordRequestDto("currentPass1!", "short");
+            UpdatePasswordCommand command = new UpdatePasswordCommand(user, "currentPass1!", "short");
             given(passwordEncoder.matches("currentPass1!", "encodedCurrentPassword")).willReturn(true);
 
             // when & then
-            assertThatThrownBy(() -> updatePassword.execute(actor, request))
+            assertThatThrownBy(() -> updatePassword.execute(command))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PASSWORD_FORMAT);
             then(user).should(never()).updatePassword(anyString());
@@ -120,11 +116,11 @@ class UpdatePasswordTests {
         @DisplayName("currentPassword 없이 유효한 새 비밀번호만으로 설정 성공")
         void execute_withoutCurrentPassword_succeeds() {
             // given
-            UpdatePasswordRequestDto request = new UpdatePasswordRequestDto(null, "newPass1!");
+            UpdatePasswordCommand command = new UpdatePasswordCommand(user, null, "newPass1!");
             given(passwordEncoder.encode("newPass1!")).willReturn("encodedNewPassword");
 
             // when & then
-            assertThatNoException().isThrownBy(() -> updatePassword.execute(actor, request));
+            assertThatNoException().isThrownBy(() -> updatePassword.execute(command));
             then(user).should().updatePassword("encodedNewPassword");
             then(passwordEncoder).should(org.mockito.Mockito.never()).matches(anyString(), anyString());
         }
@@ -133,10 +129,10 @@ class UpdatePasswordTests {
         @DisplayName("유효하지 않은 새 비밀번호 형식으로 설정 시 INVALID_PASSWORD_FORMAT 예외 발생")
         void execute_withInvalidNewPasswordFormat_throwsException() {
             // given
-            UpdatePasswordRequestDto request = new UpdatePasswordRequestDto(null, "weak");
+            UpdatePasswordCommand command = new UpdatePasswordCommand(user, null, "weak");
 
             // when & then
-            assertThatThrownBy(() -> updatePassword.execute(actor, request))
+            assertThatThrownBy(() -> updatePassword.execute(command))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PASSWORD_FORMAT);
             then(user).should(never()).updatePassword(anyString());
