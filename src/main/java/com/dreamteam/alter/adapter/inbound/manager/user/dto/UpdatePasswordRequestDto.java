@@ -1,7 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -21,10 +20,4 @@ public class UpdatePasswordRequestDto {
     @Size(min = 8, max = 16)
     @Schema(description = "새 비밀번호 (8~16자, 영문·숫자·특수문자 각 1개 이상)", example = "newPass1!")
     private String newPassword;
-
-    @AssertTrue(message = "새 비밀번호는 현재 비밀번호와 달라야 합니다")
-    private boolean isNewPasswordDifferent() {
-        if (currentPassword == null || newPassword == null) return true;
-        return !currentPassword.equals(newPassword);
-    }
 }

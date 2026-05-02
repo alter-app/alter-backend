@@ -30,6 +30,11 @@ public class UpdatePassword implements UpdatePasswordUseCase {
             }
         }
 
+        if (ObjectUtils.isNotEmpty(command.currentPassword()) &&
+            command.currentPassword().equals(command.newPassword())) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "새 비밀번호는 현재 비밀번호와 달라야 합니다.");
+        }
+
         if (!PasswordValidator.isValid(command.newPassword())) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD_FORMAT);
         }
