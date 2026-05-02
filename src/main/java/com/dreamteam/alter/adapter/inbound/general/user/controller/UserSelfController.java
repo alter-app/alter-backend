@@ -9,6 +9,7 @@ import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.email.port.inbound.VerifyEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.command.UpdateNicknameCommand;
 import com.dreamteam.alter.domain.user.port.inbound.*;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -59,6 +60,9 @@ public class UserSelfController implements UserSelfControllerSpec {
 
     @Resource(name = "updatePassword")
     private final UpdatePasswordUseCase updatePassword;
+
+    @Resource(name = "updateNickname")
+    private final UpdateNicknameUseCase updateNickname;
 
     @Override
     @GetMapping
@@ -164,6 +168,16 @@ public class UserSelfController implements UserSelfControllerSpec {
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
         updatePassword.execute(actor, request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PutMapping("/nickname")
+    public ResponseEntity<CommonApiResponse<Void>> updateNickname(
+        @Valid @RequestBody UpdateNicknameRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        updateNickname.execute(new UpdateNicknameCommand(actor.getUser(), request.getNickname()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
