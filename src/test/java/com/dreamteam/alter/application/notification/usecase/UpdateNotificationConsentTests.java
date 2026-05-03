@@ -1,5 +1,7 @@
 package com.dreamteam.alter.application.notification.usecase;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.notification.command.UpdateNotificationConsentCommand;
 import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentQueryRepository;
@@ -15,15 +17,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -44,27 +47,22 @@ class UpdateNotificationConsentTests {
     class ExecuteTests {
 
         @Test
-        @DisplayName("레코드가 없을 때 createDefault 후 updateConsent 호출 + save 호출됨")
-        void createsDefaultAndSaves_whenNoRecordExists() {
+        @DisplayName("레코드가 없을 때 NOT_FOUND 예외를 던지고 save는 호출되지 않음")
+        void throwsNotFound_whenNoRecordExists() {
             // given
             User user = mock(User.class);
             UpdateNotificationConsentCommand command =
                 UpdateNotificationConsentCommand.of(user, true, false);
 
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.empty());
-            given(notificationConsentRepository.save(any(NotificationConsent.class)))
-                .willAnswer(invocation -> invocation.getArgument(0));
 
-            // when
-            updateNotificationConsent.execute(command);
+            // when & then
+            assertThatThrownBy(() -> updateNotificationConsent.execute(command))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NOT_FOUND);
 
-            // then
-            ArgumentCaptor<NotificationConsent> captor = ArgumentCaptor.forClass(NotificationConsent.class);
-            then(notificationConsentRepository).should().save(captor.capture());
-
-            NotificationConsent saved = captor.getValue();
-            assertThat(saved.isNotificationConsent()).isTrue();
-            assertThat(saved.isNightNotificationConsent()).isFalse();
+            then(notificationConsentRepository).should(never()).save(any(NotificationConsent.class));
         }
 
         @Test
@@ -75,9 +73,7 @@ class UpdateNotificationConsentTests {
             UpdateNotificationConsentCommand command =
                 UpdateNotificationConsentCommand.of(user, true, true);
 
-            NotificationConsent existing = NotificationConsent.createDefault(user);
-            ReflectionTestUtils.setField(existing, "notificationConsent", false);
-            ReflectionTestUtils.setField(existing, "nightNotificationConsent", false);
+            NotificationConsent existing = NotificationConsent.create(user, false, false);
 
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
             given(notificationConsentRepository.save(any(NotificationConsent.class)))
@@ -103,8 +99,7 @@ class UpdateNotificationConsentTests {
             UpdateNotificationConsentCommand command =
                 UpdateNotificationConsentCommand.of(user, true, false);
 
-            NotificationConsent existing = NotificationConsent.createDefault(user);
-            // both flags currently true
+            NotificationConsent existing = NotificationConsent.create(user, true, true);
 
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
             given(notificationConsentRepository.save(any(NotificationConsent.class)))
@@ -130,8 +125,7 @@ class UpdateNotificationConsentTests {
             UpdateNotificationConsentCommand command =
                 UpdateNotificationConsentCommand.of(user, false, false);
 
-            NotificationConsent existing = NotificationConsent.createDefault(user);
-            // both flags currently true
+            NotificationConsent existing = NotificationConsent.create(user, true, true);
 
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
             given(notificationConsentRepository.save(any(NotificationConsent.class)))

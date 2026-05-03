@@ -1,5 +1,7 @@
 package com.dreamteam.alter.application.notification.usecase;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.notification.command.GetNotificationConsentCommand;
 import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentQueryRepository;
@@ -14,11 +16,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -38,19 +40,18 @@ class GetNotificationConsentTests {
     class ExecuteTests {
 
         @Test
-        @DisplayName("레코드가 없을 때 기본값(notificationConsent=true, nightNotificationConsent=true) 반환")
-        void returnsDefaults_whenNoRecordExists() {
+        @DisplayName("레코드가 없을 때 NOT_FOUND 예외를 던짐")
+        void throwsNotFound_whenNoRecordExists() {
             // given
             User user = mock(User.class);
             GetNotificationConsentCommand command = GetNotificationConsentCommand.from(user);
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.empty());
 
-            // when
-            GetNotificationConsentResult result = getNotificationConsent.execute(command);
-
-            // then
-            assertThat(result.notificationConsent()).isTrue();
-            assertThat(result.nightNotificationConsent()).isTrue();
+            // when & then
+            assertThatThrownBy(() -> getNotificationConsent.execute(command))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NOT_FOUND);
         }
 
         @Test
@@ -60,8 +61,7 @@ class GetNotificationConsentTests {
             User user = mock(User.class);
             GetNotificationConsentCommand command = GetNotificationConsentCommand.from(user);
 
-            NotificationConsent consent = NotificationConsent.createDefault(user);
-            // createDefault already sets both to true
+            NotificationConsent consent = NotificationConsent.create(user, true, true);
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
 
             // when
@@ -79,8 +79,7 @@ class GetNotificationConsentTests {
             User user = mock(User.class);
             GetNotificationConsentCommand command = GetNotificationConsentCommand.from(user);
 
-            NotificationConsent consent = NotificationConsent.createDefault(user);
-            ReflectionTestUtils.setField(consent, "notificationConsent", false);
+            NotificationConsent consent = NotificationConsent.create(user, false, true);
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
 
             // when
@@ -98,8 +97,7 @@ class GetNotificationConsentTests {
             User user = mock(User.class);
             GetNotificationConsentCommand command = GetNotificationConsentCommand.from(user);
 
-            NotificationConsent consent = NotificationConsent.createDefault(user);
-            ReflectionTestUtils.setField(consent, "nightNotificationConsent", false);
+            NotificationConsent consent = NotificationConsent.create(user, true, false);
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
 
             // when
