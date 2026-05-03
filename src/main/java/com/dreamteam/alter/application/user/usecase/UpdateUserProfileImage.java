@@ -5,8 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dreamteam.alter.common.exception.CustomException;
-import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
@@ -27,9 +25,8 @@ public class UpdateUserProfileImage implements UpdateUserProfileImageUseCase {
 	@Override
 	public void execute(User user, String fileId) {
 		String targetId = user.getId().toString();
-		File file = fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.USER_PROFILE, targetId)
-			.orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
-		file.markDeleted();
+		fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.USER_PROFILE, targetId)
+			.ifPresent(File::markDeleted);
 
 		attachFiles.execute(
 			List.of(fileId),
