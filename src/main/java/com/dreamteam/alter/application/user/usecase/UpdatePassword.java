@@ -1,10 +1,9 @@
 package com.dreamteam.alter.application.user.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.user.dto.UpdatePasswordRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.util.PasswordValidator;
-import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.command.UpdatePasswordCommand;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.UpdatePasswordUseCase;
 import lombok.RequiredArgsConstructor;
@@ -21,20 +20,25 @@ public class UpdatePassword implements UpdatePasswordUseCase {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public void execute(AppActor actor, UpdatePasswordRequestDto request) {
-        User user = actor.getUser();
+    public void execute(UpdatePasswordCommand command) {
+        User user = command.user();
 
         if (ObjectUtils.isNotEmpty(user.getPassword())) {
-            if (ObjectUtils.isEmpty(request.getCurrentPassword()) ||
-                !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            if (ObjectUtils.isEmpty(command.currentPassword()) ||
+                !passwordEncoder.matches(command.currentPassword(), user.getPassword())) {
                 throw new CustomException(ErrorCode.INVALID_CURRENT_PASSWORD);
             }
         }
 
-        if (!PasswordValidator.isValid(request.getNewPassword())) {
+        if (ObjectUtils.isNotEmpty(command.currentPassword()) &&
+            command.currentPassword().equals(command.newPassword())) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "새 비밀번호는 현재 비밀번호와 달라야 합니다.");
+        }
+
+        if (!PasswordValidator.isValid(command.newPassword())) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD_FORMAT);
         }
 
-        user.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+        user.updatePassword(passwordEncoder.encode(command.newPassword()));
     }
 }

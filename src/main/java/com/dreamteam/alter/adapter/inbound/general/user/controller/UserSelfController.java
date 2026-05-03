@@ -6,8 +6,15 @@ import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerifica
 import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
 import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.domain.email.command.SendEmailVerificationCodeCommand;
+import com.dreamteam.alter.domain.email.command.VerifyEmailVerificationCodeCommand;
 import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.email.port.inbound.VerifyEmailVerificationCodeUseCase;
+import com.dreamteam.alter.domain.user.command.GetUserSelfInfoCommand;
+import com.dreamteam.alter.domain.user.command.RemoveEmailCommand;
+import com.dreamteam.alter.domain.user.command.UpdateEmailCommand;
+import com.dreamteam.alter.domain.user.command.UpdateNicknameCommand;
+import com.dreamteam.alter.domain.user.command.UpdatePasswordCommand;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.port.inbound.*;
 import jakarta.annotation.Resource;
@@ -60,12 +67,17 @@ public class UserSelfController implements UserSelfControllerSpec {
     @Resource(name = "updatePassword")
     private final UpdatePasswordUseCase updatePassword;
 
+    @Resource(name = "updateNickname")
+    private final UpdateNicknameUseCase updateNickname;
+
     @Override
     @GetMapping
     public ResponseEntity<CommonApiResponse<UserSelfInfoResponseDto>> getUserSelfInfo() {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        return ResponseEntity.ok(CommonApiResponse.of(getUserSelfInfo.execute(actor)));
+        return ResponseEntity.ok(CommonApiResponse.of(
+            UserSelfInfoResponseDto.from(getUserSelfInfo.execute(new GetUserSelfInfoCommand(actor.getUser())))
+        ));
     }
 
     @Override
@@ -127,7 +139,7 @@ public class UserSelfController implements UserSelfControllerSpec {
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        updateEmail.execute(actor, request);
+        updateEmail.execute(new UpdateEmailCommand(actor.getUser(), request.getSessionId()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -136,7 +148,7 @@ public class UserSelfController implements UserSelfControllerSpec {
     public ResponseEntity<CommonApiResponse<Void>> removeEmail() {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        removeEmail.execute(actor);
+        removeEmail.execute(new RemoveEmailCommand(actor.getUser()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -145,7 +157,7 @@ public class UserSelfController implements UserSelfControllerSpec {
     public ResponseEntity<CommonApiResponse<Void>> sendVerificationCode(
             @Valid @RequestBody SendEmailVerificationCodeRequestDto request
     ) {
-        sendEmailVerificationCode.execute(request);
+        sendEmailVerificationCode.execute(new SendEmailVerificationCodeCommand(request.getEmail()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -154,7 +166,11 @@ public class UserSelfController implements UserSelfControllerSpec {
     public ResponseEntity<CommonApiResponse<VerifyEmailVerificationCodeResponseDto>> verifyVerificationCode(
             @Valid @RequestBody VerifyEmailVerificationCodeRequestDto request
     ) {
-        return ResponseEntity.ok(CommonApiResponse.of(verifyEmailVerificationCode.execute(request)));
+        return ResponseEntity.ok(CommonApiResponse.of(
+            VerifyEmailVerificationCodeResponseDto.from(
+                verifyEmailVerificationCode.execute(new VerifyEmailVerificationCodeCommand(request.getEmail(), request.getCode()))
+            )
+        ));
     }
 
     @Override
@@ -163,7 +179,17 @@ public class UserSelfController implements UserSelfControllerSpec {
         @Valid @RequestBody UpdatePasswordRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        updatePassword.execute(actor, request);
+        updatePassword.execute(new UpdatePasswordCommand(actor.getUser(), request.getCurrentPassword(), request.getNewPassword()));
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PutMapping("/nickname")
+    public ResponseEntity<CommonApiResponse<Void>> updateNickname(
+        @Valid @RequestBody UpdateNicknameRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        updateNickname.execute(new UpdateNicknameCommand(actor.getUser(), request.getNickname()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

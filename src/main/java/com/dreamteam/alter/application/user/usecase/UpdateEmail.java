@@ -1,10 +1,9 @@
 package com.dreamteam.alter.application.user.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.user.dto.RegisterEmailRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
-import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.command.UpdateEmailCommand;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.UpdateEmailUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -21,14 +20,14 @@ public class UpdateEmail implements UpdateEmailUseCase {
     private final EmailVerificationSessionStoreRepository emailVerificationSessionStoreRepository;
 
     @Override
-    public void execute(AppActor actor, RegisterEmailRequestDto request) {
+    public void execute(UpdateEmailCommand command) {
 
         // 이메일 인증 세션 검증
         String verifiedEmail = emailVerificationSessionStoreRepository
-                .getEmailBySession(request.getSessionId())
+                .getEmailBySession(command.sessionId())
                 .orElseThrow(() -> new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이메일 인증 세션이 유효하지 않거나 만료되었습니다."));
 
-        User user = actor.getUser();
+        User user = command.user();
 
         // 현재 이메일과 동일하면 변경 불필요
         if (verifiedEmail.equals(user.getEmail())) {
@@ -44,6 +43,6 @@ public class UpdateEmail implements UpdateEmailUseCase {
         user.updateEmail(verifiedEmail);
 
         // 세션 삭제
-        emailVerificationSessionStoreRepository.deleteSession(request.getSessionId());
+        emailVerificationSessionStoreRepository.deleteSession(command.sessionId());
     }
 }

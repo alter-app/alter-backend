@@ -1,4 +1,4 @@
-package com.dreamteam.alter.adapter.inbound.general.user.dto;
+package com.dreamteam.alter.adapter.inbound.manager.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

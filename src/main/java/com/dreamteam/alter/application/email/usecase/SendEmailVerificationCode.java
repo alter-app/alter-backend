@@ -1,10 +1,10 @@
 package com.dreamteam.alter.application.email.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificationCodeRequestDto;
 import com.dreamteam.alter.application.email.event.EmailSendEvent;
 import com.dreamteam.alter.application.email.service.VerificationCodeGenerator;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.email.command.SendEmailVerificationCodeCommand;
 import com.dreamteam.alter.domain.email.entity.EmailSendLog;
 import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.email.port.outbound.EmailSendLogRepository;
@@ -37,8 +37,8 @@ public class SendEmailVerificationCode implements SendEmailVerificationCodeUseCa
 
 
     @Override
-    public void execute(SendEmailVerificationCodeRequestDto request) {
-        String email = request.getEmail();
+    public void execute(SendEmailVerificationCodeCommand command) {
+        String email = command.email();
 
         // 이메일 중복 확인
         if (userQueryRepository.findByEmail(email).isPresent()) {

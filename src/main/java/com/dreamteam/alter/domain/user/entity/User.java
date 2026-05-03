@@ -131,6 +131,10 @@ public class User {
         this.email = null;
     }
 
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
     public void addCertificate(UserCertificate userCertificate) {
         certificates.add(userCertificate);
     }
