@@ -60,6 +60,12 @@ public class UserSelfController implements UserSelfControllerSpec {
     @Resource(name = "updatePassword")
     private final UpdatePasswordUseCase updatePassword;
 
+    @Resource(name = "createUserProfileImage")
+    private final CreateUserProfileImageUseCase createUserProfileImage;
+
+    @Resource(name = "updateUserProfileImage")
+    private final UpdateUserProfileImageUseCase updateUserProfileImage;
+
     @Override
     @GetMapping
     public ResponseEntity<CommonApiResponse<UserSelfInfoResponseDto>> getUserSelfInfo() {
@@ -166,5 +172,26 @@ public class UserSelfController implements UserSelfControllerSpec {
         updatePassword.execute(actor, request);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
+
+    @Override
+    @PostMapping("/profile-image")
+    public ResponseEntity<CommonApiResponse<Void>> createProfileImage(
+        @Valid @RequestBody CreateUserProfileImageRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        createUserProfileImage.execute(actor.getUser(), request.getFileId());
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PutMapping("/profile-image")
+    public ResponseEntity<CommonApiResponse<Void>> updateProfileImage(
+        @Valid @RequestBody UpdateUserProfileImageRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        updateUserProfileImage.execute(actor.getUser(), request.getFileId());
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
 
 }
