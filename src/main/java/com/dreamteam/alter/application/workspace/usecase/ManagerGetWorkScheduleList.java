@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.GetManagerScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerScheduleResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,9 +25,10 @@ public class ManagerGetWorkScheduleList implements ManagerGetScheduleListUseCase
 
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
     private final WorkspaceQueryRepository workspaceQueryRepository;
+    private static final int MINIMUM_HOURLY_WAGE = 10_320;
 
     @Override
-    public List<ManagerScheduleResponseDto> execute(ManagerActor actor, Long workspaceId, int year, int month) {
+    public GetManagerScheduleResponseDto execute(ManagerActor actor, Long workspaceId, int year, int month) {
         // 워크스페이스 존재 확인
         Optional<Workspace> workspace = workspaceQueryRepository.findById(workspaceId);
         if (workspace.isEmpty()) {
@@ -39,9 +42,16 @@ public class ManagerGetWorkScheduleList implements ManagerGetScheduleListUseCase
 
         List<WorkspaceShift> shifts = workspaceShiftQueryRepository
             .findByManagerAndDateRange(actor.getManagerUser(), workspaceId, year, month);
-        
-        return shifts.stream()
+
+        double totalWorkHours = shifts.stream()
+            .mapToDouble(shift -> Duration.between(shift.getStartDateTime(), shift.getEndDateTime()).toMinutes() / 60.0)
+            .sum();
+        long estimatedLaborCost = Math.round(totalWorkHours * MINIMUM_HOURLY_WAGE);
+
+        List<ManagerScheduleResponseDto> scheduleDtos = shifts.stream()
             .map(ManagerScheduleResponseDto::of)
             .toList();
+
+        return GetManagerScheduleResponseDto.of(totalWorkHours, estimatedLaborCost, scheduleDtos);
     }
 }

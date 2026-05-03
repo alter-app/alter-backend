@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.inbound.manager.schedule.controller;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.AssignWorkerRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.CreateWorkScheduleRequestDto;
+import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.GetManagerScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerWorkScheduleInquiryRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerTodayScheduleResponseDto;
@@ -64,7 +65,7 @@ public class ManagerScheduleController implements ManagerScheduleControllerSpec 
 
     @Override
     @GetMapping
-    public ResponseEntity<CommonApiResponse<List<ManagerScheduleResponseDto>>> getScheduleList(
+    public ResponseEntity<CommonApiResponse<GetManagerScheduleResponseDto>> getScheduleList(
         ManagerWorkScheduleInquiryRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
