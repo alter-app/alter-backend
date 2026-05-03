@@ -101,6 +101,20 @@ class UpdatePasswordTests {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PASSWORD_FORMAT);
             then(user).should(never()).updatePassword(anyString());
         }
+
+        @Test
+        @DisplayName("현재 비밀번호와 동일한 새 비밀번호 입력 시 ILLEGAL_ARGUMENT 예외 발생")
+        void execute_withSameNewPassword_throwsIllegalArgument() {
+            // given
+            UpdatePasswordCommand command = new UpdatePasswordCommand(user, "currentPass1!", "currentPass1!");
+            given(passwordEncoder.matches("currentPass1!", "encodedCurrentPassword")).willReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> updatePassword.execute(command))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ILLEGAL_ARGUMENT);
+            then(user).should(never()).updatePassword(anyString());
+        }
     }
 
     @Nested
