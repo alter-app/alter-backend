@@ -6,6 +6,7 @@ import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificati
 import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UpdateNicknameRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -236,6 +237,27 @@ public interface UserSelfControllerSpec {
             ))
     })
     ResponseEntity<CommonApiResponse<Void>> updatePassword(@RequestBody @Valid UpdatePasswordRequestDto request);
+
+    @Operation(summary = "닉네임 변경")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "닉네임 변경 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "현재 닉네임과 동일",
+                        value = "{\"code\": \"B001\", \"message\": \"현재 닉네임과 동일합니다.\"}"
+                    ),
+                    @ExampleObject(
+                        name = "닉네임 중복",
+                        value = "{\"code\": \"A008\"}"
+                    )
+                }
+            ))
+    })
+    ResponseEntity<CommonApiResponse<Void>> updateNickname(@RequestBody @Valid UpdateNicknameRequestDto request);
 
     @Operation(
         summary = "프로필 이미지 등록",

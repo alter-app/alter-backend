@@ -1,19 +1,15 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
-import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.ManagerSelfInfoResponse;
-import com.dreamteam.alter.domain.file.entity.QFile;
-import com.dreamteam.alter.domain.file.type.FileStatus;
-import com.dreamteam.alter.domain.file.type.FileTargetType;
-import com.dreamteam.alter.domain.user.entity.ManagerUser;
-import com.dreamteam.alter.domain.user.entity.QManagerUser;
-import com.dreamteam.alter.domain.user.entity.QUser;
-import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
-import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
+import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.dreamteam.alter.domain.user.entity.ManagerUser;
+import com.dreamteam.alter.domain.user.entity.QManagerUser;
+import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,35 +25,6 @@ public class ManagerUserQueryRepositoryImpl implements ManagerUserQueryRepositor
             .selectFrom(qManagerUser)
             .where(qManagerUser.user.id.eq(userId))
             .fetchOne());
-    }
-
-    @Override
-    public Optional<ManagerSelfInfoResponse> getManagerSelfInfoSummary(Long managerId) {
-        QManagerUser qManagerUser = QManagerUser.managerUser;
-        QUser qUser = QUser.user;
-        QFile qFile = QFile.file;
-
-        ManagerSelfInfoResponse managerSelf = queryFactory.select(
-                Projections.constructor(
-                    ManagerSelfInfoResponse.class,
-                    qManagerUser.id,
-                    qUser.name,
-                    qUser.nickname,
-                    qManagerUser.createdAt,
-                    qFile.fileUrl
-                )
-            )
-            .from(qManagerUser)
-            .join(qManagerUser.user, qUser)
-            .leftJoin(qFile).on(
-                qFile.targetType.eq(FileTargetType.USER_PROFILE),
-                qFile.targetId.eq(qUser.id.stringValue()),
-                qFile.status.eq(FileStatus.ATTACHED)
-            )
-            .where(qManagerUser.id.eq(managerId))
-            .fetchOne();
-
-        return Optional.ofNullable(managerSelf);
     }
 
     @Override

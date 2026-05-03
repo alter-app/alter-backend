@@ -1,7 +1,7 @@
 package com.dreamteam.alter.domain.user.port.inbound;
 
-import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.user.command.RemoveEmailCommand;
 
 public interface RemoveEmailUseCase {
-    void execute(AppActor actor);
+    void execute(RemoveEmailCommand command);
 }

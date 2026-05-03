@@ -1,7 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.general.user.dto;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.reputation.SelfReputationSummaryDto;
-import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.UserSelfInfoResponse;
+import com.dreamteam.alter.domain.user.result.GetUserSelfInfoResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -38,14 +38,14 @@ public class UserSelfInfoResponseDto {
     @Schema(description = "자신의 평판 요약 정보")
     private SelfReputationSummaryDto reputationSummary;
 
-    public static UserSelfInfoResponseDto from(UserSelfInfoResponse entity) {
+    public static UserSelfInfoResponseDto from(GetUserSelfInfoResult result) {
         return UserSelfInfoResponseDto.builder()
-            .id(entity.getId())
-            .name(entity.getName())
-            .nickname(entity.getNickname())
-            .createdAt(entity.getCreatedAt())
-            .profileImageUrl(entity.getProfileImageUrl())
-            .reputationSummary(SelfReputationSummaryDto.from(entity.getReputationSummary()))
+            .id(result.id())
+            .name(result.name())
+            .nickname(result.nickname())
+            .createdAt(result.createdAt())
+            .profileImageUrl(result.profileImageUrl())
+            .reputationSummary(SelfReputationSummaryDto.from(result.reputationSummary()))
             .build();
     }
 

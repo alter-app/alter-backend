@@ -1,24 +1,61 @@
 package com.dreamteam.alter.adapter.inbound.general.user.controller;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificationCodeRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.CreateUserCertificateRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.CreateUserProfileImageRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.RegisterEmailRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UpdateNicknameRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UpdatePasswordRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UpdateUserCertificateRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UpdateUserProfileImageRequestDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UserSelfCertificateListResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UserSelfCertificateResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.user.dto.UserSelfInfoResponseDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.domain.email.command.SendEmailVerificationCodeCommand;
+import com.dreamteam.alter.domain.email.command.VerifyEmailVerificationCodeCommand;
 import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.email.port.inbound.VerifyEmailVerificationCodeUseCase;
+import com.dreamteam.alter.domain.user.command.GetUserSelfInfoCommand;
+import com.dreamteam.alter.domain.user.command.RemoveEmailCommand;
+import com.dreamteam.alter.domain.user.command.UpdateEmailCommand;
+import com.dreamteam.alter.domain.user.command.UpdateNicknameCommand;
+import com.dreamteam.alter.domain.user.command.UpdatePasswordCommand;
 import com.dreamteam.alter.domain.user.context.AppActor;
-import com.dreamteam.alter.domain.user.port.inbound.*;
+import com.dreamteam.alter.domain.user.port.inbound.AddUserCertificateUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.CreateUserProfileImageUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.DeleteUserProfileImageUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.DeleteUserSelfCertificateUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.GetUserSelfCertificateListUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.GetUserSelfCertificateUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.GetUserSelfInfoUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.RemoveEmailUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.UpdateEmailUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.UpdateNicknameUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.UpdatePasswordUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.UpdateUserProfileImageUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.UpdateUserSelfCertificateUseCase;
+
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/app/users/me")
@@ -60,6 +97,9 @@ public class UserSelfController implements UserSelfControllerSpec {
     @Resource(name = "updatePassword")
     private final UpdatePasswordUseCase updatePassword;
 
+    @Resource(name = "updateNickname")
+    private final UpdateNicknameUseCase updateNickname;
+
     @Resource(name = "createUserProfileImage")
     private final CreateUserProfileImageUseCase createUserProfileImage;
 
@@ -74,7 +114,9 @@ public class UserSelfController implements UserSelfControllerSpec {
     public ResponseEntity<CommonApiResponse<UserSelfInfoResponseDto>> getUserSelfInfo() {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        return ResponseEntity.ok(CommonApiResponse.of(getUserSelfInfo.execute(actor)));
+        return ResponseEntity.ok(CommonApiResponse.of(
+            UserSelfInfoResponseDto.from(getUserSelfInfo.execute(new GetUserSelfInfoCommand(actor.getUser())))
+        ));
     }
 
     @Override
@@ -136,7 +178,7 @@ public class UserSelfController implements UserSelfControllerSpec {
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        updateEmail.execute(actor, request);
+        updateEmail.execute(new UpdateEmailCommand(actor.getUser(), request.getSessionId()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -145,7 +187,7 @@ public class UserSelfController implements UserSelfControllerSpec {
     public ResponseEntity<CommonApiResponse<Void>> removeEmail() {
         AppActor actor = AppActionContext.getInstance().getActor();
 
-        removeEmail.execute(actor);
+        removeEmail.execute(new RemoveEmailCommand(actor.getUser()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -154,7 +196,7 @@ public class UserSelfController implements UserSelfControllerSpec {
     public ResponseEntity<CommonApiResponse<Void>> sendVerificationCode(
             @Valid @RequestBody SendEmailVerificationCodeRequestDto request
     ) {
-        sendEmailVerificationCode.execute(request);
+        sendEmailVerificationCode.execute(new SendEmailVerificationCodeCommand(request.getEmail()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -163,7 +205,11 @@ public class UserSelfController implements UserSelfControllerSpec {
     public ResponseEntity<CommonApiResponse<VerifyEmailVerificationCodeResponseDto>> verifyVerificationCode(
             @Valid @RequestBody VerifyEmailVerificationCodeRequestDto request
     ) {
-        return ResponseEntity.ok(CommonApiResponse.of(verifyEmailVerificationCode.execute(request)));
+        return ResponseEntity.ok(CommonApiResponse.of(
+            VerifyEmailVerificationCodeResponseDto.from(
+                verifyEmailVerificationCode.execute(new VerifyEmailVerificationCodeCommand(request.getEmail(), request.getCode()))
+            )
+        ));
     }
 
     @Override
@@ -172,7 +218,17 @@ public class UserSelfController implements UserSelfControllerSpec {
         @Valid @RequestBody UpdatePasswordRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        updatePassword.execute(actor, request);
+        updatePassword.execute(new UpdatePasswordCommand(actor.getUser(), request.getCurrentPassword(), request.getNewPassword()));
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PutMapping("/nickname")
+    public ResponseEntity<CommonApiResponse<Void>> updateNickname(
+        @Valid @RequestBody UpdateNicknameRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        updateNickname.execute(new UpdateNicknameCommand(actor.getUser(), request.getNickname()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

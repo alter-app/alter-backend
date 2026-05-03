@@ -5,6 +5,8 @@ import com.dreamteam.alter.adapter.inbound.general.email.dto.SendEmailVerificati
 import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.email.dto.VerifyEmailVerificationCodeResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.*;
+import com.dreamteam.alter.domain.email.command.SendEmailVerificationCodeCommand;
+import com.dreamteam.alter.domain.email.command.VerifyEmailVerificationCodeCommand;
 import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.email.port.inbound.VerifyEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.CreateSignupSessionUseCase;
@@ -153,7 +155,7 @@ public class UserPublicController implements UserPublicControllerSpec {
     public ResponseEntity<CommonApiResponse<Void>> sendSignupEmailVerificationCode(
         @Valid @RequestBody SendEmailVerificationCodeRequestDto request
     ) {
-        sendEmailVerificationCode.execute(request);
+        sendEmailVerificationCode.execute(new SendEmailVerificationCodeCommand(request.getEmail()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -162,6 +164,10 @@ public class UserPublicController implements UserPublicControllerSpec {
     public ResponseEntity<CommonApiResponse<VerifyEmailVerificationCodeResponseDto>> verifySignupEmailVerificationCode(
         @Valid @RequestBody VerifyEmailVerificationCodeRequestDto request
     ) {
-        return ResponseEntity.ok(CommonApiResponse.of(verifyEmailVerificationCode.execute(request)));
+        return ResponseEntity.ok(CommonApiResponse.of(
+            VerifyEmailVerificationCodeResponseDto.from(
+                verifyEmailVerificationCode.execute(new VerifyEmailVerificationCodeCommand(request.getEmail(), request.getCode()))
+            )
+        ));
     }
 }
