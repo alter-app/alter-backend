@@ -6,7 +6,9 @@ import com.dreamteam.alter.domain.user.command.UpdateNicknameCommand;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.UpdateNicknameUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UpdateNickname implements UpdateNicknameUseCase {
 
     private final UserQueryRepository userQueryRepository;
+    private final EntityManager entityManager;
 
     @Override
     public void execute(UpdateNicknameCommand command) {
@@ -31,6 +34,11 @@ public class UpdateNickname implements UpdateNicknameUseCase {
                 throw new CustomException(ErrorCode.NICKNAME_DUPLICATED);
             });
 
-        user.updateNickname(newNickname);
+        try {
+            user.updateNickname(newNickname);
+            entityManager.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new CustomException(ErrorCode.NICKNAME_DUPLICATED);
+        }
     }
 }
