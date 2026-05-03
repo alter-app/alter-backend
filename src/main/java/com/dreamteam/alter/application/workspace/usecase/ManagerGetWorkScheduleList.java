@@ -8,6 +8,7 @@ import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetScheduleListUseCase;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class ManagerGetWorkScheduleList implements ManagerGetScheduleListUseCase
             .findByManagerAndDateRange(actor.getManagerUser(), workspaceId, year, month);
 
         double totalWorkHours = shifts.stream()
+            .filter(shift -> shift.getStatus() != WorkspaceShiftStatus.CANCELLED)
             .mapToDouble(shift -> Duration.between(shift.getStartDateTime(), shift.getEndDateTime()).toMinutes() / 60.0)
             .sum();
         long estimatedLaborCost = Math.round(totalWorkHours * MINIMUM_HOURLY_WAGE);

@@ -8,6 +8,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetMyScheduleUseCase;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -67,6 +68,7 @@ public class GetMySchedule implements GetMyScheduleUseCase {
         }
 
         double totalWorkHours = shifts.stream()
+            .filter(shift -> shift.getStatus() != WorkspaceShiftStatus.CANCELLED)
             .mapToDouble(shift -> Duration.between(shift.getStartDateTime(), shift.getEndDateTime())
                 .toMinutes() / 60.0)
             .sum();
