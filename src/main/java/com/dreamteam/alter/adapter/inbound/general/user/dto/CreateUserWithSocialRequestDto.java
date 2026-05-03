@@ -58,6 +58,14 @@ public class CreateUserWithSocialRequestDto {
     @Schema(description = "생년월일", example = "YYYYMMDD")
     private String birthday;
 
+    @NotNull
+    @Schema(description = "알림 수신 동의 여부", example = "true")
+    private Boolean notificationConsent;
+
+    @NotNull
+    @Schema(description = "야간 알림 수신 동의 여부", example = "false")
+    private Boolean nightNotificationConsent;
+
     @AssertTrue(message = "WEB 플랫폼은 authorizationCode가 필수입니다")
     private boolean isWebPlatformValid() {
         if (platformType != PlatformType.WEB) return true;

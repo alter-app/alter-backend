@@ -34,11 +34,11 @@ public class NotificationConsent {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public static NotificationConsent createDefault(User user) {
+    public static NotificationConsent create(User user, boolean notificationConsent, boolean nightNotificationConsent) {
         return NotificationConsent.builder()
             .user(user)
-            .notificationConsent(true)
-            .nightNotificationConsent(true)
+            .notificationConsent(notificationConsent)
+            .nightNotificationConsent(nightNotificationConsent)
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now())
             .build();

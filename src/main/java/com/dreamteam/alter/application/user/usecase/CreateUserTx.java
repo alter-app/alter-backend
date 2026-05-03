@@ -31,7 +31,9 @@ public class CreateUserTx {
     public GenerateTokenResponseDto process(
         CreateUserRequestDto request,
         String contact,
-        String verifiedEmail
+        String verifiedEmail,
+        boolean notificationConsent,
+        boolean nightNotificationConsent
     ) {
         // 사용자 생성
         User user = userRepository.save(User.create(
@@ -44,7 +46,7 @@ public class CreateUserTx {
             verifiedEmail
         ));
 
-        notificationConsentRepository.save(NotificationConsent.createDefault(user));
+        notificationConsentRepository.save(NotificationConsent.create(user, notificationConsent, nightNotificationConsent));
 
         Authorization authorization = authService.generateAuthorization(user, TokenScope.APP);
         authLogRepository.save(AuthLog.create(user, authorization, AuthLogType.LOGIN));

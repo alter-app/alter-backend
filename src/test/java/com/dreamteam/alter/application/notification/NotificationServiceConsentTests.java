@@ -23,7 +23,6 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -69,10 +68,7 @@ class NotificationServiceConsentTests {
 
     // ── NotificationConsent 헬퍼 ──────────────────────────────────────────
     private NotificationConsent consentWith(boolean notificationConsent, boolean nightNotificationConsent) {
-        NotificationConsent consent = NotificationConsent.createDefault(user);
-        ReflectionTestUtils.setField(consent, "notificationConsent", notificationConsent);
-        ReflectionTestUtils.setField(consent, "nightNotificationConsent", nightNotificationConsent);
-        return consent;
+        return NotificationConsent.create(user, notificationConsent, nightNotificationConsent);
     }
 
     // ── 고정 시각을 반환하는 ZonedDateTime mock 헬퍼 ──────────────────────
@@ -193,9 +189,8 @@ class NotificationServiceConsentTests {
                 .willReturn(List.of(consentingToken, nonConsentingToken));
 
             // findByUsers 배치 응답: consentingUser는 동의, nonConsentingUser는 미동의
-            NotificationConsent consentingConsent = NotificationConsent.createDefault(consentingUser);
-            NotificationConsent nonConsentingConsent = NotificationConsent.createDefault(nonConsentingUser);
-            ReflectionTestUtils.setField(nonConsentingConsent, "notificationConsent", false);
+            NotificationConsent consentingConsent = NotificationConsent.create(consentingUser, true, true);
+            NotificationConsent nonConsentingConsent = NotificationConsent.create(nonConsentingUser, false, true);
             given(notificationConsentQueryRepository.findByUsers(anyList()))
                 .willReturn(List.of(consentingConsent, nonConsentingConsent));
 

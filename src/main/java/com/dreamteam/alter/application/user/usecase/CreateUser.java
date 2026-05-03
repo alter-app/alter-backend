@@ -50,7 +50,11 @@ public class CreateUser implements CreateUserUseCase {
         String verifiedEmail = resolveVerifiedEmail(request);
 
         // 사용자 엔티티 저장
-        GenerateTokenResponseDto response = createUserTx.process(request, contact, verifiedEmail);
+        GenerateTokenResponseDto response = createUserTx.process(
+            request, contact, verifiedEmail,
+            request.getNotificationConsent(),
+            request.getNightNotificationConsent()
+        );
 
         // 회원가입 세션 삭제
         String contactKey = SignupSessionConstants.Session.CONTACT_INDEX_KEY_PREFIX + contact;

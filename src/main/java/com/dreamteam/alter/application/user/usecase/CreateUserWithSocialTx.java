@@ -31,7 +31,9 @@ public class CreateUserWithSocialTx {
     public GenerateTokenResponseDto process(
         String contact,
         CreateUserWithSocialRequestDto request,
-        SocialAuthInfo socialAuthInfo
+        SocialAuthInfo socialAuthInfo,
+        boolean notificationConsent,
+        boolean nightNotificationConsent
     ) {
         // 사용자 생성
         User user = userRepository.save(User.createWithSocial(
@@ -43,7 +45,7 @@ public class CreateUserWithSocialTx {
             socialAuthInfo.getEmail()
         ));
 
-        notificationConsentRepository.save(NotificationConsent.createDefault(user));
+        notificationConsentRepository.save(NotificationConsent.create(user, notificationConsent, nightNotificationConsent));
 
         // 소셜 계정 연동
         UserSocial userSocial = UserSocial.create(

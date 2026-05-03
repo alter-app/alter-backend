@@ -73,7 +73,11 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
         }
 
         // 사용자 및 소셜 계정 엔티티 저장
-        GenerateTokenResponseDto response = createUserWithSocialTx.process(contact, request, socialAuthInfo);
+        GenerateTokenResponseDto response = createUserWithSocialTx.process(
+            contact, request, socialAuthInfo,
+            request.getNotificationConsent(),
+            request.getNightNotificationConsent()
+        );
 
         // 회원가입 세션 삭제
         String contactKey = SignupSessionConstants.Session.CONTACT_INDEX_KEY_PREFIX + contact;

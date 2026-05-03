@@ -50,4 +50,12 @@ public class CreateUserRequestDto {
     @Schema(description = "생년월일", example = "YYYYMMDD")
     private String birthday;
 
+    @NotNull
+    @Schema(description = "알림 수신 동의 여부", example = "true")
+    private Boolean notificationConsent;
+
+    @NotNull
+    @Schema(description = "야간 알림 수신 동의 여부", example = "false")
+    private Boolean nightNotificationConsent;
+
 }
