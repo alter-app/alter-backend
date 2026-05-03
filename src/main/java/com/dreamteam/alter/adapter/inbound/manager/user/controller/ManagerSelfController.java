@@ -15,7 +15,6 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.manager.email.dto.SendEmailVerificationCodeRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.email.dto.VerifyEmailVerificationCodeRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.email.dto.VerifyEmailVerificationCodeResponseDto;
-import com.dreamteam.alter.adapter.inbound.manager.user.dto.CreateManagerProfileImageRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.user.dto.ManagerSelfInfoResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.user.dto.RegisterEmailRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.user.dto.UpdateManagerProfileImageRequestDto;
@@ -33,7 +32,6 @@ import com.dreamteam.alter.domain.user.command.UpdateNicknameCommand;
 import com.dreamteam.alter.domain.user.command.UpdatePasswordCommand;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.User;
-import com.dreamteam.alter.domain.user.port.inbound.CreateUserProfileImageUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.DeleteUserProfileImageUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.GetUserSelfInfoUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.RemoveEmailUseCase;
@@ -73,9 +71,6 @@ public class ManagerSelfController implements ManagerSelfControllerSpec {
 
     @Resource(name = "updateNickname")
     private final UpdateNicknameUseCase updateNickname;
-
-    @Resource(name = "createUserProfileImage")
-    private final CreateUserProfileImageUseCase createUserProfileImage;
 
     @Resource(name = "updateUserProfileImage")
     private final UpdateUserProfileImageUseCase updateUserProfileImage;
@@ -145,15 +140,6 @@ public class ManagerSelfController implements ManagerSelfControllerSpec {
         @Valid @RequestBody UpdateNicknameRequestDto request
     ) {
         updateNickname.execute(new UpdateNicknameCommand(currentUser(), request.getNickname()));
-        return ResponseEntity.ok(CommonApiResponse.empty());
-    }
-
-    @Override
-    @PostMapping("/profile-image")
-    public ResponseEntity<CommonApiResponse<Void>> createProfileImage(
-        @Valid @RequestBody CreateManagerProfileImageRequestDto request
-    ) {
-        createUserProfileImage.execute(currentUser(), request.getFileId());
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
