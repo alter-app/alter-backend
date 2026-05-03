@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.inbound.manager.user.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -17,6 +18,7 @@ import com.dreamteam.alter.adapter.inbound.manager.user.dto.UpdateManagerProfile
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserProfileImageUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.DeleteUserProfileImageUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.GetManagerSelfInfoUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.UpdateUserProfileImageUseCase;
 
@@ -39,6 +41,9 @@ public class ManagerSelfController implements ManagerSelfControllerSpec {
 
     @Resource(name = "updateUserProfileImage")
     private final UpdateUserProfileImageUseCase updateUserProfileImage;
+
+    @Resource(name = "deleteUserProfileImage")
+    private final DeleteUserProfileImageUseCase deleteUserProfileImage;
 
     @Override
     @GetMapping
@@ -65,6 +70,14 @@ public class ManagerSelfController implements ManagerSelfControllerSpec {
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
         updateUserProfileImage.execute(actor.getManagerUser().getUser(), request.getFileId());
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @DeleteMapping("/profile-image")
+    public ResponseEntity<CommonApiResponse<Void>> deleteProfileImage() {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        deleteUserProfileImage.execute(actor.getManagerUser().getUser());
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }

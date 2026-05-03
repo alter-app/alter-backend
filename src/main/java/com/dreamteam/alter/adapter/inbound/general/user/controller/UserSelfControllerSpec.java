@@ -334,4 +334,23 @@ public interface UserSelfControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> updateProfileImage(@RequestBody @Valid UpdateUserProfileImageRequestDto request);
+
+    @Operation(
+        summary = "프로필 이미지 삭제",
+        description = "본인 계정의 현재 프로필 이미지를 삭제 상태로 변경합니다."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "프로필 이미지 삭제 성공"),
+        @ApiResponse(responseCode = "404", description = "존재하지 않는 파일",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "현재 연결된 프로필 이미지 없음",
+                        value = "{\"code\" : \"B021\"}"
+                    )
+                }))
+    })
+    ResponseEntity<CommonApiResponse<Void>> deleteProfileImage();
 }

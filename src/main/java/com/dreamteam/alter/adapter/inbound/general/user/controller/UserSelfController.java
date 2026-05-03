@@ -66,6 +66,9 @@ public class UserSelfController implements UserSelfControllerSpec {
     @Resource(name = "updateUserProfileImage")
     private final UpdateUserProfileImageUseCase updateUserProfileImage;
 
+    @Resource(name = "deleteUserProfileImage")
+    private final DeleteUserProfileImageUseCase deleteUserProfileImage;
+
     @Override
     @GetMapping
     public ResponseEntity<CommonApiResponse<UserSelfInfoResponseDto>> getUserSelfInfo() {
@@ -193,5 +196,11 @@ public class UserSelfController implements UserSelfControllerSpec {
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
-
+    @Override
+    @DeleteMapping("/profile-image")
+    public ResponseEntity<CommonApiResponse<Void>> deleteProfileImage() {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        deleteUserProfileImage.execute(actor.getUser());
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
 }
