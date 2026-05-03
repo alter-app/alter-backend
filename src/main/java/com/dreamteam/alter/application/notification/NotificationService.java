@@ -6,6 +6,8 @@ import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.UserFcmDev
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.notification.entity.Notification;
+import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
+import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentQueryRepository;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationRepository;
 import com.dreamteam.alter.domain.user.entity.FcmDeviceToken;
 import com.dreamteam.alter.domain.user.entity.User;
@@ -24,6 +26,8 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +46,20 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserQueryRepository userQueryRepository;
     private final EntityManager entityManager;
+    private final NotificationConsentQueryRepository notificationConsentQueryRepository;
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
+    boolean isNightTime() {
+        int hour = ZonedDateTime.now(KST).getHour();
+        return hour >= 21 || hour < 8;
+    }
+
+    private boolean shouldSendNotification(User user) {
+        return notificationConsentQueryRepository.findByUser(user)
+            .map(c -> c.isNotificationConsent() && (c.isNightNotificationConsent() || !isNightTime()))
+            .orElse(true);
+    }
 
     public void saveOrUpdateUserDeviceToken(User user, String deviceToken, DevicePlatformType devicePlatformType) {
         Optional<FcmDeviceToken> existingDeviceTokenByUser =
@@ -127,13 +145,26 @@ public class NotificationService {
             .toList();
         notificationRepository.saveAll(notifications);
 
+        // 수신 동의 기반 디바이스 토큰 필터링
+        Map<Long, NotificationConsent> consentMap = notificationConsentQueryRepository.findByUsers(users)
+            .stream()
+            .collect(Collectors.toMap(c -> c.getUser().getId(), c -> c));
+
+        List<FcmDeviceToken> eligibleTokens = deviceTokens.stream()
+            .filter(dt -> {
+                NotificationConsent consent = consentMap.get(dt.getUser().getId());
+                if (consent == null) return true;
+                return consent.isNotificationConsent() && (consent.isNightNotificationConsent() || !isNightTime());
+            })
+            .toList();
+
         // 4. FCM 배치 발송
-        if (deviceTokens.isEmpty()) {
+        if (eligibleTokens.isEmpty()) {
             return;
         }
 
         try {
-            List<String> deviceTokenStrings = deviceTokens.stream()
+            List<String> deviceTokenStrings = eligibleTokens.stream()
                 .map(FcmDeviceToken::getDeviceToken)
                 .toList();
 
@@ -142,7 +173,7 @@ public class NotificationService {
             );
 
             // 5. 결과 처리
-            processBatchResponse(response, deviceTokens);
+            processBatchResponse(response, eligibleTokens);
 
         } catch (FirebaseMessagingException e) {
             log.error("FCM 다중 알림 발송 실패: {}", e.getMessage(), e);
@@ -198,6 +229,11 @@ public class NotificationService {
             return;
         }
 
+        if (!shouldSendNotification(user)) {
+            log.debug("알림 수신 동의 거부로 FCM 발송 건너뜀. userId={}", userId);
+            return;
+        }
+
         sendFcmNotification(user, title, body, false);
     }
 
@@ -209,6 +245,11 @@ public class NotificationService {
      * @param throwOnError 발송 실패 시 예외 throw 여부
      */
     private void sendFcmNotification(User user, String title, String body, boolean throwOnError) {
+        if (!shouldSendNotification(user)) {
+            log.debug("알림 수신 동의 거부로 FCM 발송 건너뜀. userId={}", user.getId());
+            return;
+        }
+
         // 디바이스 토큰 조회
         Optional<FcmDeviceToken> deviceTokenOpt = userFCMDeviceTokenQueryRepository.findByUser(user);
         if (deviceTokenOpt.isEmpty()) {

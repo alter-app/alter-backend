@@ -8,6 +8,8 @@ import com.dreamteam.alter.domain.auth.entity.Authorization;
 import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
 import com.dreamteam.alter.domain.auth.type.AuthLogType;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
+import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentRepository;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class CreateUserTx {
     private final AuthService authService;
     private final PasswordEncoder passwordEncoder;
     private final AuthLogRepository authLogRepository;
+    private final NotificationConsentRepository notificationConsentRepository;
 
     @Transactional
     public GenerateTokenResponseDto process(
@@ -40,6 +43,8 @@ public class CreateUserTx {
             request.getBirthday(),
             verifiedEmail
         ));
+
+        notificationConsentRepository.save(NotificationConsent.createDefault(user));
 
         Authorization authorization = authService.generateAuthorization(user, TokenScope.APP);
         authLogRepository.save(AuthLog.create(user, authorization, AuthLogType.LOGIN));
