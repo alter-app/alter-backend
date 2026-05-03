@@ -1,6 +1,9 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
 import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.UserSelfInfoResponse;
+import com.dreamteam.alter.domain.file.entity.QFile;
+import com.dreamteam.alter.domain.file.type.FileStatus;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.reputation.entity.QReputationSummary;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.entity.QUser;
@@ -82,6 +85,7 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
     public Optional<UserSelfInfoResponse> getUserSelfInfoSummary(Long id) {
         QUser qUser = QUser.user;
         QReputationSummary qReputationSummary = QReputationSummary.reputationSummary;
+        QFile qFile = QFile.file;
 
         UserSelfInfoResponse userSelf = queryFactory.select(
                 Projections.constructor(
@@ -90,6 +94,7 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
                     qUser.name,
                     qUser.nickname,
                     qUser.createdAt,
+                    qFile.fileUrl,
                     qReputationSummary
                 )
             )
@@ -97,6 +102,11 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
             .leftJoin(qReputationSummary).on(
                 qReputationSummary.targetType.eq(ReputationType.USER),
                 qReputationSummary.targetId.eq(qUser.id)
+            )
+            .leftJoin(qFile).on(
+                qFile.targetType.eq(FileTargetType.USER_PROFILE),
+                qFile.targetId.eq(qUser.id.stringValue()),
+                qFile.status.eq(FileStatus.ATTACHED)
             )
             .where(
                 qUser.id.eq(id),

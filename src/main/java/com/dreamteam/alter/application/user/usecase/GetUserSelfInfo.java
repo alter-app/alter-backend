@@ -27,6 +27,7 @@ public class GetUserSelfInfo implements GetUserSelfInfoUseCase {
             response.getId(),
             response.getName(),
             response.getNickname(),
+            response.getProfileImageUrl(),
             response.getCreatedAt(),
             response.getReputationSummary()
         );

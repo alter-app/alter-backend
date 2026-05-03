@@ -8,6 +8,7 @@ public record GetUserSelfInfoResult(
     Long id,
     String name,
     String nickname,
+	String profileImageUrl,
     LocalDateTime createdAt,
     ReputationSummary reputationSummary
 ) {

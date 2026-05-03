@@ -32,6 +32,9 @@ public class UserSelfInfoResponseDto {
     @Schema(description = "가입일", example = "2023-10-01T12:00:00")
     private LocalDateTime createdAt;
 
+    @Schema(description = "프로필 이미지 URL", example = "https://alter-public.s3.ap-northeast-2.amazonaws.com/user_profile/example.png")
+    private String profileImageUrl;
+
     @Schema(description = "자신의 평판 요약 정보")
     private SelfReputationSummaryDto reputationSummary;
 
@@ -41,6 +44,7 @@ public class UserSelfInfoResponseDto {
             .name(result.name())
             .nickname(result.nickname())
             .createdAt(result.createdAt())
+            .profileImageUrl(result.profileImageUrl())
             .reputationSummary(SelfReputationSummaryDto.from(result.reputationSummary()))
             .build();
     }

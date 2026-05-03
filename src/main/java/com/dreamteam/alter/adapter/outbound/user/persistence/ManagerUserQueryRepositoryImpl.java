@@ -1,13 +1,15 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
+import java.util.Optional;
+
+import org.springframework.stereotype.Repository;
+
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.QManagerUser;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor

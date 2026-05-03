@@ -27,6 +27,9 @@ public class ManagerSelfInfoResponseDto {
     @Schema(description = "매니저 닉네임", example = "김땡땡")
     private String nickname;
 
+    @Schema(description = "프로필 이미지 URL", example = "https://alter-public.s3.ap-northeast-2.amazonaws.com/user_profile/example.png")
+    private String profileImageUrl;
+
     @NotNull
     @Schema(description = "가입일", example = "2023-10-01T12:00:00")
     private LocalDateTime createdAt;
@@ -36,6 +39,7 @@ public class ManagerSelfInfoResponseDto {
             .id(result.id())
             .name(result.name())
             .nickname(result.nickname())
+            .profileImageUrl(result.profileImageUrl())
             .createdAt(result.createdAt())
             .build();
     }
