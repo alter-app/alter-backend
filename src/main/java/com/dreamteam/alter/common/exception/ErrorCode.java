@@ -57,6 +57,11 @@ public enum ErrorCode {
     EXTERNAL_API_ERROR(502, "C002", "외부 API 연동에 실패했습니다."),
     FILE_UPLOAD_FAILED(500, "C003", "파일 업로드에 실패했습니다."),
     FILE_DELETE_FAILED(500, "C004", "파일 삭제에 실패했습니다."),
+
+    TERMS_NOT_FOUND(400, "T001", "존재하지 않는 약관입니다."),
+    TERMS_NOT_EDITABLE(400, "T002", "DRAFT 상태의 약관만 수정할 수 있습니다."),
+    TERMS_ALREADY_PUBLISHED(400, "T003", "이미 게시된 약관입니다."),
+    TERMS_NOT_PUBLISHABLE(400, "T004", "DRAFT 상태의 약관만 게시할 수 있습니다."),
     ;
 
     private final int status;
