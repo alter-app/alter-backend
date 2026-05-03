@@ -79,7 +79,7 @@ class AdminPublishTermsTest {
         assertThatThrownBy(() -> adminPublishTerms.execute(999L, actor))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.TERMS_NOT_FOUND);
+                .isEqualTo(ErrorCode.NOT_FOUND);
     }
 
     @Test
@@ -94,7 +94,7 @@ class AdminPublishTermsTest {
         assertThatThrownBy(() -> adminPublishTerms.execute(1L, actor))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.TERMS_NOT_PUBLISHABLE);
+                .isEqualTo(ErrorCode.CONFLICT);
     }
 
     @Test
@@ -110,6 +110,6 @@ class AdminPublishTermsTest {
         assertThatThrownBy(() -> adminPublishTerms.execute(1L, actor))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.TERMS_NOT_PUBLISHABLE);
+                .isEqualTo(ErrorCode.CONFLICT);
     }
 }

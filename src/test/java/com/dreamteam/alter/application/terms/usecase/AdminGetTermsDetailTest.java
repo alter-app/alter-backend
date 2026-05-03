@@ -59,7 +59,7 @@ class AdminGetTermsDetailTest {
         assertThatThrownBy(() -> adminGetTermsDetail.execute(999L, actor))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.TERMS_NOT_FOUND);
+                .isEqualTo(ErrorCode.NOT_FOUND);
     }
 
     @Test
@@ -74,6 +74,6 @@ class AdminGetTermsDetailTest {
         assertThatThrownBy(() -> adminGetTermsDetail.execute(1L, actor))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.TERMS_NOT_FOUND);
+                .isEqualTo(ErrorCode.NOT_FOUND);
     }
 }

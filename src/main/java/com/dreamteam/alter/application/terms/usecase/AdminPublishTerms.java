@@ -23,10 +23,10 @@ public class AdminPublishTerms implements AdminPublishTermsUseCase {
     @Override
     public void execute(Long id, AdminActor actor) {
         Terms terms = termsRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.TERMS_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         if (terms.getStatus() != TermsStatus.DRAFT) {
-            throw new CustomException(ErrorCode.TERMS_NOT_PUBLISHABLE);
+            throw new CustomException(ErrorCode.CONFLICT);
         }
 
         termsQueryRepository.findPublishedByType(terms.getType().name())

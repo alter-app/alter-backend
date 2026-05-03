@@ -64,7 +64,7 @@ public interface AdminTermsControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "존재하지 않는 약관",
-                        value = "{\"code\" : \"T001\"}"
+                        value = "{\"code\" : \"B019\"}"
                     )
                 }))
     })
@@ -82,11 +82,11 @@ public interface AdminTermsControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "존재하지 않는 약관",
-                        value = "{\"code\" : \"T001\"}"
+                        value = "{\"code\" : \"B019\"}"
                     ),
                     @ExampleObject(
                         name = "수정 불가 상태 (DRAFT가 아님)",
-                        value = "{\"code\" : \"T002\"}"
+                        value = "{\"code\" : \"B020\"}"
                     )
                 }))
     })
@@ -105,11 +105,11 @@ public interface AdminTermsControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "존재하지 않는 약관",
-                        value = "{\"code\" : \"T001\"}"
+                        value = "{\"code\" : \"B019\"}"
                     ),
                     @ExampleObject(
                         name = "게시 불가 상태 (DRAFT가 아님)",
-                        value = "{\"code\" : \"T004\"}"
+                        value = "{\"code\" : \"B020\"}"
                     )
                 }))
     })

@@ -61,7 +61,7 @@ class AdminUpdateTermsTest {
         assertThatThrownBy(() -> adminUpdateTerms.execute(999L, request, actor))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.TERMS_NOT_FOUND);
+                .isEqualTo(ErrorCode.NOT_FOUND);
     }
 
     @Test
@@ -79,7 +79,7 @@ class AdminUpdateTermsTest {
         assertThatThrownBy(() -> adminUpdateTerms.execute(1L, request, actor))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.TERMS_NOT_EDITABLE);
+                .isEqualTo(ErrorCode.CONFLICT);
     }
 
     @Test
@@ -98,6 +98,6 @@ class AdminUpdateTermsTest {
         assertThatThrownBy(() -> adminUpdateTerms.execute(1L, request, actor))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.TERMS_NOT_EDITABLE);
+                .isEqualTo(ErrorCode.CONFLICT);
     }
 }

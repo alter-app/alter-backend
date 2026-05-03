@@ -22,10 +22,10 @@ public class AdminUpdateTerms implements AdminUpdateTermsUseCase {
     @Override
     public void execute(Long id, AdminUpdateTermsRequestDto request, AdminActor actor) {
         Terms terms = termsRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.TERMS_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         if (terms.getStatus() != TermsStatus.DRAFT) {
-            throw new CustomException(ErrorCode.TERMS_NOT_EDITABLE);
+            throw new CustomException(ErrorCode.CONFLICT);
         }
 
         terms.update(request.getTitle(), request.getNotionUrl(), request.isRequired());

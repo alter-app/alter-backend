@@ -23,7 +23,7 @@ public class AdminGetTermsDetail implements AdminGetTermsDetailUseCase {
     public AdminTermsDetailResponseDto execute(Long id, AdminActor actor) {
         Terms terms = termsRepository.findById(id)
                 .filter(t -> t.getStatus() != TermsStatus.DELETED)
-                .orElseThrow(() -> new CustomException(ErrorCode.TERMS_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         return AdminTermsDetailResponseDto.from(terms);
     }
