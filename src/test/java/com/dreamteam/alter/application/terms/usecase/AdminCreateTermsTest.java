@@ -1,0 +1,45 @@
+package com.dreamteam.alter.application.terms.usecase;
+
+import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminCreateTermsRequestDto;
+import com.dreamteam.alter.domain.terms.entity.Terms;
+import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
+import com.dreamteam.alter.domain.user.context.AdminActor;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class AdminCreateTermsTest {
+
+    @Mock
+    private TermsRepository termsRepository;
+
+    @InjectMocks
+    private AdminCreateTerms adminCreateTerms;
+
+    @Test
+    void 유효한_요청으로_약관_생성_후_id_반환() {
+        // given
+        AdminCreateTermsRequestDto request = new AdminCreateTermsRequestDto(
+                "SERVICE", "v1.0", "서비스 이용약관", "https://notion.so/terms", true
+        );
+        AdminActor actor = mock(AdminActor.class);
+
+        Terms savedTerms = mock(Terms.class);
+        when(savedTerms.getId()).thenReturn(1L);
+        when(termsRepository.save(any(Terms.class))).thenReturn(savedTerms);
+
+        // when
+        Long id = adminCreateTerms.execute(request, actor);
+
+        // then
+        assertThat(id).isEqualTo(1L);
+        verify(termsRepository, times(1)).save(any(Terms.class));
+    }
+}
