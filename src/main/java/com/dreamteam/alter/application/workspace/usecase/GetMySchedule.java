@@ -26,6 +26,7 @@ import java.util.List;
 public class GetMySchedule implements GetMyScheduleUseCase {
 
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
+    private static final int MINIMUM_HOURLY_WAGE = 10_320;
 
     @Override
     public GetMyScheduleResponseDto execute(AppActor actor, WorkScheduleInquiryRequestDto request) {
@@ -66,16 +67,19 @@ public class GetMySchedule implements GetMyScheduleUseCase {
         }
 
         double totalWorkHours = shifts.stream()
-                .mapToDouble(shift -> {
-                    Duration duration = Duration.between(shift.getStartDateTime(), shift.getEndDateTime());
-                    return duration.toMinutes() / 60.0;
-                })
-                .sum();
+            .mapToDouble(shift -> Duration.between(shift.getStartDateTime(), shift.getEndDateTime())
+                .toMinutes() / 60.0)
+            .sum();
+
+        boolean isMonthlyQuery = ObjectUtils.isNotEmpty(request.getYear())
+            && ObjectUtils.isNotEmpty(request.getMonth())
+            && ObjectUtils.isEmpty(request.getDay());
+        Long estimatedSalary = isMonthlyQuery ? Math.round(totalWorkHours * MINIMUM_HOURLY_WAGE) : null;
 
         List<MyScheduleResponseDto> scheduleDtos = shifts.stream()
-                .map(MyScheduleResponseDto::of)
-                .toList();
+            .map(MyScheduleResponseDto::of)
+            .toList();
 
-        return GetMyScheduleResponseDto.of(totalWorkHours, scheduleDtos);
+        return GetMyScheduleResponseDto.of(totalWorkHours, estimatedSalary, scheduleDtos);
     }
 }
