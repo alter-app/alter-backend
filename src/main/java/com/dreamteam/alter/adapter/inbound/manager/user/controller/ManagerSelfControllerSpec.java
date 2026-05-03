@@ -227,16 +227,6 @@ public interface ManagerSelfControllerSpec {
                         value = "{\"code\" : \"A002\"}"
                     )
                 })),
-        @ApiResponse(responseCode = "404", description = "존재하지 않는 파일",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = ErrorResponse.class),
-                examples = {
-                    @ExampleObject(
-                        name = "파일 없음 또는 기존 프로필 이미지 없음",
-                        value = "{\"code\" : \"B021\"}"
-                    )
-                })),
         @ApiResponse(responseCode = "409", description = "이미 연결된 파일",
             content = @Content(
                 mediaType = "application/json",
