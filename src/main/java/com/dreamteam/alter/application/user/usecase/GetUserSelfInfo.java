@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.user.usecase;
 
+import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.UserSelfInfoResponse;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.command.GetUserSelfInfoCommand;
@@ -19,8 +20,15 @@ public class GetUserSelfInfo implements GetUserSelfInfoUseCase {
 
     @Override
     public GetUserSelfInfoResult execute(GetUserSelfInfoCommand command) {
-        return GetUserSelfInfoResult.from(userQueryRepository.getUserSelfInfoSummary(command.user().getId())
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)));
-    }
+        UserSelfInfoResponse response = userQueryRepository.getUserSelfInfoSummary(command.user().getId())
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+        return new GetUserSelfInfoResult(
+            response.getId(),
+            response.getName(),
+            response.getNickname(),
+            response.getCreatedAt(),
+            response.getReputationSummary()
+        );
+    }
 }
