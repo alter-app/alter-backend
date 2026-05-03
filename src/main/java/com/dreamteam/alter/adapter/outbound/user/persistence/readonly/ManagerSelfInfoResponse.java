@@ -14,4 +14,5 @@ public class ManagerSelfInfoResponse {
     private String name;
     private String nickname;
     private LocalDateTime createdAt;
+    private String profileImageUrl;
 }

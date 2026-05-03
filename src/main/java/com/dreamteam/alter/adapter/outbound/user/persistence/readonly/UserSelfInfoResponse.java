@@ -20,6 +20,8 @@ public class UserSelfInfoResponse {
 
     private LocalDateTime createdAt;
 
+    private String profileImageUrl;
+
     private ReputationSummary reputationSummary;
 
 }

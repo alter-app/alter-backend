@@ -1,6 +1,9 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
 import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.ManagerSelfInfoResponse;
+import com.dreamteam.alter.domain.file.entity.QFile;
+import com.dreamteam.alter.domain.file.type.FileStatus;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.QManagerUser;
 import com.dreamteam.alter.domain.user.entity.QUser;
@@ -32,6 +35,7 @@ public class ManagerUserQueryRepositoryImpl implements ManagerUserQueryRepositor
     public Optional<ManagerSelfInfoResponse> getManagerSelfInfoSummary(Long managerId) {
         QManagerUser qManagerUser = QManagerUser.managerUser;
         QUser qUser = QUser.user;
+        QFile qFile = QFile.file;
 
         ManagerSelfInfoResponse managerSelf = queryFactory.select(
                 Projections.constructor(
@@ -39,11 +43,17 @@ public class ManagerUserQueryRepositoryImpl implements ManagerUserQueryRepositor
                     qManagerUser.id,
                     qUser.name,
                     qUser.nickname,
-                    qManagerUser.createdAt
+                    qManagerUser.createdAt,
+                    qFile.fileUrl
                 )
             )
             .from(qManagerUser)
             .join(qManagerUser.user, qUser)
+            .leftJoin(qFile).on(
+                qFile.targetType.eq(FileTargetType.USER_PROFILE),
+                qFile.targetId.eq(qUser.id.stringValue()),
+                qFile.status.eq(FileStatus.ATTACHED)
+            )
             .where(qManagerUser.id.eq(managerId))
             .fetchOne();
 

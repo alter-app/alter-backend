@@ -31,12 +31,16 @@ public class ManagerSelfInfoResponseDto {
     @Schema(description = "가입일", example = "2023-10-01T12:00:00")
     private LocalDateTime createdAt;
 
+    @Schema(description = "프로필 이미지 URL", example = "https://alter-public.s3.ap-northeast-2.amazonaws.com/user_profile/example.png")
+    private String profileImageUrl;
+
     public static ManagerSelfInfoResponseDto from(ManagerSelfInfoResponse entity) {
         return ManagerSelfInfoResponseDto.builder()
             .id(entity.getId())
             .name(entity.getName())
             .nickname(entity.getNickname())
             .createdAt(entity.getCreatedAt())
+            .profileImageUrl(entity.getProfileImageUrl())
             .build();
     }
 }
