@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.AssignWorkerRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.CreateWorkScheduleRequestDto;
+import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.GetManagerScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerTodayScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerWorkScheduleInquiryRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerScheduleResponseDto;
@@ -44,11 +45,11 @@ public interface ManagerScheduleControllerSpec {
         @Valid @RequestBody CreateWorkScheduleRequestDto request
     );
 
-    @Operation(summary = "스케줄 목록 조회", description = "특정 워크스페이스의 월별 스케줄 목록을 조회합니다.")
+    @Operation(summary = "스케줄 목록 조회", description = "특정 워크스페이스의 월별 스케줄 목록을 조회합니다. 응답에는 전체 근무자의 총 근무 시간과 예상 인건비가 포함됩니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "스케줄 목록 조회 성공")
     })
-    ResponseEntity<CommonApiResponse<List<ManagerScheduleResponseDto>>> getScheduleList(
+    ResponseEntity<CommonApiResponse<GetManagerScheduleResponseDto>> getScheduleList(
         ManagerWorkScheduleInquiryRequestDto request
     );
 

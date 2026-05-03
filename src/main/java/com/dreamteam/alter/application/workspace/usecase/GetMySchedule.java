@@ -3,11 +3,13 @@ package com.dreamteam.alter.application.workspace.usecase;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.GetMyScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.MyScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkScheduleInquiryRequestDto;
+import com.dreamteam.alter.common.constants.WorkspaceConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetMyScheduleUseCase;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -66,16 +68,20 @@ public class GetMySchedule implements GetMyScheduleUseCase {
         }
 
         double totalWorkHours = shifts.stream()
-                .mapToDouble(shift -> {
-                    Duration duration = Duration.between(shift.getStartDateTime(), shift.getEndDateTime());
-                    return duration.toMinutes() / 60.0;
-                })
-                .sum();
+            .filter(shift -> shift.getStatus() != WorkspaceShiftStatus.CANCELLED)
+            .mapToDouble(shift -> Duration.between(shift.getStartDateTime(), shift.getEndDateTime())
+                .toMinutes() / 60.0)
+            .sum();
+
+        boolean isMonthlyQuery = ObjectUtils.isNotEmpty(request.getYear())
+            && ObjectUtils.isNotEmpty(request.getMonth())
+            && ObjectUtils.isEmpty(request.getDay());
+        Long estimatedSalary = isMonthlyQuery ? Math.round(totalWorkHours * WorkspaceConstants.MINIMUM_HOURLY_WAGE) : null;
 
         List<MyScheduleResponseDto> scheduleDtos = shifts.stream()
-                .map(MyScheduleResponseDto::of)
-                .toList();
+            .map(MyScheduleResponseDto::of)
+            .toList();
 
-        return GetMyScheduleResponseDto.of(totalWorkHours, scheduleDtos);
+        return GetMyScheduleResponseDto.of(totalWorkHours, estimatedSalary, scheduleDtos);
     }
 }

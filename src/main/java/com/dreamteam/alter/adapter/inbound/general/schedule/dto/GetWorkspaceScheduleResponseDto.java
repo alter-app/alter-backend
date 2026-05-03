@@ -13,25 +13,25 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-@Schema(description = "스케줄 조회 통합 응답")
-public class GetMyScheduleResponseDto {
+@Schema(description = "업장 스케줄 조회 통합 응답")
+public class GetWorkspaceScheduleResponseDto {
 
-    @Schema(description = "총 근무 시간", example = "40.5")
+    @Schema(description = "나의 총 근무 시간", example = "20.0")
     private double totalWorkHours;
 
-    @Schema(description = "예상 급여 (최저시급 기준, 월별 조회 시에만 제공)", example = "412800")
+    @Schema(description = "나의 예상 급여 (최저시급 기준)", example = "206400")
     private Long estimatedSalary;
 
-    @Schema(description = "스케줄 목록")
-    private List<MyScheduleResponseDto> schedules;
+    @Schema(description = "업장 전체 스케줄 목록")
+    private List<WorkspaceScheduleResponseDto> schedules;
 
-    public static GetMyScheduleResponseDto of(
-        double totalWorkHours,
+    public static GetWorkspaceScheduleResponseDto of(
+        double myTotalWorkHours,
         Long estimatedSalary,
-        List<MyScheduleResponseDto> schedules
+        List<WorkspaceScheduleResponseDto> schedules
     ) {
-        return GetMyScheduleResponseDto.builder()
-            .totalWorkHours(totalWorkHours)
+        return GetWorkspaceScheduleResponseDto.builder()
+            .totalWorkHours(myTotalWorkHours)
             .estimatedSalary(estimatedSalary)
             .schedules(schedules)
             .build();

@@ -12,8 +12,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @PreAuthorize("hasAnyRole('USER')")
 @RequiredArgsConstructor
@@ -39,7 +37,7 @@ public class UserScheduleController implements UserScheduleControllerSpec {
 
     @Override
     @GetMapping("/workspaces/{workspaceId}")
-    public ResponseEntity<CommonApiResponse<List<WorkspaceScheduleResponseDto>>> getWorkspaceSchedule(
+    public ResponseEntity<CommonApiResponse<GetWorkspaceScheduleResponseDto>> getWorkspaceSchedule(
         @PathVariable Long workspaceId,
         WorkScheduleInquiryRequestDto request
     ) {
