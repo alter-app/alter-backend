@@ -2,6 +2,7 @@ package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.GetManagerScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ManagerScheduleResponseDto;
+import com.dreamteam.alter.common.constants.WorkspaceConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
@@ -26,8 +27,6 @@ public class ManagerGetWorkScheduleList implements ManagerGetScheduleListUseCase
 
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
     private final WorkspaceQueryRepository workspaceQueryRepository;
-    private static final int MINIMUM_HOURLY_WAGE = 10_320;
-
     @Override
     public GetManagerScheduleResponseDto execute(ManagerActor actor, Long workspaceId, int year, int month) {
         // 워크스페이스 존재 확인
@@ -48,7 +47,7 @@ public class ManagerGetWorkScheduleList implements ManagerGetScheduleListUseCase
             .filter(shift -> shift.getStatus() != WorkspaceShiftStatus.CANCELLED)
             .mapToDouble(shift -> Duration.between(shift.getStartDateTime(), shift.getEndDateTime()).toMinutes() / 60.0)
             .sum();
-        long estimatedLaborCost = Math.round(totalWorkHours * MINIMUM_HOURLY_WAGE);
+        long estimatedLaborCost = Math.round(totalWorkHours * WorkspaceConstants.MINIMUM_HOURLY_WAGE);
 
         List<ManagerScheduleResponseDto> scheduleDtos = shifts.stream()
             .map(ManagerScheduleResponseDto::of)

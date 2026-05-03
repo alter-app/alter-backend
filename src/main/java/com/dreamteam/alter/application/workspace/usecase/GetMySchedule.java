@@ -3,6 +3,7 @@ package com.dreamteam.alter.application.workspace.usecase;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.GetMyScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.MyScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkScheduleInquiryRequestDto;
+import com.dreamteam.alter.common.constants.WorkspaceConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.AppActor;
@@ -27,7 +28,6 @@ import java.util.List;
 public class GetMySchedule implements GetMyScheduleUseCase {
 
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
-    private static final int MINIMUM_HOURLY_WAGE = 10_320;
 
     @Override
     public GetMyScheduleResponseDto execute(AppActor actor, WorkScheduleInquiryRequestDto request) {
@@ -76,7 +76,7 @@ public class GetMySchedule implements GetMyScheduleUseCase {
         boolean isMonthlyQuery = ObjectUtils.isNotEmpty(request.getYear())
             && ObjectUtils.isNotEmpty(request.getMonth())
             && ObjectUtils.isEmpty(request.getDay());
-        Long estimatedSalary = isMonthlyQuery ? Math.round(totalWorkHours * MINIMUM_HOURLY_WAGE) : null;
+        Long estimatedSalary = isMonthlyQuery ? Math.round(totalWorkHours * WorkspaceConstants.MINIMUM_HOURLY_WAGE) : null;
 
         List<MyScheduleResponseDto> scheduleDtos = shifts.stream()
             .map(MyScheduleResponseDto::of)

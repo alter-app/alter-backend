@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.common.constants.WorkspaceConstants;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.GetWorkspaceScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkScheduleInquiryRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkspaceScheduleResponseDto;
@@ -30,8 +31,6 @@ public class GetWorkspaceWorkSchedule implements GetWorkspaceScheduleUseCase {
     private final WorkspaceQueryRepository workspaceQueryRepository;
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
     private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
-    private static final int MINIMUM_HOURLY_WAGE = 10_320;
-
     @Override
     public GetWorkspaceScheduleResponseDto execute(AppActor actor, Long workspaceId, WorkScheduleInquiryRequestDto request) {
         if (ObjectUtils.isEmpty(request.getYear()) || ObjectUtils.isEmpty(request.getMonth())) {
@@ -57,7 +56,7 @@ public class GetWorkspaceWorkSchedule implements GetWorkspaceScheduleUseCase {
             .filter(shift -> workspaceWorker.get().equals(shift.getAssignedWorkspaceWorker()))
             .mapToDouble(shift -> Duration.between(shift.getStartDateTime(), shift.getEndDateTime()).toMinutes() / 60.0)
             .sum();
-        long estimatedSalary = Math.round(myTotalWorkHours * MINIMUM_HOURLY_WAGE);
+        long estimatedSalary = Math.round(myTotalWorkHours * WorkspaceConstants.MINIMUM_HOURLY_WAGE);
 
         List<WorkspaceScheduleResponseDto> scheduleDtos = shifts.stream()
             .map(WorkspaceScheduleResponseDto::of)
