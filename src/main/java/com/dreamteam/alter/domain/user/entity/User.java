@@ -164,12 +164,17 @@ public class User {
         this.status = newStatus;
     }
 
+    /**
+     * 탈퇴 처리
+     */
     public void withdraw() {
         String anonymize = id + "_탈퇴";
         name = anonymize;
         nickname = anonymize;
         contact = anonymize;
         email = null;
+        certificates.clear();
+        userSocials.clear();
         status = UserStatus.DELETED;
     }
 }

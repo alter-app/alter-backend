@@ -13,7 +13,6 @@ import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.WithdrawalUserUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
-import com.dreamteam.alter.domain.user.port.outbound.UserSocialRepository;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
@@ -28,7 +27,6 @@ public class WithdrawalUser implements WithdrawalUserUseCase {
 	private final UserRepository userRepository;
 	private final WorkspaceQueryRepository workspaceQueryRepository;
 	private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
-	private final UserSocialRepository userSocialRepository;
 	private final FileQueryRepository fileQueryRepository;
 	private final AuthService authService;
 	private final NotificationService notificationService;
@@ -51,7 +49,6 @@ public class WithdrawalUser implements WithdrawalUserUseCase {
 		fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.USER_PROFILE, user.getId().toString())
 			.ifPresent(File::markDeleted);
 
-		userSocialRepository.deleteAll(user.getUserSocials()); 	// 소셜 연동 해제
 		authService.revokeAllExistingAuthorizations(user);		// 인가 정보 삭제
 		notificationService.removeUserDeviceToken(user);		// 다비이스 토큰 삭제
 	}

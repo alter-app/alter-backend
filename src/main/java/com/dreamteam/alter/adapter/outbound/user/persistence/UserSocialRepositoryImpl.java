@@ -17,9 +17,4 @@ public class UserSocialRepositoryImpl implements UserSocialRepository {
     public void delete(UserSocial userSocial) {
         userSocialJpaRepository.delete(userSocial);
     }
-
-    @Override
-    public void deleteAll(List<UserSocial> userSocials) {
-        userSocialJpaRepository.deleteAll(userSocials);
-    }
 }
