@@ -1,7 +1,9 @@
 package com.dreamteam.alter.adapter.inbound.admin.terms.dto;
 
+import com.dreamteam.alter.domain.terms.type.TermsType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -14,10 +16,9 @@ import lombok.NoArgsConstructor;
 @Schema(description = "약관 생성 요청 DTO")
 public class AdminCreateTermsRequestDto {
 
-    @NotBlank
-    @Size(max = 30)
-    @Schema(description = "약관 유형 (SERVICE, PRIVACY, LOCATION, MARKETING)", example = "SERVICE")
-    private String type;
+    @NotNull
+    @Schema(description = "약관 유형", example = "SERVICE", implementation = TermsType.class)
+    private TermsType type;
 
     @NotBlank
     @Size(max = 20)

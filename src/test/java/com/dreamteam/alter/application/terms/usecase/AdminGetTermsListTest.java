@@ -56,7 +56,7 @@ class AdminGetTermsListTest {
     @Test
     void type_필터로_조회시_filter_파라미터_전달_확인() {
         // given
-        TermsListFilterDto filter = new TermsListFilterDto("SERVICE", null);
+        TermsListFilterDto filter = new TermsListFilterDto(TermsType.SERVICE, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
         AdminActor actor = mock(AdminActor.class);
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
@@ -70,7 +70,7 @@ class AdminGetTermsListTest {
         // then
         ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
         verify(termsQueryRepository, times(1)).findByFilter(filterCaptor.capture(), any(Pageable.class));
-        assertThat(filterCaptor.getValue().getType()).isEqualTo("SERVICE");
+        assertThat(filterCaptor.getValue().getType()).isEqualTo(TermsType.SERVICE);
         assertThat(result.data()).hasSize(1);
         assertThat(result.data().get(0).getType()).isEqualTo("SERVICE");
     }

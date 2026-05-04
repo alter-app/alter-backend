@@ -13,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.List;
@@ -72,6 +73,13 @@ public class GlobalExceptionHandler {
 
         ErrorCode errorCode = ErrorCode.ILLEGAL_ARGUMENT;
         return ResponseEntity.status(errorCode.getStatus()).body(ErrorResponse.of(errorCode, details));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        ErrorCode errorCode = ErrorCode.ILLEGAL_ARGUMENT;
+        return ResponseEntity.status(errorCode.getStatus())
+            .body(ErrorResponse.of(errorCode));
     }
 
     @ExceptionHandler(MissingServletRequestPartException.class)

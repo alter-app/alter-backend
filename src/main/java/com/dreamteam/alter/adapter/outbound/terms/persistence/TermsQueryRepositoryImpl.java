@@ -67,11 +67,11 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
         return terms.status.ne(TermsStatus.DELETED);
     }
 
-    private BooleanExpression typeCondition(String type) {
-        return type != null ? terms.type.eq(TermsType.valueOf(type)) : null;
+    private BooleanExpression typeCondition(TermsType type) {
+        return type != null ? terms.type.eq(type) : null;
     }
 
-    private BooleanExpression statusCondition(String status) {
-        return status != null ? terms.status.eq(TermsStatus.valueOf(status)) : null;
+    private BooleanExpression statusCondition(TermsStatus status) {
+        return status != null ? terms.status.eq(status) : null;
     }
 }

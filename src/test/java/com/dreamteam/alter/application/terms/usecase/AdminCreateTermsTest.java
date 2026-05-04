@@ -3,6 +3,7 @@ package com.dreamteam.alter.application.terms.usecase;
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminCreateTermsRequestDto;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
+import com.dreamteam.alter.domain.terms.type.TermsType;
 import com.dreamteam.alter.domain.user.context.AdminActor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +28,7 @@ class AdminCreateTermsTest {
     void 유효한_요청으로_약관_생성_후_id_반환() {
         // given
         AdminCreateTermsRequestDto request = new AdminCreateTermsRequestDto(
-                "SERVICE", "v1.0", "서비스 이용약관", "https://notion.so/terms", true
+                TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true
         );
         AdminActor actor = mock(AdminActor.class);
 

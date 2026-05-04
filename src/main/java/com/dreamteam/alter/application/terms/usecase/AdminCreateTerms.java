@@ -4,7 +4,6 @@ import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminCreateTermsReque
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminCreateTermsUseCase;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
-import com.dreamteam.alter.domain.terms.type.TermsType;
 import com.dreamteam.alter.domain.user.context.AdminActor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,7 @@ public class AdminCreateTerms implements AdminCreateTermsUseCase {
     @Override
     public Long execute(AdminCreateTermsRequestDto request, AdminActor actor) {
         Terms terms = Terms.create(
-                TermsType.valueOf(request.getType()),
+                request.getType(),
                 request.getVersion(),
                 request.getTitle(),
                 request.getNotionUrl(),

@@ -54,3 +54,7 @@ CLAUDE.md
 /.ai/
 .mcp.json
 .omc
+
+.codex
+.agents/*
+AGENTS.md
