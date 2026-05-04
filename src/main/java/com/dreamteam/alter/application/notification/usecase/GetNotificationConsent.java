@@ -8,9 +8,11 @@ import com.dreamteam.alter.domain.notification.port.inbound.GetNotificationConse
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentQueryRepository;
 import com.dreamteam.alter.domain.notification.result.GetNotificationConsentResult;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service("getNotificationConsent")
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

@@ -26,8 +26,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,19 +46,6 @@ public class NotificationService {
     private final UserQueryRepository userQueryRepository;
     private final EntityManager entityManager;
     private final NotificationConsentQueryRepository notificationConsentQueryRepository;
-
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
-
-    boolean isNightTime() {
-        int hour = ZonedDateTime.now(KST).getHour();
-        return hour >= 21 || hour < 8;
-    }
-
-    private boolean shouldSendNotification(User user) {
-        return notificationConsentQueryRepository.findByUser(user)
-            .map(c -> c.isNotificationConsent() && (c.isNightNotificationConsent() || !isNightTime()))
-            .orElse(true);
-    }
 
     public void saveOrUpdateUserDeviceToken(User user, String deviceToken, DevicePlatformType devicePlatformType) {
         Optional<FcmDeviceToken> existingDeviceTokenByUser =
@@ -152,9 +138,9 @@ public class NotificationService {
 
         List<FcmDeviceToken> eligibleTokens = deviceTokens.stream()
             .filter(dt -> {
-                NotificationConsent consent = consentMap.get(dt.getUser().getId());
-                if (consent == null) return true;
-                return consent.isNotificationConsent() && (consent.isNightNotificationConsent() || !isNightTime());
+                NotificationConsent consent = Optional.ofNullable(consentMap.get(dt.getUser().getId()))
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_CONSENT_NOT_FOUND));
+                return consent.isNotificationConsent() && (consent.isNightNotificationConsent() || isDaytime());
             })
             .toList();
 
@@ -229,7 +215,7 @@ public class NotificationService {
             return;
         }
 
-        if (!shouldSendNotification(user)) {
+        if (isNotificationBlocked(user)) {
             log.debug("알림 수신 동의 거부로 FCM 발송 건너뜀. userId={}", userId);
             return;
         }
@@ -245,7 +231,7 @@ public class NotificationService {
      * @param throwOnError 발송 실패 시 예외 throw 여부
      */
     private void sendFcmNotification(User user, String title, String body, boolean throwOnError) {
-        if (!shouldSendNotification(user)) {
+        if (isNotificationBlocked(user)) {
             log.debug("알림 수신 동의 거부로 FCM 발송 건너뜀. userId={}", user.getId());
             return;
         }
@@ -295,4 +281,15 @@ public class NotificationService {
             MessagingErrorCode.UNREGISTERED.equals(e.getMessagingErrorCode());
     }
 
+
+    private boolean isNotificationBlocked(User user) {
+        NotificationConsent consent = notificationConsentQueryRepository.findByUser(user)
+            .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_CONSENT_NOT_FOUND));
+        return !consent.isNotificationConsent() || (!consent.isNightNotificationConsent() && !isDaytime());
+    }
+
+    private boolean isDaytime() {
+        int hour = LocalTime.now().getHour();
+        return hour >= 8 && hour < 21;
+    }
 }

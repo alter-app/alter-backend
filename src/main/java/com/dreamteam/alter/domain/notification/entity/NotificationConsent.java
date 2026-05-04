@@ -38,7 +38,7 @@ public class NotificationConsent {
         return NotificationConsent.builder()
             .user(user)
             .notificationConsent(notificationConsent)
-            .nightNotificationConsent(nightNotificationConsent)
+            .nightNotificationConsent(notificationConsent && nightNotificationConsent)
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now())
             .build();
@@ -46,7 +46,7 @@ public class NotificationConsent {
 
     public void updateConsent(boolean notificationConsent, boolean nightNotificationConsent) {
         this.notificationConsent = notificationConsent;
-        this.nightNotificationConsent = nightNotificationConsent;
+        this.nightNotificationConsent = notificationConsent && nightNotificationConsent;
         this.updatedAt = LocalDateTime.now();
     }
 }
