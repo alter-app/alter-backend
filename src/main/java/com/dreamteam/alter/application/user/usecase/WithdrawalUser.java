@@ -12,6 +12,7 @@ import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.WithdrawalUserUseCase;
+import com.dreamteam.alter.domain.user.port.outbound.UserCertificateRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class WithdrawalUser implements WithdrawalUserUseCase {
 
 	private final UserRepository userRepository;
+	private final UserCertificateRepository userCertificateRepository;
 	private final WorkspaceQueryRepository workspaceQueryRepository;
 	private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
 	private final FileQueryRepository fileQueryRepository;
@@ -40,6 +42,7 @@ public class WithdrawalUser implements WithdrawalUserUseCase {
 
 		user.withdraw();
 		userRepository.save(user);
+		userCertificateRepository.deleteAll(user);
 
 		// 활설화된 근무지 퇴직처리
 		workspaceWorkerQueryRepository.findAllActiveByUserId(user.getId())
