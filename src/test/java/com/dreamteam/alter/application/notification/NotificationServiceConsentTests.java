@@ -2,6 +2,8 @@ package com.dreamteam.alter.application.notification;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmBatchNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.UserFcmDeviceTokenQueryRepository;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
@@ -29,6 +31,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -146,16 +149,16 @@ class NotificationServiceConsentTests {
         }
 
         @Test
-        @DisplayName("수신 동의 레코드 없는 사용자(empty) → FCM 호출됨 (기본 동의)")
-        void sends_fcm_when_no_consent_record_exists() throws Exception {
+        @DisplayName("수신 동의 레코드 없는 사용자(empty) → NOTIFICATION_CONSENT_NOT_FOUND 예외")
+        void throws_exception_when_no_consent_record_exists() {
             // given
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.empty());
 
-            // when
-            notificationService.sendNotification(notificationRequest(1L));
-
-            // then
-            then(fcmClient).should().sendNotification(eq("test-device-token"), any(), any());
+            // when & then
+            assertThatThrownBy(() -> notificationService.sendNotification(notificationRequest(1L)))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NOTIFICATION_CONSENT_NOT_FOUND);
         }
     }
 
@@ -234,6 +237,25 @@ class NotificationServiceConsentTests {
 
             // when
             notificationService.sendNotificationOnly(1L, "제목", "내용");
+
+            // then
+            then(fcmClient).should(never()).sendNotification(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("야간 동의 false + 야간 시간(22시 KST) → FCM 미호출")
+        void skips_fcm_when_nightConsent_false_and_is_night() throws Exception {
+            // given
+            NotificationConsent consent = consentWith(true, false);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
+
+            ZonedDateTime nightTime = kstAt(22);
+            try (MockedStatic<ZonedDateTime> mockedStatic = mockStatic(ZonedDateTime.class, CALLS_REAL_METHODS)) {
+                mockedStatic.when(() -> ZonedDateTime.now(ZoneId.of("Asia/Seoul"))).thenReturn(nightTime);
+
+                // when
+                notificationService.sendNotificationOnly(1L, "제목", "내용");
+            }
 
             // then
             then(fcmClient).should(never()).sendNotification(any(), any(), any());

@@ -14,8 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 import java.util.Optional;
 
@@ -25,7 +23,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("GetNotificationConsent 테스트")
 class GetNotificationConsentTests {
 
@@ -73,7 +70,7 @@ class GetNotificationConsentTests {
         }
 
         @Test
-        @DisplayName("레코드 존재 + notificationConsent=false이면 false 반환")
+        @DisplayName("레코드 존재 + notificationConsent=false이면 nightNotificationConsent도 false 반환")
         void returnsActualValues_whenNotificationConsentIsFalse() {
             // given
             User user = mock(User.class);
@@ -87,7 +84,7 @@ class GetNotificationConsentTests {
 
             // then
             assertThat(result.notificationConsent()).isFalse();
-            assertThat(result.nightNotificationConsent()).isTrue();
+            assertThat(result.nightNotificationConsent()).isFalse();
         }
 
         @Test

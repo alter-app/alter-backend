@@ -15,8 +15,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 import java.util.Optional;
 
@@ -29,7 +27,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("UpdateNotificationConsent 테스트")
 class UpdateNotificationConsentTests {
 
@@ -76,8 +73,6 @@ class UpdateNotificationConsentTests {
             NotificationConsent existing = NotificationConsent.create(user, false, false);
 
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
-            given(notificationConsentRepository.save(any(NotificationConsent.class)))
-                .willAnswer(invocation -> invocation.getArgument(0));
 
             // when
             updateNotificationConsent.execute(command);
@@ -102,8 +97,6 @@ class UpdateNotificationConsentTests {
             NotificationConsent existing = NotificationConsent.create(user, true, true);
 
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
-            given(notificationConsentRepository.save(any(NotificationConsent.class)))
-                .willAnswer(invocation -> invocation.getArgument(0));
 
             // when
             updateNotificationConsent.execute(command);
@@ -128,8 +121,6 @@ class UpdateNotificationConsentTests {
             NotificationConsent existing = NotificationConsent.create(user, true, true);
 
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
-            given(notificationConsentRepository.save(any(NotificationConsent.class)))
-                .willAnswer(invocation -> invocation.getArgument(0));
 
             // when
             updateNotificationConsent.execute(command);

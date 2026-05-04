@@ -16,13 +16,15 @@ public interface UserNotificationConsentControllerSpec {
 
     @Operation(summary = "알림 수신 설정 조회")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "알림 수신 설정 조회 성공")
+        @ApiResponse(responseCode = "200", description = "알림 수신 설정 조회 성공"),
+        @ApiResponse(responseCode = "404", description = "알림 수신 동의 레코드 없음")
     })
     ResponseEntity<CommonApiResponse<NotificationConsentResponseDto>> getNotificationConsent();
 
     @Operation(summary = "알림 수신 설정 변경")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "알림 수신 설정 변경 성공")
+        @ApiResponse(responseCode = "200", description = "알림 수신 설정 변경 성공"),
+        @ApiResponse(responseCode = "404", description = "알림 수신 동의 레코드 없음")
     })
     ResponseEntity<CommonApiResponse<Void>> updateNotificationConsent(
         @Valid @RequestBody UpdateNotificationConsentRequestDto request
