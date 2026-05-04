@@ -13,15 +13,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("LogoutManager 테스트")
 class LogoutManagerTests {
 
@@ -37,7 +34,6 @@ class LogoutManagerTests {
     @BeforeEach
     void setUp() {
         user = mock(User.class);
-        given(user.getId()).willReturn(1L);
 
         ManagerUser managerUser = mock(ManagerUser.class);
         given(managerUser.getUser()).willReturn(user);

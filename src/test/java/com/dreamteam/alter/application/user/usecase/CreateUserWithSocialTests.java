@@ -201,14 +201,14 @@ class CreateUserWithSocialTests {
 
             // TX 저장
             GenerateTokenResponseDto mockResponse = mock(GenerateTokenResponseDto.class);
-            given(createUserWithSocialTx.process(any(), any(), any(), anyBoolean(), anyBoolean())).willReturn(mockResponse);
+            given(createUserWithSocialTx.process(any(), any(), any(), eq(true), eq(false))).willReturn(mockResponse);
 
             // when
             GenerateTokenResponseDto result = createUserWithSocial.execute(request);
 
             // then
             assertThat(result).isEqualTo(mockResponse);
-            then(createUserWithSocialTx).should().process(eq("01012345678"), eq(request), any(), anyBoolean(), anyBoolean());
+            then(createUserWithSocialTx).should().process(eq("01012345678"), eq(request), any(), eq(true), eq(false));
             then(cacheRepository).should().deleteAll(anyList());
         }
     }
