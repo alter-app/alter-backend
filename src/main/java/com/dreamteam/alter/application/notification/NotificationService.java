@@ -139,7 +139,7 @@ public class NotificationService {
         List<FcmDeviceToken> eligibleTokens = deviceTokens.stream()
             .filter(dt -> {
                 NotificationConsent consent = Optional.ofNullable(consentMap.get(dt.getUser().getId()))
-                    .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_CONSENT_NOT_FOUND));
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "알림 수신 동의 레코드를 찾을 수 없습니다."));
                 return consent.isNotificationConsent() && (consent.isNightNotificationConsent() || isDaytime());
             })
             .toList();
@@ -284,7 +284,7 @@ public class NotificationService {
 
     private boolean isNotificationBlocked(User user) {
         NotificationConsent consent = notificationConsentQueryRepository.findByUser(user)
-            .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_CONSENT_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "알림 수신 동의 레코드를 찾을 수 없습니다."));
         return !consent.isNotificationConsent() || (!consent.isNightNotificationConsent() && !isDaytime());
     }
 

@@ -149,7 +149,7 @@ class NotificationServiceConsentTests {
         }
 
         @Test
-        @DisplayName("수신 동의 레코드 없는 사용자(empty) → NOTIFICATION_CONSENT_NOT_FOUND 예외")
+        @DisplayName("수신 동의 레코드 없는 사용자(empty) → NOT_FOUND 예외")
         void throws_exception_when_no_consent_record_exists() {
             // given
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.empty());
@@ -158,7 +158,7 @@ class NotificationServiceConsentTests {
             assertThatThrownBy(() -> notificationService.sendNotification(notificationRequest(1L)))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.NOTIFICATION_CONSENT_NOT_FOUND);
+                .isEqualTo(ErrorCode.NOT_FOUND);
         }
     }
 
