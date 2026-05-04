@@ -163,4 +163,13 @@ public class User {
         }
         this.status = newStatus;
     }
+
+    public void withdraw() {
+        String anonymize = id + "_탈퇴";
+        name = anonymize;
+        nickname = anonymize;
+        contact = anonymize;
+        email = null;
+        status = UserStatus.DELETED;
+    }
 }

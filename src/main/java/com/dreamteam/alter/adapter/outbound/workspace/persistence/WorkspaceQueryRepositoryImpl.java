@@ -612,6 +612,22 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         return result != null;
     }
 
+    @Override
+    public boolean existsActiveWorkspaceByUserId(Long userId) {
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
+        Integer result = queryFactory
+            .selectOne()
+            .from(qWorkspace)
+            .where(
+                qWorkspace.managerUser.user.id.eq(userId),
+                qWorkspace.status.eq(WorkspaceStatus.ACTIVATED)
+            )
+            .fetchFirst();
+
+        return result != null;
+    }
+
     private BooleanExpression eqWorkerStatus(QWorkspaceWorker qWorkspaceWorker, WorkspaceWorkerStatus status) {
         return status != null ? qWorkspaceWorker.status.eq(status) : null;
     }

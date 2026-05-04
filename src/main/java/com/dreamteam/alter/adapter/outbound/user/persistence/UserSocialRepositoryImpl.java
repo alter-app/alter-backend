@@ -1,5 +1,7 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
+import java.util.List;
+
 import com.dreamteam.alter.domain.user.entity.UserSocial;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,5 +16,10 @@ public class UserSocialRepositoryImpl implements UserSocialRepository {
     @Override
     public void delete(UserSocial userSocial) {
         userSocialJpaRepository.delete(userSocial);
+    }
+
+    @Override
+    public void deleteAll(List<UserSocial> userSocials) {
+        userSocialJpaRepository.deleteAll(userSocials);
     }
 }
