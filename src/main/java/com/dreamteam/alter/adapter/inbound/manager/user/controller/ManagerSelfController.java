@@ -20,6 +20,7 @@ import com.dreamteam.alter.adapter.inbound.manager.user.dto.RegisterEmailRequest
 import com.dreamteam.alter.adapter.inbound.manager.user.dto.UpdateManagerProfileImageRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.user.dto.UpdateNicknameRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.user.dto.UpdatePasswordRequestDto;
+import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.email.command.SendEmailVerificationCodeCommand;
 import com.dreamteam.alter.domain.email.command.VerifyEmailVerificationCodeCommand;
@@ -30,6 +31,7 @@ import com.dreamteam.alter.domain.user.command.RemoveEmailCommand;
 import com.dreamteam.alter.domain.user.command.UpdateEmailCommand;
 import com.dreamteam.alter.domain.user.command.UpdateNicknameCommand;
 import com.dreamteam.alter.domain.user.command.UpdatePasswordCommand;
+import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.DeleteUserProfileImageUseCase;
@@ -39,6 +41,7 @@ import com.dreamteam.alter.domain.user.port.inbound.UpdateEmailUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.UpdateNicknameUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.UpdatePasswordUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.UpdateUserProfileImageUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.WithdrawalUserUseCase;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -77,6 +80,9 @@ public class ManagerSelfController implements ManagerSelfControllerSpec {
 
     @Resource(name = "deleteUserProfileImage")
     private final DeleteUserProfileImageUseCase deleteUserProfileImage;
+
+    @Resource(name = "withdrawalUser")
+    private final WithdrawalUserUseCase withdrawalUser;
 
     @Override
     @GetMapping
@@ -156,6 +162,13 @@ public class ManagerSelfController implements ManagerSelfControllerSpec {
     @DeleteMapping("/profile-image")
     public ResponseEntity<CommonApiResponse<Void>> deleteProfileImage() {
         deleteUserProfileImage.execute(currentUser());
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @DeleteMapping
+    public ResponseEntity<CommonApiResponse<Void>> withdraw() {
+        withdrawalUser.execute(currentUser());
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

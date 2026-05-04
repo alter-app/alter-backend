@@ -50,6 +50,7 @@ import com.dreamteam.alter.domain.user.port.inbound.UpdateNicknameUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.UpdatePasswordUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.UpdateUserProfileImageUseCase;
 import com.dreamteam.alter.domain.user.port.inbound.UpdateUserSelfCertificateUseCase;
+import com.dreamteam.alter.domain.user.port.inbound.WithdrawalUserUseCase;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -103,6 +104,9 @@ public class UserSelfController implements UserSelfControllerSpec {
 
     @Resource(name = "deleteUserProfileImage")
     private final DeleteUserProfileImageUseCase deleteUserProfileImage;
+
+    @Resource(name = "withdrawalUser")
+    private final WithdrawalUserUseCase withdrawalUser;
 
     @Override
     @GetMapping
@@ -242,6 +246,14 @@ public class UserSelfController implements UserSelfControllerSpec {
     public ResponseEntity<CommonApiResponse<Void>> deleteProfileImage() {
         AppActor actor = AppActionContext.getInstance().getActor();
         deleteUserProfileImage.execute(actor.getUser());
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @DeleteMapping
+    public ResponseEntity<CommonApiResponse<Void>> withdraw() {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        withdrawalUser.execute(actor.getUser());
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }

@@ -316,4 +316,13 @@ public interface UserSelfControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> deleteProfileImage();
+
+    @Operation(
+        summary = "회원 탈퇴",
+        description = "본인 계정을 탈퇴 처리하고, 활성 근무지는 퇴직 처리합니다."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "회원 탈퇴 성공"),
+    })
+    ResponseEntity<CommonApiResponse<Void>> withdraw();
 }
