@@ -6,6 +6,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
+import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
 import com.dreamteam.alter.domain.user.context.AdminActor;
 import org.junit.jupiter.api.Test;
@@ -73,5 +74,45 @@ class AdminGetTermsListTest {
         assertThat(filterCaptor.getValue().getType()).isEqualTo(TermsType.SERVICE);
         assertThat(result.data()).hasSize(1);
         assertThat(result.data().get(0).getType()).isEqualTo("SERVICE");
+    }
+
+    @Test
+    void type_필터에_유효한_TermsType_전달_시_조건_포함_확인() {
+        // given
+        TermsListFilterDto filter = new TermsListFilterDto(TermsType.PRIVACY, null);
+        PageRequestDto pageRequest = new PageRequestDto(1, 10);
+        AdminActor actor = mock(AdminActor.class);
+        Page<Terms> emptyPage = new PageImpl<>(Collections.emptyList());
+        when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        // when
+        adminGetTermsList.execute(filter, pageRequest, actor);
+
+        // then
+        ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
+        verify(termsQueryRepository).findByFilter(filterCaptor.capture(), any(Pageable.class));
+        assertThat(filterCaptor.getValue().getType()).isEqualTo(TermsType.PRIVACY);
+        assertThat(filterCaptor.getValue().getStatus()).isNull();
+    }
+
+    @Test
+    void status_필터에_유효한_TermsStatus_전달_시_조건_포함_확인() {
+        // given
+        TermsListFilterDto filter = new TermsListFilterDto(null, TermsStatus.PUBLISHED);
+        PageRequestDto pageRequest = new PageRequestDto(1, 10);
+        AdminActor actor = mock(AdminActor.class);
+        Page<Terms> emptyPage = new PageImpl<>(Collections.emptyList());
+        when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        // when
+        adminGetTermsList.execute(filter, pageRequest, actor);
+
+        // then
+        ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
+        verify(termsQueryRepository).findByFilter(filterCaptor.capture(), any(Pageable.class));
+        assertThat(filterCaptor.getValue().getStatus()).isEqualTo(TermsStatus.PUBLISHED);
+        assertThat(filterCaptor.getValue().getType()).isNull();
     }
 }

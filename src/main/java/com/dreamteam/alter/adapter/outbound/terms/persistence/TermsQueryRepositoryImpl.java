@@ -34,7 +34,7 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
                         typeCondition(filter.getType()),
                         statusCondition(filter.getStatus())
                 )
-                .orderBy(terms.createdAt.desc())
+                .orderBy(terms.createdAt.desc(), terms.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
