@@ -26,8 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,9 +73,9 @@ class NotificationServiceConsentTests {
         return NotificationConsent.create(user, notificationConsent, nightNotificationConsent);
     }
 
-    // ── 고정 시각을 반환하는 ZonedDateTime mock 헬퍼 ──────────────────────
-    private ZonedDateTime kstAt(int hour) {
-        return ZonedDateTime.of(2024, 1, 1, hour, 0, 0, 0, ZoneId.of("Asia/Seoul"));
+    // ── 고정 시각을 반환하는 LocalTime 헬퍼 ──────────────────────────────
+    private LocalTime localTimeAt(int hour) {
+        return LocalTime.of(hour, 0);
     }
 
     // ── FcmNotificationRequestDto 헬퍼 ───────────────────────────────────
@@ -116,9 +115,9 @@ class NotificationServiceConsentTests {
             NotificationConsent consent = consentWith(true, false);
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
 
-            ZonedDateTime nightTime = kstAt(22);
-            try (MockedStatic<ZonedDateTime> mockedStatic = mockStatic(ZonedDateTime.class, CALLS_REAL_METHODS)) {
-                mockedStatic.when(() -> ZonedDateTime.now(ZoneId.of("Asia/Seoul"))).thenReturn(nightTime);
+            LocalTime nightTime = localTimeAt(22);
+            try (MockedStatic<LocalTime> mockedStatic = mockStatic(LocalTime.class)) {
+                mockedStatic.when(LocalTime::now).thenReturn(nightTime);
 
                 // when
                 notificationService.sendNotification(notificationRequest(1L));
@@ -136,9 +135,9 @@ class NotificationServiceConsentTests {
             NotificationConsent consent = consentWith(true, false);
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
 
-            ZonedDateTime dayTime = kstAt(10);
-            try (MockedStatic<ZonedDateTime> mockedStatic = mockStatic(ZonedDateTime.class, CALLS_REAL_METHODS)) {
-                mockedStatic.when(() -> ZonedDateTime.now(ZoneId.of("Asia/Seoul"))).thenReturn(dayTime);
+            LocalTime dayTime = localTimeAt(10);
+            try (MockedStatic<LocalTime> mockedStatic = mockStatic(LocalTime.class)) {
+                mockedStatic.when(LocalTime::now).thenReturn(dayTime);
 
                 // when
                 notificationService.sendNotification(notificationRequest(1L));
@@ -249,9 +248,9 @@ class NotificationServiceConsentTests {
             NotificationConsent consent = consentWith(true, false);
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
 
-            ZonedDateTime nightTime = kstAt(22);
-            try (MockedStatic<ZonedDateTime> mockedStatic = mockStatic(ZonedDateTime.class, CALLS_REAL_METHODS)) {
-                mockedStatic.when(() -> ZonedDateTime.now(ZoneId.of("Asia/Seoul"))).thenReturn(nightTime);
+            LocalTime nightTime = localTimeAt(22);
+            try (MockedStatic<LocalTime> mockedStatic = mockStatic(LocalTime.class)) {
+                mockedStatic.when(LocalTime::now).thenReturn(nightTime);
 
                 // when
                 notificationService.sendNotificationOnly(1L, "제목", "내용");
