@@ -9,6 +9,8 @@ import com.dreamteam.alter.domain.auth.entity.Authorization;
 import com.dreamteam.alter.domain.auth.port.outbound.AuthLogRepository;
 import com.dreamteam.alter.domain.auth.type.AuthLogType;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
+import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentRepository;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.entity.UserSocial;
 import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
@@ -23,12 +25,15 @@ public class CreateUserWithSocialTx {
     private final UserRepository userRepository;
     private final AuthService authService;
     private final AuthLogRepository authLogRepository;
+    private final NotificationConsentRepository notificationConsentRepository;
 
     @Transactional
     public GenerateTokenResponseDto process(
         String contact,
         CreateUserWithSocialRequestDto request,
-        SocialAuthInfo socialAuthInfo
+        SocialAuthInfo socialAuthInfo,
+        boolean notificationConsent,
+        boolean nightNotificationConsent
     ) {
         // 사용자 생성
         User user = userRepository.save(User.createWithSocial(
@@ -39,6 +44,8 @@ public class CreateUserWithSocialTx {
             request.getBirthday(),
             socialAuthInfo.getEmail()
         ));
+
+        notificationConsentRepository.save(NotificationConsent.create(user, notificationConsent, nightNotificationConsent));
 
         // 소셜 계정 연동
         UserSocial userSocial = UserSocial.create(

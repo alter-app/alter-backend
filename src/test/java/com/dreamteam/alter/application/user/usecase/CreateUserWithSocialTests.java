@@ -27,6 +27,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -69,7 +70,9 @@ class CreateUserWithSocialTests {
             "김철수",
             "유땡땡",
             UserGender.GENDER_MALE,
-            "19900101"
+            "19900101",
+            true,
+            false
         );
     }
 
@@ -98,7 +101,7 @@ class CreateUserWithSocialTests {
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
                     .isEqualTo(ErrorCode.SIGNUP_SESSION_NOT_EXIST));
 
-            then(createUserWithSocialTx).should(never()).process(any(), any(), any());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean());
         }
 
         @Test
@@ -115,7 +118,7 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.NICKNAME_DUPLICATED));
 
             then(cacheRepository).should().deleteAll(anyList());
-            then(createUserWithSocialTx).should(never()).process(any(), any(), any());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean());
         }
 
         @Test
@@ -133,7 +136,7 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.USER_CONTACT_DUPLICATED));
 
             then(cacheRepository).should().deleteAll(anyList());
-            then(createUserWithSocialTx).should(never()).process(any(), any(), any());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean());
         }
 
         @Test
@@ -156,7 +159,7 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.SOCIAL_ID_DUPLICATED));
 
             then(cacheRepository).should(never()).deleteAll(anyList());
-            then(createUserWithSocialTx).should(never()).process(any(), any(), any());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean());
         }
 
         @Test
@@ -180,7 +183,7 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.EMAIL_DUPLICATED));
 
             then(cacheRepository).should(never()).deleteAll(anyList());
-            then(createUserWithSocialTx).should(never()).process(any(), any(), any());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean());
         }
 
         @Test
@@ -198,14 +201,14 @@ class CreateUserWithSocialTests {
 
             // TX 저장
             GenerateTokenResponseDto mockResponse = mock(GenerateTokenResponseDto.class);
-            given(createUserWithSocialTx.process(any(), any(), any())).willReturn(mockResponse);
+            given(createUserWithSocialTx.process(any(), any(), any(), eq(true), eq(false))).willReturn(mockResponse);
 
             // when
             GenerateTokenResponseDto result = createUserWithSocial.execute(request);
 
             // then
             assertThat(result).isEqualTo(mockResponse);
-            then(createUserWithSocialTx).should().process(eq("01012345678"), eq(request), any());
+            then(createUserWithSocialTx).should().process(eq("01012345678"), eq(request), any(), eq(true), eq(false));
             then(cacheRepository).should().deleteAll(anyList());
         }
     }
