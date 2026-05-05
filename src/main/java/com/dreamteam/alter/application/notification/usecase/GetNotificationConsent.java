@@ -25,6 +25,6 @@ public class GetNotificationConsent implements GetNotificationConsentUseCase {
         NotificationConsent consent = notificationConsentQueryRepository.findByUser(command.getUser())
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "알림 수신 설정을 찾을 수 없습니다."));
 
-        return new GetNotificationConsentResult(consent.isNotificationConsent(), consent.isNightNotificationConsent());
+        return GetNotificationConsentResult.from(consent);
     }
 }

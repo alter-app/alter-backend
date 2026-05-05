@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.general.notification.dto;
 
+import com.dreamteam.alter.domain.notification.type.NotificationConsentType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,10 +14,10 @@ import lombok.NoArgsConstructor;
 public class UpdateNotificationConsentRequestDto {
 
     @NotNull
-    @Schema(description = "알림 수신 동의 여부")
-    private Boolean notificationConsent;
+    @Schema(description = "동의 항목 타입")
+    private NotificationConsentType type;
 
     @NotNull
-    @Schema(description = "야간 알림 수신 동의 여부")
-    private Boolean nightNotificationConsent;
+    @Schema(description = "동의 여부")
+    private Boolean consent;
 }

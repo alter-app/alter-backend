@@ -24,7 +24,6 @@ public class UpdateNotificationConsent implements UpdateNotificationConsentUseCa
         NotificationConsent consent = notificationConsentQueryRepository.findByUser(command.getUser())
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "알림 수신 설정을 찾을 수 없습니다."));
 
-        consent.updateConsent(command.isNotificationConsent(), command.isNightNotificationConsent());
-        notificationConsentRepository.save(consent);
+        consent.updateConsent(command.getType(), command.isConsent());
     }
 }

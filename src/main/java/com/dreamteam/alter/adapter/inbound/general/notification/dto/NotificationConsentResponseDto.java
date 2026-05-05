@@ -1,8 +1,12 @@
 package com.dreamteam.alter.adapter.inbound.general.notification.dto;
 
 import com.dreamteam.alter.domain.notification.result.GetNotificationConsentResult;
+import com.dreamteam.alter.domain.notification.type.NotificationConsentType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Getter
 @Builder(access = AccessLevel.PRIVATE)
@@ -11,16 +15,18 @@ import lombok.*;
 @Schema(description = "알림 수신 설정 조회 응답 DTO")
 public class NotificationConsentResponseDto {
 
-    @Schema(description = "알림 수신 동의 여부")
-    private boolean notificationConsent;
-
-    @Schema(description = "야간 알림 수신 동의 여부")
-    private boolean nightNotificationConsent;
+    @Schema(description = "알림 항목별 동의 상태")
+    private List<NotificationConsentItemDto> items;
 
     public static NotificationConsentResponseDto from(GetNotificationConsentResult result) {
+        List<NotificationConsentItemDto> items = Arrays.stream(NotificationConsentType.values())
+            .map(type -> NotificationConsentItemDto.of(
+                type,
+                Boolean.TRUE.equals(result.consents().get(type))
+            ))
+            .toList();
         return NotificationConsentResponseDto.builder()
-            .notificationConsent(result.notificationConsent())
-            .nightNotificationConsent(result.nightNotificationConsent())
+            .items(items)
             .build();
     }
 }
