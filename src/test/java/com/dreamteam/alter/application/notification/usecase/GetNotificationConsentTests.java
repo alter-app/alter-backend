@@ -6,6 +6,7 @@ import com.dreamteam.alter.domain.notification.command.GetNotificationConsentCom
 import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentQueryRepository;
 import com.dreamteam.alter.domain.notification.result.GetNotificationConsentResult;
+import com.dreamteam.alter.domain.notification.type.NotificationConsentType;
 import com.dreamteam.alter.domain.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -52,7 +53,7 @@ class GetNotificationConsentTests {
         }
 
         @Test
-        @DisplayName("레코드 존재 + 둘 다 true이면 그대로 반환")
+        @DisplayName("레코드 존재 + 둘 다 true이면 GENERAL/NIGHT 모두 true 반환")
         void returnsActualValues_whenBothTrue() {
             // given
             User user = mock(User.class);
@@ -65,13 +66,13 @@ class GetNotificationConsentTests {
             GetNotificationConsentResult result = getNotificationConsent.execute(command);
 
             // then
-            assertThat(result.notificationConsent()).isTrue();
-            assertThat(result.nightNotificationConsent()).isTrue();
+            assertThat(result.consents().get(NotificationConsentType.GENERAL)).isTrue();
+            assertThat(result.consents().get(NotificationConsentType.NIGHT)).isTrue();
         }
 
         @Test
-        @DisplayName("레코드 존재 + notificationConsent=false이면 nightNotificationConsent도 false 반환")
-        void returnsActualValues_whenNotificationConsentIsFalse() {
+        @DisplayName("레코드 존재 + GENERAL=false이면 NIGHT도 false 반환")
+        void returnsActualValues_whenGeneralIsFalse() {
             // given
             User user = mock(User.class);
             GetNotificationConsentCommand command = GetNotificationConsentCommand.from(user);
@@ -83,13 +84,13 @@ class GetNotificationConsentTests {
             GetNotificationConsentResult result = getNotificationConsent.execute(command);
 
             // then
-            assertThat(result.notificationConsent()).isFalse();
-            assertThat(result.nightNotificationConsent()).isFalse();
+            assertThat(result.consents().get(NotificationConsentType.GENERAL)).isFalse();
+            assertThat(result.consents().get(NotificationConsentType.NIGHT)).isFalse();
         }
 
         @Test
-        @DisplayName("레코드 존재 + nightNotificationConsent=false이면 false 반환")
-        void returnsActualValues_whenNightNotificationConsentIsFalse() {
+        @DisplayName("레코드 존재 + NIGHT=false이면 false 반환")
+        void returnsActualValues_whenNightIsFalse() {
             // given
             User user = mock(User.class);
             GetNotificationConsentCommand command = GetNotificationConsentCommand.from(user);
@@ -101,8 +102,8 @@ class GetNotificationConsentTests {
             GetNotificationConsentResult result = getNotificationConsent.execute(command);
 
             // then
-            assertThat(result.notificationConsent()).isTrue();
-            assertThat(result.nightNotificationConsent()).isFalse();
+            assertThat(result.consents().get(NotificationConsentType.GENERAL)).isTrue();
+            assertThat(result.consents().get(NotificationConsentType.NIGHT)).isFalse();
         }
     }
 }

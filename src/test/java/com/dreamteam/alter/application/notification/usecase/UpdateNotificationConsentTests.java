@@ -6,12 +6,12 @@ import com.dreamteam.alter.domain.notification.command.UpdateNotificationConsent
 import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentQueryRepository;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentRepository;
+import com.dreamteam.alter.domain.notification.type.NotificationConsentType;
 import com.dreamteam.alter.domain.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -49,7 +49,7 @@ class UpdateNotificationConsentTests {
             // given
             User user = mock(User.class);
             UpdateNotificationConsentCommand command =
-                UpdateNotificationConsentCommand.of(user, true, false);
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.GENERAL, true);
 
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.empty());
 
@@ -63,75 +63,103 @@ class UpdateNotificationConsentTests {
         }
 
         @Test
-        @DisplayName("기존 레코드 존재 시 updateConsent 호출 후 save 호출됨")
-        void updatesExistingRecordAndSaves_whenRecordExists() {
+        @DisplayName("GENERAL=true 토글 시 notificationConsent만 변경되어 저장됨")
+        void savesGeneralTrue_keepsNightAsIs() {
             // given
             User user = mock(User.class);
             UpdateNotificationConsentCommand command =
-                UpdateNotificationConsentCommand.of(user, true, true);
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.GENERAL, true);
 
             NotificationConsent existing = NotificationConsent.create(user, false, false);
-
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
 
             // when
             updateNotificationConsent.execute(command);
 
             // then
-            ArgumentCaptor<NotificationConsent> captor = ArgumentCaptor.forClass(NotificationConsent.class);
-            then(notificationConsentRepository).should().save(captor.capture());
-
-            NotificationConsent saved = captor.getValue();
-            assertThat(saved.isNotificationConsent()).isTrue();
-            assertThat(saved.isNightNotificationConsent()).isTrue();
+            assertThat(existing.isNotificationConsent()).isTrue();
+            assertThat(existing.isNightNotificationConsent()).isFalse();
+            then(notificationConsentRepository).shouldHaveNoInteractions();
         }
 
         @Test
-        @DisplayName("nightNotificationConsent만 false로 변경 시 그 값으로 저장됨")
-        void savesWithNightConsentFalse_whenOnlyNightConsentChanged() {
+        @DisplayName("GENERAL=false 토글 시 NIGHT도 자동으로 false로 cascade")
+        void savesGeneralFalse_cascadesNightToFalse() {
             // given
             User user = mock(User.class);
             UpdateNotificationConsentCommand command =
-                UpdateNotificationConsentCommand.of(user, true, false);
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.GENERAL, false);
 
             NotificationConsent existing = NotificationConsent.create(user, true, true);
-
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
 
             // when
             updateNotificationConsent.execute(command);
 
             // then
-            ArgumentCaptor<NotificationConsent> captor = ArgumentCaptor.forClass(NotificationConsent.class);
-            then(notificationConsentRepository).should().save(captor.capture());
-
-            NotificationConsent saved = captor.getValue();
-            assertThat(saved.isNotificationConsent()).isTrue();
-            assertThat(saved.isNightNotificationConsent()).isFalse();
+            assertThat(existing.isNotificationConsent()).isFalse();
+            assertThat(existing.isNightNotificationConsent()).isFalse();
+            then(notificationConsentRepository).shouldHaveNoInteractions();
         }
 
         @Test
-        @DisplayName("두 플래그 모두 false로 변경 시 그 값으로 저장됨")
-        void savesWithBothFlagsFalse_whenBothChanged() {
+        @DisplayName("GENERAL=true 상태에서 NIGHT=true 토글 시 정상 저장")
+        void savesNightTrue_whenGeneralIsTrue() {
             // given
             User user = mock(User.class);
             UpdateNotificationConsentCommand command =
-                UpdateNotificationConsentCommand.of(user, false, false);
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.NIGHT, true);
 
-            NotificationConsent existing = NotificationConsent.create(user, true, true);
-
+            NotificationConsent existing = NotificationConsent.create(user, true, false);
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
 
             // when
             updateNotificationConsent.execute(command);
 
             // then
-            ArgumentCaptor<NotificationConsent> captor = ArgumentCaptor.forClass(NotificationConsent.class);
-            then(notificationConsentRepository).should().save(captor.capture());
+            assertThat(existing.isNotificationConsent()).isTrue();
+            assertThat(existing.isNightNotificationConsent()).isTrue();
+            then(notificationConsentRepository).shouldHaveNoInteractions();
+        }
 
-            NotificationConsent saved = captor.getValue();
-            assertThat(saved.isNotificationConsent()).isFalse();
-            assertThat(saved.isNightNotificationConsent()).isFalse();
+        @Test
+        @DisplayName("GENERAL=false 상태에서 NIGHT=true 토글 시 ILLEGAL_ARGUMENT 예외, save 미호출")
+        void throwsIllegalArgument_whenNightTrueWithGeneralFalse() {
+            // given
+            User user = mock(User.class);
+            UpdateNotificationConsentCommand command =
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.NIGHT, true);
+
+            NotificationConsent existing = NotificationConsent.create(user, false, false);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
+
+            // when & then
+            assertThatThrownBy(() -> updateNotificationConsent.execute(command))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.ILLEGAL_ARGUMENT);
+
+            then(notificationConsentRepository).should(never()).save(any(NotificationConsent.class));
+        }
+
+        @Test
+        @DisplayName("NIGHT=false 토글 시 GENERAL은 유지하고 NIGHT만 false로 저장")
+        void savesNightFalse_keepsGeneralAsIs() {
+            // given
+            User user = mock(User.class);
+            UpdateNotificationConsentCommand command =
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.NIGHT, false);
+
+            NotificationConsent existing = NotificationConsent.create(user, true, true);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
+
+            // when
+            updateNotificationConsent.execute(command);
+
+            // then
+            assertThat(existing.isNotificationConsent()).isTrue();
+            assertThat(existing.isNightNotificationConsent()).isFalse();
+            then(notificationConsentRepository).shouldHaveNoInteractions();
         }
     }
 }
