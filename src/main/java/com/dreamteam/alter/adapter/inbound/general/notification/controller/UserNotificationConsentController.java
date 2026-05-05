@@ -50,8 +50,8 @@ public class UserNotificationConsentController implements UserNotificationConsen
         updateNotificationConsentUseCase.execute(
             UpdateNotificationConsentCommand.of(
                 actor.getUser(),
-                request.getNotificationConsent(),
-                request.getNightNotificationConsent()
+                request.getType(),
+                request.getConsent()
             )
         );
         return ResponseEntity.ok(CommonApiResponse.empty());

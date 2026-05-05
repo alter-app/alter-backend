@@ -50,8 +50,8 @@ public class ManagerNotificationConsentController implements ManagerNotification
         updateNotificationConsentUseCase.execute(
             UpdateNotificationConsentCommand.of(
                 actor.getManagerUser().getUser(),
-                request.getNotificationConsent(),
-                request.getNightNotificationConsent()
+                request.getType(),
+                request.getConsent()
             )
         );
         return ResponseEntity.ok(CommonApiResponse.empty());
