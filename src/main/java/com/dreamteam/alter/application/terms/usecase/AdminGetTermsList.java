@@ -9,8 +9,6 @@ import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminGetTermsListUseCase;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,14 +23,19 @@ public class AdminGetTermsList implements AdminGetTermsListUseCase {
 
     @Override
     public PaginatedResponseDto<AdminTermsListItemResponseDto> execute(TermsListFilterDto filter, PageRequestDto pageRequest) {
-        PageRequest pageable = PageRequest.of(pageRequest.page() - 1, pageRequest.pageSize());
-        Page<Terms> page = termsQueryRepository.findByFilter(filter, pageable);
+        long count = termsQueryRepository.countByFilter(filter);
+        if (count == 0) {
+            return PaginatedResponseDto.empty(PageResponseDto.empty(pageRequest));
+        }
 
-        List<AdminTermsListItemResponseDto> data = page.getContent().stream()
+        List<Terms> termsList = termsQueryRepository.findByFilter(filter, pageRequest);
+        PageResponseDto pageResponse = PageResponseDto.of(pageRequest, (int) count);
+
+        return PaginatedResponseDto.of(
+            pageResponse,
+            termsList.stream()
                 .map(AdminTermsListItemResponseDto::from)
-                .toList();
-        PageResponseDto pageResponse = PageResponseDto.of(pageRequest, Math.toIntExact(page.getTotalElements()));
-
-        return PaginatedResponseDto.of(pageResponse, data);
+                .toList()
+        );
     }
 }

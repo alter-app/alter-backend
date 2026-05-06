@@ -14,9 +14,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,9 +36,7 @@ class AdminGetTermsListTest {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(null, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
-        Page<Terms> emptyPage = new PageImpl<>(Collections.emptyList());
-        when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(Pageable.class)))
-                .thenReturn(emptyPage);
+        when(termsQueryRepository.countByFilter(any(TermsListFilterDto.class))).thenReturn(0L);
 
         // when
         PaginatedResponseDto<AdminTermsListItemResponseDto> result = adminGetTermsList.execute(filter, pageRequest);
@@ -49,7 +44,8 @@ class AdminGetTermsListTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.data()).isEmpty();
-        verify(termsQueryRepository, times(1)).findByFilter(any(TermsListFilterDto.class), any(Pageable.class));
+        verify(termsQueryRepository, times(1)).countByFilter(any(TermsListFilterDto.class));
+        verify(termsQueryRepository, never()).findByFilter(any(TermsListFilterDto.class), any(PageRequestDto.class));
     }
 
     @Test
@@ -58,16 +54,16 @@ class AdminGetTermsListTest {
         TermsListFilterDto filter = new TermsListFilterDto(TermsType.SERVICE, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
-        Page<Terms> page = new PageImpl<>(List.of(terms));
-        when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(Pageable.class)))
-                .thenReturn(page);
+        when(termsQueryRepository.countByFilter(any(TermsListFilterDto.class))).thenReturn(1L);
+        when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(PageRequestDto.class)))
+                .thenReturn(List.of(terms));
 
         // when
         PaginatedResponseDto<AdminTermsListItemResponseDto> result = adminGetTermsList.execute(filter, pageRequest);
 
         // then
         ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
-        verify(termsQueryRepository, times(1)).findByFilter(filterCaptor.capture(), any(Pageable.class));
+        verify(termsQueryRepository, times(1)).findByFilter(filterCaptor.capture(), any(PageRequestDto.class));
         assertThat(filterCaptor.getValue().getType()).isEqualTo(TermsType.SERVICE);
         assertThat(result.data()).hasSize(1);
         assertThat(result.data().get(0).getType()).isEqualTo("SERVICE");
@@ -78,16 +74,14 @@ class AdminGetTermsListTest {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(TermsType.PRIVACY, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
-        Page<Terms> emptyPage = new PageImpl<>(Collections.emptyList());
-        when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(Pageable.class)))
-                .thenReturn(emptyPage);
+        when(termsQueryRepository.countByFilter(any(TermsListFilterDto.class))).thenReturn(0L);
 
         // when
         adminGetTermsList.execute(filter, pageRequest);
 
         // then
         ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
-        verify(termsQueryRepository).findByFilter(filterCaptor.capture(), any(Pageable.class));
+        verify(termsQueryRepository).countByFilter(filterCaptor.capture());
         assertThat(filterCaptor.getValue().getType()).isEqualTo(TermsType.PRIVACY);
         assertThat(filterCaptor.getValue().getStatus()).isNull();
     }
@@ -97,16 +91,14 @@ class AdminGetTermsListTest {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(null, TermsStatus.PUBLISHED);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
-        Page<Terms> emptyPage = new PageImpl<>(Collections.emptyList());
-        when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(Pageable.class)))
-                .thenReturn(emptyPage);
+        when(termsQueryRepository.countByFilter(any(TermsListFilterDto.class))).thenReturn(0L);
 
         // when
         adminGetTermsList.execute(filter, pageRequest);
 
         // then
         ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
-        verify(termsQueryRepository).findByFilter(filterCaptor.capture(), any(Pageable.class));
+        verify(termsQueryRepository).countByFilter(filterCaptor.capture());
         assertThat(filterCaptor.getValue().getStatus()).isEqualTo(TermsStatus.PUBLISHED);
         assertThat(filterCaptor.getValue().getType()).isNull();
     }
