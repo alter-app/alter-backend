@@ -14,7 +14,13 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Table(name = "terms")
+@Table(
+    name = "terms",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uq_terms_type_version",
+        columnNames = {"type", "version"}
+    )
+)
 @DynamicUpdate
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
