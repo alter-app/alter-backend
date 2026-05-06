@@ -31,7 +31,7 @@ public class AdminGetTermsList implements AdminGetTermsListUseCase {
         List<AdminTermsListItemResponseDto> data = page.getContent().stream()
                 .map(AdminTermsListItemResponseDto::from)
                 .toList();
-        PageResponseDto pageResponse = PageResponseDto.of(pageRequest, (int) page.getTotalElements());
+        PageResponseDto pageResponse = PageResponseDto.of(pageRequest, Math.toIntExact(page.getTotalElements()));
 
         return PaginatedResponseDto.of(pageResponse, data);
     }
