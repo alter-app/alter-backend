@@ -24,7 +24,7 @@ public class AdminUpdateTerms implements AdminUpdateTermsUseCase {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         if (terms.getStatus() != TermsStatus.DRAFT) {
-            throw new CustomException(ErrorCode.CONFLICT);
+            throw new CustomException(ErrorCode.CONFLICT, "DRAFT 상태의 약관만 수정할 수 있습니다.");
         }
 
         terms.update(request.getTitle(), request.getNotionUrl(), request.isRequired());
