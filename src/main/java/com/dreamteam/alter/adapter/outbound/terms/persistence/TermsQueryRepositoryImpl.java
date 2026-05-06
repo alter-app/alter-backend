@@ -26,6 +26,19 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
     private final QTerms terms = QTerms.terms;
 
     @Override
+    public Optional<Terms> findById(Long id) {
+        return Optional.ofNullable(
+                queryFactory
+                        .selectFrom(terms)
+                        .where(
+                                terms.id.eq(id),
+                                notDeleted()
+                        )
+                        .fetchOne()
+        );
+    }
+
+    @Override
     public Page<Terms> findByFilter(TermsListFilterDto filter, Pageable pageable) {
         List<Terms> content = queryFactory
                 .selectFrom(terms)

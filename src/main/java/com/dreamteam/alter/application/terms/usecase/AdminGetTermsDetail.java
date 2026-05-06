@@ -5,7 +5,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminGetTermsDetailUseCase;
-import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
+import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,11 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class AdminGetTermsDetail implements AdminGetTermsDetailUseCase {
 
-    private final TermsRepository termsRepository;
+    private final TermsQueryRepository termsQueryRepository;
 
     @Override
     public AdminTermsDetailResponseDto execute(Long id) {
-        Terms terms = termsRepository.findById(id)
+        Terms terms = termsQueryRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         return AdminTermsDetailResponseDto.from(terms);

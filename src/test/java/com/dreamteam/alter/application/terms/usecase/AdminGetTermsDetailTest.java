@@ -4,7 +4,7 @@ import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminTermsDetailRespo
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
-import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
+import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import com.dreamteam.alter.domain.terms.type.TermsType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 class AdminGetTermsDetailTest {
 
     @Mock
-    private TermsRepository termsRepository;
+    private TermsQueryRepository termsQueryRepository;
 
     @InjectMocks
     private AdminGetTermsDetail adminGetTermsDetail;
@@ -31,7 +31,7 @@ class AdminGetTermsDetailTest {
     void 존재하는_id_조회_성공() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
-        when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
+        when(termsQueryRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when
         AdminTermsDetailResponseDto result = adminGetTermsDetail.execute(1L);
@@ -44,13 +44,13 @@ class AdminGetTermsDetailTest {
         assertThat(result.getNotionUrl()).isEqualTo("https://notion.so/terms");
         assertThat(result.getStatus()).isEqualTo("DRAFT");
         assertThat(result.isRequired()).isTrue();
-        verify(termsRepository, times(1)).findById(1L);
+        verify(termsQueryRepository, times(1)).findById(1L);
     }
 
     @Test
     void 존재하지_않는_id_TERMS_NOT_FOUND() {
         // given
-        when(termsRepository.findById(999L)).thenReturn(Optional.empty());
+        when(termsQueryRepository.findById(999L)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> adminGetTermsDetail.execute(999L))
@@ -62,8 +62,8 @@ class AdminGetTermsDetailTest {
     @Test
     void DELETED_상태_약관_조회시_TERMS_NOT_FOUND() {
         // given
-        // @SQLRestriction("status != 'DELETED'")으로 인해 JPA가 DELETED 레코드를 반환하지 않음
-        when(termsRepository.findById(1L)).thenReturn(Optional.empty());
+        // QueryDSL notDeleted() 조건으로 인해 DELETED 레코드를 반환하지 않음
+        when(termsQueryRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> adminGetTermsDetail.execute(1L))

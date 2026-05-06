@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public interface TermsQueryRepository {
 
+    Optional<Terms> findById(Long id);
+
     Page<Terms> findByFilter(TermsListFilterDto filter, Pageable pageable);
 
     Optional<Terms> findPublishedByType(TermsType type);
