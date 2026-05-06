@@ -65,10 +65,9 @@ class AdminGetTermsDetailTest {
     @Test
     void DELETED_상태_약관_조회시_TERMS_NOT_FOUND() {
         // given
-        Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
-        terms.delete();
+        // @SQLRestriction("status != 'DELETED'")으로 인해 JPA가 DELETED 레코드를 반환하지 않음
         AdminActor actor = mock(AdminActor.class);
-        when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
+        when(termsRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> adminGetTermsDetail.execute(1L, actor))

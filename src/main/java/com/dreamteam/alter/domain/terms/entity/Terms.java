@@ -5,6 +5,7 @@ import com.dreamteam.alter.domain.terms.type.TermsType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -43,6 +44,7 @@ public class Terms {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
+    @SQLRestriction("status != 'DELETED'")
     private TermsStatus status;
 
     @Column(name = "effective_at", nullable = true)
