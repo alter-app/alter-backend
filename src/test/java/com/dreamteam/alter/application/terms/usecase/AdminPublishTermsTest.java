@@ -3,7 +3,6 @@ package com.dreamteam.alter.application.terms.usecase;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
-import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
 import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
@@ -26,9 +25,6 @@ class AdminPublishTermsTest {
     @Mock
     private TermsRepository termsRepository;
 
-    @Mock
-    private TermsQueryRepository termsQueryRepository;
-
     @InjectMocks
     private AdminPublishTerms adminPublishTerms;
 
@@ -38,7 +34,7 @@ class AdminPublishTermsTest {
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
-        when(termsQueryRepository.findPublishedByType("SERVICE")).thenReturn(Optional.empty());
+        when(termsRepository.findPublishedByTypeWithLock(TermsType.SERVICE)).thenReturn(Optional.empty());
 
         // when
         adminPublishTerms.execute(1L, actor);
@@ -47,7 +43,7 @@ class AdminPublishTermsTest {
         assertThat(terms.getStatus()).isEqualTo(TermsStatus.PUBLISHED);
         assertThat(terms.getEffectiveAt()).isNotNull();
         verify(termsRepository, times(1)).findById(1L);
-        verify(termsQueryRepository, times(1)).findPublishedByType("SERVICE");
+        verify(termsRepository, times(1)).findPublishedByTypeWithLock(TermsType.SERVICE);
     }
 
     @Test
@@ -58,7 +54,7 @@ class AdminPublishTermsTest {
         Terms newTerms = Terms.create(TermsType.SERVICE, "v2.0", "서비스 이용약관 v2", "https://notion.so/terms-v2", true);
         AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(2L)).thenReturn(Optional.of(newTerms));
-        when(termsQueryRepository.findPublishedByType("SERVICE")).thenReturn(Optional.of(existingTerms));
+        when(termsRepository.findPublishedByTypeWithLock(TermsType.SERVICE)).thenReturn(Optional.of(existingTerms));
 
         // when
         adminPublishTerms.execute(2L, actor);
