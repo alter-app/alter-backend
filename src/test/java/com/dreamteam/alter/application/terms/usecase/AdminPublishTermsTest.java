@@ -6,7 +6,6 @@ import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
 import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
-import com.dreamteam.alter.domain.user.context.AdminActor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,12 +31,11 @@ class AdminPublishTermsTest {
     void DRAFT_약관_게시_성공_기존_PUBLISHED_없음() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
         when(termsRepository.findPublishedByTypeWithLock(TermsType.SERVICE)).thenReturn(Optional.empty());
 
         // when
-        adminPublishTerms.execute(1L, actor);
+        adminPublishTerms.execute(1L);
 
         // then
         assertThat(terms.getStatus()).isEqualTo(TermsStatus.PUBLISHED);
@@ -52,12 +50,11 @@ class AdminPublishTermsTest {
         Terms existingTerms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         existingTerms.publish();
         Terms newTerms = Terms.create(TermsType.SERVICE, "v2.0", "서비스 이용약관 v2", "https://notion.so/terms-v2", true);
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(2L)).thenReturn(Optional.of(newTerms));
         when(termsRepository.findPublishedByTypeWithLock(TermsType.SERVICE)).thenReturn(Optional.of(existingTerms));
 
         // when
-        adminPublishTerms.execute(2L, actor);
+        adminPublishTerms.execute(2L);
 
         // then
         assertThat(existingTerms.getStatus()).isEqualTo(TermsStatus.DEPRECATED);
@@ -68,11 +65,10 @@ class AdminPublishTermsTest {
     @Test
     void 존재하지_않는_id_TERMS_NOT_FOUND() {
         // given
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(999L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> adminPublishTerms.execute(999L, actor))
+        assertThatThrownBy(() -> adminPublishTerms.execute(999L))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.NOT_FOUND);
@@ -83,11 +79,10 @@ class AdminPublishTermsTest {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when & then
-        assertThatThrownBy(() -> adminPublishTerms.execute(1L, actor))
+        assertThatThrownBy(() -> adminPublishTerms.execute(1L))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.CONFLICT);
@@ -99,11 +94,10 @@ class AdminPublishTermsTest {
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
         terms.deprecate();
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when & then
-        assertThatThrownBy(() -> adminPublishTerms.execute(1L, actor))
+        assertThatThrownBy(() -> adminPublishTerms.execute(1L))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.CONFLICT);

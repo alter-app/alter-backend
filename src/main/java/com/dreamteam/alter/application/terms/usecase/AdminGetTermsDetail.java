@@ -6,7 +6,6 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminGetTermsDetailUseCase;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
-import com.dreamteam.alter.domain.user.context.AdminActor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +18,7 @@ public class AdminGetTermsDetail implements AdminGetTermsDetailUseCase {
     private final TermsRepository termsRepository;
 
     @Override
-    public AdminTermsDetailResponseDto execute(Long id, AdminActor actor) {
+    public AdminTermsDetailResponseDto execute(Long id) {
         Terms terms = termsRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 

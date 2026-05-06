@@ -8,13 +8,11 @@ import com.dreamteam.alter.adapter.inbound.admin.terms.dto.TermsListFilterDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
-import com.dreamteam.alter.application.aop.AdminActionContext;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminCreateTermsUseCase;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminGetTermsDetailUseCase;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminGetTermsListUseCase;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminPublishTermsUseCase;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminUpdateTermsUseCase;
-import com.dreamteam.alter.domain.user.context.AdminActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -54,8 +52,7 @@ public class AdminTermsController implements AdminTermsControllerSpec {
         PageRequestDto pageRequest,
         TermsListFilterDto filter
     ) {
-        AdminActor actor = AdminActionContext.getInstance().getActor();
-        return ResponseEntity.ok(adminGetTermsList.execute(filter, pageRequest, actor));
+        return ResponseEntity.ok(adminGetTermsList.execute(filter, pageRequest));
     }
 
     @Override
@@ -63,8 +60,7 @@ public class AdminTermsController implements AdminTermsControllerSpec {
     public ResponseEntity<CommonApiResponse<Map<String, Long>>> createTerms(
         @Valid @RequestBody AdminCreateTermsRequestDto request
     ) {
-        AdminActor actor = AdminActionContext.getInstance().getActor();
-        Long id = adminCreateTerms.execute(request, actor);
+        Long id = adminCreateTerms.execute(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(CommonApiResponse.of(Map.of("id", id)));
     }
 
@@ -73,8 +69,7 @@ public class AdminTermsController implements AdminTermsControllerSpec {
     public ResponseEntity<CommonApiResponse<AdminTermsDetailResponseDto>> getTermsDetail(
         @PathVariable Long id
     ) {
-        AdminActor actor = AdminActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(adminGetTermsDetail.execute(id, actor)));
+        return ResponseEntity.ok(CommonApiResponse.of(adminGetTermsDetail.execute(id)));
     }
 
     @Override
@@ -83,8 +78,7 @@ public class AdminTermsController implements AdminTermsControllerSpec {
         @PathVariable Long id,
         @Valid @RequestBody AdminUpdateTermsRequestDto request
     ) {
-        AdminActor actor = AdminActionContext.getInstance().getActor();
-        adminUpdateTerms.execute(id, request, actor);
+        adminUpdateTerms.execute(id, request);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -93,8 +87,7 @@ public class AdminTermsController implements AdminTermsControllerSpec {
     public ResponseEntity<CommonApiResponse<Void>> publishTerms(
         @PathVariable Long id
     ) {
-        AdminActor actor = AdminActionContext.getInstance().getActor();
-        adminPublishTerms.execute(id, actor);
+        adminPublishTerms.execute(id);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }

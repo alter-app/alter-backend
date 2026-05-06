@@ -7,7 +7,6 @@ import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminUpdateTermsUseCase;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
 import com.dreamteam.alter.domain.terms.type.TermsStatus;
-import com.dreamteam.alter.domain.user.context.AdminActor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +19,7 @@ public class AdminUpdateTerms implements AdminUpdateTermsUseCase {
     private final TermsRepository termsRepository;
 
     @Override
-    public void execute(Long id, AdminUpdateTermsRequestDto request, AdminActor actor) {
+    public void execute(Long id, AdminUpdateTermsRequestDto request) {
         Terms terms = termsRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 

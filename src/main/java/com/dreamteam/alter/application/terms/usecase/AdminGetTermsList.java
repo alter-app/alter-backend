@@ -8,7 +8,6 @@ import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminGetTermsListUseCase;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
-import com.dreamteam.alter.domain.user.context.AdminActor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,7 +24,7 @@ public class AdminGetTermsList implements AdminGetTermsListUseCase {
     private final TermsQueryRepository termsQueryRepository;
 
     @Override
-    public PaginatedResponseDto<AdminTermsListItemResponseDto> execute(TermsListFilterDto filter, PageRequestDto pageRequest, AdminActor actor) {
+    public PaginatedResponseDto<AdminTermsListItemResponseDto> execute(TermsListFilterDto filter, PageRequestDto pageRequest) {
         PageRequest pageable = PageRequest.of(pageRequest.page() - 1, pageRequest.pageSize());
         Page<Terms> page = termsQueryRepository.findByFilter(filter, pageable);
 

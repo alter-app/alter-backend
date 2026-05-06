@@ -6,7 +6,6 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
 import com.dreamteam.alter.domain.terms.type.TermsType;
-import com.dreamteam.alter.domain.user.context.AdminActor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,11 +34,10 @@ class AdminUpdateTermsTest {
         AdminUpdateTermsRequestDto request = new AdminUpdateTermsRequestDto(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when
-        adminUpdateTerms.execute(1L, request, actor);
+        adminUpdateTerms.execute(1L, request);
 
         // then
         assertThat(terms.getTitle()).isEqualTo("수정된 제목");
@@ -54,11 +52,10 @@ class AdminUpdateTermsTest {
         AdminUpdateTermsRequestDto request = new AdminUpdateTermsRequestDto(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(999L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> adminUpdateTerms.execute(999L, request, actor))
+        assertThatThrownBy(() -> adminUpdateTerms.execute(999L, request))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.NOT_FOUND);
@@ -72,11 +69,10 @@ class AdminUpdateTermsTest {
         AdminUpdateTermsRequestDto request = new AdminUpdateTermsRequestDto(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when & then
-        assertThatThrownBy(() -> adminUpdateTerms.execute(1L, request, actor))
+        assertThatThrownBy(() -> adminUpdateTerms.execute(1L, request))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.CONFLICT);
@@ -91,11 +87,10 @@ class AdminUpdateTermsTest {
         AdminUpdateTermsRequestDto request = new AdminUpdateTermsRequestDto(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when & then
-        assertThatThrownBy(() -> adminUpdateTerms.execute(1L, request, actor))
+        assertThatThrownBy(() -> adminUpdateTerms.execute(1L, request))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.CONFLICT);

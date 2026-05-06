@@ -4,7 +4,6 @@ import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminCreateTermsReque
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminCreateTermsUseCase;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
-import com.dreamteam.alter.domain.user.context.AdminActor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +16,7 @@ public class AdminCreateTerms implements AdminCreateTermsUseCase {
     private final TermsRepository termsRepository;
 
     @Override
-    public Long execute(AdminCreateTermsRequestDto request, AdminActor actor) {
+    public Long execute(AdminCreateTermsRequestDto request) {
         Terms terms = Terms.create(
                 request.getType(),
                 request.getVersion(),

@@ -6,7 +6,6 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
 import com.dreamteam.alter.domain.terms.type.TermsType;
-import com.dreamteam.alter.domain.user.context.AdminActor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,11 +31,10 @@ class AdminGetTermsDetailTest {
     void 존재하는_id_조회_성공() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when
-        AdminTermsDetailResponseDto result = adminGetTermsDetail.execute(1L, actor);
+        AdminTermsDetailResponseDto result = adminGetTermsDetail.execute(1L);
 
         // then
         assertThat(result).isNotNull();
@@ -52,11 +50,10 @@ class AdminGetTermsDetailTest {
     @Test
     void 존재하지_않는_id_TERMS_NOT_FOUND() {
         // given
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(999L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> adminGetTermsDetail.execute(999L, actor))
+        assertThatThrownBy(() -> adminGetTermsDetail.execute(999L))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.NOT_FOUND);
@@ -66,11 +63,10 @@ class AdminGetTermsDetailTest {
     void DELETED_상태_약관_조회시_TERMS_NOT_FOUND() {
         // given
         // @SQLRestriction("status != 'DELETED'")으로 인해 JPA가 DELETED 레코드를 반환하지 않음
-        AdminActor actor = mock(AdminActor.class);
         when(termsRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> adminGetTermsDetail.execute(1L, actor))
+        assertThatThrownBy(() -> adminGetTermsDetail.execute(1L))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.NOT_FOUND);

@@ -8,7 +8,6 @@ import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
-import com.dreamteam.alter.domain.user.context.AdminActor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -40,13 +39,12 @@ class AdminGetTermsListTest {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(null, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
-        AdminActor actor = mock(AdminActor.class);
         Page<Terms> emptyPage = new PageImpl<>(Collections.emptyList());
         when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(Pageable.class)))
                 .thenReturn(emptyPage);
 
         // when
-        PaginatedResponseDto<AdminTermsListItemResponseDto> result = adminGetTermsList.execute(filter, pageRequest, actor);
+        PaginatedResponseDto<AdminTermsListItemResponseDto> result = adminGetTermsList.execute(filter, pageRequest);
 
         // then
         assertThat(result).isNotNull();
@@ -59,14 +57,13 @@ class AdminGetTermsListTest {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(TermsType.SERVICE, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
-        AdminActor actor = mock(AdminActor.class);
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         Page<Terms> page = new PageImpl<>(List.of(terms));
         when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(Pageable.class)))
                 .thenReturn(page);
 
         // when
-        PaginatedResponseDto<AdminTermsListItemResponseDto> result = adminGetTermsList.execute(filter, pageRequest, actor);
+        PaginatedResponseDto<AdminTermsListItemResponseDto> result = adminGetTermsList.execute(filter, pageRequest);
 
         // then
         ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
@@ -81,13 +78,12 @@ class AdminGetTermsListTest {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(TermsType.PRIVACY, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
-        AdminActor actor = mock(AdminActor.class);
         Page<Terms> emptyPage = new PageImpl<>(Collections.emptyList());
         when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(Pageable.class)))
                 .thenReturn(emptyPage);
 
         // when
-        adminGetTermsList.execute(filter, pageRequest, actor);
+        adminGetTermsList.execute(filter, pageRequest);
 
         // then
         ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
@@ -101,13 +97,12 @@ class AdminGetTermsListTest {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(null, TermsStatus.PUBLISHED);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
-        AdminActor actor = mock(AdminActor.class);
         Page<Terms> emptyPage = new PageImpl<>(Collections.emptyList());
         when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(Pageable.class)))
                 .thenReturn(emptyPage);
 
         // when
-        adminGetTermsList.execute(filter, pageRequest, actor);
+        adminGetTermsList.execute(filter, pageRequest);
 
         // then
         ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
