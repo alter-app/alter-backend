@@ -5,6 +5,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
+import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,11 +39,11 @@ class AdminGetTermsDetailTest {
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getType()).isEqualTo("SERVICE");
+        assertThat(result.getType().value()).isEqualTo(TermsType.SERVICE);
         assertThat(result.getVersion()).isEqualTo("v1.0");
         assertThat(result.getTitle()).isEqualTo("서비스 이용약관");
         assertThat(result.getDocUrl()).isEqualTo("https://notion.so/terms");
-        assertThat(result.getStatus()).isEqualTo("DRAFT");
+        assertThat(result.getStatus().value()).isEqualTo(TermsStatus.DRAFT);
         assertThat(result.isRequired()).isTrue();
         verify(termsQueryRepository, times(1)).findById(1L);
     }

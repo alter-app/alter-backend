@@ -1,6 +1,9 @@
 package com.dreamteam.alter.adapter.inbound.admin.terms.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.domain.terms.entity.Terms;
+import com.dreamteam.alter.domain.terms.type.TermsStatus;
+import com.dreamteam.alter.domain.terms.type.TermsType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -20,8 +23,8 @@ public class AdminTermsListItemResponseDto {
     @Schema(description = "약관 ID", example = "1")
     private Long id;
 
-    @Schema(description = "약관 유형", example = "SERVICE")
-    private String type;
+    @Schema(description = "약관 유형")
+    private DescribedEnumDto<TermsType> type;
 
     @Schema(description = "약관 버전", example = "v1.0")
     private String version;
@@ -32,8 +35,8 @@ public class AdminTermsListItemResponseDto {
     @Schema(description = "필수 동의 여부", example = "true")
     private boolean required;
 
-    @Schema(description = "약관 상태", example = "PUBLISHED")
-    private String status;
+    @Schema(description = "약관 상태")
+    private DescribedEnumDto<TermsStatus> status;
 
     @Schema(description = "게시 일시", example = "2025-01-01T12:00:00")
     private LocalDateTime effectiveAt;
@@ -44,11 +47,11 @@ public class AdminTermsListItemResponseDto {
     public static AdminTermsListItemResponseDto from(Terms terms) {
         return AdminTermsListItemResponseDto.builder()
                 .id(terms.getId())
-                .type(terms.getType().name())
+                .type(DescribedEnumDto.of(terms.getType(), TermsType.describe()))
                 .version(terms.getVersion())
                 .title(terms.getTitle())
                 .required(terms.isRequired())
-                .status(terms.getStatus().name())
+                .status(DescribedEnumDto.of(terms.getStatus(), TermsStatus.describe()))
                 .effectiveAt(terms.getEffectiveAt())
                 .createdAt(terms.getCreatedAt())
                 .build();

@@ -66,7 +66,7 @@ class AdminGetTermsListTest {
         verify(termsQueryRepository, times(1)).findByFilter(filterCaptor.capture(), any(PageRequestDto.class));
         assertThat(filterCaptor.getValue().getType()).isEqualTo(TermsType.SERVICE);
         assertThat(result.data()).hasSize(1);
-        assertThat(result.data().get(0).getType()).isEqualTo("SERVICE");
+        assertThat(result.data().get(0).getType().value()).isEqualTo(TermsType.SERVICE);
     }
 
     @Test
