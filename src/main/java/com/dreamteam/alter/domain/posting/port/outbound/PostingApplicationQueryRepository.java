@@ -35,4 +35,6 @@ public interface PostingApplicationQueryRepository {
 
     Optional<PostingApplication> getByManagerAndId(ManagerUser managerUser, Long postingApplicationId);
 
+    List<PostingApplication> findAllActiveByUserId(Long userId);
+
 }

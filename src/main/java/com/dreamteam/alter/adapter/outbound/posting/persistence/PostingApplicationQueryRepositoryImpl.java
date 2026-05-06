@@ -313,11 +313,27 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
     ) {
         BooleanExpression managerCondition = qManagerUser.eq(managerUser);
         BooleanExpression workspaceCondition = eqWorkspaceId(qWorkspace, filter.getWorkspaceId());
-        
+
         if (ObjectUtils.isNotEmpty(workspaceCondition)) {
             return managerCondition.and(workspaceCondition);
         }
         return managerCondition;
+    }
+
+    @Override
+    public List<PostingApplication> findAllActiveByUserId(Long userId) {
+        QPostingApplication qPostingApplication = QPostingApplication.postingApplication;
+        return queryFactory
+            .selectFrom(qPostingApplication)
+            .where(
+                qPostingApplication.user.id.eq(userId),
+                qPostingApplication.status.in(
+                    PostingApplicationStatus.SUBMITTED,
+                    PostingApplicationStatus.SHORTLISTED,
+                    PostingApplicationStatus.ACCEPTED
+                )
+            )
+            .fetch();
     }
 
 }
