@@ -51,12 +51,12 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
     }
 
     @Override
-    public Optional<Terms> findPublishedByType(String type) {
+    public Optional<Terms> findPublishedByType(TermsType type) {
         return Optional.ofNullable(
                 queryFactory
                         .selectFrom(terms)
                         .where(
-                                terms.type.eq(TermsType.valueOf(type)),
+                                terms.type.eq(type),
                                 terms.status.eq(TermsStatus.PUBLISHED)
                         )
                         .fetchFirst()
