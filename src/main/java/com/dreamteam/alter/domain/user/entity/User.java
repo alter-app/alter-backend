@@ -174,6 +174,7 @@ public class User {
         contact = anonymize;
         email = null;
         birthday = "00000000";
+        password = null;
         userSocials.clear();
         status = UserStatus.DELETED;
     }
