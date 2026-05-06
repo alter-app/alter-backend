@@ -29,8 +29,8 @@ public class AdminTermsDetailResponseDto {
     @Schema(description = "약관 제목", example = "서비스 이용약관")
     private String title;
 
-    @Schema(description = "노션 URL", example = "https://notion.so/terms")
-    private String notionUrl;
+    @Schema(description = "약관 문서 URL", example = "https://notion.so/terms")
+    private String docUrl;
 
     @Schema(description = "필수 동의 여부", example = "true")
     private boolean required;
@@ -53,7 +53,7 @@ public class AdminTermsDetailResponseDto {
                 .type(terms.getType().name())
                 .version(terms.getVersion())
                 .title(terms.getTitle())
-                .notionUrl(terms.getNotionUrl())
+                .docUrl(terms.getDocUrl())
                 .required(terms.isRequired())
                 .status(terms.getStatus().name())
                 .effectiveAt(terms.getEffectiveAt())

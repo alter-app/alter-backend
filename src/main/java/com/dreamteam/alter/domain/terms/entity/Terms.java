@@ -42,8 +42,8 @@ public class Terms {
     @Column(name = "title", length = 255, nullable = false)
     private String title;
 
-    @Column(name = "notion_url", length = 1000, nullable = false)
-    private String notionUrl;
+    @Column(name = "doc_url", length = 1000, nullable = false)
+    private String docUrl;
 
     @Column(name = "is_required", nullable = false)
     private boolean required;
@@ -64,21 +64,21 @@ public class Terms {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public static Terms create(TermsType type, String version, String title, String notionUrl, boolean required) {
+    public static Terms create(TermsType type, String version, String title, String docUrl, boolean required) {
         return Terms.builder()
                 .type(type)
                 .version(version)
                 .title(title)
-                .notionUrl(notionUrl)
+                .docUrl(docUrl)
                 .required(required)
                 .status(TermsStatus.DRAFT)
                 .effectiveAt(null)
                 .build();
     }
 
-    public void update(String title, String notionUrl, boolean required) {
+    public void update(String title, String docUrl, boolean required) {
         this.title = title;
-        this.notionUrl = notionUrl;
+        this.docUrl = docUrl;
         this.required = required;
     }
 

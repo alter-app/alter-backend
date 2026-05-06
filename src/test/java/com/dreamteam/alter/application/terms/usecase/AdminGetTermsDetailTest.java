@@ -41,7 +41,7 @@ class AdminGetTermsDetailTest {
         assertThat(result.getType()).isEqualTo("SERVICE");
         assertThat(result.getVersion()).isEqualTo("v1.0");
         assertThat(result.getTitle()).isEqualTo("서비스 이용약관");
-        assertThat(result.getNotionUrl()).isEqualTo("https://notion.so/terms");
+        assertThat(result.getDocUrl()).isEqualTo("https://notion.so/terms");
         assertThat(result.getStatus()).isEqualTo("DRAFT");
         assertThat(result.isRequired()).isTrue();
         verify(termsQueryRepository, times(1)).findById(1L);

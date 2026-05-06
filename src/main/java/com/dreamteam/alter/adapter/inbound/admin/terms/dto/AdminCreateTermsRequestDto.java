@@ -34,8 +34,8 @@ public class AdminCreateTermsRequestDto {
     @NotBlank
     @Size(max = 1000)
     @Pattern(regexp = "^https://.*", message = "https URL이어야 합니다")
-    @Schema(description = "노션 URL", example = "https://notion.so/terms")
-    private String notionUrl;
+    @Schema(description = "약관 문서 URL", example = "https://notion.so/terms")
+    private String docUrl;
 
     @Schema(description = "필수 동의 여부", example = "true")
     private boolean required;

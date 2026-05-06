@@ -21,7 +21,7 @@ public class AdminCreateTerms implements AdminCreateTermsUseCase {
                 request.getType(),
                 request.getVersion(),
                 request.getTitle(),
-                request.getNotionUrl(),
+                request.getDocUrl(),
                 request.isRequired()
         );
         return termsRepository.save(terms).getId();

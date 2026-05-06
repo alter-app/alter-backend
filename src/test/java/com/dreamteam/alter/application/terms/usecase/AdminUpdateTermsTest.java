@@ -41,7 +41,7 @@ class AdminUpdateTermsTest {
 
         // then
         assertThat(terms.getTitle()).isEqualTo("수정된 제목");
-        assertThat(terms.getNotionUrl()).isEqualTo("https://notion.so/terms-v2");
+        assertThat(terms.getDocUrl()).isEqualTo("https://notion.so/terms-v2");
         assertThat(terms.isRequired()).isFalse();
         verify(termsRepository, times(1)).findById(1L);
     }
