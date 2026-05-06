@@ -42,7 +42,7 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
                 .select(terms.count())
                 .from(terms)
                 .where(
-                        notDeleted(),
+                        filter.getStatus() == null ? notDeleted() : null,
                         typeCondition(filter.getType()),
                         statusCondition(filter.getStatus())
                 )
@@ -55,7 +55,7 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
         return queryFactory
                 .selectFrom(terms)
                 .where(
-                        notDeleted(),
+                        filter.getStatus() == null ? notDeleted() : null,
                         typeCondition(filter.getType()),
                         statusCondition(filter.getStatus())
                 )
