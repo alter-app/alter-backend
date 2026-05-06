@@ -1,6 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.admin.terms.controller;
 
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminCreateTermsRequestDto;
+import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminCreateTermsResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminTermsDetailResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminTermsListItemResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminUpdateTermsRequestDto;
@@ -22,7 +23,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 @RestController
 @RequestMapping("/admin/terms")
@@ -57,11 +57,11 @@ public class AdminTermsController implements AdminTermsControllerSpec {
 
     @Override
     @PostMapping
-    public ResponseEntity<CommonApiResponse<Map<String, Long>>> createTerms(
+    public ResponseEntity<CommonApiResponse<AdminCreateTermsResponseDto>> createTerms(
         @Valid @RequestBody AdminCreateTermsRequestDto request
     ) {
         Long id = adminCreateTerms.execute(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(CommonApiResponse.of(Map.of("id", id)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(CommonApiResponse.of(AdminCreateTermsResponseDto.of(id)));
     }
 
     @Override

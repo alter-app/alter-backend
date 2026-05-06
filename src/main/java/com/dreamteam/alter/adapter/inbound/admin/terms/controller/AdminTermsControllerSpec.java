@@ -1,6 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.admin.terms.controller;
 
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminCreateTermsRequestDto;
+import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminCreateTermsResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminTermsDetailResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminTermsListItemResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminUpdateTermsRequestDto;
@@ -22,7 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.Map;
 
 @Tag(name = "ADMIN - 약관 관리 API")
 public interface AdminTermsControllerSpec {
@@ -50,7 +50,7 @@ public interface AdminTermsControllerSpec {
                     )
                 }))
     })
-    ResponseEntity<CommonApiResponse<Map<String, Long>>> createTerms(
+    ResponseEntity<CommonApiResponse<AdminCreateTermsResponseDto>> createTerms(
         @Valid @RequestBody AdminCreateTermsRequestDto request
     );
 
