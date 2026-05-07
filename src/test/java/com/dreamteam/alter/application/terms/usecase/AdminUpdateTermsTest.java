@@ -4,7 +4,7 @@ import com.dreamteam.alter.domain.terms.command.AdminUpdateTermsCommand;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
-import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
+import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import com.dreamteam.alter.domain.terms.type.TermsType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 class AdminUpdateTermsTest {
 
     @Mock
-    private TermsRepository termsRepository;
+    private TermsQueryRepository termsQueryRepository;
 
     @InjectMocks
     private AdminUpdateTerms adminUpdateTerms;
@@ -36,7 +36,7 @@ class AdminUpdateTermsTest {
         AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
-        when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
+        when(termsQueryRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when
         adminUpdateTerms.execute(1L, command);
@@ -45,7 +45,7 @@ class AdminUpdateTermsTest {
         assertThat(terms.getTitle()).isEqualTo("수정된 제목");
         assertThat(terms.getDocUrl()).isEqualTo("https://notion.so/terms-v2");
         assertThat(terms.isRequired()).isFalse();
-        verify(termsRepository, times(1)).findById(1L);
+        verify(termsQueryRepository, times(1)).findById(1L);
     }
 
     @Test
@@ -55,7 +55,7 @@ class AdminUpdateTermsTest {
         AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
-        when(termsRepository.findById(999L)).thenReturn(Optional.empty());
+        when(termsQueryRepository.findById(999L)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> adminUpdateTerms.execute(999L, command))
@@ -73,7 +73,7 @@ class AdminUpdateTermsTest {
         AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
-        when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
+        when(termsQueryRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when & then
         assertThatThrownBy(() -> adminUpdateTerms.execute(1L, command))
@@ -92,7 +92,7 @@ class AdminUpdateTermsTest {
         AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
-        when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
+        when(termsQueryRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when & then
         assertThatThrownBy(() -> adminUpdateTerms.execute(1L, command))

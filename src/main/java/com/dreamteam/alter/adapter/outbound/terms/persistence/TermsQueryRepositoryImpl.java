@@ -7,6 +7,7 @@ import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -73,6 +74,20 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
                                 terms.status.eq(TermsStatus.PUBLISHED)
                         )
                         .fetchFirst()
+        );
+    }
+
+    @Override
+    public Optional<Terms> findPublishedByTypeWithLock(TermsType type) {
+        return Optional.ofNullable(
+                queryFactory
+                        .selectFrom(terms)
+                        .where(
+                                terms.type.eq(type),
+                                terms.status.eq(TermsStatus.PUBLISHED)
+                        )
+                        .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                        .fetchOne()
         );
     }
 

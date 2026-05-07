@@ -16,4 +16,6 @@ public interface TermsQueryRepository {
     List<Terms> findByFilter(TermsType type, TermsStatus status, int page, int pageSize);
 
     Optional<Terms> findPublishedByType(TermsType type);
+
+    Optional<Terms> findPublishedByTypeWithLock(TermsType type);
 }

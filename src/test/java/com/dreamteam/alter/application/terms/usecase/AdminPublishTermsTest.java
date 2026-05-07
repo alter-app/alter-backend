@@ -3,7 +3,7 @@ package com.dreamteam.alter.application.terms.usecase;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
-import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
+import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 class AdminPublishTermsTest {
 
     @Mock
-    private TermsRepository termsRepository;
+    private TermsQueryRepository termsQueryRepository;
 
     @InjectMocks
     private AdminPublishTerms adminPublishTerms;
@@ -33,8 +33,8 @@ class AdminPublishTermsTest {
     void publishTerms_success_whenNoPreviousPublished() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
-        when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
-        when(termsRepository.findPublishedByTypeWithLock(TermsType.SERVICE)).thenReturn(Optional.empty());
+        when(termsQueryRepository.findById(1L)).thenReturn(Optional.of(terms));
+        when(termsQueryRepository.findPublishedByTypeWithLock(TermsType.SERVICE)).thenReturn(Optional.empty());
 
         // when
         adminPublishTerms.execute(1L);
@@ -42,8 +42,8 @@ class AdminPublishTermsTest {
         // then
         assertThat(terms.getStatus()).isEqualTo(TermsStatus.PUBLISHED);
         assertThat(terms.getEffectiveAt()).isNotNull();
-        verify(termsRepository, times(1)).findById(1L);
-        verify(termsRepository, times(1)).findPublishedByTypeWithLock(TermsType.SERVICE);
+        verify(termsQueryRepository, times(1)).findById(1L);
+        verify(termsQueryRepository, times(1)).findPublishedByTypeWithLock(TermsType.SERVICE);
     }
 
     @Test
@@ -53,8 +53,8 @@ class AdminPublishTermsTest {
         Terms existingTerms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         existingTerms.publish();
         Terms newTerms = Terms.create(TermsType.SERVICE, "2.0", "서비스 이용약관 v2", "https://notion.so/terms-v2", true);
-        when(termsRepository.findById(2L)).thenReturn(Optional.of(newTerms));
-        when(termsRepository.findPublishedByTypeWithLock(TermsType.SERVICE)).thenReturn(Optional.of(existingTerms));
+        when(termsQueryRepository.findById(2L)).thenReturn(Optional.of(newTerms));
+        when(termsQueryRepository.findPublishedByTypeWithLock(TermsType.SERVICE)).thenReturn(Optional.of(existingTerms));
 
         // when
         adminPublishTerms.execute(2L);
@@ -69,7 +69,7 @@ class AdminPublishTermsTest {
     @DisplayName("존재하지 않는 id TERMS NOT FOUND")
     void publishTerms_throwsNotFound_whenTermsNotExists() {
         // given
-        when(termsRepository.findById(999L)).thenReturn(Optional.empty());
+        when(termsQueryRepository.findById(999L)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> adminPublishTerms.execute(999L))
@@ -84,7 +84,7 @@ class AdminPublishTermsTest {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
-        when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
+        when(termsQueryRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when & then
         assertThatThrownBy(() -> adminPublishTerms.execute(1L))
@@ -100,7 +100,7 @@ class AdminPublishTermsTest {
         Terms terms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
         terms.deprecate();
-        when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
+        when(termsQueryRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when & then
         assertThatThrownBy(() -> adminPublishTerms.execute(1L))
