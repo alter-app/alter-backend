@@ -1,6 +1,6 @@
 package com.dreamteam.alter.application.terms.usecase;
 
-import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminUpdateTermsRequestDto;
+import com.dreamteam.alter.domain.terms.command.AdminUpdateTermsCommand;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
@@ -33,13 +33,13 @@ class AdminUpdateTermsTest {
     void updateTerms_success_whenStatusIsDraft() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
-        AdminUpdateTermsRequestDto request = new AdminUpdateTermsRequestDto(
+        AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when
-        adminUpdateTerms.execute(1L, request);
+        adminUpdateTerms.execute(1L, command);
 
         // then
         assertThat(terms.getTitle()).isEqualTo("수정된 제목");
@@ -52,13 +52,13 @@ class AdminUpdateTermsTest {
     @DisplayName("존재하지 않는 id TERMS NOT FOUND")
     void updateTerms_throwsNotFound_whenTermsNotExists() {
         // given
-        AdminUpdateTermsRequestDto request = new AdminUpdateTermsRequestDto(
+        AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
         when(termsRepository.findById(999L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> adminUpdateTerms.execute(999L, request))
+        assertThatThrownBy(() -> adminUpdateTerms.execute(999L, command))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.NOT_FOUND);
@@ -70,13 +70,13 @@ class AdminUpdateTermsTest {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
-        AdminUpdateTermsRequestDto request = new AdminUpdateTermsRequestDto(
+        AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when & then
-        assertThatThrownBy(() -> adminUpdateTerms.execute(1L, request))
+        assertThatThrownBy(() -> adminUpdateTerms.execute(1L, command))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.CONFLICT);
@@ -89,13 +89,13 @@ class AdminUpdateTermsTest {
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
         terms.deprecate();
-        AdminUpdateTermsRequestDto request = new AdminUpdateTermsRequestDto(
+        AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when & then
-        assertThatThrownBy(() -> adminUpdateTerms.execute(1L, request))
+        assertThatThrownBy(() -> adminUpdateTerms.execute(1L, command))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.CONFLICT);

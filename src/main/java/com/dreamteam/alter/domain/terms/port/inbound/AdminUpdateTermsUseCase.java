@@ -1,8 +1,8 @@
 package com.dreamteam.alter.domain.terms.port.inbound;
 
-import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminUpdateTermsRequestDto;
+import com.dreamteam.alter.domain.terms.command.AdminUpdateTermsCommand;
 
 public interface AdminUpdateTermsUseCase {
 
-    void execute(Long id, AdminUpdateTermsRequestDto request);
+    void execute(Long id, AdminUpdateTermsCommand command);
 }

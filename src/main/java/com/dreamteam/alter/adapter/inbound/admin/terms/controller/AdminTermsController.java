@@ -6,6 +6,8 @@ import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminTermsDetailRespo
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminTermsListItemResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminUpdateTermsRequestDto;
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.TermsListFilterDto;
+import com.dreamteam.alter.domain.terms.command.AdminCreateTermsCommand;
+import com.dreamteam.alter.domain.terms.command.AdminUpdateTermsCommand;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
@@ -60,7 +62,10 @@ public class AdminTermsController implements AdminTermsControllerSpec {
     public ResponseEntity<CommonApiResponse<AdminCreateTermsResponseDto>> createTerms(
         @Valid @RequestBody AdminCreateTermsRequestDto request
     ) {
-        Long id = adminCreateTerms.execute(request);
+        AdminCreateTermsCommand command = new AdminCreateTermsCommand(
+                request.getType(), request.getVersion(), request.getTitle(),
+                request.getDocUrl(), request.isRequired());
+        Long id = adminCreateTerms.execute(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(CommonApiResponse.of(AdminCreateTermsResponseDto.of(id)));
     }
 
@@ -78,7 +83,9 @@ public class AdminTermsController implements AdminTermsControllerSpec {
         @PathVariable Long id,
         @Valid @RequestBody AdminUpdateTermsRequestDto request
     ) {
-        adminUpdateTerms.execute(id, request);
+        AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(
+                request.getTitle(), request.getDocUrl(), request.isRequired());
+        adminUpdateTerms.execute(id, command);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

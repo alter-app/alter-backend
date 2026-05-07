@@ -1,6 +1,6 @@
 package com.dreamteam.alter.application.terms.usecase;
 
-import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminCreateTermsRequestDto;
+import com.dreamteam.alter.domain.terms.command.AdminCreateTermsCommand;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
 import com.dreamteam.alter.domain.terms.type.TermsType;
@@ -30,7 +30,7 @@ class AdminCreateTermsTest {
     @DisplayName("유효한 요청으로 약관 생성 후 id 반환")
     void createTerms_returnsId() {
         // given
-        AdminCreateTermsRequestDto request = new AdminCreateTermsRequestDto(
+        AdminCreateTermsCommand command = new AdminCreateTermsCommand(
                 TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true
         );
         Terms savedTerms = mock(Terms.class);
@@ -38,7 +38,7 @@ class AdminCreateTermsTest {
         when(termsRepository.save(any(Terms.class))).thenReturn(savedTerms);
 
         // when
-        Long id = adminCreateTerms.execute(request);
+        Long id = adminCreateTerms.execute(command);
 
         // then
         assertThat(id).isEqualTo(1L);
@@ -49,7 +49,7 @@ class AdminCreateTermsTest {
     @DisplayName("유효한 TermsType enum으로 약관 생성 성공")
     void createTerms_success_withValidTermsTypeEnum() {
         // given
-        AdminCreateTermsRequestDto request = new AdminCreateTermsRequestDto(
+        AdminCreateTermsCommand command = new AdminCreateTermsCommand(
                 TermsType.PRIVACY, "v1.0", "개인정보 처리방침", "https://notion.so/privacy", true
         );
         Terms savedTerms = mock(Terms.class);
@@ -57,7 +57,7 @@ class AdminCreateTermsTest {
         when(termsRepository.save(any(Terms.class))).thenReturn(savedTerms);
 
         // when
-        Long id = adminCreateTerms.execute(request);
+        Long id = adminCreateTerms.execute(command);
 
         // then
         ArgumentCaptor<Terms> termsCaptor = ArgumentCaptor.forClass(Terms.class);

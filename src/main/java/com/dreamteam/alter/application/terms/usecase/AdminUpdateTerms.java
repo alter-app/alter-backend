@@ -1,6 +1,6 @@
 package com.dreamteam.alter.application.terms.usecase;
 
-import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminUpdateTermsRequestDto;
+import com.dreamteam.alter.domain.terms.command.AdminUpdateTermsCommand;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
@@ -19,7 +19,7 @@ public class AdminUpdateTerms implements AdminUpdateTermsUseCase {
     private final TermsRepository termsRepository;
 
     @Override
-    public void execute(Long id, AdminUpdateTermsRequestDto request) {
+    public void execute(Long id, AdminUpdateTermsCommand command) {
         Terms terms = termsRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
@@ -27,6 +27,6 @@ public class AdminUpdateTerms implements AdminUpdateTermsUseCase {
             throw new CustomException(ErrorCode.CONFLICT, "DRAFT 상태의 약관만 수정할 수 있습니다.");
         }
 
-        terms.update(request.getTitle(), request.getDocUrl(), request.isRequired());
+        terms.update(command.title(), command.docUrl(), command.required());
     }
 }

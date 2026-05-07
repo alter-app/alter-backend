@@ -1,6 +1,6 @@
 package com.dreamteam.alter.application.terms.usecase;
 
-import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminCreateTermsRequestDto;
+import com.dreamteam.alter.domain.terms.command.AdminCreateTermsCommand;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.inbound.AdminCreateTermsUseCase;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
@@ -16,13 +16,13 @@ public class AdminCreateTerms implements AdminCreateTermsUseCase {
     private final TermsRepository termsRepository;
 
     @Override
-    public Long execute(AdminCreateTermsRequestDto request) {
+    public Long execute(AdminCreateTermsCommand command) {
         Terms terms = Terms.create(
-                request.getType(),
-                request.getVersion(),
-                request.getTitle(),
-                request.getDocUrl(),
-                request.isRequired()
+                command.type(),
+                command.version(),
+                command.title(),
+                command.docUrl(),
+                command.required()
         );
         return termsRepository.save(terms).getId();
     }
