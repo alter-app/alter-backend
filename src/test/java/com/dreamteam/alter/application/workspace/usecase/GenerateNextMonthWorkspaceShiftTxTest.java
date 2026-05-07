@@ -42,7 +42,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
 
     @Test
     @DisplayName("스케줄이 비어있으면 저장하지 않고 0건 결과를 반환한다")
-    void 스케줄없음_생성없음() {
+    void execute_noShiftsCreated_whenSchedulesEmpty() {
         Workspace workspace = createMockWorkspace(1L);
 
         GenerateNextMonthWorkspaceShiftTx.GenerationResult result = generateNextMonthWorkspaceShiftTx.execute(
@@ -59,7 +59,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
 
     @Test
     @DisplayName("매주 월요일 09:00~18:00 고정 스케줄에 대해 다음 달 시프트를 정상 생성한다")
-    void 정상스케줄_시프트생성() {
+    void execute_createsShifts_forFixedWeeklySchedule() {
         Workspace workspace = createMockWorkspace(1L);
         WorkspaceWorker worker = createMockWorker(workspace, 10L);
         WorkspaceWorkerSchedule schedule = createMockSchedule(
@@ -84,7 +84,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
 
     @Test
     @DisplayName("이미 확정된 근무와 충돌하는 시간대는 건너뛴다")
-    void 충돌시간대_건너뜀() {
+    void execute_skipsConflictingTimeSlots() {
         Workspace workspace = createMockWorkspace(1L);
         WorkspaceWorker worker = createMockWorker(workspace, 10L);
         WorkspaceWorkerSchedule schedule = createMockSchedule(
@@ -118,7 +118,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
 
     @Test
     @DisplayName("야간 근무(금요일 22:00 ~ 토요일 06:00)가 정상적으로 처리된다")
-    void 야간근무_정상처리() {
+    void execute_handlesOvernightShift() {
         Workspace workspace = createMockWorkspace(1L);
         WorkspaceWorker worker = createMockWorker(workspace, 10L);
         WorkspaceWorkerSchedule schedule = createMockSchedule(

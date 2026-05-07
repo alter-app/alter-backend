@@ -70,7 +70,7 @@ class GenerateNextMonthWorkspaceShiftTest {
 
     @Test
     @DisplayName("대상 워크스페이스가 없으면 스케줄 조회 없이 종료한다")
-    void 대상워크스페이스없음_조기종료() {
+    void execute_earlyReturn_whenNoTargetWorkspaces() {
         when(workspaceQueryRepository.findAllForNextMonthShiftGeneration(25, false))
             .thenReturn(List.of());
 
@@ -83,7 +83,7 @@ class GenerateNextMonthWorkspaceShiftTest {
 
     @Test
     @DisplayName("말일에는 말일 플래그로 대상 워크스페이스를 조회한다")
-    void 말일조회_말일플래그적용() {
+    void execute_usesMonthEndFlag_whenLastDayOfMonth() {
         mockedLocalDate.when(LocalDate::now).thenReturn(MONTH_END_TODAY);
         when(workspaceQueryRepository.findAllForNextMonthShiftGeneration(28, true))
             .thenReturn(List.of());
@@ -95,7 +95,7 @@ class GenerateNextMonthWorkspaceShiftTest {
 
     @Test
     @DisplayName("활성화된 스케줄이 있는 워크스페이스는 TX 실행기로 위임한다")
-    void 활성화된스케줄존재_tx실행위임() {
+    void execute_delegatesToTx_whenActivatedScheduleExists() {
         Workspace workspace = createMockWorkspace(1L);
         WorkspaceWorker worker = createMockWorker(workspace, 10L);
         WorkspaceWorkerSchedule schedule = createMockSchedule(worker);
@@ -117,7 +117,7 @@ class GenerateNextMonthWorkspaceShiftTest {
 
     @Test
     @DisplayName("일부 워크스페이스 처리 실패가 발생해도 나머지 워크스페이스 처리는 계속된다")
-    void 일부워크스페이스실패_나머지정상처리() {
+    void execute_continuesProcessing_whenSomeWorkspacesFail() {
         Workspace workspace1 = createMockWorkspace(1L);
         Workspace workspace2 = createMockWorkspace(2L);
         WorkspaceWorker worker1 = createMockWorker(workspace1, 10L);
@@ -146,7 +146,7 @@ class GenerateNextMonthWorkspaceShiftTest {
 
     @Test
     @DisplayName("활성화된 스케줄이 없는 워크스페이스는 TX 실행을 건너뛴다")
-    void 활성화된스케줄없음_tx실행건너뜀() {
+    void execute_skipsTx_whenNoActivatedSchedules() {
         Workspace workspace = createMockWorkspace(1L);
 
         when(workspaceQueryRepository.findAllForNextMonthShiftGeneration(25, false))
