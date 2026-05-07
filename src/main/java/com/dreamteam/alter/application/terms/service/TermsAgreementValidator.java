@@ -7,6 +7,7 @@ import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import com.dreamteam.alter.domain.terms.type.TermsType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -17,6 +18,7 @@ public class TermsAgreementValidator {
 
     private final TermsQueryRepository termsQueryRepository;
 
+    @Transactional(readOnly = true)
     public List<Terms> validateAndResolve(Set<TermsType> agreedTermsTypes) {
         List<Terms> latestPublishedTerms = termsQueryRepository.findLatestPublishedPerType();
 
