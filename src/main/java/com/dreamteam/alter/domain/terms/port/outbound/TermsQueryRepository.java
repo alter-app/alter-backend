@@ -1,8 +1,7 @@
 package com.dreamteam.alter.domain.terms.port.outbound;
 
-import com.dreamteam.alter.adapter.inbound.admin.terms.dto.TermsListFilterDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.domain.terms.entity.Terms;
+import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
 
 import java.util.List;
@@ -12,9 +11,9 @@ public interface TermsQueryRepository {
 
     Optional<Terms> findById(Long id);
 
-    long countByFilter(TermsListFilterDto filter);
+    long countByFilter(TermsType type, TermsStatus status);
 
-    List<Terms> findByFilter(TermsListFilterDto filter, PageRequestDto pageRequest);
+    List<Terms> findByFilter(TermsType type, TermsStatus status, int page, int pageSize);
 
     Optional<Terms> findPublishedByType(TermsType type);
 }

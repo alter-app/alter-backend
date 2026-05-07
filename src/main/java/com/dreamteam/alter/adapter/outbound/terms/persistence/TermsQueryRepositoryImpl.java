@@ -1,7 +1,5 @@
 package com.dreamteam.alter.adapter.outbound.terms.persistence;
 
-import com.dreamteam.alter.adapter.inbound.admin.terms.dto.TermsListFilterDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.domain.terms.entity.QTerms;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
@@ -37,31 +35,31 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
     }
 
     @Override
-    public long countByFilter(TermsListFilterDto filter) {
+    public long countByFilter(TermsType type, TermsStatus status) {
         Long count = queryFactory
                 .select(terms.count())
                 .from(terms)
                 .where(
-                        filter.getStatus() == null ? notDeleted() : null,
-                        typeCondition(filter.getType()),
-                        statusCondition(filter.getStatus())
+                        status == null ? notDeleted() : null,
+                        typeCondition(type),
+                        statusCondition(status)
                 )
                 .fetchOne();
         return count != null ? count : 0L;
     }
 
     @Override
-    public List<Terms> findByFilter(TermsListFilterDto filter, PageRequestDto pageRequest) {
+    public List<Terms> findByFilter(TermsType type, TermsStatus status, int page, int pageSize) {
         return queryFactory
                 .selectFrom(terms)
                 .where(
-                        filter.getStatus() == null ? notDeleted() : null,
-                        typeCondition(filter.getType()),
-                        statusCondition(filter.getStatus())
+                        status == null ? notDeleted() : null,
+                        typeCondition(type),
+                        statusCondition(status)
                 )
                 .orderBy(terms.createdAt.desc(), terms.id.desc())
-                .offset(pageRequest.getOffset())
-                .limit(pageRequest.getLimit())
+                .offset((long) (page - 1) * pageSize)
+                .limit(pageSize)
                 .fetch();
     }
 

@@ -11,16 +11,13 @@ import com.dreamteam.alter.domain.terms.type.TermsType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +35,7 @@ class AdminGetTermsListTest {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(null, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
-        when(termsQueryRepository.countByFilter(any(TermsListFilterDto.class))).thenReturn(0L);
+        when(termsQueryRepository.countByFilter(isNull(), isNull())).thenReturn(0L);
 
         // when
         PaginatedResponseDto<AdminTermsListItemResponseDto> result = adminGetTermsList.execute(filter, pageRequest);
@@ -46,8 +43,8 @@ class AdminGetTermsListTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.data()).isEmpty();
-        verify(termsQueryRepository, times(1)).countByFilter(any(TermsListFilterDto.class));
-        verify(termsQueryRepository, never()).findByFilter(any(TermsListFilterDto.class), any(PageRequestDto.class));
+        verify(termsQueryRepository, times(1)).countByFilter(isNull(), isNull());
+        verify(termsQueryRepository, never()).findByFilter(any(), any(), anyInt(), anyInt());
     }
 
     @Test
@@ -57,17 +54,15 @@ class AdminGetTermsListTest {
         TermsListFilterDto filter = new TermsListFilterDto(TermsType.SERVICE, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
-        when(termsQueryRepository.countByFilter(any(TermsListFilterDto.class))).thenReturn(1L);
-        when(termsQueryRepository.findByFilter(any(TermsListFilterDto.class), any(PageRequestDto.class)))
+        when(termsQueryRepository.countByFilter(eq(TermsType.SERVICE), isNull())).thenReturn(1L);
+        when(termsQueryRepository.findByFilter(eq(TermsType.SERVICE), isNull(), eq(1), eq(10)))
                 .thenReturn(List.of(terms));
 
         // when
         PaginatedResponseDto<AdminTermsListItemResponseDto> result = adminGetTermsList.execute(filter, pageRequest);
 
         // then
-        ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
-        verify(termsQueryRepository, times(1)).findByFilter(filterCaptor.capture(), any(PageRequestDto.class));
-        assertThat(filterCaptor.getValue().getType()).isEqualTo(TermsType.SERVICE);
+        verify(termsQueryRepository, times(1)).findByFilter(eq(TermsType.SERVICE), isNull(), eq(1), eq(10));
         assertThat(result.data()).hasSize(1);
         assertThat(result.data().get(0).getType().value()).isEqualTo(TermsType.SERVICE);
     }
@@ -78,16 +73,13 @@ class AdminGetTermsListTest {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(TermsType.PRIVACY, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
-        when(termsQueryRepository.countByFilter(any(TermsListFilterDto.class))).thenReturn(0L);
+        when(termsQueryRepository.countByFilter(eq(TermsType.PRIVACY), isNull())).thenReturn(0L);
 
         // when
         adminGetTermsList.execute(filter, pageRequest);
 
         // then
-        ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
-        verify(termsQueryRepository).countByFilter(filterCaptor.capture());
-        assertThat(filterCaptor.getValue().getType()).isEqualTo(TermsType.PRIVACY);
-        assertThat(filterCaptor.getValue().getStatus()).isNull();
+        verify(termsQueryRepository).countByFilter(eq(TermsType.PRIVACY), isNull());
     }
 
     @Test
@@ -96,15 +88,12 @@ class AdminGetTermsListTest {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(null, TermsStatus.PUBLISHED);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
-        when(termsQueryRepository.countByFilter(any(TermsListFilterDto.class))).thenReturn(0L);
+        when(termsQueryRepository.countByFilter(isNull(), eq(TermsStatus.PUBLISHED))).thenReturn(0L);
 
         // when
         adminGetTermsList.execute(filter, pageRequest);
 
         // then
-        ArgumentCaptor<TermsListFilterDto> filterCaptor = ArgumentCaptor.forClass(TermsListFilterDto.class);
-        verify(termsQueryRepository).countByFilter(filterCaptor.capture());
-        assertThat(filterCaptor.getValue().getStatus()).isEqualTo(TermsStatus.PUBLISHED);
-        assertThat(filterCaptor.getValue().getType()).isNull();
+        verify(termsQueryRepository).countByFilter(isNull(), eq(TermsStatus.PUBLISHED));
     }
 }

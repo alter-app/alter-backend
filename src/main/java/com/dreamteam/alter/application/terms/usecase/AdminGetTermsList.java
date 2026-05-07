@@ -23,12 +23,13 @@ public class AdminGetTermsList implements AdminGetTermsListUseCase {
 
     @Override
     public PaginatedResponseDto<AdminTermsListItemResponseDto> execute(TermsListFilterDto filter, PageRequestDto pageRequest) {
-        long count = termsQueryRepository.countByFilter(filter);
+        long count = termsQueryRepository.countByFilter(filter.getType(), filter.getStatus());
         if (count == 0) {
             return PaginatedResponseDto.empty(PageResponseDto.empty(pageRequest));
         }
 
-        List<Terms> termsList = termsQueryRepository.findByFilter(filter, pageRequest);
+        List<Terms> termsList = termsQueryRepository.findByFilter(
+                filter.getType(), filter.getStatus(), pageRequest.page(), pageRequest.pageSize());
         PageResponseDto pageResponse = PageResponseDto.of(pageRequest, (int) count);
 
         return PaginatedResponseDto.of(
