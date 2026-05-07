@@ -18,7 +18,10 @@ public class TermsAgreementValidator {
     private final TermsQueryRepository termsQueryRepository;
 
     public List<Terms> validateAndResolve(List<Long> agreedTermsIds) {
-        List<Terms> requiredTermsList = termsQueryRepository.findAllRequiredPublished();
+        List<Terms> requiredTermsList = termsQueryRepository.findLatestPublishedPerType()
+                .stream()
+                .filter(Terms::isRequired)
+                .toList();
 
         Set<Long> agreedSet = new HashSet<>(agreedTermsIds);
         boolean allRequiredAgreed = requiredTermsList.stream()

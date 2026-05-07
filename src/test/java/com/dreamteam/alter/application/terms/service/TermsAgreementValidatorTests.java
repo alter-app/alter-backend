@@ -33,9 +33,10 @@ class TermsAgreementValidatorTests {
     @InjectMocks
     private TermsAgreementValidator termsAgreementValidator;
 
-    private Terms createTermsMock(Long id) {
+    private Terms createTermsMock(Long id, boolean required) {
         Terms terms = mock(Terms.class);
         given(terms.getId()).willReturn(id);
+        given(terms.isRequired()).willReturn(required);
         return terms;
     }
 
@@ -47,9 +48,9 @@ class TermsAgreementValidatorTests {
         @DisplayName("필수 약관을 모두 동의한 경우 Terms 목록 반환")
         void validateAndResolve_allRequiredAgreed_returnsTermsList() {
             // given
-            Terms terms1 = createTermsMock(1L);
-            Terms terms2 = createTermsMock(2L);
-            given(termsQueryRepository.findAllRequiredPublished()).willReturn(List.of(terms1, terms2));
+            Terms terms1 = createTermsMock(1L, true);
+            Terms terms2 = createTermsMock(2L, true);
+            given(termsQueryRepository.findLatestPublishedPerType()).willReturn(List.of(terms1, terms2));
             given(termsQueryRepository.findById(1L)).willReturn(Optional.of(terms1));
             given(termsQueryRepository.findById(2L)).willReturn(Optional.of(terms2));
 
@@ -64,9 +65,10 @@ class TermsAgreementValidatorTests {
         @DisplayName("필수 약관 외 선택 약관도 함께 동의한 경우 전체 Terms 목록 반환")
         void validateAndResolve_requiredAndOptionalAgreed_returnsAllTerms() {
             // given
-            Terms requiredTerms = createTermsMock(1L);
-            Terms optionalTerms = mock(Terms.class); // 필수 목록에 없으므로 getId() 호출 안 됨
-            given(termsQueryRepository.findAllRequiredPublished()).willReturn(List.of(requiredTerms));
+            Terms requiredTerms = createTermsMock(1L, true);
+            Terms optionalTerms = mock(Terms.class);
+            given(optionalTerms.isRequired()).willReturn(false); // filter 대상, getId() 호출 안 됨
+            given(termsQueryRepository.findLatestPublishedPerType()).willReturn(List.of(requiredTerms, optionalTerms));
             given(termsQueryRepository.findById(1L)).willReturn(Optional.of(requiredTerms));
             given(termsQueryRepository.findById(2L)).willReturn(Optional.of(optionalTerms));
 
@@ -81,9 +83,9 @@ class TermsAgreementValidatorTests {
         @DisplayName("필수 약관 미동의 시 REQUIRED_TERMS_NOT_AGREED 예외 발생")
         void validateAndResolve_missingRequiredTerms_throwsRequiredTermsNotAgreed() {
             // given
-            Terms terms1 = createTermsMock(1L);
-            Terms terms2 = createTermsMock(2L);
-            given(termsQueryRepository.findAllRequiredPublished()).willReturn(List.of(terms1, terms2));
+            Terms terms1 = createTermsMock(1L, true);
+            Terms terms2 = createTermsMock(2L, true);
+            given(termsQueryRepository.findLatestPublishedPerType()).willReturn(List.of(terms1, terms2));
 
             // when & then
             assertThatThrownBy(() -> termsAgreementValidator.validateAndResolve(List.of(1L)))
@@ -98,8 +100,8 @@ class TermsAgreementValidatorTests {
         @DisplayName("동의한 약관 ID가 존재하지 않는 경우 TERMS_NOT_FOUND 예외 발생")
         void validateAndResolve_nonExistentTermsId_throwsTermsNotFound() {
             // given
-            Terms terms1 = createTermsMock(1L);
-            given(termsQueryRepository.findAllRequiredPublished()).willReturn(List.of(terms1));
+            Terms terms1 = createTermsMock(1L, true);
+            given(termsQueryRepository.findLatestPublishedPerType()).willReturn(List.of(terms1));
             given(termsQueryRepository.findById(1L)).willReturn(Optional.of(terms1));
             given(termsQueryRepository.findById(999L)).willReturn(Optional.empty());
 
@@ -114,7 +116,7 @@ class TermsAgreementValidatorTests {
         @DisplayName("필수 약관이 없는 경우 동의 목록 없어도 통과")
         void validateAndResolve_noRequiredTerms_emptyAgreedListPasses() {
             // given
-            given(termsQueryRepository.findAllRequiredPublished()).willReturn(List.of());
+            given(termsQueryRepository.findLatestPublishedPerType()).willReturn(List.of());
 
             // when
             List<Terms> result = termsAgreementValidator.validateAndResolve(List.of());

@@ -6,6 +6,7 @@ import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
@@ -92,13 +93,24 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
     }
 
     @Override
-    public List<Terms> findAllRequiredPublished() {
+    public List<Terms> findLatestPublishedPerType() {
+        QTerms sub = new QTerms("sub");
+
         return queryFactory
                 .selectFrom(terms)
                 .where(
                         terms.status.eq(TermsStatus.PUBLISHED),
-                        terms.required.isTrue()
+                        terms.effectiveAt.eq(
+                                JPAExpressions
+                                        .select(sub.effectiveAt.max())
+                                        .from(sub)
+                                        .where(
+                                                sub.type.eq(terms.type),
+                                                sub.status.eq(TermsStatus.PUBLISHED)
+                                        )
+                        )
                 )
+                .orderBy(terms.type.asc())
                 .fetch();
     }
 
