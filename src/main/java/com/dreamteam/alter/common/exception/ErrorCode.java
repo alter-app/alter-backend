@@ -25,7 +25,6 @@ public enum ErrorCode {
     SOCIAL_UNLINK_NOT_ALLOWED(400, "A016", "비밀번호가 설정되지 않은 경우 마지막 소셜 계정은 해제할 수 없습니다."),
     INVALID_CURRENT_PASSWORD(400, "A017", "현재 비밀번호가 올바르지 않습니다."),
     REQUIRED_TERMS_NOT_AGREED(400, "A018", "필수 약관에 모두 동의해야 합니다."),
-    TERMS_NOT_FOUND(400, "A019", "존재하지 않는 약관입니다."),
 
     ILLEGAL_ARGUMENT(400, "B001", "잘못된 요청입니다."),
     REFRESH_TOKEN_REQUIRED(400, "B002", "RefreshToken을 통해 요청해야 합니다."),
