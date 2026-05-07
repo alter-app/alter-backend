@@ -91,6 +91,17 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
         );
     }
 
+    @Override
+    public List<Terms> findAllRequiredPublished() {
+        return queryFactory
+                .selectFrom(terms)
+                .where(
+                        terms.status.eq(TermsStatus.PUBLISHED),
+                        terms.required.isTrue()
+                )
+                .fetch();
+    }
+
     private BooleanExpression notDeleted() {
         return terms.status.ne(TermsStatus.DELETED);
     }

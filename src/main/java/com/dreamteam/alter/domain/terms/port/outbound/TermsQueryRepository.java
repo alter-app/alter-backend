@@ -18,4 +18,6 @@ public interface TermsQueryRepository {
     Optional<Terms> findPublishedByType(TermsType type);
 
     Optional<Terms> findPublishedByTypeWithLock(TermsType type);
+
+    List<Terms> findAllRequiredPublished();
 }
