@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -109,7 +110,8 @@ class CreateUserTests {
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
                     .isEqualTo(ErrorCode.NICKNAME_DUPLICATED));
 
-            then(cacheRepository).should().deleteAll(anyList());
+            then(cacheRepository).should().deleteAll(argThat(list ->
+                list.containsAll(List.of("SIGNUP:PENDING:signup-session-id", "SIGNUP:CONTACT:01012345678"))));
             then(createUserTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList());
         }
 
@@ -127,7 +129,8 @@ class CreateUserTests {
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
                     .isEqualTo(ErrorCode.USER_CONTACT_DUPLICATED));
 
-            then(cacheRepository).should().deleteAll(anyList());
+            then(cacheRepository).should().deleteAll(argThat(list ->
+                list.containsAll(List.of("SIGNUP:PENDING:signup-session-id", "SIGNUP:CONTACT:01012345678"))));
             then(createUserTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList());
         }
 
@@ -186,21 +189,23 @@ class CreateUserTests {
             // given
             Terms termsMock1 = mock(Terms.class);
             Terms termsMock2 = mock(Terms.class);
+            List<Terms> agreedTerms = List.of(termsMock1, termsMock2);
             given(cacheRepository.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
             given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
             given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
-            given(termsAgreementValidator.validateAndResolve(any())).willReturn(List.of(termsMock1, termsMock2));
+            given(termsAgreementValidator.validateAndResolve(any())).willReturn(agreedTerms);
 
             GenerateTokenResponseDto mockResponse = mock(GenerateTokenResponseDto.class);
-            given(createUserTx.process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList())).willReturn(mockResponse);
+            given(createUserTx.process(any(), any(), any(), anyBoolean(), anyBoolean(), eq(agreedTerms))).willReturn(mockResponse);
 
             // when
             GenerateTokenResponseDto result = createUser.execute(request);
 
             // then
             assertThat(result).isEqualTo(mockResponse);
-            then(createUserTx).should().process(eq(request), eq("01012345678"), any(), eq(true), eq(false), anyList());
-            then(cacheRepository).should().deleteAll(anyList());
+            then(createUserTx).should().process(eq(request), eq("01012345678"), any(), eq(true), eq(false), eq(agreedTerms));
+            then(cacheRepository).should().deleteAll(argThat(list ->
+                list.containsAll(List.of("SIGNUP:PENDING:signup-session-id", "SIGNUP:CONTACT:01012345678"))));
             then(emailVerificationSessionStoreRepository).should(never()).deleteSession(any());
         }
     }

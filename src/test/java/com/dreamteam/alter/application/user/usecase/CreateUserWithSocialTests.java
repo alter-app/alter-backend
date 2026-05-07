@@ -8,6 +8,7 @@ import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
 import com.dreamteam.alter.application.terms.service.TermsAgreementValidator;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.type.TermsType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -33,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -126,7 +128,8 @@ class CreateUserWithSocialTests {
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
                     .isEqualTo(ErrorCode.NICKNAME_DUPLICATED));
 
-            then(cacheRepository).should().deleteAll(anyList());
+            then(cacheRepository).should().deleteAll(argThat(list ->
+                list.containsAll(List.of("SIGNUP:PENDING:signup-session-id", "SIGNUP:CONTACT:01012345678"))));
             then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList());
         }
 
@@ -144,7 +147,8 @@ class CreateUserWithSocialTests {
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
                     .isEqualTo(ErrorCode.USER_CONTACT_DUPLICATED));
 
-            then(cacheRepository).should().deleteAll(anyList());
+            then(cacheRepository).should().deleteAll(argThat(list ->
+                list.containsAll(List.of("SIGNUP:PENDING:signup-session-id", "SIGNUP:CONTACT:01012345678"))));
             then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList());
         }
 
@@ -221,10 +225,13 @@ class CreateUserWithSocialTests {
         @DisplayName("유효한 입력으로 소셜 회원가입 성공")
         void execute_withValidInput_succeeds() {
             // given - 기본 세션 및 검증
+            Terms termsMock1 = mock(Terms.class);
+            Terms termsMock2 = mock(Terms.class);
+            List<Terms> agreedTerms = List.of(termsMock1, termsMock2);
             given(cacheRepository.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
             given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
             given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
-            given(termsAgreementValidator.validateAndResolve(any())).willReturn(List.of());
+            given(termsAgreementValidator.validateAndResolve(any())).willReturn(agreedTerms);
 
             // 소셜 인증 및 중복 확인
             SocialAuthInfo authInfo = createSocialAuthInfo("kakao-social-id", null, null);
@@ -233,15 +240,16 @@ class CreateUserWithSocialTests {
 
             // TX 저장
             GenerateTokenResponseDto mockResponse = mock(GenerateTokenResponseDto.class);
-            given(createUserWithSocialTx.process(any(), any(), any(), eq(true), eq(false), anyList())).willReturn(mockResponse);
+            given(createUserWithSocialTx.process(any(), any(), any(), eq(true), eq(false), eq(agreedTerms))).willReturn(mockResponse);
 
             // when
             GenerateTokenResponseDto result = createUserWithSocial.execute(request);
 
             // then
             assertThat(result).isEqualTo(mockResponse);
-            then(createUserWithSocialTx).should().process(eq("01012345678"), eq(request), any(), eq(true), eq(false), anyList());
-            then(cacheRepository).should().deleteAll(anyList());
+            then(createUserWithSocialTx).should().process(eq("01012345678"), eq(request), any(), eq(true), eq(false), eq(agreedTerms));
+            then(cacheRepository).should().deleteAll(argThat(list ->
+                list.containsAll(List.of("SIGNUP:PENDING:signup-session-id", "SIGNUP:CONTACT:01012345678"))));
         }
     }
 }
