@@ -8,6 +8,7 @@ import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
 import com.dreamteam.alter.application.terms.service.TermsAgreementValidator;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.terms.type.TermsType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
@@ -25,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -79,7 +81,7 @@ class CreateUserWithSocialTests {
             "19900101",
             true,
             false,
-            List.of(1L, 2L)
+            Set.of(TermsType.SERVICE, TermsType.PRIVACY)
         );
     }
 

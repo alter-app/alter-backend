@@ -46,7 +46,7 @@ public class CreateUser implements CreateUserUseCase {
         validateDuplication(request, contact, sessionIdKey);
 
         // 약관 동의 검증
-        List<Terms> agreedTerms = termsAgreementValidator.validateAndResolve(request.getAgreedTermsIds());
+        List<Terms> agreedTerms = termsAgreementValidator.validateAndResolve(request.getAgreedTermsTypes());
 
         // 비밀번호 형식 검증
         if (!PasswordValidator.isValid(request.getPassword())) {

@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.general.user.dto;
 
+import com.dreamteam.alter.domain.terms.type.TermsType;
 import com.dreamteam.alter.domain.user.type.UserGender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Set;
 
 @Getter
 @NoArgsConstructor
@@ -61,7 +62,7 @@ public class CreateUserRequestDto {
     private Boolean nightNotificationConsent;
 
     @NotNull
-    @Schema(description = "동의한 약관 ID 목록", example = "[1, 2, 3]")
-    private List<Long> agreedTermsIds;
+    @Schema(description = "동의한 약관 타입 목록", example = "[\"SERVICE\", \"PRIVACY\"]")
+    private Set<TermsType> agreedTermsTypes;
 
 }

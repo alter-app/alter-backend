@@ -48,7 +48,7 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
         validateDuplication(request, contact, sessionIdKey);
 
         // 약관 동의 검증
-        List<Terms> agreedTerms = termsAgreementValidator.validateAndResolve(request.getAgreedTermsIds());
+        List<Terms> agreedTerms = termsAgreementValidator.validateAndResolve(request.getAgreedTermsTypes());
 
         // 소셜 인증
         OauthToken oauthToken = request.getOauthToken() != null

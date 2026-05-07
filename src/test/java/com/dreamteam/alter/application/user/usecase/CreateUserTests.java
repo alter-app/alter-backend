@@ -8,6 +8,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
 import com.dreamteam.alter.domain.terms.entity.Terms;
+import com.dreamteam.alter.domain.terms.type.TermsType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.user.type.UserGender;
@@ -22,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -71,7 +73,7 @@ class CreateUserTests {
             "19900101",
             true,
             false,
-            List.of(1L, 2L)
+            Set.of(TermsType.SERVICE, TermsType.PRIVACY)
         );
     }
 
@@ -162,7 +164,7 @@ class CreateUserTests {
                 "19900101",
                 true,
                 false,
-                List.of(1L, 2L)
+                Set.of(TermsType.SERVICE, TermsType.PRIVACY)
             );
             given(cacheRepository.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
             given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
