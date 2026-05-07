@@ -8,6 +8,9 @@ import com.dreamteam.alter.domain.terms.type.TermsType;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import java.util.Comparator;
+import java.util.stream.Collectors;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -96,7 +99,7 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
     public List<Terms> findLatestPublishedPerType() {
         QTerms sub = new QTerms("sub");
 
-        return queryFactory
+        List<Terms> result = queryFactory
                 .selectFrom(terms)
                 .where(
                         terms.status.eq(TermsStatus.PUBLISHED),
@@ -110,8 +113,20 @@ public class TermsQueryRepositoryImpl implements TermsQueryRepository {
                                         )
                         )
                 )
-                .orderBy(terms.type.asc())
+                .orderBy(terms.type.asc(), terms.effectiveAt.desc(), terms.id.desc())
                 .fetch();
+
+        // 동일 effective_at 중복 방어: 타입별 id 내림차순 기준 첫 번째 1건만 취함
+        return result.stream()
+                .collect(Collectors.toMap(
+                        Terms::getType,
+                        t -> t,
+                        (existing, replacement) -> existing
+                ))
+                .values()
+                .stream()
+                .sorted(Comparator.comparing(Terms::getType))
+                .toList();
     }
 
     private BooleanExpression notDeleted() {
