@@ -1,6 +1,5 @@
 package com.dreamteam.alter.application.terms.usecase;
 
-import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminTermsDetailResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
@@ -37,15 +36,15 @@ class AdminGetTermsDetailTest {
         when(termsQueryRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when
-        AdminTermsDetailResponseDto result = adminGetTermsDetail.execute(1L);
+        Terms result = adminGetTermsDetail.execute(1L);
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getType().value()).isEqualTo(TermsType.SERVICE);
+        assertThat(result.getType()).isEqualTo(TermsType.SERVICE);
         assertThat(result.getVersion()).isEqualTo("v1.0");
         assertThat(result.getTitle()).isEqualTo("서비스 이용약관");
         assertThat(result.getDocUrl()).isEqualTo("https://notion.so/terms");
-        assertThat(result.getStatus().value()).isEqualTo(TermsStatus.DRAFT);
+        assertThat(result.getStatus()).isEqualTo(TermsStatus.DRAFT);
         assertThat(result.isRequired()).isTrue();
         verify(termsQueryRepository, times(1)).findById(1L);
     }

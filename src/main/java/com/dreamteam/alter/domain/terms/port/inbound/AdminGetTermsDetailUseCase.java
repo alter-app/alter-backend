@@ -1,8 +1,8 @@
 package com.dreamteam.alter.domain.terms.port.inbound;
 
-import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminTermsDetailResponseDto;
+import com.dreamteam.alter.domain.terms.entity.Terms;
 
 public interface AdminGetTermsDetailUseCase {
 
-    AdminTermsDetailResponseDto execute(Long id);
+    Terms execute(Long id);
 }
