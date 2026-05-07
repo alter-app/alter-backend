@@ -25,6 +25,11 @@ public class TermsPublicController implements TermsPublicControllerSpec {
     @Override
     @GetMapping
     public ResponseEntity<CommonApiResponse<List<PublishedTermsItemResponseDto>>> getPublishedTermsList() {
-        return ResponseEntity.ok(CommonApiResponse.of(getPublishedTermsList.execute()));
+        return ResponseEntity.ok(CommonApiResponse.of(
+            getPublishedTermsList.execute()
+                .stream()
+                .map(PublishedTermsItemResponseDto::from)
+                .toList()
+        ));
     }
 }
