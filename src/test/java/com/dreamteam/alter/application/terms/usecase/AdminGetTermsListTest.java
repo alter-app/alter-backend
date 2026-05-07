@@ -1,5 +1,7 @@
 package com.dreamteam.alter.application.terms.usecase;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
+import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminTermsListItemResponseDto;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import com.dreamteam.alter.domain.terms.query.AdminGetTermsListQuery;
@@ -27,22 +29,20 @@ class AdminGetTermsListTest {
     private AdminGetTermsList adminGetTermsList;
 
     @Test
-    @DisplayName("필터 없이 전체 목록 조회 성공 빈 리스트 반환")
-    void getTermsList_returnsEmptyList_whenNoFilter() {
+    @DisplayName("count가 0이면 빈 PaginatedResponseDto 반환")
+    void getTermsList_returnsEmpty_whenCountIsZero() {
         // given
         AdminGetTermsListQuery query = new AdminGetTermsListQuery(null, null, 1, 10);
         when(termsQueryRepository.countByFilter(isNull(), isNull())).thenReturn(0L);
-        when(termsQueryRepository.findByFilter(isNull(), isNull(), eq(1), eq(10))).thenReturn(List.of());
 
         // when
-        long total = adminGetTermsList.count(query);
-        List<Terms> result = adminGetTermsList.execute(query);
+        PaginatedResponseDto<AdminTermsListItemResponseDto> result = adminGetTermsList.execute(query);
 
         // then
-        assertThat(total).isZero();
-        assertThat(result).isEmpty();
+        assertThat(result.data()).isEmpty();
+        assertThat(result.page().totalCount()).isZero();
         verify(termsQueryRepository, times(1)).countByFilter(isNull(), isNull());
-        verify(termsQueryRepository, times(1)).findByFilter(isNull(), isNull(), eq(1), eq(10));
+        verify(termsQueryRepository, never()).findByFilter(any(), any(), anyInt(), anyInt());
     }
 
     @Test
@@ -51,41 +51,42 @@ class AdminGetTermsListTest {
         // given
         AdminGetTermsListQuery query = new AdminGetTermsListQuery(TermsType.SERVICE, null, 1, 10);
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
+        when(termsQueryRepository.countByFilter(eq(TermsType.SERVICE), isNull())).thenReturn(1L);
         when(termsQueryRepository.findByFilter(eq(TermsType.SERVICE), isNull(), eq(1), eq(10)))
                 .thenReturn(List.of(terms));
 
         // when
-        List<Terms> result = adminGetTermsList.execute(query);
+        PaginatedResponseDto<AdminTermsListItemResponseDto> result = adminGetTermsList.execute(query);
 
         // then
         verify(termsQueryRepository, times(1)).findByFilter(eq(TermsType.SERVICE), isNull(), eq(1), eq(10));
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getType()).isEqualTo(TermsType.SERVICE);
+        assertThat(result.data()).hasSize(1);
+        assertThat(result.data().get(0).getType().value()).isEqualTo(TermsType.SERVICE);
     }
 
     @Test
-    @DisplayName("type 필터에 유효한 TermsType 전달 시 조건 포함 확인")
+    @DisplayName("type 필터에 유효한 TermsType 전달 시 countByFilter에 조건 포함 확인")
     void getTermsList_verifiesTypeCondition_whenValidTermsTypeGiven() {
         // given
         AdminGetTermsListQuery query = new AdminGetTermsListQuery(TermsType.PRIVACY, null, 1, 10);
         when(termsQueryRepository.countByFilter(eq(TermsType.PRIVACY), isNull())).thenReturn(0L);
 
         // when
-        adminGetTermsList.count(query);
+        adminGetTermsList.execute(query);
 
         // then
         verify(termsQueryRepository).countByFilter(eq(TermsType.PRIVACY), isNull());
     }
 
     @Test
-    @DisplayName("status 필터에 유효한 TermsStatus 전달 시 조건 포함 확인")
+    @DisplayName("status 필터에 유효한 TermsStatus 전달 시 countByFilter에 조건 포함 확인")
     void getTermsList_verifiesStatusCondition_whenValidTermsStatusGiven() {
         // given
         AdminGetTermsListQuery query = new AdminGetTermsListQuery(null, TermsStatus.PUBLISHED, 1, 10);
         when(termsQueryRepository.countByFilter(isNull(), eq(TermsStatus.PUBLISHED))).thenReturn(0L);
 
         // when
-        adminGetTermsList.count(query);
+        adminGetTermsList.execute(query);
 
         // then
         verify(termsQueryRepository).countByFilter(isNull(), eq(TermsStatus.PUBLISHED));

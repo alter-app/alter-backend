@@ -8,7 +8,6 @@ import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminUpdateTermsReque
 import com.dreamteam.alter.adapter.inbound.admin.terms.dto.TermsListFilterDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.PageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
 import com.dreamteam.alter.domain.terms.command.AdminCreateTermsCommand;
 import com.dreamteam.alter.domain.terms.command.AdminUpdateTermsCommand;
@@ -27,8 +26,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
@@ -62,17 +59,7 @@ public class AdminTermsController implements AdminTermsControllerSpec {
         AdminGetTermsListQuery query = new AdminGetTermsListQuery(
                 filter.getType(), filter.getStatus(), pageRequest.page(), pageRequest.pageSize());
 
-        long total = adminGetTermsList.count(query);
-        if (total == 0) {
-            return ResponseEntity.ok(PaginatedResponseDto.empty(PageResponseDto.empty(pageRequest)));
-        }
-
-        List<Terms> termsList = adminGetTermsList.execute(query);
-        PageResponseDto pageResponse = PageResponseDto.of(pageRequest, (int) total);
-        List<AdminTermsListItemResponseDto> items = termsList.stream()
-                .map(AdminTermsListItemResponseDto::from)
-                .toList();
-        return ResponseEntity.ok(PaginatedResponseDto.of(pageResponse, items));
+        return ResponseEntity.ok(adminGetTermsList.execute(query));
     }
 
     @Override
