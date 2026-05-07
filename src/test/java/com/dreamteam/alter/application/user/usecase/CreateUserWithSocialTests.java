@@ -34,6 +34,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -191,6 +192,26 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.EMAIL_DUPLICATED));
 
             then(cacheRepository).should(never()).deleteAll(anyList());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList());
+        }
+
+        @Test
+        @DisplayName("필수 약관 미동의 시 REQUIRED_TERMS_NOT_AGREED 예외 발생")
+        void execute_requiredTermsNotAgreed_throwsRequiredTermsNotAgreed() {
+            // given
+            given(cacheRepository.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
+            given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
+            willThrow(new CustomException(ErrorCode.REQUIRED_TERMS_NOT_AGREED))
+                .given(termsAgreementValidator).validateAndResolve(any());
+
+            // when & then
+            assertThatThrownBy(() -> createUserWithSocial.execute(request))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.REQUIRED_TERMS_NOT_AGREED));
+
+            then(socialAuthenticationManager).should(never()).authenticate(any());
             then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList());
         }
 
