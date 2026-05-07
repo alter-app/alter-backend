@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.admin.terms.dto.AdminCreateTermsReque
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
 import com.dreamteam.alter.domain.terms.type.TermsType;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,7 +27,8 @@ class AdminCreateTermsTest {
     private AdminCreateTerms adminCreateTerms;
 
     @Test
-    void 유효한_요청으로_약관_생성_후_id_반환() {
+    @DisplayName("유효한 요청으로 약관 생성 후 id 반환")
+    void createTerms_returnsId() {
         // given
         AdminCreateTermsRequestDto request = new AdminCreateTermsRequestDto(
                 TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true
@@ -44,7 +46,8 @@ class AdminCreateTermsTest {
     }
 
     @Test
-    void 유효한_TermsType_enum으로_약관_생성_성공() {
+    @DisplayName("유효한 TermsType enum으로 약관 생성 성공")
+    void createTerms_success_withValidTermsTypeEnum() {
         // given
         AdminCreateTermsRequestDto request = new AdminCreateTermsRequestDto(
                 TermsType.PRIVACY, "v1.0", "개인정보 처리방침", "https://notion.so/privacy", true

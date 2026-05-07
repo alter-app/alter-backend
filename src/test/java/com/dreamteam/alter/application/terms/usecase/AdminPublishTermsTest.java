@@ -6,6 +6,7 @@ import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
 import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,7 +29,8 @@ class AdminPublishTermsTest {
     private AdminPublishTerms adminPublishTerms;
 
     @Test
-    void DRAFT_약관_게시_성공_기존_PUBLISHED_없음() {
+    @DisplayName("DRAFT 약관 게시 성공 기존 PUBLISHED 없음")
+    void publishTerms_success_whenNoPreviousPublished() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
@@ -45,7 +47,8 @@ class AdminPublishTermsTest {
     }
 
     @Test
-    void DRAFT_약관_게시_성공_기존_PUBLISHED_있음() {
+    @DisplayName("DRAFT 약관 게시 성공 기존 PUBLISHED 있음")
+    void publishTerms_success_deprecatesPreviousPublished() {
         // given
         Terms existingTerms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         existingTerms.publish();
@@ -63,7 +66,8 @@ class AdminPublishTermsTest {
     }
 
     @Test
-    void 존재하지_않는_id_TERMS_NOT_FOUND() {
+    @DisplayName("존재하지 않는 id TERMS NOT FOUND")
+    void publishTerms_throwsNotFound_whenTermsNotExists() {
         // given
         when(termsRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -75,7 +79,8 @@ class AdminPublishTermsTest {
     }
 
     @Test
-    void PUBLISHED_상태_약관_게시_시도시_TERMS_NOT_PUBLISHABLE() {
+    @DisplayName("PUBLISHED 상태 약관 게시 시도시 TERMS NOT PUBLISHABLE")
+    void publishTerms_throwsConflict_whenStatusIsPublished() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
@@ -89,7 +94,8 @@ class AdminPublishTermsTest {
     }
 
     @Test
-    void DEPRECATED_상태_약관_게시_시도시_TERMS_NOT_PUBLISHABLE() {
+    @DisplayName("DEPRECATED 상태 약관 게시 시도시 TERMS NOT PUBLISHABLE")
+    void publishTerms_throwsConflict_whenStatusIsDeprecated() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();

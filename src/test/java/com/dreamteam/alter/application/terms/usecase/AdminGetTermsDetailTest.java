@@ -7,6 +7,7 @@ import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,7 +30,8 @@ class AdminGetTermsDetailTest {
     private AdminGetTermsDetail adminGetTermsDetail;
 
     @Test
-    void 존재하는_id_조회_성공() {
+    @DisplayName("존재하는 id 조회 성공")
+    void getTermsDetail_success() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         when(termsQueryRepository.findById(1L)).thenReturn(Optional.of(terms));
@@ -49,7 +51,8 @@ class AdminGetTermsDetailTest {
     }
 
     @Test
-    void 존재하지_않는_id_TERMS_NOT_FOUND() {
+    @DisplayName("존재하지 않는 id TERMS NOT FOUND")
+    void getTermsDetail_throwsNotFound_whenTermsNotExists() {
         // given
         when(termsQueryRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -61,7 +64,8 @@ class AdminGetTermsDetailTest {
     }
 
     @Test
-    void DELETED_상태_약관_조회시_TERMS_NOT_FOUND() {
+    @DisplayName("DELETED 상태 약관 조회시 TERMS NOT FOUND")
+    void getTermsDetail_throwsNotFound_whenStatusIsDeleted() {
         // given
         // QueryDSL notDeleted() 조건으로 인해 DELETED 레코드를 반환하지 않음
         when(termsQueryRepository.findById(1L)).thenReturn(Optional.empty());

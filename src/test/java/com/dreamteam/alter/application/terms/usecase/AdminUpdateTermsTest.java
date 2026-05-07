@@ -6,6 +6,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsRepository;
 import com.dreamteam.alter.domain.terms.type.TermsType;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,7 +29,8 @@ class AdminUpdateTermsTest {
     private AdminUpdateTerms adminUpdateTerms;
 
     @Test
-    void DRAFT_약관_수정_성공() {
+    @DisplayName("DRAFT 약관 수정 성공")
+    void updateTerms_success_whenStatusIsDraft() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         AdminUpdateTermsRequestDto request = new AdminUpdateTermsRequestDto(
@@ -47,7 +49,8 @@ class AdminUpdateTermsTest {
     }
 
     @Test
-    void 존재하지_않는_id_TERMS_NOT_FOUND() {
+    @DisplayName("존재하지 않는 id TERMS NOT FOUND")
+    void updateTerms_throwsNotFound_whenTermsNotExists() {
         // given
         AdminUpdateTermsRequestDto request = new AdminUpdateTermsRequestDto(
                 "수정된 제목", "https://notion.so/terms-v2", false
@@ -62,7 +65,8 @@ class AdminUpdateTermsTest {
     }
 
     @Test
-    void PUBLISHED_상태_약관_수정시_TERMS_NOT_EDITABLE() {
+    @DisplayName("PUBLISHED 상태 약관 수정시 TERMS NOT EDITABLE")
+    void updateTerms_throwsConflict_whenStatusIsPublished() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
@@ -79,7 +83,8 @@ class AdminUpdateTermsTest {
     }
 
     @Test
-    void DEPRECATED_상태_약관_수정시_TERMS_NOT_EDITABLE() {
+    @DisplayName("DEPRECATED 상태 약관 수정시 TERMS NOT EDITABLE")
+    void updateTerms_throwsConflict_whenStatusIsDeprecated() {
         // given
         Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();

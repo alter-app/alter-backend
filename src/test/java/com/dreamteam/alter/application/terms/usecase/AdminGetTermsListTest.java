@@ -8,6 +8,7 @@ import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.terms.port.outbound.TermsQueryRepository;
 import com.dreamteam.alter.domain.terms.type.TermsStatus;
 import com.dreamteam.alter.domain.terms.type.TermsType;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -32,7 +33,8 @@ class AdminGetTermsListTest {
     private AdminGetTermsList adminGetTermsList;
 
     @Test
-    void 필터_없이_전체_목록_조회_성공_빈_리스트_반환() {
+    @DisplayName("필터 없이 전체 목록 조회 성공 빈 리스트 반환")
+    void getTermsList_returnsEmptyList_whenNoFilter() {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(null, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
@@ -49,7 +51,8 @@ class AdminGetTermsListTest {
     }
 
     @Test
-    void type_필터로_조회시_filter_파라미터_전달_확인() {
+    @DisplayName("type 필터로 조회시 filter 파라미터 전달 확인")
+    void getTermsList_verifiesFilterParam_whenTypeFilterGiven() {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(TermsType.SERVICE, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
@@ -70,7 +73,8 @@ class AdminGetTermsListTest {
     }
 
     @Test
-    void type_필터에_유효한_TermsType_전달_시_조건_포함_확인() {
+    @DisplayName("type 필터에 유효한 TermsType 전달 시 조건 포함 확인")
+    void getTermsList_verifiesTypeCondition_whenValidTermsTypeGiven() {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(TermsType.PRIVACY, null);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
@@ -87,7 +91,8 @@ class AdminGetTermsListTest {
     }
 
     @Test
-    void status_필터에_유효한_TermsStatus_전달_시_조건_포함_확인() {
+    @DisplayName("status 필터에 유효한 TermsStatus 전달 시 조건 포함 확인")
+    void getTermsList_verifiesStatusCondition_whenValidTermsStatusGiven() {
         // given
         TermsListFilterDto filter = new TermsListFilterDto(null, TermsStatus.PUBLISHED);
         PageRequestDto pageRequest = new PageRequestDto(1, 10);
