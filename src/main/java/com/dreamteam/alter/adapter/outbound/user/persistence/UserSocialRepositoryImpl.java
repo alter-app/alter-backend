@@ -1,9 +1,11 @@
 package com.dreamteam.alter.adapter.outbound.user.persistence;
 
+import org.springframework.stereotype.Repository;
+
 import com.dreamteam.alter.domain.user.entity.UserSocial;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialRepository;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

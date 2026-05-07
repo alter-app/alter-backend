@@ -85,4 +85,19 @@ public class WorkspaceWorkerScheduleQueryRepositoryImpl implements WorkspaceWork
 			)
 			.fetch();
 	}
+
+	@Override
+	public List<WorkspaceWorkerSchedule> findAllActivatedByUserId(Long userId) {
+		QWorkspaceWorkerSchedule qWorkspaceWorkerSchedule = QWorkspaceWorkerSchedule.workspaceWorkerSchedule;
+		QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
+
+		return queryFactory
+			.selectFrom(qWorkspaceWorkerSchedule)
+			.join(qWorkspaceWorkerSchedule.workspaceWorker, qWorkspaceWorker)
+			.where(
+				qWorkspaceWorker.user.id.eq(userId),
+				qWorkspaceWorkerSchedule.status.eq(WorkspaceWorkerScheduleStatus.ACTIVATED)
+			)
+			.fetch();
+	}
 }

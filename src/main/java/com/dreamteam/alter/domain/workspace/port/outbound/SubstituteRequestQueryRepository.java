@@ -9,6 +9,7 @@ import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SentS
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SentSubstituteRequestDetailResponse;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
+import com.dreamteam.alter.domain.workspace.entity.SubstituteRequestTarget;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
 
 import java.time.LocalDateTime;
@@ -45,5 +46,8 @@ public interface SubstituteRequestQueryRepository {
     );
     
     Optional<SentSubstituteRequestDetailResponse> getSentRequestDetail(User user, Long requestId);
+
+    List<SubstituteRequest> findAllActiveByRequesterUserId(Long userId);
+    List<SubstituteRequestTarget> findAllPendingTargetsByUserId(Long userId);
 }
 

@@ -12,9 +12,11 @@ import com.dreamteam.alter.domain.user.entity.QUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
+import com.dreamteam.alter.domain.workspace.entity.SubstituteRequestTarget;
 import com.dreamteam.alter.domain.workspace.entity.QSubstituteRequestTarget;
 import com.dreamteam.alter.domain.workspace.port.outbound.SubstituteRequestQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
+import com.dreamteam.alter.domain.workspace.type.SubstituteRequestTargetStatus;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestType;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
 import com.querydsl.core.types.Projections;
@@ -423,8 +425,33 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             // 상태가 지정되지 않은 경우 모든 조회 가능한 상태 조회
             return substituteRequest.status.in(SubstituteRequestStatus.getManagerViewableStatuses());
         }
-        
+
         // 특정 상태가 지정된 경우 해당 상태만 조회
         return substituteRequest.status.eq(status);
+    }
+
+    @Override
+    public List<SubstituteRequest> findAllActiveByRequesterUserId(Long userId) {
+        return queryFactory
+            .selectFrom(substituteRequest)
+            .join(workspaceWorker).on(workspaceWorker.id.eq(substituteRequest.requesterId))
+            .where(
+                workspaceWorker.user.id.eq(userId),
+                substituteRequest.status.in(SubstituteRequestStatus.PENDING, SubstituteRequestStatus.ACCEPTED)
+            )
+            .fetch();
+    }
+
+    @Override
+    public List<SubstituteRequestTarget> findAllPendingTargetsByUserId(Long userId) {
+        QSubstituteRequestTarget target = QSubstituteRequestTarget.substituteRequestTarget;
+        return queryFactory
+            .selectFrom(target)
+            .join(workspaceWorker).on(workspaceWorker.id.eq(target.targetWorkerId))
+            .where(
+                workspaceWorker.user.id.eq(userId),
+                target.status.eq(SubstituteRequestTargetStatus.PENDING)
+            )
+            .fetch();
     }
 }

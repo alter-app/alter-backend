@@ -259,4 +259,23 @@ public interface ManagerSelfControllerSpec {
     })
     ResponseEntity<CommonApiResponse<Void>> deleteProfileImage();
 
+    @Operation(
+        summary = "매니저 회원 탈퇴",
+        description = "본인 계정을 탈퇴 처리하고,  활성화된 업장을 보유한 경우 탈퇴할 수 없습니다."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "매니저 회원 탈퇴 성공"),
+        @ApiResponse(responseCode = "409", description = "변경할 수 없는 상태",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "활성화된 업장 보유",
+                        value = "{\"code\" : \"B020\", \"message\" : \"활성화된 업장이 있습니다.\"}"
+                    )
+                }))
+    })
+    ResponseEntity<CommonApiResponse<Void>> withdraw();
+
 }

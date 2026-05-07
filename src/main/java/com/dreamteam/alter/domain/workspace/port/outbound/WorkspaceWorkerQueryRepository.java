@@ -14,6 +14,7 @@ public interface WorkspaceWorkerQueryRepository {
     Optional<WorkspaceWorker> findActiveWorkerByWorkspaceAndUser(Workspace workspace, User user);
     Optional<WorkspaceWorker> findById(Long id);
     List<WorkspaceWorker> findAllById(List<Long> ids);
+    List<WorkspaceWorker> findAllActiveByUserId(Long userId);
     
     long getUserActiveWorkspaceCount(User user);
     
