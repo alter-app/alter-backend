@@ -32,7 +32,7 @@ class AdminGetTermsDetailTest {
     @DisplayName("존재하는 id 조회 성공")
     void getTermsDetail_success() {
         // given
-        Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
+        Terms terms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         when(termsQueryRepository.findById(1L)).thenReturn(Optional.of(terms));
 
         // when
@@ -41,7 +41,7 @@ class AdminGetTermsDetailTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.getType()).isEqualTo(TermsType.SERVICE);
-        assertThat(result.getVersion()).isEqualTo("v1.0");
+        assertThat(result.getVersion()).isEqualTo("1.0");
         assertThat(result.getTitle()).isEqualTo("서비스 이용약관");
         assertThat(result.getDocUrl()).isEqualTo("https://notion.so/terms");
         assertThat(result.getStatus()).isEqualTo(TermsStatus.DRAFT);

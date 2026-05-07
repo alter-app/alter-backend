@@ -54,7 +54,7 @@ public class AdminTermsDetailResponseDto {
         return AdminTermsDetailResponseDto.builder()
                 .id(terms.getId())
                 .type(DescribedEnumDto.of(terms.getType(), TermsType.describe()))
-                .version(terms.getVersion())
+                .version("v" + terms.getVersion())
                 .title(terms.getTitle())
                 .docUrl(terms.getDocUrl())
                 .required(terms.isRequired())

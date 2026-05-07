@@ -48,7 +48,7 @@ public class AdminTermsListItemResponseDto {
         return AdminTermsListItemResponseDto.builder()
                 .id(terms.getId())
                 .type(DescribedEnumDto.of(terms.getType(), TermsType.describe()))
-                .version(terms.getVersion())
+                .version("v" + terms.getVersion())
                 .title(terms.getTitle())
                 .required(terms.isRequired())
                 .status(DescribedEnumDto.of(terms.getStatus(), TermsStatus.describe()))

@@ -50,7 +50,7 @@ class AdminGetTermsListTest {
     void getTermsList_verifiesFilterParam_whenTypeFilterGiven() {
         // given
         AdminGetTermsListQuery query = new AdminGetTermsListQuery(TermsType.SERVICE, null, 1, 10);
-        Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
+        Terms terms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         when(termsQueryRepository.countByFilter(eq(TermsType.SERVICE), isNull())).thenReturn(1L);
         when(termsQueryRepository.findByFilter(eq(TermsType.SERVICE), isNull(), eq(1), eq(10)))
                 .thenReturn(List.of(terms));

@@ -32,7 +32,7 @@ class AdminUpdateTermsTest {
     @DisplayName("DRAFT 약관 수정 성공")
     void updateTerms_success_whenStatusIsDraft() {
         // given
-        Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
+        Terms terms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(
                 "수정된 제목", "https://notion.so/terms-v2", false
         );
@@ -68,7 +68,7 @@ class AdminUpdateTermsTest {
     @DisplayName("PUBLISHED 상태 약관 수정시 TERMS NOT EDITABLE")
     void updateTerms_throwsConflict_whenStatusIsPublished() {
         // given
-        Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
+        Terms terms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
         AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(
                 "수정된 제목", "https://notion.so/terms-v2", false
@@ -86,7 +86,7 @@ class AdminUpdateTermsTest {
     @DisplayName("DEPRECATED 상태 약관 수정시 TERMS NOT EDITABLE")
     void updateTerms_throwsConflict_whenStatusIsDeprecated() {
         // given
-        Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
+        Terms terms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
         terms.deprecate();
         AdminUpdateTermsCommand command = new AdminUpdateTermsCommand(

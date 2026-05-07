@@ -31,7 +31,7 @@ class AdminCreateTermsTest {
     void createTerms_returnsId() {
         // given
         AdminCreateTermsCommand command = new AdminCreateTermsCommand(
-                TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true
+                TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true
         );
         Terms savedTerms = mock(Terms.class);
         when(savedTerms.getId()).thenReturn(1L);
@@ -50,7 +50,7 @@ class AdminCreateTermsTest {
     void createTerms_success_withValidTermsTypeEnum() {
         // given
         AdminCreateTermsCommand command = new AdminCreateTermsCommand(
-                TermsType.PRIVACY, "v1.0", "개인정보 처리방침", "https://notion.so/privacy", true
+                TermsType.PRIVACY, "1.0", "개인정보 처리방침", "https://notion.so/privacy", true
         );
         Terms savedTerms = mock(Terms.class);
         when(savedTerms.getId()).thenReturn(2L);

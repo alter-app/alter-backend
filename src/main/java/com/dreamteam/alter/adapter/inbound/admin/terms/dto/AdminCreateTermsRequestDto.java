@@ -22,8 +22,8 @@ public class AdminCreateTermsRequestDto {
 
     @NotBlank
     @Size(max = 20)
-    @Pattern(regexp = "^v\\d+\\.\\d+$", message = "버전 형식은 v{숫자}.{숫자} 이어야 합니다")
-    @Schema(description = "약관 버전", example = "v1.0")
+    @Pattern(regexp = "^\\d+\\.\\d+$", message = "버전은 숫자 형식으로 입력해주세요. (예: 1.0)")
+    @Schema(description = "약관 버전", example = "1.0")
     private String version;
 
     @NotBlank

@@ -32,7 +32,7 @@ class AdminPublishTermsTest {
     @DisplayName("DRAFT 약관 게시 성공 기존 PUBLISHED 없음")
     void publishTerms_success_whenNoPreviousPublished() {
         // given
-        Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
+        Terms terms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
         when(termsRepository.findPublishedByTypeWithLock(TermsType.SERVICE)).thenReturn(Optional.empty());
 
@@ -50,9 +50,9 @@ class AdminPublishTermsTest {
     @DisplayName("DRAFT 약관 게시 성공 기존 PUBLISHED 있음")
     void publishTerms_success_deprecatesPreviousPublished() {
         // given
-        Terms existingTerms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
+        Terms existingTerms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         existingTerms.publish();
-        Terms newTerms = Terms.create(TermsType.SERVICE, "v2.0", "서비스 이용약관 v2", "https://notion.so/terms-v2", true);
+        Terms newTerms = Terms.create(TermsType.SERVICE, "2.0", "서비스 이용약관 v2", "https://notion.so/terms-v2", true);
         when(termsRepository.findById(2L)).thenReturn(Optional.of(newTerms));
         when(termsRepository.findPublishedByTypeWithLock(TermsType.SERVICE)).thenReturn(Optional.of(existingTerms));
 
@@ -82,7 +82,7 @@ class AdminPublishTermsTest {
     @DisplayName("PUBLISHED 상태 약관 게시 시도시 TERMS NOT PUBLISHABLE")
     void publishTerms_throwsConflict_whenStatusIsPublished() {
         // given
-        Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
+        Terms terms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
 
@@ -97,7 +97,7 @@ class AdminPublishTermsTest {
     @DisplayName("DEPRECATED 상태 약관 게시 시도시 TERMS NOT PUBLISHABLE")
     void publishTerms_throwsConflict_whenStatusIsDeprecated() {
         // given
-        Terms terms = Terms.create(TermsType.SERVICE, "v1.0", "서비스 이용약관", "https://notion.so/terms", true);
+        Terms terms = Terms.create(TermsType.SERVICE, "1.0", "서비스 이용약관", "https://notion.so/terms", true);
         terms.publish();
         terms.deprecate();
         when(termsRepository.findById(1L)).thenReturn(Optional.of(terms));
