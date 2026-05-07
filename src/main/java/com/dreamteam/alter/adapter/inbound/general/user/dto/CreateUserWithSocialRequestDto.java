@@ -13,6 +13,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -65,6 +67,10 @@ public class CreateUserWithSocialRequestDto {
     @NotNull
     @Schema(description = "야간 알림 수신 동의 여부", example = "false")
     private Boolean nightNotificationConsent;
+
+    @NotNull
+    @Schema(description = "동의한 약관 ID 목록", example = "[1, 2, 3]")
+    private List<Long> agreedTermsIds;
 
     @AssertTrue(message = "WEB 플랫폼은 authorizationCode가 필수입니다")
     private boolean isWebPlatformValid() {

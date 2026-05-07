@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.general.user.dto.CreateUserWithSocial
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
 import com.dreamteam.alter.adapter.outbound.user.persistence.SignupSessionCacheRepository;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
+import com.dreamteam.alter.application.terms.service.TermsAgreementValidator;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.entity.User;
@@ -22,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,6 +56,9 @@ class CreateUserWithSocialTests {
     @Mock
     private CreateUserWithSocialTx createUserWithSocialTx;
 
+    @Mock
+    private TermsAgreementValidator termsAgreementValidator;
+
     @InjectMocks
     private CreateUserWithSocial createUserWithSocial;
 
@@ -72,7 +77,8 @@ class CreateUserWithSocialTests {
             UserGender.GENDER_MALE,
             "19900101",
             true,
-            false
+            false,
+            List.of(1L, 2L)
         );
     }
 
@@ -101,7 +107,7 @@ class CreateUserWithSocialTests {
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
                     .isEqualTo(ErrorCode.SIGNUP_SESSION_NOT_EXIST));
 
-            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList());
         }
 
         @Test
@@ -118,7 +124,7 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.NICKNAME_DUPLICATED));
 
             then(cacheRepository).should().deleteAll(anyList());
-            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList());
         }
 
         @Test
@@ -136,7 +142,7 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.USER_CONTACT_DUPLICATED));
 
             then(cacheRepository).should().deleteAll(anyList());
-            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList());
         }
 
         @Test
@@ -146,6 +152,7 @@ class CreateUserWithSocialTests {
             given(cacheRepository.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
             given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
             given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
+            given(termsAgreementValidator.validateAndResolve(any())).willReturn(List.of());
 
             SocialAuthInfo authInfo = createSocialAuthInfo("kakao-social-id", null, null);
             given(socialAuthenticationManager.authenticate(any())).willReturn(authInfo);
@@ -159,7 +166,7 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.SOCIAL_ID_DUPLICATED));
 
             then(cacheRepository).should(never()).deleteAll(anyList());
-            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList());
         }
 
         @Test
@@ -169,6 +176,7 @@ class CreateUserWithSocialTests {
             given(cacheRepository.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
             given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
             given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
+            given(termsAgreementValidator.validateAndResolve(any())).willReturn(List.of());
 
             SocialAuthInfo authInfo = createSocialAuthInfo("kakao-social-id", "social@example.com", null);
             given(socialAuthenticationManager.authenticate(any())).willReturn(authInfo);
@@ -183,7 +191,7 @@ class CreateUserWithSocialTests {
                     .isEqualTo(ErrorCode.EMAIL_DUPLICATED));
 
             then(cacheRepository).should(never()).deleteAll(anyList());
-            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean());
+            then(createUserWithSocialTx).should(never()).process(any(), any(), any(), anyBoolean(), anyBoolean(), anyList());
         }
 
         @Test
@@ -193,6 +201,7 @@ class CreateUserWithSocialTests {
             given(cacheRepository.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
             given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
             given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
+            given(termsAgreementValidator.validateAndResolve(any())).willReturn(List.of());
 
             // 소셜 인증 및 중복 확인
             SocialAuthInfo authInfo = createSocialAuthInfo("kakao-social-id", null, null);
@@ -201,14 +210,14 @@ class CreateUserWithSocialTests {
 
             // TX 저장
             GenerateTokenResponseDto mockResponse = mock(GenerateTokenResponseDto.class);
-            given(createUserWithSocialTx.process(any(), any(), any(), eq(true), eq(false))).willReturn(mockResponse);
+            given(createUserWithSocialTx.process(any(), any(), any(), eq(true), eq(false), anyList())).willReturn(mockResponse);
 
             // when
             GenerateTokenResponseDto result = createUserWithSocial.execute(request);
 
             // then
             assertThat(result).isEqualTo(mockResponse);
-            then(createUserWithSocialTx).should().process(eq("01012345678"), eq(request), any(), eq(true), eq(false));
+            then(createUserWithSocialTx).should().process(eq("01012345678"), eq(request), any(), eq(true), eq(false), anyList());
             then(cacheRepository).should().deleteAll(anyList());
         }
     }
