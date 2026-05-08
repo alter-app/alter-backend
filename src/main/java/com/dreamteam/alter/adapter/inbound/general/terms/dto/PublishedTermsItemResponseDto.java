@@ -1,7 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.general.terms.dto;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
-import com.dreamteam.alter.domain.terms.entity.Terms;
+import com.dreamteam.alter.domain.terms.result.GetPublishedTermsListResult;
 import com.dreamteam.alter.domain.terms.type.TermsType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
@@ -40,15 +40,15 @@ public class PublishedTermsItemResponseDto {
     @Schema(description = "게시 일시", example = "2025-01-01T12:00:00")
     private LocalDateTime effectiveAt;
 
-    public static PublishedTermsItemResponseDto from(Terms terms) {
+    public static PublishedTermsItemResponseDto from(GetPublishedTermsListResult result) {
         return PublishedTermsItemResponseDto.builder()
-                .id(terms.getId())
-                .type(DescribedEnumDto.of(terms.getType(), TermsType.describe()))
-                .version("v" + terms.getVersion())
-                .title(terms.getTitle())
-                .docUrl(terms.getDocUrl())
-                .required(terms.isRequired())
-                .effectiveAt(terms.getEffectiveAt())
+                .id(result.id())
+                .type(DescribedEnumDto.of(result.type(), TermsType.describe()))
+                .version("v" + result.version())
+                .title(result.title())
+                .docUrl(result.docUrl())
+                .required(result.required())
+                .effectiveAt(result.effectiveAt())
                 .build();
     }
 }
