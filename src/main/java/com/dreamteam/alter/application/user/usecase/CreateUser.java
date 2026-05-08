@@ -8,6 +8,8 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.util.PasswordValidator;
 import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
+import com.dreamteam.alter.application.terms.service.TermsAgreementValidator;
+import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Service("createUser")
 @RequiredArgsConstructor
@@ -26,6 +29,7 @@ public class CreateUser implements CreateUserUseCase {
     private final SignupSessionCacheRepository cacheRepository;
     private final EmailVerificationSessionStoreRepository emailVerificationSessionStoreRepository;
     private final CreateUserTx createUserTx;
+    private final TermsAgreementValidator termsAgreementValidator;
 
     @Override
     public GenerateTokenResponseDto execute(CreateUserRequestDto request) {
@@ -41,6 +45,9 @@ public class CreateUser implements CreateUserUseCase {
         // 중복 확인
         validateDuplication(request, contact, sessionIdKey);
 
+        // 약관 동의 검증
+        List<Terms> agreedTerms = termsAgreementValidator.validateAndResolve(request.getAgreedTermsTypes());
+
         // 비밀번호 형식 검증
         if (!PasswordValidator.isValid(request.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD_FORMAT);
@@ -53,7 +60,8 @@ public class CreateUser implements CreateUserUseCase {
         GenerateTokenResponseDto response = createUserTx.process(
             request, contact, verifiedEmail,
             request.getNotificationConsent(),
-            request.getNightNotificationConsent()
+            request.getNightNotificationConsent(),
+            agreedTerms
         );
 
         // 회원가입 세션 삭제

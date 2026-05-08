@@ -18,4 +18,10 @@ public interface TermsQueryRepository {
     Optional<Terms> findPublishedByType(TermsType type);
 
     Optional<Terms> findPublishedByTypeWithLock(TermsType type);
+
+    /**
+     * 각 TermsType 별로 PUBLISHED 상태인 약관 중 effective_at 이 가장 최근인 것 1건씩 반환
+     * 결과 순서: TermsType 선언 순서 (SERVICE, PRIVACY, LOCATION, MARKETING)
+     */
+    List<Terms> findLatestPublishedPerType();
 }

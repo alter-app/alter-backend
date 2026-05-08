@@ -5,10 +5,12 @@ import com.dreamteam.alter.adapter.inbound.general.user.dto.CreateUserWithSocial
 import com.dreamteam.alter.adapter.inbound.general.user.dto.GenerateTokenResponseDto;
 import com.dreamteam.alter.adapter.outbound.user.persistence.SignupSessionCacheRepository;
 import com.dreamteam.alter.application.auth.manager.SocialAuthenticationManager;
+import com.dreamteam.alter.application.terms.service.TermsAgreementValidator;
 import com.dreamteam.alter.common.constants.SignupSessionConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.vo.SocialAuthRequest;
+import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserWithSocialUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserSocialQueryRepository;
@@ -29,6 +31,7 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
     private final SocialAuthenticationManager socialAuthenticationManager;
     private final SignupSessionCacheRepository cacheRepository;
     private final CreateUserWithSocialTx createUserWithSocialTx;
+    private final TermsAgreementValidator termsAgreementValidator;
 
     @Override
     public GenerateTokenResponseDto execute(CreateUserWithSocialRequestDto request) {
@@ -43,6 +46,9 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
 
         // 중복 확인
         validateDuplication(request, contact, sessionIdKey);
+
+        // 약관 동의 검증
+        List<Terms> agreedTerms = termsAgreementValidator.validateAndResolve(request.getAgreedTermsTypes());
 
         // 소셜 인증
         OauthToken oauthToken = request.getOauthToken() != null
@@ -76,7 +82,8 @@ public class CreateUserWithSocial implements CreateUserWithSocialUseCase {
         GenerateTokenResponseDto response = createUserWithSocialTx.process(
             contact, request, socialAuthInfo,
             request.getNotificationConsent(),
-            request.getNightNotificationConsent()
+            request.getNightNotificationConsent(),
+            agreedTerms
         );
 
         // 회원가입 세션 삭제

@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.general.user.dto;
 
+import com.dreamteam.alter.domain.terms.type.TermsType;
 import com.dreamteam.alter.domain.user.type.PlatformType;
 import com.dreamteam.alter.domain.user.type.SocialProvider;
 import com.dreamteam.alter.domain.user.type.UserGender;
@@ -12,6 +13,8 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.Set;
 
 @Getter
 @NoArgsConstructor
@@ -65,6 +68,10 @@ public class CreateUserWithSocialRequestDto {
     @NotNull
     @Schema(description = "야간 알림 수신 동의 여부", example = "false")
     private Boolean nightNotificationConsent;
+
+    @NotNull
+    @Schema(description = "동의한 약관 타입 목록", example = "[\"SERVICE\", \"PRIVACY\"]")
+    private Set<TermsType> agreedTermsTypes;
 
     @AssertTrue(message = "WEB 플랫폼은 authorizationCode가 필수입니다")
     private boolean isWebPlatformValid() {
