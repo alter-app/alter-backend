@@ -120,7 +120,7 @@ public interface ManagerWorkspaceControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "이미 사용 중인 근무자 색상입니다.",
-                        value = "{\"code\" : \"B026\"}"
+                        value = "{\"code\" : \"B020\"}"
                     ),
                 })),
     })
