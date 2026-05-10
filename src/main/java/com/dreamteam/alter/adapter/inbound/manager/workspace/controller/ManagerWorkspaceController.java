@@ -21,13 +21,16 @@ import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspac
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListFilterDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.ManagerWorkspaceWorkerListResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.UpdateFixedScheduleDateRequestDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.UpdateWorkspaceWorkerColorRequestDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.workspace.command.UpdateWorkspaceWorkerColorCommand;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceManagerListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceWorkerListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateFixedScheduleDateUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateWorkspaceWorkerColorCodeUseCase;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -54,6 +57,9 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
 
     @Resource(name = "managerUpdateFixedScheduleDate")
     private final ManagerUpdateFixedScheduleDateUseCase managerUpdateFixedScheduleDate;
+
+    @Resource(name = "managerUpdateWorkspaceWorkerColorCode")
+    private final ManagerUpdateWorkspaceWorkerColorCodeUseCase managerUpdateWorkspaceWorkerColor;
 
     @Override
     @GetMapping
@@ -104,6 +110,23 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
         managerUpdateFixedScheduleDate.execute(actor, workspaceId, request);
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PatchMapping("/{workspaceId}/workers/{workerId}/color")
+    public ResponseEntity<CommonApiResponse<Void>> updateWorkspaceWorkerColorCode(
+        @PathVariable Long workspaceId,
+        @PathVariable Long workerId,
+        @RequestBody @Valid UpdateWorkspaceWorkerColorRequestDto request
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        managerUpdateWorkspaceWorkerColor.execute(
+            actor,
+            workspaceId,
+            workerId,
+            UpdateWorkspaceWorkerColorCommand.of(request.getColorCode())
+        );
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }

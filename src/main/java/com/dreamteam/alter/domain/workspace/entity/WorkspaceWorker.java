@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public class WorkspaceWorker {
 
+    public static final String DEFAULT_COLOR_CODE = "#9CA3AF";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,6 +37,10 @@ public class WorkspaceWorker {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private WorkspaceWorkerStatus status;
+
+    @Builder.Default
+    @Column(name = "color_code", nullable = false, length = 7)
+    private String colorCode = DEFAULT_COLOR_CODE;
 
     @Column(name = "employed_at", nullable = false)
     private LocalDate employedAt;
@@ -65,6 +71,10 @@ public class WorkspaceWorker {
     public void resign() {
         this.status = WorkspaceWorkerStatus.RESIGNED;
         this.resignedAt = LocalDate.now();
+    }
+
+    public void updateColorCode(String colorCode) {
+        this.colorCode = colorCode;
     }
 
 }

@@ -11,21 +11,25 @@ import org.apache.commons.lang3.ObjectUtils;
 @Builder(access = AccessLevel.PRIVATE)
 @Schema(description = "근무자 요약 정보")
 public class WorkerSummaryDto {
-    
+
     @Schema(description = "근무자 ID", example = "1")
     private Long workerId;
-    
+
     @Schema(description = "근무자명", example = "김알바")
     private String workerName;
+
+    @Schema(description = "근무자 표시 색상 (hex)", example = "#9CA3AF")
+    private String colorCode;
 
     public static WorkerSummaryDto of(WorkspaceWorker workspaceWorker) {
         if (ObjectUtils.isEmpty(workspaceWorker)) {
             return null;
         }
-        
+
         return WorkerSummaryDto.builder()
             .workerId(workspaceWorker.getId())
             .workerName(workspaceWorker.getUser().getName())
+            .colorCode(workspaceWorker.getColorCode())
             .build();
     }
 }
