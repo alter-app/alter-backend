@@ -86,6 +86,50 @@ public interface ManagerWorkspaceControllerSpec {
         @RequestBody @Valid UpdateFixedScheduleDateRequestDto request
     );
 
+    @Operation(summary = "매니저 - 근무자 색상 변경", description = "근무자 캘린더에서 사용할 표시 색상을 변경합니다. 같은 업장의 ACTIVATED 근무자끼리 색상은 unique 합니다 (기본 색상 #9CA3AF 제외).")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "색상 변경 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 색상 형식",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "잘못된 요청",
+                        value = "{\"code\" : \"B001\"}"
+                    ),
+                })),
+        @ApiResponse(responseCode = "404", description = "존재하지 않는 업장 또는 근무자",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "존재하지 않는 업장입니다.",
+                        value = "{\"code\" : \"B008\"}"
+                    ),
+                    @ExampleObject(
+                        name = "근무자를 찾을 수 없습니다.",
+                        value = "{\"code\" : \"B019\"}"
+                    ),
+                })),
+        @ApiResponse(responseCode = "409", description = "이미 사용 중인 색상",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "이미 사용 중인 근무자 색상입니다.",
+                        value = "{\"code\" : \"B026\"}"
+                    ),
+                })),
+    })
+    ResponseEntity<CommonApiResponse<Void>> updateWorkspaceWorkerColorCode(
+        @PathVariable Long workspaceId,
+        @PathVariable Long workerId,
+        @RequestBody @Valid UpdateWorkspaceWorkerColorRequestDto request
+    );
+
     // 업장 근무자 상세 정보 조회
 
     // 업장 근무자 상태 변경
