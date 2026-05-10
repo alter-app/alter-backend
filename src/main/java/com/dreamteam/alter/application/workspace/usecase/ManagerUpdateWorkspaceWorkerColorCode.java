@@ -1,9 +1,9 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.UpdateWorkspaceWorkerColorRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.workspace.command.UpdateWorkspaceWorkerColorCommand;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateWorkspaceWorkerColorCodeUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
@@ -25,7 +25,7 @@ public class ManagerUpdateWorkspaceWorkerColorCode implements ManagerUpdateWorks
         ManagerActor actor,
         Long workspaceId,
         Long workerId,
-        UpdateWorkspaceWorkerColorRequestDto request
+        UpdateWorkspaceWorkerColorCommand command
     ) {
         if (!workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser())) {
             throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
@@ -38,15 +38,15 @@ public class ManagerUpdateWorkspaceWorkerColorCode implements ManagerUpdateWorks
             throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
         }
 
-        if (!WorkspaceWorker.DEFAULT_COLOR_CODE.equals(request.getColorCode())
+        if (!WorkspaceWorker.DEFAULT_COLOR_CODE.equals(command.getColorCode())
             && workspaceWorkerQueryRepository.existsActivatedByWorkspaceAndColorCode(
                 workspaceId,
-                request.getColorCode(),
+                command.getColorCode(),
                 workerId
             )) {
             throw new CustomException(ErrorCode.CONFLICT, "이미 사용 중인 근무자 색상입니다.");
         }
 
-        worker.updateColorCode(request.getColorCode());
+        worker.updateColorCode(command.getColorCode());
     }
 }

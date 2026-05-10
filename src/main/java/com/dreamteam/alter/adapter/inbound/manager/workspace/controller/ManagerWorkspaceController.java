@@ -24,6 +24,7 @@ import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.UpdateFixedSche
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.UpdateWorkspaceWorkerColorRequestDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.workspace.command.UpdateWorkspaceWorkerColorCommand;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceManagerListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceUseCase;
@@ -120,7 +121,12 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
         @RequestBody @Valid UpdateWorkspaceWorkerColorRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        managerUpdateWorkspaceWorkerColor.execute(actor, workspaceId, workerId, request);
+        managerUpdateWorkspaceWorkerColor.execute(
+            actor,
+            workspaceId,
+            workerId,
+            UpdateWorkspaceWorkerColorCommand.of(request.getColorCode())
+        );
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }
