@@ -15,11 +15,13 @@ public interface WorkspaceWorkerQueryRepository {
     Optional<WorkspaceWorker> findById(Long id);
     List<WorkspaceWorker> findAllById(List<Long> ids);
     List<WorkspaceWorker> findAllActiveByUserId(Long userId);
-    
+
     long getUserActiveWorkspaceCount(User user);
-    
+
     List<UserWorkspaceListResponse> getUserActiveWorkspaceListWithCursor(
-        CursorPageRequest<CursorDto> request, 
+        CursorPageRequest<CursorDto> request,
         User user
     );
+
+    boolean existsActivatedByWorkspaceAndColorCode(Long workspaceId, String colorCode, Long excludeWorkerId);
 }
