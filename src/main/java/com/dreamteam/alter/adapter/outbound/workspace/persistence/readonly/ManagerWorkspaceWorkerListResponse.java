@@ -26,6 +26,8 @@ public class ManagerWorkspaceWorkerListResponse {
     @Enumerated(EnumType.STRING)
     private WorkerPositionType position;
 
+    private String colorCode;
+
     private LocalDate employedAt;
 
     private LocalDate resignedAt;

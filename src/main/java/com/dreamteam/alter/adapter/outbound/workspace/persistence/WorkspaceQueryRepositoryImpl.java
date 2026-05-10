@@ -173,6 +173,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 ),
                 qWorkspaceWorker.status,
                 Expressions.constant(WorkerPositionType.WORKER),
+                qWorkspaceWorker.colorCode,
                 qWorkspaceWorker.employedAt,
                 qWorkspaceWorker.resignedAt,
                 qWorkspaceWorker.createdAt,
@@ -205,6 +206,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qUser.contact,
                 qUser.gender,
                 qWorkspaceWorker.status,
+                qWorkspaceWorker.colorCode,
                 qWorkspaceWorker.employedAt,
                 qWorkspaceWorker.resignedAt,
                 qWorkspaceWorker.createdAt

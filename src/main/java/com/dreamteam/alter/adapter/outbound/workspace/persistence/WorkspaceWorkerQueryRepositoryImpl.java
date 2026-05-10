@@ -131,8 +131,30 @@ public class WorkspaceWorkerQueryRepositoryImpl implements WorkspaceWorkerQueryR
     }
 
 
+    @Override
+    public boolean existsActivatedByWorkspaceAndColorCode(Long workspaceId, String colorCode, Long excludeWorkerId) {
+        QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
+
+        BooleanExpression excludeCondition = ObjectUtils.isNotEmpty(excludeWorkerId)
+            ? qWorkspaceWorker.id.ne(excludeWorkerId)
+            : null;
+
+        Integer result = queryFactory
+            .selectOne()
+            .from(qWorkspaceWorker)
+            .where(
+                qWorkspaceWorker.workspace.id.eq(workspaceId),
+                qWorkspaceWorker.colorCode.eq(colorCode),
+                qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
+                excludeCondition
+            )
+            .fetchFirst();
+
+        return result != null;
+    }
+
     private BooleanExpression cursorConditions(
-        QWorkspaceWorker qWorkspaceWorker, 
+        QWorkspaceWorker qWorkspaceWorker,
         CursorDto cursor
     ) {
         if (ObjectUtils.isEmpty(cursor)) {

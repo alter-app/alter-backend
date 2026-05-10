@@ -35,6 +35,10 @@ public class ManagerWorkspaceWorkerListResponseDto {
     private WorkerPositionResponseDto position;
 
     @NotNull
+    @Schema(description = "근무자 표시 색상 (hex)", example = "#9CA3AF")
+    private String colorCode;
+
+    @NotNull
     @Schema(description = "채용일자", example = "2023-10-01T12:00:00")
     private LocalDate employedAt;
 
@@ -50,6 +54,7 @@ public class ManagerWorkspaceWorkerListResponseDto {
             .user(WorkspaceWorkerResponseDto.of(entity.getUser()))
             .status(DescribedEnumDto.of(entity.getStatus(), WorkspaceWorkerStatus.describe()))
             .position(WorkerPositionResponseDto.from(entity.getPosition()))
+            .colorCode(entity.getColorCode())
             .employedAt(entity.getEmployedAt())
             .resignedAt(entity.getResignedAt())
             .nextShiftDateTime(entity.getNextShiftDateTime())
