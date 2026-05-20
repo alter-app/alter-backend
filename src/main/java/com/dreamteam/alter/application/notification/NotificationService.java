@@ -219,11 +219,6 @@ public class NotificationService {
             return;
         }
 
-        if (isNotificationBlocked(user, type)) {
-            log.debug("알림 수신 동의 거부로 FCM 발송 건너뜀. userId={}", userId);
-            return;
-        }
-
         sendFcmNotification(user, type, title, body, false);
     }
 

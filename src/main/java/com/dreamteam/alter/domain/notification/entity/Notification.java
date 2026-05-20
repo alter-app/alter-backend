@@ -9,6 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Getter
 @Entity
@@ -57,6 +58,7 @@ public class Notification {
         String title,
         String body
     ) {
+        Objects.requireNonNull(type, "notification type must not be null");
         return Notification.builder()
             .targetUser(targetUser)
             .scope(scope)

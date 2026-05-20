@@ -25,6 +25,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -99,6 +100,7 @@ public class NotificationConsent {
     }
 
     public boolean isBlocked(NotificationType type, boolean isDaytime) {
+        Objects.requireNonNull(type, "notification type must not be null");
         if (!this.notificationConsent) {
             return true;
         }
