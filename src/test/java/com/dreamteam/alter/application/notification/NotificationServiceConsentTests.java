@@ -9,6 +9,7 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentQueryRepository;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationRepository;
+import com.dreamteam.alter.domain.notification.type.NotificationConsentType;
 import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.entity.FcmDeviceToken;
 import com.dreamteam.alter.domain.user.entity.User;
@@ -74,6 +75,17 @@ class NotificationServiceConsentTests {
         return NotificationConsent.create(user, notificationConsent, nightNotificationConsent);
     }
 
+    private NotificationConsent consentWithAll(User targetUser, boolean general, boolean night, boolean substitute, boolean reputation) {
+        NotificationConsent consent = NotificationConsent.create(targetUser, general, night);
+        if (general && !substitute) {
+            consent.updateConsent(NotificationConsentType.SUBSTITUTE, false);
+        }
+        if (general && !reputation) {
+            consent.updateConsent(NotificationConsentType.REPUTATION, false);
+        }
+        return consent;
+    }
+
     // ── 고정 시각을 반환하는 LocalTime 헬퍼 ──────────────────────────────
     private LocalTime localTimeAt(int hour) {
         return LocalTime.of(hour, 0);
@@ -81,12 +93,20 @@ class NotificationServiceConsentTests {
 
     // ── FcmNotificationRequestDto 헬퍼 ───────────────────────────────────
     private FcmNotificationRequestDto notificationRequest(Long userId) {
-        return FcmNotificationRequestDto.of(userId, TokenScope.APP, NotificationType.GENERAL, "제목", "내용");
+        return notificationRequest(userId, NotificationType.GENERAL);
+    }
+
+    private FcmNotificationRequestDto notificationRequest(Long userId, NotificationType type) {
+        return FcmNotificationRequestDto.of(userId, TokenScope.APP, type, "제목", "내용");
     }
 
     // ── FcmBatchNotificationRequestDto 헬퍼 ──────────────────────────────
     private FcmBatchNotificationRequestDto batchRequest(List<Long> userIds) {
-        return FcmBatchNotificationRequestDto.of(userIds, TokenScope.APP, NotificationType.GENERAL, "제목", "내용");
+        return batchRequest(userIds, NotificationType.GENERAL);
+    }
+
+    private FcmBatchNotificationRequestDto batchRequest(List<Long> userIds, NotificationType type) {
+        return FcmBatchNotificationRequestDto.of(userIds, TokenScope.APP, type, "제목", "내용");
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -236,7 +256,7 @@ class NotificationServiceConsentTests {
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
 
             // when
-            notificationService.sendNotificationOnly(1L, "제목", "내용");
+            notificationService.sendNotificationOnly(1L, NotificationType.CHAT, "제목", "내용");
 
             // then
             then(fcmClient).should(never()).sendNotification(any(), any(), any());
@@ -254,11 +274,116 @@ class NotificationServiceConsentTests {
                 mockedStatic.when(LocalTime::now).thenReturn(nightTime);
 
                 // when
-                notificationService.sendNotificationOnly(1L, "제목", "내용");
+                notificationService.sendNotificationOnly(1L, NotificationType.CHAT, "제목", "내용");
             }
 
             // then
             then(fcmClient).should(never()).sendNotification(any(), any(), any());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    @Nested
+    @DisplayName("타입별 수신 동의 필터링 (SUBSTITUTE / REPUTATION)")
+    class TypeSpecificConsentTests {
+
+        @Test
+        @DisplayName("SUBSTITUTE 미동의 + SUBSTITUTE 타입 발송 → FCM 미호출")
+        void skips_fcm_when_substitute_consent_is_false_and_type_is_substitute() throws Exception {
+            // given
+            NotificationConsent consent = consentWithAll(user, true, true, false, true);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
+
+            // when
+            notificationService.sendNotification(notificationRequest(1L, NotificationType.SUBSTITUTE));
+
+            // then
+            then(fcmClient).should(never()).sendNotification(any(), any(), any());
+            then(notificationRepository).should().save(any());
+        }
+
+        @Test
+        @DisplayName("SUBSTITUTE 미동의 + GENERAL 타입 발송 → FCM 호출됨 (타입 차단 누수 없음)")
+        void sends_fcm_when_substitute_consent_is_false_but_type_is_general() throws Exception {
+            // given
+            NotificationConsent consent = consentWithAll(user, true, true, false, true);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
+
+            // when
+            notificationService.sendNotification(notificationRequest(1L, NotificationType.GENERAL));
+
+            // then
+            then(fcmClient).should().sendNotification(eq("test-device-token"), any(), any());
+        }
+
+        @Test
+        @DisplayName("REPUTATION 미동의 + REPUTATION 타입 발송 → FCM 미호출")
+        void skips_fcm_when_reputation_consent_is_false_and_type_is_reputation() throws Exception {
+            // given
+            NotificationConsent consent = consentWithAll(user, true, true, true, false);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
+
+            // when
+            notificationService.sendNotification(notificationRequest(1L, NotificationType.REPUTATION));
+
+            // then
+            then(fcmClient).should(never()).sendNotification(any(), any(), any());
+            then(notificationRepository).should().save(any());
+        }
+
+        @Test
+        @DisplayName("배치 SUBSTITUTE 발송: 일부 사용자만 SUBSTITUTE 미동의 → 미동의자 제외")
+        void batch_excludes_users_without_substitute_consent_for_substitute_type() throws Exception {
+            // given
+            User userA = mock(User.class);
+            given(userA.getId()).willReturn(10L);
+
+            User userB = mock(User.class);
+            given(userB.getId()).willReturn(20L);
+
+            given(userQueryRepository.findAllById(List.of(10L, 20L)))
+                .willReturn(List.of(userA, userB));
+
+            FcmDeviceToken tokenA = mock(FcmDeviceToken.class);
+            given(tokenA.getDeviceToken()).willReturn("token-A");
+            given(tokenA.getUser()).willReturn(userA);
+
+            FcmDeviceToken tokenB = mock(FcmDeviceToken.class);
+            given(tokenB.getDeviceToken()).willReturn("token-B");
+            given(tokenB.getUser()).willReturn(userB);
+
+            given(userFCMDeviceTokenQueryRepository.findByUsers(anyList()))
+                .willReturn(List.of(tokenA, tokenB));
+
+            // userA는 SUBSTITUTE 동의, userB는 SUBSTITUTE 미동의
+            NotificationConsent consentA = consentWithAll(userA, true, true, true, true);
+            NotificationConsent consentB = consentWithAll(userB, true, true, false, true);
+            given(notificationConsentQueryRepository.findByUsers(anyList()))
+                .willReturn(List.of(consentA, consentB));
+
+            com.google.firebase.messaging.BatchResponse batchResponse =
+                mock(com.google.firebase.messaging.BatchResponse.class);
+            com.google.firebase.messaging.SendResponse sendResponse =
+                mock(com.google.firebase.messaging.SendResponse.class);
+            given(sendResponse.isSuccessful()).willReturn(true);
+            given(batchResponse.getResponses()).willReturn(List.of(sendResponse));
+            given(fcmClient.sendMultipleNotifications(anyList(), any(), any())).willReturn(batchResponse);
+
+            // when
+            notificationService.sendMultipleNotifications(batchRequest(List.of(10L, 20L), NotificationType.SUBSTITUTE));
+
+            // then: Notification 레코드는 두 사용자 모두 저장
+            then(notificationRepository).should().saveAll(argThat(list -> ((List<?>) list).size() == 2));
+
+            // then: FCM 배치는 SUBSTITUTE 동의자 토큰만 포함
+            then(fcmClient).should().sendMultipleNotifications(
+                argThat(tokens -> {
+                    @SuppressWarnings("unchecked")
+                    List<String> tokenList = (List<String>) tokens;
+                    return tokenList.size() == 1 && tokenList.contains("token-A");
+                }),
+                any(), any()
+            );
         }
     }
 }
