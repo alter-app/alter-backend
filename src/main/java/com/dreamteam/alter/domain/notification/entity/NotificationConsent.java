@@ -3,6 +3,7 @@ package com.dreamteam.alter.domain.notification.entity;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.notification.type.NotificationConsentType;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -48,6 +49,12 @@ public class NotificationConsent {
     @Column(name = "night_notification_consent", nullable = false)
     private boolean nightNotificationConsent;
 
+    @Column(name = "substitute_notification_consent", nullable = false)
+    private boolean substituteNotificationConsent;
+
+    @Column(name = "reputation_notification_consent", nullable = false)
+    private boolean reputationNotificationConsent;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -61,6 +68,8 @@ public class NotificationConsent {
             .user(user)
             .notificationConsent(notificationConsent)
             .nightNotificationConsent(notificationConsent && nightNotificationConsent)
+            .substituteNotificationConsent(notificationConsent)
+            .reputationNotificationConsent(notificationConsent)
             .build();
     }
 
@@ -70,17 +79,46 @@ public class NotificationConsent {
                 this.notificationConsent = consent;
                 if (!consent) {
                     this.nightNotificationConsent = false;
+                    this.substituteNotificationConsent = false;
+                    this.reputationNotificationConsent = false;
                 }
             }
             case NIGHT -> {
-                if (consent && !this.notificationConsent) {
-                    throw new CustomException(
-                        ErrorCode.ILLEGAL_ARGUMENT,
-                        "전체 알림 수신 동의가 꺼진 상태에서는 야간 알림을 켤 수 없습니다."
-                    );
-                }
+                validateSubConsent(consent, "야간");
                 this.nightNotificationConsent = consent;
             }
+            case SUBSTITUTE -> {
+                validateSubConsent(consent, "대타");
+                this.substituteNotificationConsent = consent;
+            }
+            case REPUTATION -> {
+                validateSubConsent(consent, "평판");
+                this.reputationNotificationConsent = consent;
+            }
+        }
+    }
+
+    public boolean isBlocked(NotificationType type, boolean isDaytime) {
+        if (!this.notificationConsent) {
+            return true;
+        }
+        if (!isDaytime && !this.nightNotificationConsent) {
+            return true;
+        }
+        return switch (type) {
+            case SUBSTITUTE -> !this.substituteNotificationConsent;
+            case REPUTATION -> !this.reputationNotificationConsent;
+            case GENERAL, SCHEDULE, POSTING_APPLICATION, CHAT,
+                 WORKSPACE_INVITATION, JOIN_REQUEST -> false;
+        };
+    }
+
+    private void validateSubConsent(boolean consent, String label) {
+        if (consent && !this.notificationConsent) {
+            throw new CustomException(
+                ErrorCode.ILLEGAL_ARGUMENT,
+                String.format("전체 알림 수신 동의가 꺼진 상태에서는 %s 알림을 켤 수 없습니다.", label)
+            );
         }
     }
 }
