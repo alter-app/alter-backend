@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.domain.user.context.AppActor;
@@ -87,7 +88,7 @@ public class AcceptSubstituteRequest implements AcceptSubstituteRequestUseCase {
                 );
 
                 notificationService.sendNotification(
-                    FcmNotificationRequestDto.of(requesterWorker.getUser().getId(), TokenScope.APP, title, body)
+                    FcmNotificationRequestDto.of(requesterWorker.getUser().getId(), TokenScope.APP, NotificationType.SUBSTITUTE, title, body)
                 );
             }
 
@@ -105,7 +106,7 @@ public class AcceptSubstituteRequest implements AcceptSubstituteRequestUseCase {
             );
 
             notificationService.sendNotification(
-                FcmNotificationRequestDto.of(managerUser.getUser().getId(), TokenScope.MANAGER, managerTitle, managerBody)
+                FcmNotificationRequestDto.of(managerUser.getUser().getId(), TokenScope.MANAGER, NotificationType.SUBSTITUTE, managerTitle, managerBody)
             );
         } catch (CustomException e) {
             // 알림 발송 실패는 수락 프로세스에 영향을 주지 않음

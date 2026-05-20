@@ -7,6 +7,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
@@ -93,7 +94,7 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
             workspace.getBusinessName()
         );
         eventPublisher.publishEvent(
-            new FcmNotificationEvent(FcmNotificationRequestDto.of(invitedUser.getId(), TokenScope.APP, title, body))
+            new FcmNotificationEvent(FcmNotificationRequestDto.of(invitedUser.getId(), TokenScope.APP, NotificationType.WORKSPACE_INVITATION, title, body))
         );
     }
 }

@@ -6,6 +6,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.entity.BusinessJoinRequest;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
@@ -53,7 +54,7 @@ public class SendJoinRequest implements SendJoinRequestUseCase {
         );
         Long managerUserId = workspace.getManagerUser().getUser().getId();
         eventPublisher.publishEvent(
-            new FcmNotificationEvent(FcmNotificationRequestDto.of(managerUserId, TokenScope.MANAGER, title, body))
+            new FcmNotificationEvent(FcmNotificationRequestDto.of(managerUserId, TokenScope.MANAGER, NotificationType.JOIN_REQUEST, title, body))
         );
     }
 }
