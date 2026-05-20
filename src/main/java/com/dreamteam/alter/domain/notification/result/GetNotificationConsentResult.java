@@ -11,7 +11,9 @@ public record GetNotificationConsentResult(
     public static GetNotificationConsentResult from(NotificationConsent consent) {
         return new GetNotificationConsentResult(Map.of(
             NotificationConsentType.GENERAL, consent.isNotificationConsent(),
-            NotificationConsentType.NIGHT, consent.isNightNotificationConsent()
+            NotificationConsentType.NIGHT, consent.isNightNotificationConsent(),
+            NotificationConsentType.SUBSTITUTE, consent.isSubstituteNotificationConsent(),
+            NotificationConsentType.REPUTATION, consent.isReputationNotificationConsent()
         ));
     }
 }
