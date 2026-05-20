@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.inbound.general.notification.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
+import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationListFilterDto;
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationResponseDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.notification.port.inbound.GetMyNotificationsUseCase;
@@ -28,9 +29,10 @@ public class UserNotificationController implements UserNotificationControllerSpe
     @Override
     @GetMapping("/notifications")
     public ResponseEntity<CursorPaginatedApiResponse<NotificationResponseDto>> getMyNotifications(
-        CursorPageRequestDto pageRequest
+        CursorPageRequestDto pageRequest,
+        NotificationListFilterDto filter
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(getMyNotificationsUseCase.execute(actor, pageRequest));
+        return ResponseEntity.ok(getMyNotificationsUseCase.execute(actor, pageRequest, filter));
     }
 }

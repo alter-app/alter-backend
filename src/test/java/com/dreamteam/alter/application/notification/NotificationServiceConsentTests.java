@@ -9,6 +9,7 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentQueryRepository;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationRepository;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.entity.FcmDeviceToken;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserFcmDeviceTokenRepository;
@@ -80,12 +81,12 @@ class NotificationServiceConsentTests {
 
     // ── FcmNotificationRequestDto 헬퍼 ───────────────────────────────────
     private FcmNotificationRequestDto notificationRequest(Long userId) {
-        return FcmNotificationRequestDto.of(userId, TokenScope.APP, "제목", "내용");
+        return FcmNotificationRequestDto.of(userId, TokenScope.APP, NotificationType.GENERAL, "제목", "내용");
     }
 
     // ── FcmBatchNotificationRequestDto 헬퍼 ──────────────────────────────
     private FcmBatchNotificationRequestDto batchRequest(List<Long> userIds) {
-        return FcmBatchNotificationRequestDto.of(userIds, TokenScope.APP, "제목", "내용");
+        return FcmBatchNotificationRequestDto.of(userIds, TokenScope.APP, NotificationType.GENERAL, "제목", "내용");
     }
 
     // ═══════════════════════════════════════════════════════════════════════
