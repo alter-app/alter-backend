@@ -9,6 +9,7 @@ import com.dreamteam.alter.domain.notification.entity.Notification;
 import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationConsentQueryRepository;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationRepository;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.entity.FcmDeviceToken;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserFcmDeviceTokenRepository;
@@ -94,7 +95,7 @@ public class NotificationService {
         String deviceTokenString = deviceTokenOpt.map(FcmDeviceToken::getDeviceToken).orElse(null);
 
         // 3. 알림 레코드 저장
-        saveNotification(user, request.getScope(), deviceTokenString, request.getTitle(), request.getBody());
+        saveNotification(user, request.getScope(), request.getType(), deviceTokenString, request.getTitle(), request.getBody());
 
         // 4. FCM 발송
         sendFcmNotification(user, request.getTitle(), request.getBody(), true);
@@ -124,6 +125,7 @@ public class NotificationService {
             .map(user -> Notification.create(
                 user,
                 request.getScope(),
+                request.getType(),
                 deviceTokenMap.get(user.getId()),
                 request.getTitle(),
                 request.getBody()
@@ -267,9 +269,11 @@ public class NotificationService {
     /**
      * Notification 엔티티 저장
      */
-    private void saveNotification(User user, TokenScope scope, String deviceToken, String title, String body) {
+    private void saveNotification(
+        User user, TokenScope scope, NotificationType type, String deviceToken, String title, String body
+    ) {
         notificationRepository.save(Notification.create(
-            user, scope, deviceToken, title, body
+            user, scope, type, deviceToken, title, body
         ));
     }
 

@@ -1,6 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.common.dto;
 
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,6 +21,10 @@ public class FcmNotificationRequestDto {
     @Schema(description = "알림 범위", example = "APP")
     private TokenScope scope;
 
+    @NotNull
+    @Schema(description = "알림 유형", example = "GENERAL")
+    private NotificationType type;
+
     @NotBlank
     @Schema(description = "알림 제목", example = "새로운 메시지")
     private String title;
@@ -28,7 +33,9 @@ public class FcmNotificationRequestDto {
     @Schema(description = "알림 내용", example = "새로운 메시지가 도착했습니다.")
     private String body;
 
-    public static FcmNotificationRequestDto of(Long targetUserId, TokenScope scope, String title, String body) {
-        return new FcmNotificationRequestDto(targetUserId, scope, title, body);
+    public static FcmNotificationRequestDto of(
+        Long targetUserId, TokenScope scope, NotificationType type, String title, String body
+    ) {
+        return new FcmNotificationRequestDto(targetUserId, scope, type, title, body);
     }
 }
