@@ -98,7 +98,7 @@ public class NotificationService {
         saveNotification(user, request.getScope(), request.getType(), deviceTokenString, request.getTitle(), request.getBody());
 
         // 4. FCM 발송
-        sendFcmNotification(user, request.getTitle(), request.getBody(), true);
+        sendFcmNotification(user, request.getType(), request.getTitle(), request.getBody(), true);
     }
 
     public void sendMultipleNotifications(FcmBatchNotificationRequestDto request) {
@@ -138,11 +138,13 @@ public class NotificationService {
             .stream()
             .collect(Collectors.toMap(c -> c.getUser().getId(), c -> c));
 
+        boolean daytime = isDaytime();
+        NotificationType type = request.getType();
         List<FcmDeviceToken> eligibleTokens = deviceTokens.stream()
             .filter(dt -> {
                 NotificationConsent consent = Optional.ofNullable(consentMap.get(dt.getUser().getId()))
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "알림 수신 동의 레코드를 찾을 수 없습니다."));
-                return consent.isNotificationConsent() && (consent.isNightNotificationConsent() || isDaytime());
+                return !consent.isBlocked(type, daytime);
             })
             .toList();
 
@@ -208,7 +210,7 @@ public class NotificationService {
      * FCM 알림만 발송 (Notification 엔티티 저장 없음)
      * 채팅 메시지 등 별도 저장 로직이 있는 경우 사용
      */
-    public void sendNotificationOnly(Long userId, String title, String body) {
+    public void sendNotificationOnly(Long userId, NotificationType type, String title, String body) {
         User user = userQueryRepository.findById(userId)
             .orElse(null);
 
@@ -217,12 +219,12 @@ public class NotificationService {
             return;
         }
 
-        if (isNotificationBlocked(user)) {
+        if (isNotificationBlocked(user, type)) {
             log.debug("알림 수신 동의 거부로 FCM 발송 건너뜀. userId={}", userId);
             return;
         }
 
-        sendFcmNotification(user, title, body, false);
+        sendFcmNotification(user, type, title, body, false);
     }
 
     /**
@@ -232,8 +234,8 @@ public class NotificationService {
      * @param body 알림 본문
      * @param throwOnError 발송 실패 시 예외 throw 여부
      */
-    private void sendFcmNotification(User user, String title, String body, boolean throwOnError) {
-        if (isNotificationBlocked(user)) {
+    private void sendFcmNotification(User user, NotificationType type, String title, String body, boolean throwOnError) {
+        if (isNotificationBlocked(user, type)) {
             log.debug("알림 수신 동의 거부로 FCM 발송 건너뜀. userId={}", user.getId());
             return;
         }
@@ -286,10 +288,10 @@ public class NotificationService {
     }
 
 
-    private boolean isNotificationBlocked(User user) {
+    private boolean isNotificationBlocked(User user, NotificationType type) {
         NotificationConsent consent = notificationConsentQueryRepository.findByUser(user)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "알림 수신 동의 레코드를 찾을 수 없습니다."));
-        return !consent.isNotificationConsent() || (!consent.isNightNotificationConsent() && !isDaytime());
+        return consent.isBlocked(type, isDaytime());
     }
 
     private boolean isDaytime() {

@@ -12,6 +12,7 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
@@ -104,7 +105,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
             );
 
             // FCM 알림 전송
-            notificationService.sendNotificationOnly(opponentId, title, body);
+            notificationService.sendNotificationOnly(opponentId, NotificationType.CHAT, title, body);
 
         } catch (Exception e) {
             // 알림 실패는 로그만 남기고 메시지 전송은 성공 처리
