@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.general.schedule.dto.RejectSubstitute
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.domain.user.context.AppActor;
@@ -71,7 +72,7 @@ public class RejectSubstituteRequest implements RejectSubstituteRequestUseCase {
             );
 
             notificationService.sendNotification(
-                FcmNotificationRequestDto.of(requesterWorker.getUser().getId(), TokenScope.APP, title, body)
+                FcmNotificationRequestDto.of(requesterWorker.getUser().getId(), TokenScope.APP, NotificationType.SUBSTITUTE, title, body)
             );
         } catch (CustomException e) {
             // 알림 발송 실패는 거절 프로세스에 영향을 주지 않음

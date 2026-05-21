@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.admin.notification.dto;
 
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -21,5 +22,8 @@ public class AdminSendMockNotificationRequestDto {
 
     @Schema(description = "알림 내용")
     private String body;
+
+    @Schema(description = "알림 타입 (null 시 GENERAL)")
+    private NotificationType type;
 
 }

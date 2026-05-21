@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.admin.notification.dto.AdminSendMockN
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.admin.port.inbound.AdminSendMockNotificationUseCase;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -24,8 +25,9 @@ public class AdminSendMockNotification implements AdminSendMockNotificationUseCa
     public void execute(AdminSendMockNotificationRequestDto request) {
         String title = ObjectUtils.isNotEmpty(request.getTitle()) ? request.getTitle() : DEFAULT_MOCK_TITLE;
         String body = ObjectUtils.isNotEmpty(request.getBody()) ? request.getBody() : DEFAULT_MOCK_BODY;
+        NotificationType type = ObjectUtils.isNotEmpty(request.getType()) ? request.getType() : NotificationType.GENERAL;
 
-        notificationService.sendNotification(FcmNotificationRequestDto.of(request.getUserId(), TokenScope.APP, title, body));
+        notificationService.sendNotification(FcmNotificationRequestDto.of(request.getUserId(), TokenScope.APP, type, title, body));
     }
 
 }

@@ -53,8 +53,8 @@ class GetNotificationConsentTests {
         }
 
         @Test
-        @DisplayName("레코드 존재 + 둘 다 true이면 GENERAL/NIGHT 모두 true 반환")
-        void returnsActualValues_whenBothTrue() {
+        @DisplayName("레코드 존재 + GENERAL=true 이면 GENERAL/NIGHT/SUBSTITUTE/REPUTATION 모두 true 반환")
+        void returnsActualValues_whenAllTrue() {
             // given
             User user = mock(User.class);
             GetNotificationConsentCommand command = GetNotificationConsentCommand.from(user);
@@ -68,10 +68,12 @@ class GetNotificationConsentTests {
             // then
             assertThat(result.consents().get(NotificationConsentType.GENERAL)).isTrue();
             assertThat(result.consents().get(NotificationConsentType.NIGHT)).isTrue();
+            assertThat(result.consents().get(NotificationConsentType.SUBSTITUTE)).isTrue();
+            assertThat(result.consents().get(NotificationConsentType.REPUTATION)).isTrue();
         }
 
         @Test
-        @DisplayName("레코드 존재 + GENERAL=false이면 NIGHT도 false 반환")
+        @DisplayName("레코드 존재 + GENERAL=false이면 NIGHT/SUBSTITUTE/REPUTATION 모두 false 반환")
         void returnsActualValues_whenGeneralIsFalse() {
             // given
             User user = mock(User.class);
@@ -86,10 +88,12 @@ class GetNotificationConsentTests {
             // then
             assertThat(result.consents().get(NotificationConsentType.GENERAL)).isFalse();
             assertThat(result.consents().get(NotificationConsentType.NIGHT)).isFalse();
+            assertThat(result.consents().get(NotificationConsentType.SUBSTITUTE)).isFalse();
+            assertThat(result.consents().get(NotificationConsentType.REPUTATION)).isFalse();
         }
 
         @Test
-        @DisplayName("레코드 존재 + NIGHT=false이면 false 반환")
+        @DisplayName("레코드 존재 + NIGHT=false이면 NIGHT만 false, 나머지는 true 반환")
         void returnsActualValues_whenNightIsFalse() {
             // given
             User user = mock(User.class);
@@ -104,6 +108,8 @@ class GetNotificationConsentTests {
             // then
             assertThat(result.consents().get(NotificationConsentType.GENERAL)).isTrue();
             assertThat(result.consents().get(NotificationConsentType.NIGHT)).isFalse();
+            assertThat(result.consents().get(NotificationConsentType.SUBSTITUTE)).isTrue();
+            assertThat(result.consents().get(NotificationConsentType.REPUTATION)).isTrue();
         }
     }
 }

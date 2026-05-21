@@ -6,6 +6,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.entity.BusinessJoinRequest;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
@@ -54,7 +55,7 @@ public class ApproveJoinRequest implements ApproveJoinRequestUseCase {
             workspace.getBusinessName()
         );
         eventPublisher.publishEvent(
-            new FcmNotificationEvent(FcmNotificationRequestDto.of(joinRequest.getUser().getId(), TokenScope.APP, title, body))
+            new FcmNotificationEvent(FcmNotificationRequestDto.of(joinRequest.getUser().getId(), TokenScope.APP, NotificationType.JOIN_REQUEST, title, body))
         );
     }
 }

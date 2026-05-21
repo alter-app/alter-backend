@@ -7,6 +7,7 @@ import com.dreamteam.alter.common.notification.NotificationMessageBuilder;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.entity.Posting;
 import com.dreamteam.alter.domain.posting.entity.PostingApplication;
@@ -70,7 +71,7 @@ public class CreatePostingApplication implements CreatePostingApplicationUseCase
             String body = NotificationMessageBuilder.buildNewApplicationMessage(postingTitle);
             
             notificationService.sendNotification(
-                FcmNotificationRequestDto.of(managerUserId, TokenScope.MANAGER, title, body)
+                FcmNotificationRequestDto.of(managerUserId, TokenScope.MANAGER, NotificationType.POSTING_APPLICATION, title, body)
             );
         } catch (CustomException e) {
             // 알림 발송 실패는 지원 프로세스에 영향을 주지 않음

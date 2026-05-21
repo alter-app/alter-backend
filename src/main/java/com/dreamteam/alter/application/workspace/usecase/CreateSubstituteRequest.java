@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.general.schedule.dto.CreateSubstitute
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.domain.user.context.AppActor;
@@ -219,7 +220,7 @@ public class CreateSubstituteRequest implements CreateSubstituteRequestUseCase {
 
             // 다중 사용자 알림 발송
             notificationService.sendMultipleNotifications(
-                FcmBatchNotificationRequestDto.of(targetUserIds, TokenScope.APP, title, body)
+                FcmBatchNotificationRequestDto.of(targetUserIds, TokenScope.APP, NotificationType.SUBSTITUTE, title, body)
             );
 
         } catch (CustomException e) {

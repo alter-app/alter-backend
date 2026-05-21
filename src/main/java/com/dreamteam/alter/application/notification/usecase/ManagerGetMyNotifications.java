@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
+import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationListFilterDto;
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationResponseDto;
 import com.dreamteam.alter.adapter.outbound.notification.persistence.readonly.NotificationResponse;
 import com.dreamteam.alter.common.util.CursorUtil;
@@ -30,7 +31,9 @@ public class ManagerGetMyNotifications implements ManagerGetMyNotificationsUseCa
     private final ObjectMapper objectMapper;
 
     @Override
-    public CursorPaginatedApiResponse<NotificationResponseDto> execute(ManagerActor actor, CursorPageRequestDto pageRequest) {
+    public CursorPaginatedApiResponse<NotificationResponseDto> execute(
+        ManagerActor actor, CursorPageRequestDto pageRequest, NotificationListFilterDto filter
+    ) {
         CursorDto cursorDto = null;
         if (ObjectUtils.isNotEmpty(pageRequest.cursor())) {
             cursorDto = CursorUtil.decodeCursor(pageRequest.cursor(), CursorDto.class, objectMapper);
@@ -40,13 +43,13 @@ public class ManagerGetMyNotifications implements ManagerGetMyNotificationsUseCa
         // ManagerActor에서 User 추출
         User targetUser = actor.getManagerUser().getUser();
 
-        long count = notificationQueryRepository.getCountOfNotifications(targetUser, TokenScope.MANAGER);
+        long count = notificationQueryRepository.getCountOfNotifications(targetUser, TokenScope.MANAGER, filter.getType());
         if (count == 0) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));
         }
 
         List<NotificationResponse> notifications = notificationQueryRepository.getNotificationsWithCursor(
-            cursorPageRequest, targetUser, TokenScope.MANAGER
+            cursorPageRequest, targetUser, TokenScope.MANAGER, filter.getType()
         );
         if (ObjectUtils.isEmpty(notifications)) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));

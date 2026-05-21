@@ -1,6 +1,7 @@
 package com.dreamteam.alter.domain.notification.entity;
 
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,6 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Getter
 @Entity
@@ -31,6 +33,10 @@ public class Notification {
     @Column(name = "scope", nullable = false)
     private TokenScope scope;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", length = 30, nullable = false)
+    private NotificationType type;
+
     @Column(name = "device_token", length = 500)
     private String deviceToken;
 
@@ -47,13 +53,16 @@ public class Notification {
     public static Notification create(
         User targetUser,
         TokenScope scope,
+        NotificationType type,
         String deviceToken,
         String title,
         String body
     ) {
+        Objects.requireNonNull(type, "notification type must not be null");
         return Notification.builder()
             .targetUser(targetUser)
             .scope(scope)
+            .type(type)
             .deviceToken(deviceToken)
             .title(title)
             .body(body)

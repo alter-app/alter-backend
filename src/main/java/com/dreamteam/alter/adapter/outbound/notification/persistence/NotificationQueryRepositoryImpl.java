@@ -6,6 +6,7 @@ import com.dreamteam.alter.adapter.outbound.notification.persistence.readonly.No
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.notification.entity.QNotification;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationQueryRepository;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -26,7 +27,8 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
     public List<NotificationResponse> getNotificationsWithCursor(
         CursorPageRequest<CursorDto> pageRequest,
         User targetUser,
-        TokenScope scope
+        TokenScope scope,
+        NotificationType type
     ) {
         QNotification notification = QNotification.notification;
 
@@ -34,6 +36,7 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
             .select(Projections.constructor(
                 NotificationResponse.class,
                 notification.id,
+                notification.type,
                 notification.title,
                 notification.body,
                 notification.createdAt
@@ -42,6 +45,7 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
             .where(
                 notification.targetUser.eq(targetUser),
                 notification.scope.eq(scope),
+                eqType(notification, type),
                 cursorCondition(notification, pageRequest.cursor())
             )
             .orderBy(notification.createdAt.desc(), notification.id.desc())
@@ -50,7 +54,7 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
     }
 
     @Override
-    public long getCountOfNotifications(User targetUser, TokenScope scope) {
+    public long getCountOfNotifications(User targetUser, TokenScope scope, NotificationType type) {
         QNotification notification = QNotification.notification;
 
         Long count = queryFactory
@@ -58,11 +62,16 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
             .from(notification)
             .where(
                 notification.targetUser.eq(targetUser),
-                notification.scope.eq(scope)
+                notification.scope.eq(scope),
+                eqType(notification, type)
             )
             .fetchOne();
 
         return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
+    private BooleanExpression eqType(QNotification notification, NotificationType type) {
+        return type != null ? notification.type.eq(type) : null;
     }
 
     private BooleanExpression cursorCondition(

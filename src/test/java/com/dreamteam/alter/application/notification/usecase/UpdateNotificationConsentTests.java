@@ -83,8 +83,8 @@ class UpdateNotificationConsentTests {
         }
 
         @Test
-        @DisplayName("GENERAL=false 토글 시 NIGHT도 자동으로 false로 cascade")
-        void savesGeneralFalse_cascadesNightToFalse() {
+        @DisplayName("GENERAL=false 토글 시 NIGHT/SUBSTITUTE/REPUTATION 모두 false로 cascade")
+        void savesGeneralFalse_cascadesAllSubConsentsToFalse() {
             // given
             User user = mock(User.class);
             UpdateNotificationConsentCommand command =
@@ -99,6 +99,8 @@ class UpdateNotificationConsentTests {
             // then
             assertThat(existing.isNotificationConsent()).isFalse();
             assertThat(existing.isNightNotificationConsent()).isFalse();
+            assertThat(existing.isSubstituteNotificationConsent()).isFalse();
+            assertThat(existing.isReputationNotificationConsent()).isFalse();
             then(notificationConsentRepository).shouldHaveNoInteractions();
         }
 
@@ -159,6 +161,130 @@ class UpdateNotificationConsentTests {
             // then
             assertThat(existing.isNotificationConsent()).isTrue();
             assertThat(existing.isNightNotificationConsent()).isFalse();
+            then(notificationConsentRepository).shouldHaveNoInteractions();
+        }
+
+        @Test
+        @DisplayName("GENERAL=true 상태에서 SUBSTITUTE=true 토글 시 정상 저장")
+        void savesSubstituteTrue_whenGeneralIsTrue() {
+            // given
+            User user = mock(User.class);
+            UpdateNotificationConsentCommand command =
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.SUBSTITUTE, true);
+
+            NotificationConsent existing = NotificationConsent.create(user, true, true);
+            existing.updateConsent(NotificationConsentType.SUBSTITUTE, false);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
+
+            // when
+            updateNotificationConsent.execute(command);
+
+            // then
+            assertThat(existing.isSubstituteNotificationConsent()).isTrue();
+            then(notificationConsentRepository).shouldHaveNoInteractions();
+        }
+
+        @Test
+        @DisplayName("GENERAL=false 상태에서 SUBSTITUTE=true 토글 시 ILLEGAL_ARGUMENT 예외")
+        void throwsIllegalArgument_whenSubstituteTrueWithGeneralFalse() {
+            // given
+            User user = mock(User.class);
+            UpdateNotificationConsentCommand command =
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.SUBSTITUTE, true);
+
+            NotificationConsent existing = NotificationConsent.create(user, false, false);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
+
+            // when & then
+            assertThatThrownBy(() -> updateNotificationConsent.execute(command))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.ILLEGAL_ARGUMENT);
+
+            then(notificationConsentRepository).should(never()).save(any(NotificationConsent.class));
+        }
+
+        @Test
+        @DisplayName("SUBSTITUTE=false 토글 시 다른 동의 상태는 유지")
+        void savesSubstituteFalse_keepsOthersAsIs() {
+            // given
+            User user = mock(User.class);
+            UpdateNotificationConsentCommand command =
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.SUBSTITUTE, false);
+
+            NotificationConsent existing = NotificationConsent.create(user, true, true);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
+
+            // when
+            updateNotificationConsent.execute(command);
+
+            // then
+            assertThat(existing.isNotificationConsent()).isTrue();
+            assertThat(existing.isNightNotificationConsent()).isTrue();
+            assertThat(existing.isSubstituteNotificationConsent()).isFalse();
+            assertThat(existing.isReputationNotificationConsent()).isTrue();
+            then(notificationConsentRepository).shouldHaveNoInteractions();
+        }
+
+        @Test
+        @DisplayName("GENERAL=true 상태에서 REPUTATION=true 토글 시 정상 저장")
+        void savesReputationTrue_whenGeneralIsTrue() {
+            // given
+            User user = mock(User.class);
+            UpdateNotificationConsentCommand command =
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.REPUTATION, true);
+
+            NotificationConsent existing = NotificationConsent.create(user, true, true);
+            existing.updateConsent(NotificationConsentType.REPUTATION, false);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
+
+            // when
+            updateNotificationConsent.execute(command);
+
+            // then
+            assertThat(existing.isReputationNotificationConsent()).isTrue();
+            then(notificationConsentRepository).shouldHaveNoInteractions();
+        }
+
+        @Test
+        @DisplayName("GENERAL=false 상태에서 REPUTATION=true 토글 시 ILLEGAL_ARGUMENT 예외")
+        void throwsIllegalArgument_whenReputationTrueWithGeneralFalse() {
+            // given
+            User user = mock(User.class);
+            UpdateNotificationConsentCommand command =
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.REPUTATION, true);
+
+            NotificationConsent existing = NotificationConsent.create(user, false, false);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
+
+            // when & then
+            assertThatThrownBy(() -> updateNotificationConsent.execute(command))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.ILLEGAL_ARGUMENT);
+
+            then(notificationConsentRepository).should(never()).save(any(NotificationConsent.class));
+        }
+
+        @Test
+        @DisplayName("REPUTATION=false 토글 시 다른 동의 상태는 유지")
+        void savesReputationFalse_keepsOthersAsIs() {
+            // given
+            User user = mock(User.class);
+            UpdateNotificationConsentCommand command =
+                UpdateNotificationConsentCommand.of(user, NotificationConsentType.REPUTATION, false);
+
+            NotificationConsent existing = NotificationConsent.create(user, true, true);
+            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(existing));
+
+            // when
+            updateNotificationConsent.execute(command);
+
+            // then
+            assertThat(existing.isNotificationConsent()).isTrue();
+            assertThat(existing.isNightNotificationConsent()).isTrue();
+            assertThat(existing.isSubstituteNotificationConsent()).isTrue();
+            assertThat(existing.isReputationNotificationConsent()).isFalse();
             then(notificationConsentRepository).shouldHaveNoInteractions();
         }
     }

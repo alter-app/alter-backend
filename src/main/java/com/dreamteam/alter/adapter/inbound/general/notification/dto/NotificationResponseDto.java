@@ -1,6 +1,8 @@
 package com.dreamteam.alter.adapter.inbound.general.notification.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.outbound.notification.persistence.readonly.NotificationResponse;
+import com.dreamteam.alter.domain.notification.type.NotificationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -16,6 +18,9 @@ public class NotificationResponseDto {
     @Schema(description = "알림 ID")
     private Long id;
 
+    @Schema(description = "알림 유형")
+    private DescribedEnumDto<NotificationType> type;
+
     @Schema(description = "알림 제목")
     private String title;
 
@@ -28,6 +33,7 @@ public class NotificationResponseDto {
     public static NotificationResponseDto from(NotificationResponse response) {
         return NotificationResponseDto.builder()
             .id(response.id())
+            .type(DescribedEnumDto.of(response.type(), NotificationType.describe()))
             .title(response.title())
             .body(response.body())
             .createdAt(response.createdAt())

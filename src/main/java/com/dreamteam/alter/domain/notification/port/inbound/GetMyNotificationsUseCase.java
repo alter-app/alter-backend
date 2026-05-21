@@ -2,9 +2,12 @@ package com.dreamteam.alter.domain.notification.port.inbound;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
+import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationListFilterDto;
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationResponseDto;
 import com.dreamteam.alter.domain.user.context.AppActor;
 
 public interface GetMyNotificationsUseCase {
-    CursorPaginatedApiResponse<NotificationResponseDto> execute(AppActor actor, CursorPageRequestDto pageRequest);
+    CursorPaginatedApiResponse<NotificationResponseDto> execute(
+        AppActor actor, CursorPageRequestDto pageRequest, NotificationListFilterDto filter
+    );
 }
