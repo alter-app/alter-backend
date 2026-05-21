@@ -25,8 +25,9 @@ public class AdminSendMockNotification implements AdminSendMockNotificationUseCa
     public void execute(AdminSendMockNotificationRequestDto request) {
         String title = ObjectUtils.isNotEmpty(request.getTitle()) ? request.getTitle() : DEFAULT_MOCK_TITLE;
         String body = ObjectUtils.isNotEmpty(request.getBody()) ? request.getBody() : DEFAULT_MOCK_BODY;
+        NotificationType type = ObjectUtils.isNotEmpty(request.getType()) ? request.getType() : NotificationType.GENERAL;
 
-        notificationService.sendNotification(FcmNotificationRequestDto.of(request.getUserId(), TokenScope.APP, NotificationType.GENERAL, title, body));
+        notificationService.sendNotification(FcmNotificationRequestDto.of(request.getUserId(), TokenScope.APP, type, title, body));
     }
 
 }
