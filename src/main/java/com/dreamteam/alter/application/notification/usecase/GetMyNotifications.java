@@ -39,13 +39,13 @@ public class GetMyNotifications implements GetMyNotificationsUseCase {
         }
         CursorPageRequest<CursorDto> cursorPageRequest = CursorPageRequest.of(cursorDto, pageRequest.pageSize());
 
-        long count = notificationQueryRepository.getCountOfNotifications(actor.getUser(), TokenScope.APP, filter.getType());
+        long count = notificationQueryRepository.getCountOfNotifications(actor.getUser(), TokenScope.APP, filter.getType(), filter.getIsRead());
         if (count == 0) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));
         }
 
         List<NotificationResponse> notifications = notificationQueryRepository.getNotificationsWithCursor(
-            cursorPageRequest, actor.getUser(), TokenScope.APP, filter.getType()
+            cursorPageRequest, actor.getUser(), TokenScope.APP, filter.getType(), filter.getIsRead()
         );
         if (ObjectUtils.isEmpty(notifications)) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));

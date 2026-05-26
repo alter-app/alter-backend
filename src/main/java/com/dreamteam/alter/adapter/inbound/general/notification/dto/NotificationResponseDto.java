@@ -27,6 +27,9 @@ public class NotificationResponseDto {
     @Schema(description = "알림 내용")
     private String body;
 
+    @Schema(description = "읽음 여부")
+    private boolean isRead;
+
     @Schema(description = "생성일")
     private LocalDateTime createdAt;
 
@@ -36,6 +39,7 @@ public class NotificationResponseDto {
             .type(DescribedEnumDto.of(response.type(), NotificationType.describe()))
             .title(response.title())
             .body(response.body())
+            .isRead(response.isRead())
             .createdAt(response.createdAt())
             .build();
     }

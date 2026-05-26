@@ -28,7 +28,8 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
         CursorPageRequest<CursorDto> pageRequest,
         User targetUser,
         TokenScope scope,
-        NotificationType type
+        NotificationType type,
+        Boolean isRead
     ) {
         QNotification notification = QNotification.notification;
 
@@ -39,6 +40,7 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
                 notification.type,
                 notification.title,
                 notification.body,
+                notification.isRead,
                 notification.createdAt
             ))
             .from(notification)
@@ -46,6 +48,7 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
                 notification.targetUser.eq(targetUser),
                 notification.scope.eq(scope),
                 eqType(notification, type),
+                eqIsRead(notification, isRead),
                 cursorCondition(notification, pageRequest.cursor())
             )
             .orderBy(notification.createdAt.desc(), notification.id.desc())
@@ -54,7 +57,7 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
     }
 
     @Override
-    public long getCountOfNotifications(User targetUser, TokenScope scope, NotificationType type) {
+    public long getCountOfNotifications(User targetUser, TokenScope scope, NotificationType type, Boolean isRead) {
         QNotification notification = QNotification.notification;
 
         Long count = queryFactory
@@ -63,7 +66,8 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
             .where(
                 notification.targetUser.eq(targetUser),
                 notification.scope.eq(scope),
-                eqType(notification, type)
+                eqType(notification, type),
+                eqIsRead(notification, isRead)
             )
             .fetchOne();
 
@@ -72,6 +76,10 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
 
     private BooleanExpression eqType(QNotification notification, NotificationType type) {
         return type != null ? notification.type.eq(type) : null;
+    }
+
+    private BooleanExpression eqIsRead(QNotification notification, Boolean isRead) {
+        return isRead != null ? notification.isRead.eq(isRead) : null;
     }
 
     private BooleanExpression cursorCondition(

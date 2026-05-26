@@ -14,7 +14,8 @@ public interface NotificationQueryRepository {
         CursorPageRequest<CursorDto> pageRequest,
         User targetUser,
         TokenScope scope,
-        NotificationType type
+        NotificationType type,
+        Boolean isRead
     );
-    long getCountOfNotifications(User targetUser, TokenScope scope, NotificationType type);
+    long getCountOfNotifications(User targetUser, TokenScope scope, NotificationType type, Boolean isRead);
 }

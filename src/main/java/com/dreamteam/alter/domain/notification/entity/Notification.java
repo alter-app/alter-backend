@@ -46,6 +46,7 @@ public class Notification {
     @Column(name = "body", length = 1000, nullable = false)
     private String body;
 
+    @Builder.Default
     @Column(name = "is_read", nullable = false)
     private boolean isRead = false;
 

@@ -9,6 +9,7 @@ public record NotificationResponse(
     NotificationType type,
     String title,
     String body,
+    boolean isRead,
     LocalDateTime createdAt
 ) {
 }
