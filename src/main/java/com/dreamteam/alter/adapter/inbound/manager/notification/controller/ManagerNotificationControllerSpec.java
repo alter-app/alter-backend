@@ -6,6 +6,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.MarkNotificationsAsReadRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationListFilterDto;
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.notification.dto.UnreadNotificationCountResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,4 +30,10 @@ public interface ManagerNotificationControllerSpec {
         @ApiResponse(responseCode = "200", description = "읽음 처리 성공")
     })
     ResponseEntity<CommonApiResponse<Void>> markNotificationsAsRead(MarkNotificationsAsReadRequestDto request);
+
+    @Operation(summary = "미읽음 알림 개수 조회 (뱃지용)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "미읽음 알림 개수 조회 성공")
+    })
+    ResponseEntity<CommonApiResponse<UnreadNotificationCountResponseDto>> getUnreadNotificationCount();
 }

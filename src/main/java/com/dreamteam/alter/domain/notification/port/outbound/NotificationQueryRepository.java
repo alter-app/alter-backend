@@ -18,4 +18,5 @@ public interface NotificationQueryRepository {
         Boolean isRead
     );
     long getCountOfNotifications(User targetUser, TokenScope scope, NotificationType type, Boolean isRead);
+    long getCountOfUnreadNotifications(User targetUser, TokenScope scope);
 }

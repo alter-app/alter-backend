@@ -74,6 +74,23 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
         return ObjectUtils.isEmpty(count) ? 0 : count;
     }
 
+    @Override
+    public long getCountOfUnreadNotifications(User targetUser, TokenScope scope) {
+        QNotification notification = QNotification.notification;
+
+        Long count = queryFactory
+            .select(notification.id.count())
+            .from(notification)
+            .where(
+                notification.targetUser.eq(targetUser),
+                notification.scope.eq(scope),
+                notification.isRead.eq(false)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
     private BooleanExpression eqType(QNotification notification, NotificationType type) {
         return type != null ? notification.type.eq(type) : null;
     }
