@@ -48,10 +48,10 @@ public class ManagerNotificationController implements ManagerNotificationControl
     @Override
     @PatchMapping("/read")
     public ResponseEntity<CommonApiResponse<Void>> markNotificationsAsRead(
-        @RequestBody MarkNotificationsAsReadRequestDto request
+        @RequestBody(required = false) MarkNotificationsAsReadRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        managerMarkNotificationsAsReadUseCase.execute(actor, request);
+        managerMarkNotificationsAsReadUseCase.execute(actor, request != null ? request : new MarkNotificationsAsReadRequestDto());
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

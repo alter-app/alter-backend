@@ -48,10 +48,10 @@ public class UserNotificationController implements UserNotificationControllerSpe
     @Override
     @PatchMapping("/notifications/read")
     public ResponseEntity<CommonApiResponse<Void>> markNotificationsAsRead(
-        @RequestBody MarkNotificationsAsReadRequestDto request
+        @RequestBody(required = false) MarkNotificationsAsReadRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        markNotificationsAsReadUseCase.execute(actor, request);
+        markNotificationsAsReadUseCase.execute(actor, request != null ? request : new MarkNotificationsAsReadRequestDto());
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
