@@ -130,6 +130,29 @@ public interface ManagerWorkspaceControllerSpec {
         @RequestBody @Valid UpdateWorkspaceWorkerColorRequestDto request
     );
 
+    @Operation(summary = "매니저 - 근무자 퇴사 처리", description = "근무자를 퇴사 처리합니다. 현재 시점 이후 해당 근무자에게 배정된 모든 스케줄은 미배정(CANCELLED) 상태로 전환됩니다. 과거 근무 기록은 유지됩니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "퇴사 처리 성공"),
+        @ApiResponse(responseCode = "404", description = "존재하지 않는 업장 또는 근무자",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "존재하지 않는 업장입니다.",
+                        value = "{\"code\" : \"B008\"}"
+                    ),
+                    @ExampleObject(
+                        name = "근무자를 찾을 수 없습니다.",
+                        value = "{\"code\" : \"B019\"}"
+                    ),
+                })),
+    })
+    ResponseEntity<CommonApiResponse<Void>> resignWorkspaceWorker(
+        @PathVariable Long workspaceId,
+        @PathVariable Long workerId
+    );
+
     // 업장 근무자 상세 정보 조회
 
     // 업장 근무자 상태 변경
