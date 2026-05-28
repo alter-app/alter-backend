@@ -5,11 +5,9 @@ import com.dreamteam.alter.domain.notification.entity.Notification;
 import com.dreamteam.alter.domain.user.entity.User;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface NotificationRepository {
     Notification save(Notification notification);
     List<Notification> saveAll(List<Notification> notifications);
-    Optional<Notification> findById(Long id);
     void markAllAsRead(User targetUser, TokenScope scope);
 }

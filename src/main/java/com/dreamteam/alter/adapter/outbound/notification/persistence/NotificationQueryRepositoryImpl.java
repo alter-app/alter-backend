@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.outbound.notification.persistence.readonly.NotificationResponse;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.notification.entity.Notification;
 import com.dreamteam.alter.domain.notification.entity.QNotification;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationQueryRepository;
 import com.dreamteam.alter.domain.notification.type.NotificationType;
@@ -16,12 +17,23 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 public class NotificationQueryRepositoryImpl implements NotificationQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public Optional<Notification> findById(Long id) {
+        QNotification notification = QNotification.notification;
+        Notification result = queryFactory
+            .selectFrom(notification)
+            .where(notification.id.eq(id))
+            .fetchOne();
+        return Optional.ofNullable(result);
+    }
 
     @Override
     public List<NotificationResponse> getNotificationsWithCursor(

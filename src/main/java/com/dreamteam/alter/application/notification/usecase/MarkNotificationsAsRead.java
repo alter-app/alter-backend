@@ -5,6 +5,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.notification.entity.Notification;
 import com.dreamteam.alter.domain.notification.port.inbound.MarkNotificationsAsReadUseCase;
+import com.dreamteam.alter.domain.notification.port.outbound.NotificationQueryRepository;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationRepository;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class MarkNotificationsAsRead implements MarkNotificationsAsReadUseCase {
 
+    private final NotificationQueryRepository notificationQueryRepository;
     private final NotificationRepository notificationRepository;
 
     @Override
     public void execute(AppActor actor, Long notificationId) {
         if (notificationId != null) {
-            Notification notification = notificationRepository.findById(notificationId)
+            Notification notification = notificationQueryRepository.findById(notificationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
             if (!notification.getTargetUser().getId().equals(actor.getUser().getId())) {
                 throw new CustomException(ErrorCode.FORBIDDEN);

@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -27,11 +26,6 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     @Override
     public List<Notification> saveAll(List<Notification> notifications) {
         return notificationJpaRepository.saveAll(notifications);
-    }
-
-    @Override
-    public Optional<Notification> findById(Long id) {
-        return notificationJpaRepository.findById(id);
     }
 
     @Override
