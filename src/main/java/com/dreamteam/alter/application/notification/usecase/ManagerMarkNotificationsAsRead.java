@@ -30,6 +30,9 @@ public class ManagerMarkNotificationsAsRead implements ManagerMarkNotificationsA
             if (!notification.getTargetUser().getId().equals(targetUser.getId())) {
                 throw new CustomException(ErrorCode.FORBIDDEN);
             }
+            if (!TokenScope.MANAGER.equals(notification.getScope())) {
+                throw new CustomException(ErrorCode.FORBIDDEN);
+            }
             notification.markAsRead();
         } else {
             notificationRepository.markAllAsRead(targetUser, TokenScope.MANAGER);
