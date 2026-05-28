@@ -1,6 +1,5 @@
 package com.dreamteam.alter.application.notification.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.notification.dto.MarkNotificationsAsReadRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
@@ -21,11 +20,11 @@ public class ManagerMarkNotificationsAsRead implements ManagerMarkNotificationsA
     private final NotificationRepository notificationRepository;
 
     @Override
-    public void execute(ManagerActor actor, MarkNotificationsAsReadRequestDto request) {
+    public void execute(ManagerActor actor, Long notificationId) {
         User targetUser = actor.getManagerUser().getUser();
 
-        if (request.getNotificationId() != null) {
-            Notification notification = notificationRepository.findById(request.getNotificationId())
+        if (notificationId != null) {
+            Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
             if (!notification.getTargetUser().getId().equals(targetUser.getId())) {
                 throw new CustomException(ErrorCode.FORBIDDEN);

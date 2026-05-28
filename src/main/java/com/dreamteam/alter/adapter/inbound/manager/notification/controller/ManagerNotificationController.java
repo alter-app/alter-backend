@@ -51,7 +51,7 @@ public class ManagerNotificationController implements ManagerNotificationControl
         @RequestBody(required = false) MarkNotificationsAsReadRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        managerMarkNotificationsAsReadUseCase.execute(actor, request != null ? request : new MarkNotificationsAsReadRequestDto());
+        managerMarkNotificationsAsReadUseCase.execute(actor, request != null ? request.getNotificationId() : null);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -59,6 +59,6 @@ public class ManagerNotificationController implements ManagerNotificationControl
     @GetMapping("/me/unread-count")
     public ResponseEntity<CommonApiResponse<UnreadNotificationCountResponseDto>> getUnreadNotificationCount() {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(managerGetUnreadNotificationCountUseCase.execute(actor)));
+        return ResponseEntity.ok(CommonApiResponse.of(UnreadNotificationCountResponseDto.of(managerGetUnreadNotificationCountUseCase.execute(actor))));
     }
 }

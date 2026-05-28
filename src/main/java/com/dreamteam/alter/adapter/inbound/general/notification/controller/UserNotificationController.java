@@ -51,7 +51,7 @@ public class UserNotificationController implements UserNotificationControllerSpe
         @RequestBody(required = false) MarkNotificationsAsReadRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        markNotificationsAsReadUseCase.execute(actor, request != null ? request : new MarkNotificationsAsReadRequestDto());
+        markNotificationsAsReadUseCase.execute(actor, request != null ? request.getNotificationId() : null);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -59,6 +59,6 @@ public class UserNotificationController implements UserNotificationControllerSpe
     @GetMapping("/notifications/unread-count")
     public ResponseEntity<CommonApiResponse<UnreadNotificationCountResponseDto>> getUnreadNotificationCount() {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(getUnreadNotificationCountUseCase.execute(actor)));
+        return ResponseEntity.ok(CommonApiResponse.of(UnreadNotificationCountResponseDto.of(getUnreadNotificationCountUseCase.execute(actor))));
     }
 }

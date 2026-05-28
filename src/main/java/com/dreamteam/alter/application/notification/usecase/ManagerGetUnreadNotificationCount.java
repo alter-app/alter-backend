@@ -1,6 +1,5 @@
 package com.dreamteam.alter.application.notification.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.notification.dto.UnreadNotificationCountResponseDto;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.notification.port.inbound.ManagerGetUnreadNotificationCountUseCase;
 import com.dreamteam.alter.domain.notification.port.outbound.NotificationQueryRepository;
@@ -18,9 +17,8 @@ public class ManagerGetUnreadNotificationCount implements ManagerGetUnreadNotifi
     private final NotificationQueryRepository notificationQueryRepository;
 
     @Override
-    public UnreadNotificationCountResponseDto execute(ManagerActor actor) {
+    public long execute(ManagerActor actor) {
         User targetUser = actor.getManagerUser().getUser();
-        long count = notificationQueryRepository.getCountOfUnreadNotifications(targetUser, TokenScope.MANAGER);
-        return UnreadNotificationCountResponseDto.of(count);
+        return notificationQueryRepository.getCountOfUnreadNotifications(targetUser, TokenScope.MANAGER);
     }
 }
