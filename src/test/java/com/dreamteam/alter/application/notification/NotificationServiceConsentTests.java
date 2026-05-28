@@ -2,8 +2,6 @@ package com.dreamteam.alter.application.notification;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmBatchNotificationRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
-import com.dreamteam.alter.common.exception.CustomException;
-import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.adapter.outbound.user.persistence.readonly.UserFcmDeviceTokenQueryRepository;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.notification.entity.NotificationConsent;
@@ -32,7 +30,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -169,16 +166,17 @@ class NotificationServiceConsentTests {
         }
 
         @Test
-        @DisplayName("수신 동의 레코드 없는 사용자(empty) → NOT_FOUND 예외")
-        void throws_exception_when_no_consent_record_exists() {
+        @DisplayName("수신 동의 레코드 없는 사용자 → 미동의로 간주, FCM 미호출, 예외 미발생, Notification 레코드는 저장됨")
+        void treats_missing_consent_as_blocked_and_skips_fcm_silently() throws Exception {
             // given
             given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.empty());
 
-            // when & then
-            assertThatThrownBy(() -> notificationService.sendNotification(notificationRequest(1L)))
-                .isInstanceOf(CustomException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.NOT_FOUND);
+            // when
+            notificationService.sendNotification(notificationRequest(1L));
+
+            // then
+            then(fcmClient).should(never()).sendNotification(any(), any(), any());
+            then(notificationRepository).should().save(any());
         }
     }
 
@@ -237,6 +235,60 @@ class NotificationServiceConsentTests {
                     @SuppressWarnings("unchecked")
                     List<String> tokenList = (List<String>) tokens;
                     return tokenList.size() == 1 && tokenList.contains("token-consenting");
+                }),
+                any(), any()
+            );
+        }
+
+        @Test
+        @DisplayName("일부 사용자의 동의 레코드 누락 → 누락 사용자 제외하고 발송, 예외 미발생")
+        void treats_missing_consent_as_blocked_in_batch_and_skips_user_silently() throws Exception {
+            // given
+            User userWithConsent = mock(User.class);
+            given(userWithConsent.getId()).willReturn(10L);
+
+            User userWithoutConsent = mock(User.class);
+            given(userWithoutConsent.getId()).willReturn(20L);
+
+            given(userQueryRepository.findAllById(List.of(10L, 20L)))
+                .willReturn(List.of(userWithConsent, userWithoutConsent));
+
+            FcmDeviceToken tokenWithConsent = mock(FcmDeviceToken.class);
+            given(tokenWithConsent.getDeviceToken()).willReturn("token-with-consent");
+            given(tokenWithConsent.getUser()).willReturn(userWithConsent);
+
+            FcmDeviceToken tokenWithoutConsent = mock(FcmDeviceToken.class);
+            given(tokenWithoutConsent.getDeviceToken()).willReturn("token-without-consent");
+            given(tokenWithoutConsent.getUser()).willReturn(userWithoutConsent);
+
+            given(userFCMDeviceTokenQueryRepository.findByUsers(anyList()))
+                .willReturn(List.of(tokenWithConsent, tokenWithoutConsent));
+
+            // userWithConsent만 동의 레코드 존재, userWithoutConsent는 누락
+            NotificationConsent consent = NotificationConsent.create(userWithConsent, true, true);
+            given(notificationConsentQueryRepository.findByUsers(anyList()))
+                .willReturn(List.of(consent));
+
+            com.google.firebase.messaging.BatchResponse batchResponse =
+                mock(com.google.firebase.messaging.BatchResponse.class);
+            com.google.firebase.messaging.SendResponse sendResponse =
+                mock(com.google.firebase.messaging.SendResponse.class);
+            given(sendResponse.isSuccessful()).willReturn(true);
+            given(batchResponse.getResponses()).willReturn(List.of(sendResponse));
+            given(fcmClient.sendMultipleNotifications(anyList(), any(), any())).willReturn(batchResponse);
+
+            // when
+            notificationService.sendMultipleNotifications(batchRequest(List.of(10L, 20L)));
+
+            // then: Notification 레코드는 두 사용자 모두 저장
+            then(notificationRepository).should().saveAll(argThat(list -> ((List<?>) list).size() == 2));
+
+            // then: FCM 배치는 동의 레코드가 있는 사용자의 토큰만 포함
+            then(fcmClient).should().sendMultipleNotifications(
+                argThat(tokens -> {
+                    @SuppressWarnings("unchecked")
+                    List<String> tokenList = (List<String>) tokens;
+                    return tokenList.size() == 1 && tokenList.contains("token-with-consent");
                 }),
                 any(), any()
             );

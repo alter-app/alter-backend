@@ -142,8 +142,11 @@ public class NotificationService {
         NotificationType type = request.getType();
         List<FcmDeviceToken> eligibleTokens = deviceTokens.stream()
             .filter(dt -> {
-                NotificationConsent consent = Optional.ofNullable(consentMap.get(dt.getUser().getId()))
-                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "알림 수신 동의 레코드를 찾을 수 없습니다."));
+                NotificationConsent consent = consentMap.get(dt.getUser().getId());
+                if (consent == null) {
+                    log.warn("알림 수신 동의 레코드가 없어 발송을 스킵합니다. userId={}", dt.getUser().getId());
+                    return false;
+                }
                 return !consent.isBlocked(type, daytime);
             })
             .toList();
@@ -284,9 +287,12 @@ public class NotificationService {
 
 
     private boolean isNotificationBlocked(User user, NotificationType type) {
-        NotificationConsent consent = notificationConsentQueryRepository.findByUser(user)
-            .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "알림 수신 동의 레코드를 찾을 수 없습니다."));
-        return consent.isBlocked(type, isDaytime());
+        Optional<NotificationConsent> consentOpt = notificationConsentQueryRepository.findByUser(user);
+        if (consentOpt.isEmpty()) {
+            log.warn("알림 수신 동의 레코드가 없어 발송을 스킵합니다. userId={}", user.getId());
+            return true;
+        }
+        return consentOpt.get().isBlocked(type, isDaytime());
     }
 
     private boolean isDaytime() {
