@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Tag(name = "APP - 사용자 자신이 근무중인 아르바이트 조회")
 public interface UserWorkControllerSpec {
@@ -39,6 +40,16 @@ public interface UserWorkControllerSpec {
     ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<UserWorkspaceManagerListResponseDto>>> getWorkspaceManagerList(
         Long workspaceId,
         CursorPageRequestDto pageRequest
+    );
+
+    @Operation(summary = "근무중인 업장 퇴사", description = "사용자가 본인이 근무중인 업장에서 퇴사합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "퇴사 성공"),
+        @ApiResponse(responseCode = "400", description = "존재하지 않는 업장 (B008)"),
+        @ApiResponse(responseCode = "403", description = "해당 업장에서 근무중이 아님 (A002)"),
+    })
+    ResponseEntity<CommonApiResponse<Void>> resignWorkspaceWorker(
+        @PathVariable Long workspaceId
     );
 
 }
