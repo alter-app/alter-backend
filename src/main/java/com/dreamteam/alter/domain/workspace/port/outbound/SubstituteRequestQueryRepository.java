@@ -49,5 +49,6 @@ public interface SubstituteRequestQueryRepository {
 
     List<SubstituteRequest> findAllActiveByRequesterUserId(Long userId);
     List<SubstituteRequestTarget> findAllPendingTargetsByUserId(Long userId);
+    List<SubstituteRequest> findAllActiveByRequesterWorkerId(Long workerId);
+    List<SubstituteRequest> findAllPendingTargetRequestsByTargetWorkerId(Long targetWorkerId);
 }
-
