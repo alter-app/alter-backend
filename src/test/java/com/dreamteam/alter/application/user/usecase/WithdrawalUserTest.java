@@ -13,14 +13,10 @@ import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserCertificateRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
-import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
-import com.dreamteam.alter.domain.workspace.entity.SubstituteRequestTarget;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
-import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
-import com.dreamteam.alter.domain.workspace.port.outbound.SubstituteRequestQueryRepository;
+import com.dreamteam.alter.domain.workspace.port.inbound.WorkerResignationService;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
-import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerScheduleQueryRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,10 +53,7 @@ class WithdrawalUserTest {
     private WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
 
     @Mock
-    private WorkspaceWorkerScheduleQueryRepository workspaceWorkerScheduleQueryRepository;
-
-    @Mock
-    private SubstituteRequestQueryRepository substituteRequestQueryRepository;
+    private WorkerResignationService workerResignationService;
 
     @Mock
     private PostingApplicationQueryRepository postingApplicationQueryRepository;
@@ -93,8 +86,7 @@ class WithdrawalUserTest {
         verifyNoInteractions(userRepository);
         verifyNoInteractions(userCertificateRepository);
         verifyNoInteractions(workspaceWorkerQueryRepository);
-        verifyNoInteractions(workspaceWorkerScheduleQueryRepository);
-        verifyNoInteractions(substituteRequestQueryRepository);
+        verifyNoInteractions(workerResignationService);
         verifyNoInteractions(postingApplicationQueryRepository);
         verifyNoInteractions(fileQueryRepository);
         verifyNoInteractions(authService);
@@ -102,7 +94,7 @@ class WithdrawalUserTest {
     }
 
     @Test
-    @DisplayName("정상 탈퇴 흐름 - 모든 정리 로직이 호출되고 SubstituteRequest/Target/PostingApplication 이 취소된다")
+    @DisplayName("정상 탈퇴 흐름 - 활성 근무지 퇴직 공통 서비스와 탈퇴 고유 정리 로직이 호출된다")
     void execute_정상탈퇴_모든정리호출() {
         // given
         Long userId = 10L;
@@ -113,18 +105,6 @@ class WithdrawalUserTest {
         WorkspaceWorker activeWorker = mock(WorkspaceWorker.class);
         when(workspaceWorkerQueryRepository.findAllActiveByUserId(userId))
             .thenReturn(List.of(activeWorker));
-
-        WorkspaceWorkerSchedule activeSchedule = mock(WorkspaceWorkerSchedule.class);
-        when(workspaceWorkerScheduleQueryRepository.findAllActivatedByUserId(userId))
-            .thenReturn(List.of(activeSchedule));
-
-        SubstituteRequest activeRequest = mock(SubstituteRequest.class);
-        when(substituteRequestQueryRepository.findAllActiveByRequesterUserId(userId))
-            .thenReturn(List.of(activeRequest));
-
-        SubstituteRequestTarget pendingTarget = mock(SubstituteRequestTarget.class);
-        when(substituteRequestQueryRepository.findAllPendingTargetsByUserId(userId))
-            .thenReturn(List.of(pendingTarget));
 
         PostingApplication activeApplication = mock(PostingApplication.class);
         when(postingApplicationQueryRepository.findAllActiveByUserId(userId))
@@ -141,10 +121,7 @@ class WithdrawalUserTest {
         verify(user, times(1)).withdraw();
         verify(userRepository, times(1)).save(user);
         verify(userCertificateRepository, times(1)).deleteAll(user);
-        verify(activeWorker, times(1)).resign();
-        verify(activeSchedule, times(1)).delete();
-        verify(activeRequest, times(1)).cancel();
-        verify(pendingTarget, times(1)).cancel();
+        verify(workerResignationService, times(1)).resign(activeWorker);
         verify(activeApplication, times(1)).updateStatus(PostingApplicationStatus.CANCELLED);
         verify(profileImage, times(1)).markDeleted();
         verify(authService, times(1)).revokeAllExistingAuthorizations(user);
@@ -160,9 +137,6 @@ class WithdrawalUserTest {
         when(user.getId()).thenReturn(userId);
         when(workspaceQueryRepository.existsActiveWorkspaceByUserId(userId)).thenReturn(false);
         when(workspaceWorkerQueryRepository.findAllActiveByUserId(userId)).thenReturn(List.of());
-        when(workspaceWorkerScheduleQueryRepository.findAllActivatedByUserId(userId)).thenReturn(List.of());
-        when(substituteRequestQueryRepository.findAllActiveByRequesterUserId(userId)).thenReturn(List.of());
-        when(substituteRequestQueryRepository.findAllPendingTargetsByUserId(userId)).thenReturn(List.of());
         when(postingApplicationQueryRepository.findAllActiveByUserId(userId)).thenReturn(List.of());
         when(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.USER_PROFILE, userId.toString()))
             .thenReturn(Optional.empty());
@@ -174,6 +148,7 @@ class WithdrawalUserTest {
         verify(user, times(1)).withdraw();
         verify(userRepository, times(1)).save(user);
         verify(userCertificateRepository, times(1)).deleteAll(user);
+        verifyNoInteractions(workerResignationService);
         verify(authService, times(1)).revokeAllExistingAuthorizations(user);
         verify(notificationService, times(1)).removeUserDeviceToken(user);
     }
