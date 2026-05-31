@@ -43,13 +43,13 @@ public class ManagerGetMyNotifications implements ManagerGetMyNotificationsUseCa
         // ManagerActor에서 User 추출
         User targetUser = actor.getManagerUser().getUser();
 
-        long count = notificationQueryRepository.getCountOfNotifications(targetUser, TokenScope.MANAGER, filter.getType());
+        long count = notificationQueryRepository.getCountOfNotifications(targetUser, TokenScope.MANAGER, filter.getType(), filter.getIsRead());
         if (count == 0) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));
         }
 
         List<NotificationResponse> notifications = notificationQueryRepository.getNotificationsWithCursor(
-            cursorPageRequest, targetUser, TokenScope.MANAGER, filter.getType()
+            cursorPageRequest, targetUser, TokenScope.MANAGER, filter.getType(), filter.getIsRead()
         );
         if (ObjectUtils.isEmpty(notifications)) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), (int) count));
