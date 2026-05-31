@@ -7,9 +7,9 @@ import com.dreamteam.alter.adapter.inbound.general.notification.dto.MarkNotifica
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationListFilterDto;
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.UnreadNotificationCountResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.notification.mapper.MarkNotificationsAsReadCommandMapper;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.notification.command.GetUnreadNotificationCountCommand;
-import com.dreamteam.alter.domain.notification.command.MarkNotificationsAsReadCommand;
 import com.dreamteam.alter.domain.notification.port.inbound.ManagerGetMyNotificationsUseCase;
 import com.dreamteam.alter.domain.notification.port.inbound.GetUnreadNotificationCountUseCase;
 import com.dreamteam.alter.domain.notification.port.inbound.MarkNotificationsAsReadUseCase;
@@ -54,7 +54,7 @@ public class ManagerNotificationController implements ManagerNotificationControl
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
         markNotificationsAsReadUseCase.execute(
-            MarkNotificationsAsReadCommand.of(actor, request != null ? request.getNotificationId() : null)
+            MarkNotificationsAsReadCommandMapper.toCommand(actor, request)
         );
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
