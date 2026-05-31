@@ -468,7 +468,8 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
 
     @Override
     public List<SubstituteRequest> findAllPendingTargetRequestsByTargetWorkerId(Long targetWorkerId) {
-        QSubstituteRequestTarget target = QSubstituteRequestTarget.substituteRequestTarget;
+        QSubstituteRequestTarget target = new QSubstituteRequestTarget("target");
+        QSubstituteRequestTarget pendingTarget = new QSubstituteRequestTarget("pendingTarget");
 
         return queryFactory
             .selectFrom(substituteRequest)
@@ -478,11 +479,11 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
                 substituteRequest.status.eq(SubstituteRequestStatus.PENDING),
                 JPAExpressions
                     .selectOne()
-                    .from(QSubstituteRequestTarget.substituteRequestTarget)
+                    .from(pendingTarget)
                     .where(
-                        QSubstituteRequestTarget.substituteRequestTarget.substituteRequest.eq(substituteRequest),
-                        QSubstituteRequestTarget.substituteRequestTarget.targetWorkerId.eq(targetWorkerId),
-                        QSubstituteRequestTarget.substituteRequestTarget.status.eq(SubstituteRequestTargetStatus.PENDING)
+                        pendingTarget.substituteRequest.eq(substituteRequest),
+                        pendingTarget.targetWorkerId.eq(targetWorkerId),
+                        pendingTarget.status.eq(SubstituteRequestTargetStatus.PENDING)
                     )
                     .exists()
             )

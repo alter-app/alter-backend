@@ -21,14 +21,14 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ManagerResignWorkspaceWorker 테스트")
-class ManagerResignWorkspaceWorkerTest {
+class ManagerResignWorkspaceWorkerTests {
 
     @Mock
     private WorkspaceQueryRepository workspaceQueryRepository;
@@ -48,14 +48,14 @@ class ManagerResignWorkspaceWorkerTest {
         // given
         ManagerActor actor = mock(ManagerActor.class);
         ManagerUser managerUser = mock(ManagerUser.class);
-        when(actor.getManagerUser()).thenReturn(managerUser);
-        when(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).thenReturn(false);
+        given(actor.getManagerUser()).willReturn(managerUser);
+        given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(false);
 
         // when & then
         assertThatThrownBy(() -> managerResignWorkspaceWorker.execute(actor, 1L, 10L))
             .isInstanceOf(CustomException.class)
             .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.WORKSPACE_NOT_FOUND));
-        verify(workerResignationService, never()).resign(any());
+        then(workerResignationService).should(never()).resign(any());
     }
 
     @Test
@@ -64,15 +64,15 @@ class ManagerResignWorkspaceWorkerTest {
         // given
         ManagerActor actor = mock(ManagerActor.class);
         ManagerUser managerUser = mock(ManagerUser.class);
-        when(actor.getManagerUser()).thenReturn(managerUser);
-        when(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).thenReturn(true);
-        when(workspaceWorkerQueryRepository.findById(10L)).thenReturn(Optional.empty());
+        given(actor.getManagerUser()).willReturn(managerUser);
+        given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
+        given(workspaceWorkerQueryRepository.findById(10L)).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> managerResignWorkspaceWorker.execute(actor, 1L, 10L))
             .isInstanceOf(CustomException.class)
             .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND));
-        verify(workerResignationService, never()).resign(any());
+        then(workerResignationService).should(never()).resign(any());
     }
 
     @Test
@@ -81,20 +81,20 @@ class ManagerResignWorkspaceWorkerTest {
         // given
         ManagerActor actor = mock(ManagerActor.class);
         ManagerUser managerUser = mock(ManagerUser.class);
-        when(actor.getManagerUser()).thenReturn(managerUser);
-        when(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).thenReturn(true);
+        given(actor.getManagerUser()).willReturn(managerUser);
+        given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
 
         Workspace workspace = mock(Workspace.class);
-        when(workspace.getId()).thenReturn(2L);
+        given(workspace.getId()).willReturn(2L);
         WorkspaceWorker worker = mock(WorkspaceWorker.class);
-        when(worker.getWorkspace()).thenReturn(workspace);
-        when(workspaceWorkerQueryRepository.findById(10L)).thenReturn(Optional.of(worker));
+        given(worker.getWorkspace()).willReturn(workspace);
+        given(workspaceWorkerQueryRepository.findById(10L)).willReturn(Optional.of(worker));
 
         // when & then
         assertThatThrownBy(() -> managerResignWorkspaceWorker.execute(actor, 1L, 10L))
             .isInstanceOf(CustomException.class)
             .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.WORKSPACE_NOT_FOUND));
-        verify(workerResignationService, never()).resign(worker);
+        then(workerResignationService).should(never()).resign(worker);
     }
 
     @Test
@@ -103,19 +103,19 @@ class ManagerResignWorkspaceWorkerTest {
         // given
         ManagerActor actor = mock(ManagerActor.class);
         ManagerUser managerUser = mock(ManagerUser.class);
-        when(actor.getManagerUser()).thenReturn(managerUser);
-        when(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).thenReturn(true);
+        given(actor.getManagerUser()).willReturn(managerUser);
+        given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
 
         Workspace workspace = mock(Workspace.class);
-        when(workspace.getId()).thenReturn(1L);
+        given(workspace.getId()).willReturn(1L);
         WorkspaceWorker worker = mock(WorkspaceWorker.class);
-        when(worker.getWorkspace()).thenReturn(workspace);
-        when(workspaceWorkerQueryRepository.findById(10L)).thenReturn(Optional.of(worker));
+        given(worker.getWorkspace()).willReturn(workspace);
+        given(workspaceWorkerQueryRepository.findById(10L)).willReturn(Optional.of(worker));
 
         // when
         managerResignWorkspaceWorker.execute(actor, 1L, 10L);
 
         // then
-        verify(workerResignationService).resign(worker);
+        then(workerResignationService).should().resign(worker);
     }
 }
