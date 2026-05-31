@@ -189,4 +189,17 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
             .orderBy(workspaceShift.startDateTime.asc())
             .fetch();
     }
+
+    @Override
+    public List<WorkspaceShift> findFutureShiftsByAssignedWorker(
+        WorkspaceWorker worker,
+        LocalDateTime fromInclusive
+    ) {
+        return queryFactory
+            .selectFrom(workspaceShift)
+            .where(workspaceShift.assignedWorkspaceWorker.eq(worker)
+                .and(workspaceShift.startDateTime.goe(fromInclusive))
+                .and(workspaceShift.status.ne(WorkspaceShiftStatus.DELETED)))
+            .fetch();
+    }
 }

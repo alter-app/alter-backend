@@ -170,6 +170,15 @@ public class SubstituteRequest {
         }
     }
 
+    public void cancelPendingTargetAndCancelIfNoPendingTargets(Long targetWorkerId) {
+        updatePendingTargetStatus(targetWorkerId, SubstituteRequestTarget::cancel);
+
+        if (SubstituteRequestStatus.PENDING.equals(this.status) && hasNoPendingTargets()) {
+            this.status = SubstituteRequestStatus.CANCELLED;
+            this.processedAt = LocalDateTime.now();
+        }
+    }
+
     public boolean canBeCancelledBy(Long userId) {
         return this.requesterId.equals(userId)
             && (SubstituteRequestStatus.PENDING.equals(this.status) || SubstituteRequestStatus.ACCEPTED.equals(this.status));
@@ -224,6 +233,19 @@ public class SubstituteRequest {
         this.targets.stream()
             .filter(target -> SubstituteRequestTargetStatus.PENDING.equals(target.getStatus()))
             .forEach(action);
+    }
+
+    private void updatePendingTargetStatus(Long workerId, Consumer<SubstituteRequestTarget> action) {
+        this.targets.stream()
+            .filter(target -> target.getTargetWorkerId().equals(workerId))
+            .filter(target -> SubstituteRequestTargetStatus.PENDING.equals(target.getStatus()))
+            .findFirst()
+            .ifPresent(action);
+    }
+
+    private boolean hasNoPendingTargets() {
+        return this.targets.stream()
+            .noneMatch(target -> SubstituteRequestTargetStatus.PENDING.equals(target.getStatus()));
     }
 
     /**

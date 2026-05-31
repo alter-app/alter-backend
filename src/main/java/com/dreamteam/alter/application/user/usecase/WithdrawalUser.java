@@ -16,14 +16,9 @@ import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.inbound.WithdrawalUserUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserCertificateRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
-import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
-import com.dreamteam.alter.domain.workspace.entity.SubstituteRequestTarget;
-import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
-import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
-import com.dreamteam.alter.domain.workspace.port.outbound.SubstituteRequestQueryRepository;
+import com.dreamteam.alter.domain.workspace.port.inbound.WorkerResignationService;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
-import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerScheduleQueryRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,8 +31,7 @@ public class WithdrawalUser implements WithdrawalUserUseCase {
 	private final UserCertificateRepository userCertificateRepository;
 	private final WorkspaceQueryRepository workspaceQueryRepository;
 	private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
-	private final WorkspaceWorkerScheduleQueryRepository workspaceWorkerScheduleQueryRepository;
-	private final SubstituteRequestQueryRepository substituteRequestQueryRepository;
+	private final WorkerResignationService workerResignationService;
 	private final PostingApplicationQueryRepository postingApplicationQueryRepository;
 	private final FileQueryRepository fileQueryRepository;
 	private final AuthService authService;
@@ -56,19 +50,7 @@ public class WithdrawalUser implements WithdrawalUserUseCase {
 
 		// 활성화된 근무지 퇴직처리
 		workspaceWorkerQueryRepository.findAllActiveByUserId(user.getId())
-			.forEach(WorkspaceWorker::resign);
-
-		// 고정근무 스케줄 삭제
-		workspaceWorkerScheduleQueryRepository.findAllActivatedByUserId(user.getId())
-			.forEach(WorkspaceWorkerSchedule::delete);
-
-		// 본인이 요청자인 활성 대타 요청 취소 (자식 target 까지 cascade)
-		substituteRequestQueryRepository.findAllActiveByRequesterUserId(user.getId())
-			.forEach(SubstituteRequest::cancel);
-
-		// 본인이 PENDING target 으로 지정된 대타 요청 target 행 취소
-		substituteRequestQueryRepository.findAllPendingTargetsByUserId(user.getId())
-			.forEach(SubstituteRequestTarget::cancel);
+			.forEach(workerResignationService::resign);
 
 		// 본인이 지원한 활성 PostingApplication 취소
 		postingApplicationQueryRepository.findAllActiveByUserId(user.getId())

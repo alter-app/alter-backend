@@ -29,6 +29,7 @@ import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceList
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceManagerListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceWorkerListUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerResignWorkspaceWorkerUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateFixedScheduleDateUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateWorkspaceWorkerColorCodeUseCase;
 
@@ -60,6 +61,9 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
 
     @Resource(name = "managerUpdateWorkspaceWorkerColorCode")
     private final ManagerUpdateWorkspaceWorkerColorCodeUseCase managerUpdateWorkspaceWorkerColor;
+
+    @Resource(name = "managerResignWorkspaceWorker")
+    private final ManagerResignWorkspaceWorkerUseCase managerResignWorkspaceWorker;
 
     @Override
     @GetMapping
@@ -127,6 +131,17 @@ public class ManagerWorkspaceController implements ManagerWorkspaceControllerSpe
             workerId,
             UpdateWorkspaceWorkerColorCommand.of(request.getColorCode())
         );
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PatchMapping("/{workspaceId}/workers/{workerId}/resign")
+    public ResponseEntity<CommonApiResponse<Void>> resignWorkspaceWorker(
+        @PathVariable Long workspaceId,
+        @PathVariable Long workerId
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        managerResignWorkspaceWorker.execute(actor, workspaceId, workerId);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }

@@ -11,9 +11,11 @@ import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetUserActiveWorkspaceListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetUserWorkspaceWorkerListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetUserWorkspaceManagerListUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.UserResignWorkspaceWorkerUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,6 +28,7 @@ public class UserWorkController implements UserWorkControllerSpec {
     private final GetUserActiveWorkspaceListUseCase getUserActiveWorkspaceListUseCase;
     private final GetUserWorkspaceWorkerListUseCase getUserWorkspaceWorkerListUseCase;
     private final GetUserWorkspaceManagerListUseCase getUserWorkspaceManagerListUseCase;
+    private final UserResignWorkspaceWorkerUseCase userResignWorkspaceWorkerUseCase;
 
     @GetMapping
     public ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<UserWorkspaceListResponseDto>>> getActiveWorkspaceList(
@@ -59,6 +62,17 @@ public class UserWorkController implements UserWorkControllerSpec {
         AppActor actor = AppActionContext.getInstance().getActor();
 
         return ResponseEntity.ok(CommonApiResponse.of(getUserWorkspaceManagerListUseCase.execute(actor, workspaceId, pageRequest)));
+    }
+
+    @Override
+    @PatchMapping("/{workspaceId}/resign")
+    public ResponseEntity<CommonApiResponse<Void>> resignWorkspaceWorker(
+        @PathVariable Long workspaceId
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+
+        userResignWorkspaceWorkerUseCase.execute(actor, workspaceId);
+        return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
 }

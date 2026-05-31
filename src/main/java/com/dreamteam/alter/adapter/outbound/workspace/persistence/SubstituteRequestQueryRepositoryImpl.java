@@ -454,4 +454,39 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             )
             .fetch();
     }
+
+    @Override
+    public List<SubstituteRequest> findAllActiveByRequesterWorkerId(Long workerId) {
+        return queryFactory
+            .selectFrom(substituteRequest)
+            .where(
+                substituteRequest.requesterId.eq(workerId),
+                substituteRequest.status.in(SubstituteRequestStatus.PENDING, SubstituteRequestStatus.ACCEPTED)
+            )
+            .fetch();
+    }
+
+    @Override
+    public List<SubstituteRequest> findAllPendingTargetRequestsByTargetWorkerId(Long targetWorkerId) {
+        QSubstituteRequestTarget target = new QSubstituteRequestTarget("target");
+        QSubstituteRequestTarget pendingTarget = new QSubstituteRequestTarget("pendingTarget");
+
+        return queryFactory
+            .selectFrom(substituteRequest)
+            .distinct()
+            .join(substituteRequest.targets, target).fetchJoin()
+            .where(
+                substituteRequest.status.eq(SubstituteRequestStatus.PENDING),
+                JPAExpressions
+                    .selectOne()
+                    .from(pendingTarget)
+                    .where(
+                        pendingTarget.substituteRequest.eq(substituteRequest),
+                        pendingTarget.targetWorkerId.eq(targetWorkerId),
+                        pendingTarget.status.eq(SubstituteRequestTargetStatus.PENDING)
+                    )
+                    .exists()
+            )
+            .fetch();
+    }
 }

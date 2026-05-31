@@ -69,15 +69,9 @@ public interface ManagerWorkspaceControllerSpec {
                         name = "1~31 범위를 벗어난 값입니다.",
                         value = "{\"code\" : \"B001\"}"
                     ),
-                })),
-        @ApiResponse(responseCode = "404", description = "404 Error 실패 케이스",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = ErrorResponse.class),
-                examples = {
                     @ExampleObject(
                         name = "존재하지 않는 업장입니다.",
-                        value = "{\"code\" : \"B019\"}"
+                        value = "{\"code\" : \"B008\"}"
                     ),
                 })),
     })
@@ -89,7 +83,7 @@ public interface ManagerWorkspaceControllerSpec {
     @Operation(summary = "매니저 - 근무자 색상 변경", description = "근무자 캘린더에서 사용할 표시 색상을 변경합니다. 같은 업장의 ACTIVATED 근무자끼리 색상은 unique 합니다 (기본 색상 #9CA3AF 제외).")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "색상 변경 성공"),
-        @ApiResponse(responseCode = "400", description = "잘못된 색상 형식",
+        @ApiResponse(responseCode = "400", description = "잘못된 색상 형식 또는 존재하지 않는 업장",
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = ErrorResponse.class),
@@ -98,16 +92,16 @@ public interface ManagerWorkspaceControllerSpec {
                         name = "잘못된 요청",
                         value = "{\"code\" : \"B001\"}"
                     ),
-                })),
-        @ApiResponse(responseCode = "404", description = "존재하지 않는 업장 또는 근무자",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = ErrorResponse.class),
-                examples = {
                     @ExampleObject(
                         name = "존재하지 않는 업장입니다.",
                         value = "{\"code\" : \"B008\"}"
                     ),
+                })),
+        @ApiResponse(responseCode = "404", description = "존재하지 않는 근무자",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
                     @ExampleObject(
                         name = "근무자를 찾을 수 없습니다.",
                         value = "{\"code\" : \"B019\"}"
@@ -128,6 +122,35 @@ public interface ManagerWorkspaceControllerSpec {
         @PathVariable Long workspaceId,
         @PathVariable Long workerId,
         @RequestBody @Valid UpdateWorkspaceWorkerColorRequestDto request
+    );
+
+    @Operation(summary = "매니저 - 근무자 퇴사 처리", description = "근무자를 퇴사 처리합니다. 현재 시점 이후 해당 근무자에게 배정된 모든 스케줄은 미배정(CANCELLED) 상태로 전환됩니다. 과거 근무 기록은 유지됩니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "퇴사 처리 성공"),
+        @ApiResponse(responseCode = "400", description = "존재하지 않는 업장",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "존재하지 않는 업장입니다.",
+                        value = "{\"code\" : \"B008\"}"
+                    ),
+                })),
+        @ApiResponse(responseCode = "404", description = "존재하지 않는 근무자",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "근무자를 찾을 수 없습니다.",
+                        value = "{\"code\" : \"B019\"}"
+                    ),
+                })),
+    })
+    ResponseEntity<CommonApiResponse<Void>> resignWorkspaceWorker(
+        @PathVariable Long workspaceId,
+        @PathVariable Long workerId
     );
 
     // 업장 근무자 상세 정보 조회
