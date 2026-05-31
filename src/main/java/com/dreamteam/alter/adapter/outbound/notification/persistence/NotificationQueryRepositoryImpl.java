@@ -87,6 +87,20 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
     }
 
     @Override
+    public List<Notification> findUnreadNotifications(User targetUser, TokenScope scope) {
+        QNotification notification = QNotification.notification;
+
+        return queryFactory
+            .selectFrom(notification)
+            .where(
+                notification.targetUser.eq(targetUser),
+                notification.scope.eq(scope),
+                notification.isRead.isFalse()
+            )
+            .fetch();
+    }
+
+    @Override
     public long getCountOfUnreadNotifications(User targetUser, TokenScope scope) {
         QNotification notification = QNotification.notification;
 
