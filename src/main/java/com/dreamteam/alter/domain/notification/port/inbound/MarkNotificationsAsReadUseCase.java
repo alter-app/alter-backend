@@ -1,7 +1,7 @@
 package com.dreamteam.alter.domain.notification.port.inbound;
 
-import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.notification.command.MarkNotificationsAsReadCommand;
 
 public interface MarkNotificationsAsReadUseCase {
-    void execute(AppActor actor, Long notificationId);
+    void execute(MarkNotificationsAsReadCommand command);
 }

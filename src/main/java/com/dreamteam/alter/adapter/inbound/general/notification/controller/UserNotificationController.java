@@ -8,6 +8,8 @@ import com.dreamteam.alter.adapter.inbound.general.notification.dto.Notification
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.NotificationResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.notification.dto.UnreadNotificationCountResponseDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.domain.notification.command.GetUnreadNotificationCountCommand;
+import com.dreamteam.alter.domain.notification.command.MarkNotificationsAsReadCommand;
 import com.dreamteam.alter.domain.notification.port.inbound.GetMyNotificationsUseCase;
 import com.dreamteam.alter.domain.notification.port.inbound.GetUnreadNotificationCountUseCase;
 import com.dreamteam.alter.domain.notification.port.inbound.MarkNotificationsAsReadUseCase;
@@ -51,7 +53,9 @@ public class UserNotificationController implements UserNotificationControllerSpe
         @RequestBody(required = false) MarkNotificationsAsReadRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        markNotificationsAsReadUseCase.execute(actor, request != null ? request.getNotificationId() : null);
+        markNotificationsAsReadUseCase.execute(
+            MarkNotificationsAsReadCommand.of(actor, request != null ? request.getNotificationId() : null)
+        );
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -59,6 +63,7 @@ public class UserNotificationController implements UserNotificationControllerSpe
     @GetMapping("/notifications/unread-count")
     public ResponseEntity<CommonApiResponse<UnreadNotificationCountResponseDto>> getUnreadNotificationCount() {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(UnreadNotificationCountResponseDto.of(getUnreadNotificationCountUseCase.execute(actor))));
+        return ResponseEntity.ok(CommonApiResponse.of(UnreadNotificationCountResponseDto.of(
+            getUnreadNotificationCountUseCase.execute(GetUnreadNotificationCountCommand.of(actor)))));
     }
 }
