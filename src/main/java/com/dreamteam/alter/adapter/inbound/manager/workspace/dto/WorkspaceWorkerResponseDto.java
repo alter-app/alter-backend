@@ -30,12 +30,16 @@ public class WorkspaceWorkerResponseDto {
     @Schema(description = "근무자 성별", example = "GENDER_MALE")
     private UserGender gender;
 
+    @Schema(description = "근무자 프로필 이미지 URL (미설정 시 null)", example = "https://cdn.alter-app.com/users/1/profile.png")
+    private String profileImageUrl;
+
     public static WorkspaceWorkerResponseDto of(WorkspaceWorkerResponse entity) {
         return WorkspaceWorkerResponseDto.builder()
             .id(entity.getId())
             .name(entity.getName())
             .contact(entity.getContact())
             .gender(entity.getGender())
+            .profileImageUrl(entity.getProfileImageUrl())
             .build();
     }
 
