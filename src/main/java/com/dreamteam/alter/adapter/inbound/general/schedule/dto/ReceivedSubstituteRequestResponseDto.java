@@ -65,12 +65,14 @@ public class ReceivedSubstituteRequestResponseDto {
             ))
             .requester(WorkerInfo.of(
                 response.getRequesterId(),
-                response.getRequesterName()
+                response.getRequesterName(),
+                response.getRequesterProfileImageUrl()
             ))
             .requestType(DescribedEnumDto.of(response.getRequestType(), SubstituteRequestType.describe()))
             .acceptedWorker(ObjectUtils.isNotEmpty(response.getAcceptedWorkerId()) ? WorkerInfo.of(
                 response.getAcceptedWorkerId(),
-                response.getAcceptedWorkerName()
+                response.getAcceptedWorkerName(),
+                response.getAcceptedWorkerProfileImageUrl()
             ) : null)
             .status(DescribedEnumDto.of(response.getStatus(), SubstituteRequestStatus.describe()))
             .requestReason(response.getRequestReason())

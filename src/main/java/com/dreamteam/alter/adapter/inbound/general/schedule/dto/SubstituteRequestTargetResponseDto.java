@@ -31,7 +31,8 @@ public class SubstituteRequestTargetResponseDto {
         return SubstituteRequestTargetResponseDto.builder()
             .target(WorkerInfo.of(
                 targetInfo.getTargetWorkerId(),
-                targetInfo.getTargetWorkerName()
+                targetInfo.getTargetWorkerName(),
+                targetInfo.getProfileImageUrl()
             ))
             .status(DescribedEnumDto.of(targetInfo.getStatus(), SubstituteRequestTargetStatus.describe()))
             .rejectionReason(targetInfo.getRejectionReason())
@@ -41,7 +42,7 @@ public class SubstituteRequestTargetResponseDto {
 
     public static SubstituteRequestTargetResponseDto of(Long targetWorkerId, String targetWorkerName) {
         return SubstituteRequestTargetResponseDto.builder()
-            .target(WorkerInfo.of(targetWorkerId, targetWorkerName))
+            .target(WorkerInfo.of(targetWorkerId, targetWorkerName, null))
             .status(DescribedEnumDto.of(SubstituteRequestTargetStatus.PENDING, SubstituteRequestTargetStatus.describe()))
             .rejectionReason(null)
             .respondedAt(null)

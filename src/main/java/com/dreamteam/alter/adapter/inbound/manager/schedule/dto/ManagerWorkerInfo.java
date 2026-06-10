@@ -16,10 +16,14 @@ public class ManagerWorkerInfo {
     @Schema(description = "근무자 이름", example = "홍길동")
     private String workerName;
 
-    public static ManagerWorkerInfo of(Long workerId, String workerName) {
+    @Schema(description = "근무자 프로필 이미지 URL (미설정 시 null)", example = "https://cdn.alter-app.com/users/1/profile.png")
+    private String profileImageUrl;
+
+    public static ManagerWorkerInfo of(Long workerId, String workerName, String profileImageUrl) {
         return ManagerWorkerInfo.builder()
             .workerId(workerId)
             .workerName(workerName)
+            .profileImageUrl(profileImageUrl)
             .build();
     }
 
