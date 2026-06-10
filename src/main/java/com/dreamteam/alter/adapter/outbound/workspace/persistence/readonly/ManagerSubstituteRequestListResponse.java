@@ -22,9 +22,11 @@ public class ManagerSubstituteRequestListResponse {
     private String workspaceName;
     private Long requesterId;
     private String requesterName;
+    private String requesterProfileImageUrl;
     private SubstituteRequestType requestType;
     private Long acceptedWorkerId;
     private String acceptedWorkerName;
+    private String acceptedWorkerProfileImageUrl;
     private SubstituteRequestStatus status;
     private String requestReason;
     private LocalDateTime createdAt;
