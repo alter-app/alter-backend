@@ -19,6 +19,7 @@ import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.workspace.port.inbound.CancelWorkspaceRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestUseCase;
@@ -41,6 +42,9 @@ public class ManagerWorkspaceRequestController implements ManagerWorkspaceReques
 
     @Resource(name = "getWorkspaceRequest")
     private final GetWorkspaceRequestUseCase getWorkspaceRequest;
+
+    @Resource(name = "cancelWorkspaceRequest")
+    private final CancelWorkspaceRequestUseCase cancelWorkspaceRequest;
 
     @Override
     @PostMapping
@@ -66,5 +70,15 @@ public class ManagerWorkspaceRequestController implements ManagerWorkspaceReques
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
         return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceRequest.execute(actor.getManagerUser().getUser(), workspaceRequestId)));
+    }
+
+    @Override
+    @PostMapping("/{workspaceRequestId}/cancel")
+    public ResponseEntity<CommonApiResponse<Void>> cancelWorkspaceRequest(
+        @PathVariable Long workspaceRequestId
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        cancelWorkspaceRequest.execute(actor.getManagerUser().getUser(), workspaceRequestId);
+        return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }

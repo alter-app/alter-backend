@@ -134,4 +134,12 @@ public class WorkspaceRequest {
 	public void reject() {
 		this.status = WorkspaceRequestStatus.REVOKED;
 	}
+
+	public void cancel() {
+		if (!WorkspaceRequestStatus.PENDING.equals(status) && !WorkspaceRequestStatus.REVOKED.equals(status)) {
+			throw new CustomException(ErrorCode.CONFLICT, "취소할 수 없는 상태의 요청입니다.");
+		}
+
+		this.status = WorkspaceRequestStatus.CANCELED;
+	}
 }
