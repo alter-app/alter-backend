@@ -17,6 +17,7 @@ public class WorkspaceRequestResponse {
 	private Long id;
 	private String businessRegistrationNo;
 	private String businessName;
+	private String ownerName;
 	private String businessType;
 	private String contact;
 	private String fullAddress;

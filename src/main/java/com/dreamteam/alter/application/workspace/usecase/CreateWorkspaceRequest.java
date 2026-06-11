@@ -30,6 +30,7 @@ public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 			user,
 			request.getBrn(),
 			request.getBizName(),
+			request.getOwnerName(),
 			request.getType(),
 			request.getContact(),
 			request.getAddress(),

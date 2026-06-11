@@ -30,6 +30,9 @@ public class WorkspaceRequestResponseDto {
 	@Schema(description = "업장 이름", example = "드림팀 카페")
 	private String businessName;
 
+	@Schema(description = "대표자 성명", example = "홍길동")
+	private String ownerName;
+
 	@Schema(description = "업종", example = "카페")
 	private String businessType;
 
@@ -63,20 +66,26 @@ public class WorkspaceRequestResponseDto {
 	@Schema(description = "업장 등록 신청 수정 일시", example = "2023-10-01T12:00:00")
 	private LocalDateTime updatedAt;
 
-	public static WorkspaceRequestResponseDto of(WorkspaceRequestResponse workspaceRequest) {
+	public static WorkspaceRequestResponseDto of(
+		WorkspaceRequestResponse workspaceRequest,
+		String workspaceCertFileUrl,
+		String workspaceOwnIdentityFileUrl,
+		String workspaceWarrantFileUrl
+	) {
 		return WorkspaceRequestResponseDto.builder()
 			.id(workspaceRequest.getId())
 			.businessRegistrationNo(workspaceRequest.getBusinessRegistrationNo())
 			.businessName(workspaceRequest.getBusinessName())
+			.ownerName(workspaceRequest.getOwnerName())
 			.businessType(workspaceRequest.getBusinessType())
 			.contact(workspaceRequest.getContact())
 			.status(DescribedEnumDto.of(workspaceRequest.getStatus(), WorkspaceRequestStatus.describe()))
 			.fullAddress(workspaceRequest.getFullAddress())
 			.latitude(workspaceRequest.getLatitude())
 			.longitude(workspaceRequest.getLongitude())
-			.workspaceCertFileUrl(workspaceRequest.getWorkspaceCertFileUrl())
-			.workspaceOwnIdentityFileUrl(workspaceRequest.getWorkspaceOwnIdentityFileUrl())
-			.workspaceWarrantFileUrl(workspaceRequest.getWorkspaceWarrantFileUrl())
+			.workspaceCertFileUrl(workspaceCertFileUrl)
+			.workspaceOwnIdentityFileUrl(workspaceOwnIdentityFileUrl)
+			.workspaceWarrantFileUrl(workspaceWarrantFileUrl)
 			.createdAt(workspaceRequest.getCreatedAt())
 			.updatedAt(workspaceRequest.getUpdatedAt())
 			.build();

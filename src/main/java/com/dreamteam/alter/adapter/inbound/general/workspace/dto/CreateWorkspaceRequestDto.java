@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,11 @@ public class CreateWorkspaceRequestDto {
 	@NotBlank
 	@Schema(description = "업장 이름", example = "세븐일레븐")
 	private String bizName;
+
+	@NotBlank
+	@Size(max = 64)
+	@Schema(description = "대표자 성명", example = "홍길동")
+	private String ownerName;
 
 	@NotBlank
 	@Schema(description = "사업자 등록번호", example = "123-45-12345")

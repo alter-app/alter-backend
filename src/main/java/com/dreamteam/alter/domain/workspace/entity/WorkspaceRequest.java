@@ -57,6 +57,9 @@ public class WorkspaceRequest {
 	@Column(name = "business_name", length = 128, nullable = false)
 	private String businessName;
 
+	@Column(name = "owner_name", length = 64, nullable = false)
+	private String ownerName;
+
 	@Column(name = "business_type", length = 128, nullable = false)
 	private String businessType;
 
@@ -93,6 +96,7 @@ public class WorkspaceRequest {
 		User user,
 		String brn,
 		String bizName,
+		String ownerName,
 		String type,
 		String contact,
 		String address,
@@ -107,6 +111,7 @@ public class WorkspaceRequest {
 			.status(WorkspaceRequestStatus.PENDING)
 			.businessRegistrationNo(brn)
 			.businessName(bizName)
+			.ownerName(ownerName)
 			.businessType(type)
 			.contact(contact)
 			.fullAddress(address)

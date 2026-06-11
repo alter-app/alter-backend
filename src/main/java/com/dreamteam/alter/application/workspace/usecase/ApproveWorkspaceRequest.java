@@ -64,6 +64,7 @@ public class ApproveWorkspaceRequest implements ApproveWorkspaceRequestUseCase {
 			workspaceRequest.getContact(),
 			null,
 			WorkspaceStatus.ACTIVATED,
+			workspaceRequest.getOwnerName(),
 			workspaceRequest.getFullAddress(),
 			workspaceRequest.getProvince(),
 			workspaceRequest.getDistrict(),

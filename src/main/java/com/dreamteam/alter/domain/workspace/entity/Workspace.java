@@ -36,6 +36,9 @@ public class Workspace {
     @Column(name = "business_name", length = 128, nullable = false)
     private String businessName;
 
+    @Column(name = "owner_name", length = 64, nullable = false)
+    private String ownerName;
+
     @Column(name = "business_type", length = 128, nullable = false)
     private String businessType; // Enum 으로 정의 고려
 
@@ -88,6 +91,7 @@ public class Workspace {
         String contact,
         String description,
         WorkspaceStatus status,
+        String ownerName,
         String fullAddress,
         String province,
         String district,
@@ -99,6 +103,7 @@ public class Workspace {
             .managerUser(managerUser)
             .businessRegistrationNo(businessRegistrationNo)
             .businessName(businessName)
+            .ownerName(ownerName)
             .businessType(businessType)
             .contact(contact)
             .description(description)

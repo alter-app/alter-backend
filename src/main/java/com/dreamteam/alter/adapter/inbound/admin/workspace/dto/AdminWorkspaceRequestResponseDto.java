@@ -30,6 +30,9 @@ public class AdminWorkspaceRequestResponseDto {
 	@Schema(description = "업장 이름", example = "드림팀 카페")
 	private String businessName;
 
+	@Schema(description = "대표자 성명", example = "홍길동")
+	private String ownerName;
+
 	@Schema(description = "업종", example = "카페")
 	private String businessType;
 
@@ -68,6 +71,7 @@ public class AdminWorkspaceRequestResponseDto {
 			.id(entity.getId())
 			.businessRegistrationNo(entity.getBusinessRegistrationNo())
 			.businessName(entity.getBusinessName())
+			.ownerName(entity.getOwnerName())
 			.businessType(entity.getBusinessType())
 			.contact(entity.getContact())
 			.status(DescribedEnumDto.of(entity.getStatus(), WorkspaceRequestStatus.describe()))
