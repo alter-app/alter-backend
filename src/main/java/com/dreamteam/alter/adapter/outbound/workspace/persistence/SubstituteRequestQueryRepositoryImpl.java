@@ -197,18 +197,10 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .join(workspaceShift.workspace, workspace)
             .join(requesterWorker).on(requesterWorker.id.eq(substituteRequest.requesterId))
             .join(requesterUser).on(requesterUser.id.eq(requesterWorker.user.id))
-            .leftJoin(requesterFile).on(
-                requesterFile.targetType.eq(FileTargetType.USER_PROFILE),
-                requesterFile.targetId.eq(requesterUser.id.stringValue()),
-                requesterFile.status.eq(FileStatus.ATTACHED)
-            )
+            .leftJoin(requesterFile).on(fileConditions(requesterFile, requesterUser))
             .leftJoin(acceptedWorker).on(acceptedWorker.id.eq(substituteRequest.acceptedWorkerId))
             .leftJoin(acceptedUser).on(acceptedUser.id.eq(acceptedWorker.user.id))
-            .leftJoin(acceptedFile).on(
-                acceptedFile.targetType.eq(FileTargetType.USER_PROFILE),
-                acceptedFile.targetId.eq(acceptedUser.id.stringValue()),
-                acceptedFile.status.eq(FileStatus.ATTACHED)
-            )
+            .leftJoin(acceptedFile).on(fileConditions(acceptedFile, acceptedUser))
             .join(workspaceWorker).on(
                 workspaceWorker.workspace.id.eq(workspace.id)
                     .and(workspaceWorker.user.eq(user))
@@ -322,18 +314,10 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .join(workspaceShift.workspace, workspace)
             .join(requesterWorker).on(requesterWorker.id.eq(substituteRequest.requesterId))
             .join(requesterUser).on(requesterUser.id.eq(requesterWorker.user.id))
-            .leftJoin(requesterFile).on(
-                requesterFile.targetType.eq(FileTargetType.USER_PROFILE),
-                requesterFile.targetId.eq(requesterUser.id.stringValue()),
-                requesterFile.status.eq(FileStatus.ATTACHED)
-            )
+            .leftJoin(requesterFile).on(fileConditions(requesterFile, requesterUser))
             .leftJoin(acceptedWorker).on(acceptedWorker.id.eq(substituteRequest.acceptedWorkerId))
             .leftJoin(acceptedUser).on(acceptedUser.id.eq(acceptedWorker.user.id))
-            .leftJoin(acceptedFile).on(
-                acceptedFile.targetType.eq(FileTargetType.USER_PROFILE),
-                acceptedFile.targetId.eq(acceptedUser.id.stringValue()),
-                acceptedFile.status.eq(FileStatus.ATTACHED)
-            )
+            .leftJoin(acceptedFile).on(fileConditions(acceptedFile, acceptedUser))
             .where(
                 substituteRequest.id.eq(requestId)
                     .and(requesterWorker.user.eq(user))
@@ -363,11 +347,7 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .from(substituteRequestTarget)
             .join(targetWorker).on(targetWorker.id.eq(substituteRequestTarget.targetWorkerId))
             .join(targetUser).on(targetUser.id.eq(targetWorker.user.id))
-            .leftJoin(targetFile).on(
-                targetFile.targetType.eq(FileTargetType.USER_PROFILE),
-                targetFile.targetId.eq(targetUser.id.stringValue()),
-                targetFile.status.eq(FileStatus.ATTACHED)
-            )
+            .leftJoin(targetFile).on(fileConditions(targetFile, targetUser))
             .where(substituteRequestTarget.substituteRequest.id.eq(requestId))
             .orderBy(substituteRequestTarget.id.asc())
             .fetch();
@@ -436,18 +416,10 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .join(workspaceShift.workspace, workspace)
             .join(requesterWorker).on(requesterWorker.id.eq(substituteRequest.requesterId))
             .join(requesterUser).on(requesterUser.id.eq(requesterWorker.user.id))
-            .leftJoin(requesterFile).on(
-                requesterFile.targetType.eq(FileTargetType.USER_PROFILE),
-                requesterFile.targetId.eq(requesterUser.id.stringValue()),
-                requesterFile.status.eq(FileStatus.ATTACHED)
-            )
+            .leftJoin(requesterFile).on(fileConditions(requesterFile, requesterUser))
             .leftJoin(acceptedWorker).on(acceptedWorker.id.eq(substituteRequest.acceptedWorkerId))
             .leftJoin(acceptedUser).on(acceptedUser.id.eq(acceptedWorker.user.id))
-            .leftJoin(acceptedFile).on(
-                acceptedFile.targetType.eq(FileTargetType.USER_PROFILE),
-                acceptedFile.targetId.eq(acceptedUser.id.stringValue()),
-                acceptedFile.status.eq(FileStatus.ATTACHED)
-            )
+            .leftJoin(acceptedFile).on(fileConditions(acceptedFile, acceptedUser))
             .where(
                 ObjectUtils.isNotEmpty(workspaceId) ? workspace.id.eq(workspaceId) : null,
                 managerRequestStatusCondition(status),
@@ -540,5 +512,13 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
                     .exists()
             )
             .fetch();
+    }
+
+    private BooleanExpression[] fileConditions(QFile file, QUser user) {
+        return new BooleanExpression[] {
+            file.targetType.eq(FileTargetType.USER_PROFILE),
+            file.targetId.eq(user.id.stringValue()),
+            file.status.eq(FileStatus.ATTACHED)
+        };
     }
 }
