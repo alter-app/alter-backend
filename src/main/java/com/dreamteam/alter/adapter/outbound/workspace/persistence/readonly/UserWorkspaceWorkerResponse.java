@@ -11,5 +11,6 @@ public class UserWorkspaceWorkerResponse {
 
     private Long id;
     private String name;
+    private String profileImageUrl;
 
 }

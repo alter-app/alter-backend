@@ -8,6 +8,9 @@ import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.Recei
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SentSubstituteRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SentSubstituteRequestDetailResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.SubstituteRequestTargetInfo;
+import com.dreamteam.alter.domain.file.entity.QFile;
+import com.dreamteam.alter.domain.file.type.FileStatus;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.QUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspaceWorker;
@@ -123,6 +126,7 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .where(
                 workspaceCondition
                     .and(statusCondition(filter.getStatus()))
+                    .and(substituteRequest.requesterId.ne(workspaceWorker.id))
                     .and(
                         substituteRequest.requestType.eq(SubstituteRequestType.ALL)
                             .or(JPAExpressions.selectFrom(QSubstituteRequestTarget.substituteRequestTarget)
@@ -147,6 +151,8 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
         QWorkspaceWorker requesterWorker = new QWorkspaceWorker("requesterWorker");
         QWorkspaceWorker acceptedWorker = new QWorkspaceWorker("acceptedWorker");
         QWorkspaceWorker myWorker = new QWorkspaceWorker("myWorker");
+        QFile requesterFile = new QFile("requesterFile");
+        QFile acceptedFile = new QFile("acceptedFile");
 
         BooleanExpression workspaceCondition;
         if (ObjectUtils.isNotEmpty(filter.getWorkspaceId())) {
@@ -176,9 +182,11 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
                 workspace.businessName,
                 requesterWorker.id,
                 requesterUser.name,
+                requesterFile.fileUrl,
                 substituteRequest.requestType,
                 acceptedWorker.id,
                 acceptedUser.name,
+                acceptedFile.fileUrl,
                 substituteRequest.status,
                 substituteRequest.requestReason,
                 substituteRequest.createdAt,
@@ -190,8 +198,10 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .join(workspaceShift.workspace, workspace)
             .join(requesterWorker).on(requesterWorker.id.eq(substituteRequest.requesterId))
             .join(requesterUser).on(requesterUser.id.eq(requesterWorker.user.id))
+            .leftJoin(requesterFile).on(fileConditions(requesterFile, requesterUser))
             .leftJoin(acceptedWorker).on(acceptedWorker.id.eq(substituteRequest.acceptedWorkerId))
             .leftJoin(acceptedUser).on(acceptedUser.id.eq(acceptedWorker.user.id))
+            .leftJoin(acceptedFile).on(fileConditions(acceptedFile, acceptedUser))
             .join(workspaceWorker).on(
                 workspaceWorker.workspace.id.eq(workspace.id)
                     .and(workspaceWorker.user.eq(user))
@@ -200,6 +210,7 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .where(
                 workspaceCondition
                     .and(statusCondition(filter.getStatus()))
+                    .and(substituteRequest.requesterId.ne(workspaceWorker.id))
                     .and(
                         substituteRequest.requestType.eq(SubstituteRequestType.ALL)
                             .or(JPAExpressions.selectFrom(QSubstituteRequestTarget.substituteRequestTarget)
@@ -274,7 +285,9 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
         QUser requesterUser = new QUser("requesterUser");
         QWorkspaceWorker acceptedWorker = new QWorkspaceWorker("acceptedWorker");
         QUser acceptedUser = new QUser("acceptedUser");
-        
+        QFile requesterFile = new QFile("requesterFile");
+        QFile acceptedFile = new QFile("acceptedFile");
+
         SentSubstituteRequestDetailResponse requestInfo = queryFactory
             .select(Projections.bean(
                 SentSubstituteRequestDetailResponse.class,
@@ -287,9 +300,11 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
                 workspace.businessName.as("workspaceName"),
                 requesterWorker.id.as("requesterId"),
                 requesterUser.name.as("requesterName"),
+                requesterFile.fileUrl.as("requesterProfileImageUrl"),
                 substituteRequest.requestType.as("requestType"),
                 acceptedWorker.id.as("acceptedWorkerId"),
                 acceptedUser.name.as("acceptedWorkerName"),
+                acceptedFile.fileUrl.as("acceptedWorkerProfileImageUrl"),
                 substituteRequest.status.as("status"),
                 substituteRequest.requestReason.as("requestReason"),
                 substituteRequest.createdAt.as("createdAt"),
@@ -301,8 +316,10 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .join(workspaceShift.workspace, workspace)
             .join(requesterWorker).on(requesterWorker.id.eq(substituteRequest.requesterId))
             .join(requesterUser).on(requesterUser.id.eq(requesterWorker.user.id))
+            .leftJoin(requesterFile).on(fileConditions(requesterFile, requesterUser))
             .leftJoin(acceptedWorker).on(acceptedWorker.id.eq(substituteRequest.acceptedWorkerId))
             .leftJoin(acceptedUser).on(acceptedUser.id.eq(acceptedWorker.user.id))
+            .leftJoin(acceptedFile).on(fileConditions(acceptedFile, acceptedUser))
             .where(
                 substituteRequest.id.eq(requestId)
                     .and(requesterWorker.user.eq(user))
@@ -317,12 +334,14 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
         QUser targetUser = new QUser("targetUser");
         QWorkspaceWorker targetWorker = new QWorkspaceWorker("targetWorker");
         QSubstituteRequestTarget substituteRequestTarget = new QSubstituteRequestTarget("substituteRequestTarget");
+        QFile targetFile = new QFile("targetFile");
 
         List<SubstituteRequestTargetInfo> targets = queryFactory
             .select(Projections.constructor(
                 SubstituteRequestTargetInfo.class,
                 targetWorker.id,
                 targetUser.name,
+                targetFile.fileUrl,
                 substituteRequestTarget.status,
                 substituteRequestTarget.rejectionReason,
                 substituteRequestTarget.respondedAt
@@ -330,6 +349,7 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .from(substituteRequestTarget)
             .join(targetWorker).on(targetWorker.id.eq(substituteRequestTarget.targetWorkerId))
             .join(targetUser).on(targetUser.id.eq(targetWorker.user.id))
+            .leftJoin(targetFile).on(fileConditions(targetFile, targetUser))
             .where(substituteRequestTarget.substituteRequest.id.eq(requestId))
             .orderBy(substituteRequestTarget.id.asc())
             .fetch();
@@ -367,6 +387,8 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
         QUser acceptedUser = new QUser("acceptedUser");
         QWorkspaceWorker requesterWorker = new QWorkspaceWorker("requesterWorker");
         QWorkspaceWorker acceptedWorker = new QWorkspaceWorker("acceptedWorker");
+        QFile requesterFile = new QFile("requesterFile");
+        QFile acceptedFile = new QFile("acceptedFile");
 
         return queryFactory
             .select(Projections.constructor(
@@ -380,9 +402,11 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
                 workspace.businessName,
                 requesterWorker.id,
                 requesterUser.name,
+                requesterFile.fileUrl,
                 substituteRequest.requestType,
                 acceptedWorker.id,
                 acceptedUser.name,
+                acceptedFile.fileUrl,
                 substituteRequest.status,
                 substituteRequest.requestReason,
                 substituteRequest.createdAt,
@@ -394,8 +418,10 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .join(workspaceShift.workspace, workspace)
             .join(requesterWorker).on(requesterWorker.id.eq(substituteRequest.requesterId))
             .join(requesterUser).on(requesterUser.id.eq(requesterWorker.user.id))
+            .leftJoin(requesterFile).on(fileConditions(requesterFile, requesterUser))
             .leftJoin(acceptedWorker).on(acceptedWorker.id.eq(substituteRequest.acceptedWorkerId))
             .leftJoin(acceptedUser).on(acceptedUser.id.eq(acceptedWorker.user.id))
+            .leftJoin(acceptedFile).on(fileConditions(acceptedFile, acceptedUser))
             .where(
                 ObjectUtils.isNotEmpty(workspaceId) ? workspace.id.eq(workspaceId) : null,
                 managerRequestStatusCondition(status),
@@ -488,5 +514,13 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
                     .exists()
             )
             .fetch();
+    }
+
+    private BooleanExpression[] fileConditions(QFile file, QUser user) {
+        return new BooleanExpression[] {
+            file.targetType.eq(FileTargetType.USER_PROFILE),
+            file.targetId.eq(user.id.stringValue()),
+            file.status.eq(FileStatus.ATTACHED)
+        };
     }
 }

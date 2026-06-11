@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 public class SubstituteRequestTargetInfo {
     private Long targetWorkerId;
     private String targetWorkerName;
+    private String profileImageUrl;
     private SubstituteRequestTargetStatus status;
     private String rejectionReason;
     private LocalDateTime respondedAt;

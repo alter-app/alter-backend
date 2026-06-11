@@ -22,6 +22,8 @@ public class WorkspaceWorkerResponse {
     @Enumerated(EnumType.STRING)
     private UserGender gender;
 
+    private String profileImageUrl;
+
     /**
      * User 엔티티로부터 DTO 생성
      */
@@ -30,7 +32,8 @@ public class WorkspaceWorkerResponse {
             user.getId(),
             user.getName(),
             user.getContact(),
-            user.getGender()
+            user.getGender(),
+            null
         );
     }
 

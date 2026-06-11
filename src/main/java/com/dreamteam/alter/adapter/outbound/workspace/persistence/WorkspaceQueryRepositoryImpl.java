@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import com.dreamteam.alter.domain.file.type.FileStatus;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
@@ -21,6 +23,7 @@ import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserW
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceWorkerListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.UserWorkspaceWorkerResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceWorkerResponse;
+import com.dreamteam.alter.domain.file.entity.QFile;
 import com.dreamteam.alter.domain.reputation.entity.QReputationSummary;
 import com.dreamteam.alter.domain.reputation.type.ReputationType;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
@@ -159,6 +162,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUser qUser = QUser.user;
         QWorkspaceShift qWorkspaceShift = QWorkspaceShift.workspaceShift;
+        QFile qFile = QFile.file;
 
         return queryFactory
             .select(Projections.constructor(
@@ -169,7 +173,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                     qUser.id,
                     qUser.name,
                     qUser.contact,
-                    qUser.gender
+                    qUser.gender,
+                    qFile.fileUrl
                 ),
                 qWorkspaceWorker.status,
                 Expressions.constant(WorkerPositionType.WORKER),
@@ -188,6 +193,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspaceShift.startDateTime.gt(LocalDateTime.now()),
                 qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
             )
+            .leftJoin(qFile)
+            .on(fileConditions(qFile, qUser))
             .where(
                 qWorkspace.managerUser.eq(managerUser),
                 qWorkspace.id.eq(workspaceId),
@@ -205,6 +212,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qUser.name,
                 qUser.contact,
                 qUser.gender,
+                qFile.fileUrl,
                 qWorkspaceWorker.status,
                 qWorkspaceWorker.colorCode,
                 qWorkspaceWorker.employedAt,
@@ -262,6 +270,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUser qUser = QUser.user;
         QWorkspaceShift qWorkspaceShift = QWorkspaceShift.workspaceShift;
+        QFile qFile = QFile.file;
 
         return queryFactory
             .select(Projections.constructor(
@@ -270,7 +279,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 Projections.constructor(
                     UserWorkspaceWorkerResponse.class,
                     qUser.id,
-                    qUser.name
+                    qUser.name,
+                    qFile.fileUrl
                 ),
                 Expressions.constant(WorkerPositionType.WORKER),
                 qWorkspaceWorker.employedAt,
@@ -286,6 +296,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspaceShift.startDateTime.gt(LocalDateTime.now()),
                 qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
             )
+            .leftJoin(qFile)
+            .on(fileConditions(qFile, qUser))
             .where(
                 qWorkspace.id.eq(workspaceId),
                 qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
@@ -295,6 +307,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspaceWorker.id,
                 qUser.id,
                 qUser.name,
+                qFile.fileUrl,
                 qWorkspaceWorker.employedAt,
                 qWorkspaceWorker.createdAt
             )
@@ -353,6 +366,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUser qUser = QUser.user;
         QWorkspaceShift qWorkspaceShift = QWorkspaceShift.workspaceShift;
+        QFile qFile = QFile.file;
 
         BooleanExpression excludeCondition = ObjectUtils.isNotEmpty(self)
             ? qUser.id.ne(self.getId())
@@ -376,7 +390,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 Projections.constructor(
                     UserWorkspaceWorkerResponse.class,
                     qUser.id,
-                    qUser.name
+                    qUser.name,
+                    qFile.fileUrl
                 ),
                 Expressions.constant(WorkerPositionType.WORKER),
                 qWorkspaceWorker.employedAt,
@@ -392,6 +407,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspaceShift.startDateTime.gt(LocalDateTime.now()),
                 qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)
             )
+            .leftJoin(qFile)
+            .on(fileConditions(qFile, qUser))
             .where(
                 qWorkspace.id.eq(workspaceId),
                 qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
@@ -403,6 +420,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspaceWorker.id,
                 qUser.id,
                 qUser.name,
+                qFile.fileUrl,
                 qWorkspaceWorker.employedAt,
                 qWorkspaceWorker.createdAt
             )
@@ -473,6 +491,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QManagerUser qManagerUser = QManagerUser.managerUser;
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUser qUser = QUser.user;
+        QFile qFile = QFile.file;
 
         return queryFactory
             .select(Projections.constructor(
@@ -481,7 +500,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 Projections.constructor(
                     UserWorkspaceWorkerResponse.class,
                     qUser.id,
-                    qUser.name
+                    qUser.name,
+                    qFile.fileUrl
                 ),
                 Expressions.constant(WorkerPositionType.OWNER),
                 qManagerUser.createdAt
@@ -489,6 +509,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .from(qManagerUser)
             .join(qManagerUser.user, qUser)
             .join(qManagerUser.workspaces, qWorkspace)
+            .leftJoin(qFile)
+            .on(fileConditions(qFile, qUser))
             .where(
                 qWorkspace.id.eq(workspaceId),
                 cursorConditions(qManagerUser, pageRequest.cursor())
@@ -525,6 +547,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QManagerUser qManagerUser = QManagerUser.managerUser;
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUser qUser = QUser.user;
+        QFile qFile = QFile.file;
 
         return queryFactory
             .select(Projections.constructor(
@@ -535,7 +558,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                     qUser.id,
                     qUser.name,
                     qUser.contact,
-                    qUser.gender
+                    qUser.gender,
+                    qFile.fileUrl
                 ),
                 Expressions.constant(WorkerPositionType.OWNER),
                 qManagerUser.createdAt
@@ -543,6 +567,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .from(qManagerUser)
             .join(qManagerUser.user, qUser)
             .join(qManagerUser.workspaces, qWorkspace)
+            .leftJoin(qFile)
+            .on(fileConditions(qFile, qUser))
             .where(
                 qWorkspace.managerUser.eq(managerUser),
                 qWorkspace.id.eq(workspaceId),
@@ -672,4 +698,11 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 .and(qManagerUser.id.lt(cursor.getId())));
     }
 
+    private BooleanExpression[] fileConditions(QFile file, QUser user) {
+        return new BooleanExpression[] {
+            file.targetType.eq(FileTargetType.USER_PROFILE),
+            file.targetId.eq(user.id.stringValue()),
+            file.status.eq(FileStatus.ATTACHED)
+        };
+    }
 }
