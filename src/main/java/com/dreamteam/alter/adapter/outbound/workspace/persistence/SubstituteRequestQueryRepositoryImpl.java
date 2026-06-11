@@ -126,6 +126,7 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .where(
                 workspaceCondition
                     .and(statusCondition(filter.getStatus()))
+                    .and(substituteRequest.requesterId.ne(workspaceWorker.id))
                     .and(
                         substituteRequest.requestType.eq(SubstituteRequestType.ALL)
                             .or(JPAExpressions.selectFrom(QSubstituteRequestTarget.substituteRequestTarget)
@@ -209,6 +210,7 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .where(
                 workspaceCondition
                     .and(statusCondition(filter.getStatus()))
+                    .and(substituteRequest.requesterId.ne(workspaceWorker.id))
                     .and(
                         substituteRequest.requestType.eq(SubstituteRequestType.ALL)
                             .or(JPAExpressions.selectFrom(QSubstituteRequestTarget.substituteRequestTarget)
