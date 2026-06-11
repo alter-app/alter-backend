@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dreamteam.alter.application.auth.service.AuthService;
 import com.dreamteam.alter.application.file.FileDeleteService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -12,6 +13,7 @@ import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserRepository;
 import com.dreamteam.alter.domain.user.type.ManagerUserStatus;
@@ -35,6 +37,7 @@ public class ApproveWorkspaceRequest implements ApproveWorkspaceRequestUseCase {
 	private final WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
 	private final FileQueryRepository fileQueryRepository;
 	private final FileDeleteService fileDeleteService;
+	private final AuthService authService;
 
 	@Override
 	public void execute(Long workspaceRequestId) {
@@ -43,8 +46,15 @@ public class ApproveWorkspaceRequest implements ApproveWorkspaceRequestUseCase {
 
 		workspaceRequest.approve();
 
-		ManagerUser managerUser = managerUserQueryRepository.findByUserId(workspaceRequest.getUser().getId())
-			.orElseGet(() -> managerUserRepository.save(ManagerUser.create(workspaceRequest.getUser(), ManagerUserStatus.ACTIVATED)));
+		User requester = workspaceRequest.getUser();
+
+		// USER -> MANAGER 승급. 실제로 승급된 경우에만 기존 인증 세션을 무효화한다.
+		if (requester.promoteToManager()) {
+			authService.revokeAllExistingAuthorizations(requester);
+		}
+
+		ManagerUser managerUser = managerUserQueryRepository.findByUserId(requester.getId())
+			.orElseGet(() -> managerUserRepository.save(ManagerUser.create(requester, ManagerUserStatus.ACTIVATED)));
 
 		Workspace workspace = Workspace.create(
 			managerUser,

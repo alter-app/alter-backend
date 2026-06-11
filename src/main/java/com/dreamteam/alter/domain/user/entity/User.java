@@ -165,6 +165,19 @@ public class User {
     }
 
     /**
+     * 매니저로 권한을 승급합니다.
+     *
+     * @return 실제로 USER에서 MANAGER로 승급된 경우 true, 이미 매니저 이상이면 false
+     */
+    public boolean promoteToManager() {
+        if (UserRole.ROLE_USER.equals(this.role)) {
+            this.role = UserRole.ROLE_MANAGER;
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * 탈퇴 처리
      */
     public void withdraw() {
