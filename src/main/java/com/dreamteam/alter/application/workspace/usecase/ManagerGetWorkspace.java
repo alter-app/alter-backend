@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.Manag
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceImagesUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerGetWorkspaceUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.util.ObjectUtils;
 public class ManagerGetWorkspace implements ManagerGetWorkspaceUseCase {
 
     private final WorkspaceQueryRepository workspaceQueryRepository;
+    private final ManagerGetWorkspaceImagesUseCase managerGetWorkspaceImages;
 
     @Override
     public ManagerWorkspaceResponseDto execute(ManagerActor actor, Long workspaceId) {
@@ -28,7 +30,7 @@ public class ManagerGetWorkspace implements ManagerGetWorkspaceUseCase {
             throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
         }
 
-        return ManagerWorkspaceResponseDto.of(workspace);
+        return ManagerWorkspaceResponseDto.of(workspace, managerGetWorkspaceImages.execute(actor, workspaceId));
     }
 
 }
