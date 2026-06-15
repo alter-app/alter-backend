@@ -111,6 +111,7 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 			.collect(Collectors.toMap(File::getId, Function.identity()));
 
 		List<WorkspaceImage> workspaceImages = new ArrayList<>();
+		int sortOrder = 0;
 		for (WorkspaceRequestImage requestImage : requestImages) {
 			File file = fileMap.get(requestImage.getFileId());
 			if (file == null) {
@@ -118,7 +119,8 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 			}
 			// 신청(requestId)에 붙어있던 파일을 생성된 업장(workspaceId)으로 재첨부
 			file.attach(String.valueOf(workspace.getId()));
-			workspaceImages.add(WorkspaceImage.create(workspace, requestImage.getFileId(), requestImage.getSortOrder()));
+			// 누락 파일이 있어도 노출 순서가 비연속되지 않도록 재계산
+			workspaceImages.add(WorkspaceImage.create(workspace, requestImage.getFileId(), sortOrder++));
 		}
 		workspaceImageRepository.saveAll(workspaceImages);
 	}

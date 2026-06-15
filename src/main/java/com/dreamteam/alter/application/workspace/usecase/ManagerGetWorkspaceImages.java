@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -49,12 +50,15 @@ public class ManagerGetWorkspaceImages implements ManagerGetWorkspaceImagesUseCa
         Map<String, File> fileMap = fileQueryRepository.findAllByIdIn(fileIds).stream()
             .collect(Collectors.toMap(File::getId, Function.identity()));
 
-        return images.stream()
-            .filter(image -> fileMap.containsKey(image.getFileId()))
-            .map(image -> {
-                File file = fileMap.get(image.getFileId());
-                return WorkspaceImageResponseDto.of(file.getId(), fileUrlService.resolve(file).getUrl(), image.getSortOrder());
-            })
-            .toList();
+        List<WorkspaceImageResponseDto> result = new ArrayList<>();
+        int sortOrder = 0;
+        for (WorkspaceImage image : images) {
+            File file = fileMap.get(image.getFileId());
+            if (file == null) {
+                continue;
+            }
+            result.add(WorkspaceImageResponseDto.of(file.getId(), fileUrlService.resolve(file).getUrl(), sortOrder++));
+        }
+        return result;
     }
 }
