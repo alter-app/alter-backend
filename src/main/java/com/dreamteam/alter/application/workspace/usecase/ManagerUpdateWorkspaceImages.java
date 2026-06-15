@@ -47,7 +47,7 @@ public class ManagerUpdateWorkspaceImages implements ManagerUpdateWorkspaceImage
     public void execute(ManagerActor actor, Long workspaceId, UpdateWorkspaceImagesRequestDto request) {
         List<String> newFileIds = CollectionUtils.isEmpty(request.getFileIds())
             ? List.of()
-            : request.getFileIds();
+            : request.getFileIds().stream().distinct().toList();
 
         if (newFileIds.size() > MAX_IMAGE_COUNT) {
             throw new CustomException(ErrorCode.FILE_LIMIT_EXCEEDED);
