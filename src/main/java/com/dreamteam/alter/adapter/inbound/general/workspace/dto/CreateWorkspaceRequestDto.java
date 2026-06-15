@@ -70,5 +70,5 @@ public class CreateWorkspaceRequestDto {
 
 	@Size(max = 5, message = "대표이미지는 최대 5개까지 등록할 수 있습니다.")
 	@Schema(description = "업장 대표이미지 파일 ID 목록 (최대 5개, 목록 순서가 노출 순서)", example = "[\"01959b4e-4e5f-7c3a-8d9e-0f1a2b3c4d5e\"]")
-	private List<String> representativeImageFileIds;
+	private List<@NotBlank String> representativeImageFileIds;
 }
