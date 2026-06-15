@@ -56,8 +56,10 @@ public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 		}
 		attachFiles.executeMap(fileMap, savedWorkspaceRequestId.toString(), user.getId());
 
-		List<String> representativeImageFileIds = request.getRepresentativeImageFileIds();
-		if (!CollectionUtils.isEmpty(representativeImageFileIds)) {
+		List<String> representativeImageFileIds = CollectionUtils.isEmpty(request.getRepresentativeImageFileIds())
+			? List.of()
+			: request.getRepresentativeImageFileIds().stream().distinct().toList();
+		if (!representativeImageFileIds.isEmpty()) {
 			attachFiles.execute(
 				representativeImageFileIds,
 				FileTargetType.WORKSPACE_REPRESENTATIVE_IMAGE,
