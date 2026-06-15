@@ -19,9 +19,4 @@ public class WorkspaceImageQueryRepositoryImpl implements WorkspaceImageQueryRep
     public List<WorkspaceImage> findAllByWorkspaceId(Long workspaceId) {
         return workspaceImageJpaRepository.findByWorkspaceIdOrderBySortOrderAsc(workspaceId);
     }
-
-    @Override
-    public long countByWorkspaceId(Long workspaceId) {
-        return workspaceImageJpaRepository.countByWorkspaceId(workspaceId);
-    }
 }

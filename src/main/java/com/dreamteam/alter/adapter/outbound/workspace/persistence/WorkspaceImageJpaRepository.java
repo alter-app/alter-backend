@@ -8,5 +8,4 @@ import com.dreamteam.alter.domain.workspace.entity.WorkspaceImage;
 
 public interface WorkspaceImageJpaRepository extends JpaRepository<WorkspaceImage, Long> {
     List<WorkspaceImage> findByWorkspaceIdOrderBySortOrderAsc(Long workspaceId);
-    long countByWorkspaceId(Long workspaceId);
 }
