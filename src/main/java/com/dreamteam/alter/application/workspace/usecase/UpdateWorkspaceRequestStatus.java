@@ -1,6 +1,11 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,9 +21,13 @@ import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserRepository;
 import com.dreamteam.alter.domain.user.type.ManagerUserStatus;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.dreamteam.alter.domain.workspace.entity.WorkspaceImage;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
+import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequestImage;
 import com.dreamteam.alter.domain.workspace.port.inbound.UpdateWorkspaceRequestStatusUseCase;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceImageRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRepository;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestImageQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceRequestStatus;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
@@ -34,6 +43,8 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 	private final WorkspaceRepository workspaceRepository;
 	private final ManagerUserQueryRepository managerUserQueryRepository;
 	private final ManagerUserRepository managerUserRepository;
+	private final WorkspaceImageRepository workspaceImageRepository;
+	private final WorkspaceRequestImageQueryRepository workspaceRequestImageQueryRepository;
 	private final FileQueryRepository fileQueryRepository;
 	private final FileDeleteService fileDeleteService;
 
@@ -77,9 +88,38 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 
 		workspaceRepository.save(workspace);
 
+		attachRepresentativeImages(workspaceRequestId, workspace);
+
 		Optional<File> file = fileQueryRepository.findByTargetTypeAndTargetId(
 			FileTargetType.WORKSPACE_OWN_IDENTITY, String.valueOf(workspaceRequestId));
 
 		file.ifPresent(fileDeleteService::delete);
+	}
+
+	private void attachRepresentativeImages(Long workspaceRequestId, Workspace workspace) {
+		List<WorkspaceRequestImage> requestImages =
+			workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(workspaceRequestId);
+
+		if (requestImages.isEmpty()) {
+			return;
+		}
+
+		List<String> fileIds = requestImages.stream()
+			.map(WorkspaceRequestImage::getFileId)
+			.toList();
+		Map<String, File> fileMap = fileQueryRepository.findAllByIdIn(fileIds).stream()
+			.collect(Collectors.toMap(File::getId, Function.identity()));
+
+		List<WorkspaceImage> workspaceImages = new ArrayList<>();
+		for (WorkspaceRequestImage requestImage : requestImages) {
+			File file = fileMap.get(requestImage.getFileId());
+			if (file == null) {
+				continue;
+			}
+			// 신청(requestId)에 붙어있던 파일을 생성된 업장(workspaceId)으로 재첨부
+			file.attach(String.valueOf(workspace.getId()));
+			workspaceImages.add(WorkspaceImage.create(workspace, requestImage.getFileId(), requestImage.getSortOrder()));
+		}
+		workspaceImageRepository.saveAll(workspaceImages);
 	}
 }

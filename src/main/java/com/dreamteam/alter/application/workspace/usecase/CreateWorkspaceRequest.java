@@ -1,17 +1,22 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
+import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequestImage;
 import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceRequestUseCase;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestImageRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 
 	private final WorkspaceRequestRepository workspaceRequestRepository;
+	private final WorkspaceRequestImageRepository workspaceRequestImageRepository;
 	private final AttachFilesUseCase attachFiles;
 
 	@Override
@@ -49,5 +55,21 @@ public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 			fileMap.put(request.getWorkspaceWarrantFileId(), FileTargetType.WORKSPACE_WARRANT);
 		}
 		attachFiles.executeMap(fileMap, savedWorkspaceRequestId.toString(), user.getId());
+
+		List<String> representativeImageFileIds = request.getRepresentativeImageFileIds();
+		if (!CollectionUtils.isEmpty(representativeImageFileIds)) {
+			attachFiles.execute(
+				representativeImageFileIds,
+				FileTargetType.WORKSPACE_REPRESENTATIVE_IMAGE,
+				savedWorkspaceRequestId.toString(),
+				user.getId()
+			);
+
+			List<WorkspaceRequestImage> images = new ArrayList<>();
+			for (int sortOrder = 0; sortOrder < representativeImageFileIds.size(); sortOrder++) {
+				images.add(WorkspaceRequestImage.create(workspaceRequest, representativeImageFileIds.get(sortOrder), sortOrder));
+			}
+			workspaceRequestImageRepository.saveAll(images);
+		}
 	}
 }
