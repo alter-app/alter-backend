@@ -33,7 +33,9 @@ import com.dreamteam.alter.domain.workspace.type.WorkspaceRequestStatus;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service("updateWorkspaceRequestStatus")
 @RequiredArgsConstructor
 @Transactional
@@ -115,6 +117,9 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 		for (WorkspaceRequestImage requestImage : requestImages) {
 			File file = fileMap.get(requestImage.getFileId());
 			if (file == null) {
+				// 신청~승인 사이에 파일이 삭제된 경우. 일부만 마이그레이션되므로 운영 추적용 경고
+				log.warn("업장 대표이미지 마이그레이션 중 파일 누락. workspaceRequestId={}, workspaceId={}, fileId={}",
+					workspaceRequestId, workspace.getId(), requestImage.getFileId());
 				continue;
 			}
 			// 신청(requestId)에 붙어있던 파일을 생성된 업장(workspaceId)으로 재첨부
