@@ -2,6 +2,9 @@ package com.dreamteam.alter.domain.workspace.entity;
 
 import java.time.LocalDateTime;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
+
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -58,6 +61,7 @@ public class WorkspaceImage {
     private LocalDateTime updatedAt;
 
     public static WorkspaceImage create(Workspace workspace, String fileId, int sortOrder) {
+        validateSortOrder(sortOrder);
         return WorkspaceImage.builder()
             .workspace(workspace)
             .fileId(fileId)
@@ -66,6 +70,13 @@ public class WorkspaceImage {
     }
 
     public void updateSortOrder(int sortOrder) {
+        validateSortOrder(sortOrder);
         this.sortOrder = sortOrder;
+    }
+
+    private static void validateSortOrder(int sortOrder) {
+        if (sortOrder < 0) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "노출 순서는 0 이상이어야 합니다.");
+        }
     }
 }
