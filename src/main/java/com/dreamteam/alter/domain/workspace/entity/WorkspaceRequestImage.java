@@ -16,7 +16,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,10 +24,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(
-    name = "workspace_request_images",
-    uniqueConstraints = @UniqueConstraint(name = "uk_workspace_request_images_request_file", columnNames = {"workspace_request_id", "file_id"})
-)
+@Table(name = "workspace_request_images")
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
