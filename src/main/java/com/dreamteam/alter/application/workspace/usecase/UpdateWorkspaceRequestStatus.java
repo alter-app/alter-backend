@@ -17,30 +17,43 @@ import com.dreamteam.alter.domain.user.port.outbound.ManagerUserRepository;
 import com.dreamteam.alter.domain.user.type.ManagerUserStatus;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
-import com.dreamteam.alter.domain.workspace.port.inbound.ApproveWorkspaceRequestUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.UpdateWorkspaceRequestStatusUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceRequestStatus;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
 
 import lombok.RequiredArgsConstructor;
 
-@Service("approveWorkspaceRequest")
+@Service("updateWorkspaceRequestStatus")
 @RequiredArgsConstructor
 @Transactional
-public class ApproveWorkspaceRequest implements ApproveWorkspaceRequestUseCase {
+public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatusUseCase {
 
+	private final WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
 	private final WorkspaceRepository workspaceRepository;
 	private final ManagerUserQueryRepository managerUserQueryRepository;
 	private final ManagerUserRepository managerUserRepository;
-	private final WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
 	private final FileQueryRepository fileQueryRepository;
 	private final FileDeleteService fileDeleteService;
 
 	@Override
-	public void execute(Long workspaceRequestId) {
-		WorkspaceRequest workspaceRequest = workspaceRequestQueryRepository.findByIdWithUser(workspaceRequestId)
-			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 업장 등록 요청을 찾을 수 없습니다."));
+	public void execute(Long workspaceRequestId, WorkspaceRequestStatus status) {
+		if (status != WorkspaceRequestStatus.ACTIVATED && status != WorkspaceRequestStatus.REVOKED) {
+			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "ACTIVATED 또는 REVOKED 만 설정 가능합니다.");
+		}
 
+		WorkspaceRequest workspaceRequest = workspaceRequestQueryRepository.findByIdWithUser(workspaceRequestId)
+			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 업장 등록 신청을 찾을 수 없습니다."));
+
+		if (status == WorkspaceRequestStatus.ACTIVATED) {
+			approve(workspaceRequest, workspaceRequestId);
+		} else {
+			workspaceRequest.reject();
+		}
+	}
+
+	private void approve(WorkspaceRequest workspaceRequest, Long workspaceRequestId) {
 		workspaceRequest.approve();
 
 		ManagerUser managerUser = managerUserQueryRepository.findByUserId(workspaceRequest.getUser().getId())
