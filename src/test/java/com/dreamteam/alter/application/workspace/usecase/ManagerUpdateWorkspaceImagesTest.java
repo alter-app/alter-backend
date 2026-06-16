@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceImageRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.UpdateWorkspaceImagesRequestDto;
 import com.dreamteam.alter.application.file.FileDeleteService;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -24,8 +25,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -68,11 +71,15 @@ class ManagerUpdateWorkspaceImagesTest {
     private ArgumentCaptor<List<String>> fileIdsCaptor;
 
     private UpdateWorkspaceImagesRequestDto request(String... fileIds) {
-        return new UpdateWorkspaceImagesRequestDto(List.of(fileIds));
+        Set<WorkspaceImageRequestDto> images = new LinkedHashSet<>();
+        for (int i = 0; i < fileIds.length; i++) {
+            images.add(new WorkspaceImageRequestDto(fileIds[i], i));
+        }
+        return new UpdateWorkspaceImagesRequestDto(images);
     }
 
     @Test
-    @DisplayName("5개를 초과하면 FILE_LIMIT_EXCEEDED 예외가 발생한다")
+    @DisplayName("5개를 초과하면 ILLEGAL_ARGUMENT 예외가 발생한다")
     void execute_5개초과_예외() {
         // given
         ManagerActor actor = mock(ManagerActor.class);
@@ -81,7 +88,7 @@ class ManagerUpdateWorkspaceImagesTest {
         assertThatThrownBy(() -> managerUpdateWorkspaceImages.execute(
             actor, 1L, request("f1", "f2", "f3", "f4", "f5", "f6")))
             .isInstanceOf(CustomException.class)
-            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.FILE_LIMIT_EXCEEDED));
+            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
         then(workspaceImageRepository).should(never()).saveAll(any());
     }
 

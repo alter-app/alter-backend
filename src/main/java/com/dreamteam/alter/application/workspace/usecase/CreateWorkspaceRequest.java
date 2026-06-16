@@ -7,8 +7,8 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceImageRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -56,9 +56,8 @@ public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 		}
 		attachFiles.executeMap(fileMap, savedWorkspaceRequestId.toString(), user.getId());
 
-		List<String> representativeImageFileIds = CollectionUtils.isEmpty(request.getRepresentativeImageFileIds())
-			? List.of()
-			: request.getRepresentativeImageFileIds().stream().distinct().toList();
+		List<String> representativeImageFileIds =
+			WorkspaceImageRequestDto.toOrderedFileIds(request.getRepresentativeImages());
 		if (!representativeImageFileIds.isEmpty()) {
 			attachFiles.execute(
 				representativeImageFileIds,

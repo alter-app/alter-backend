@@ -1,9 +1,12 @@
 package com.dreamteam.alter.adapter.inbound.general.workspace.dto;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Set;
+
+import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceImageRequestDto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -69,6 +72,6 @@ public class CreateWorkspaceRequestDto {
 	private String workspaceWarrantFileId;
 
 	@Size(max = 5, message = "대표이미지는 최대 5개까지 등록할 수 있습니다.")
-	@Schema(description = "업장 대표이미지 파일 ID 목록 (최대 5개, 목록 순서가 노출 순서)", example = "[\"01959b4e-4e5f-7c3a-8d9e-0f1a2b3c4d5e\"]")
-	private List<@NotBlank String> representativeImageFileIds;
+	@Schema(description = "업장 대표이미지 목록 (최대 5개, fileId 중복 자동 제거, sortOrder 오름차순으로 노출)")
+	private Set<@Valid WorkspaceImageRequestDto> representativeImages;
 }

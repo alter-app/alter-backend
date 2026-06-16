@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceImageRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -16,7 +17,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -89,7 +92,11 @@ class CreateWorkspaceRequestTest {
         given(workspaceRequestRepository.save(any())).willReturn(1L);
 
         CreateWorkspaceRequestDto dto = baseRequest();
-        dto.setRepresentativeImageFileIds(List.of("img1", "img1", "img2"));
+        Set<WorkspaceImageRequestDto> images = new LinkedHashSet<>();
+        images.add(new WorkspaceImageRequestDto("img1", 0));
+        images.add(new WorkspaceImageRequestDto("img1", 1)); // 동일 fileId → 무시
+        images.add(new WorkspaceImageRequestDto("img2", 2));
+        dto.setRepresentativeImages(images);
 
         // when
         createWorkspaceRequest.execute(user, dto);

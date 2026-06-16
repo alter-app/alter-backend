@@ -41,7 +41,7 @@ public interface ManagerWorkspaceImageControllerSpec {
         @PathVariable Long workspaceId
     );
 
-    @Operation(summary = "매니저 - 업장 대표이미지 수정 (전체 교체)", description = "전달한 파일 ID 목록으로 대표이미지를 전체 교체합니다. 목록 순서가 노출 순서이며, 추가/삭제/순서변경을 한 번에 처리합니다. 최대 5개.")
+    @Operation(summary = "매니저 - 업장 대표이미지 수정 (전체 교체)", description = "전달한 대표이미지 목록으로 전체 교체합니다. sortOrder 오름차순이 노출 순서이며(미지정 시 후순위), 추가/삭제/순서변경을 한 번에 처리합니다. 최대 5개.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "대표이미지 수정 성공"),
         @ApiResponse(responseCode = "400", description = "400 Error 실패 케이스",
@@ -55,7 +55,7 @@ public interface ManagerWorkspaceImageControllerSpec {
                     ),
                     @ExampleObject(
                         name = "대표이미지는 최대 5개까지 등록할 수 있습니다.",
-                        value = "{\"code\" : \"B026\"}"
+                        value = "{\"code\" : \"B001\"}"
                     ),
                     @ExampleObject(
                         name = "존재하지 않는 파일입니다.",
