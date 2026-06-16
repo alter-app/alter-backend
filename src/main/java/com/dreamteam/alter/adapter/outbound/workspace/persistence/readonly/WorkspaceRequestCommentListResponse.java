@@ -11,10 +11,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class WorkspaceReasonCommentListResponse {
+public class WorkspaceRequestCommentListResponse {
 
 	private Long id;
-	private Long workspaceReasonId;
+	private Long workspaceRequestId;
 	private Long userId;
 	private CommentOwner commentOwner;
 	private String comment;
