@@ -47,4 +47,14 @@ public interface ManagerWorkspaceRequestControllerSpec {
     ResponseEntity<CommonApiResponse<WorkspaceRequestResponseDto>> getWorkspaceRequestDetail(
         @PathVariable Long workspaceRequestId
     );
+
+    @Operation(summary = "매니저 - 업장 등록 신청 취소")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "업장 등록 신청 취소 성공"),
+        @ApiResponse(responseCode = "404", description = "등록 신청한 업장을 찾을 수 없습니다. (NOT_FOUND)"),
+        @ApiResponse(responseCode = "409", description = "취소할 수 없는 상태입니다. (CONFLICT)")
+    })
+    ResponseEntity<CommonApiResponse<Void>> cancelWorkspaceRequest(
+        @PathVariable Long workspaceRequestId
+    );
 }
