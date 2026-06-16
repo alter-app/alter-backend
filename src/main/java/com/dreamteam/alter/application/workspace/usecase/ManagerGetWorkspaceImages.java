@@ -22,7 +22,9 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceImageQueryRep
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service("managerGetWorkspaceImages")
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -55,6 +57,8 @@ public class ManagerGetWorkspaceImages implements ManagerGetWorkspaceImagesUseCa
         for (WorkspaceImage image : images) {
             File file = fileMap.get(image.getFileId());
             if (file == null) {
+                // WorkspaceImage가 참조하는 파일이 조회되지 않음. 데이터 정합성 이상 신호이므로 추적용 경고
+                log.warn("업장 대표이미지 조회 중 파일 누락. workspaceId={}, fileId={}", workspaceId, image.getFileId());
                 continue;
             }
             result.add(WorkspaceImageResponseDto.of(file.getId(), fileUrlService.resolve(file).getUrl(), sortOrder++));
