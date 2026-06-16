@@ -3,8 +3,10 @@ package com.dreamteam.alter.adapter.inbound.manager.workspace.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,10 +17,9 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestResponseDto;
-import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
-import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.workspace.port.inbound.CancelWorkspaceRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestUseCase;
@@ -30,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/manager/workspace-requests")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('MANAGER')")
 @Validated
 public class ManagerWorkspaceRequestController implements ManagerWorkspaceRequestControllerSpec {
 
@@ -41,6 +43,9 @@ public class ManagerWorkspaceRequestController implements ManagerWorkspaceReques
 
     @Resource(name = "getWorkspaceRequest")
     private final GetWorkspaceRequestUseCase getWorkspaceRequest;
+
+    @Resource(name = "cancelWorkspaceRequest")
+    private final CancelWorkspaceRequestUseCase cancelWorkspaceRequest;
 
     @Override
     @PostMapping
@@ -66,5 +71,15 @@ public class ManagerWorkspaceRequestController implements ManagerWorkspaceReques
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
         return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceRequest.execute(actor.getManagerUser().getUser(), workspaceRequestId)));
+    }
+
+    @Override
+    @PatchMapping("/{workspaceRequestId}/cancel")
+    public ResponseEntity<CommonApiResponse<Void>> cancelWorkspaceRequest(
+        @PathVariable Long workspaceRequestId
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        cancelWorkspaceRequest.execute(actor.getManagerUser().getUser(), workspaceRequestId);
+        return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }

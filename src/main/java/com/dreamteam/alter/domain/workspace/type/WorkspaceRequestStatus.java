@@ -6,6 +6,7 @@ public enum WorkspaceRequestStatus {
 	PENDING,
 	ACTIVATED,
 	REVOKED,
+	CANCELLED,
 	;
 
 
@@ -13,7 +14,8 @@ public enum WorkspaceRequestStatus {
 		return Map.of(
 			WorkspaceRequestStatus.PENDING, "승인 대기",
 			WorkspaceRequestStatus.REVOKED, "반려",
-			WorkspaceRequestStatus.ACTIVATED, "활성화"
+			WorkspaceRequestStatus.ACTIVATED, "활성화",
+			WorkspaceRequestStatus.CANCELLED, "취소"
 		);
 	}
 }
