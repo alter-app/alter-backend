@@ -3,9 +3,11 @@ package com.dreamteam.alter.application.file;
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.domain.file.PresignedUrlResult;
 import com.dreamteam.alter.domain.file.entity.File;
+import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.port.outbound.PresignedUrlCacheRepository;
 import com.dreamteam.alter.domain.file.port.outbound.S3Client;
 import com.dreamteam.alter.domain.file.type.BucketType;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,8 @@ public class FileUrlService {
     private final S3Client s3Client;
 
     private final PresignedUrlCacheRepository presignedUrlCacheRepository;
+
+    private final FileQueryRepository fileQueryRepository;
 
     public PresignedUrlResult getPresignedUrl(File file) {
         return presignedUrlCacheRepository.findByFileId(file.getId())
@@ -37,5 +41,11 @@ public class FileUrlService {
         }
 
         return FileResponseDto.of(file, url);
+    }
+
+    public String resolveUrlByTarget(FileTargetType targetType, String targetId) {
+        return fileQueryRepository.findByTargetTypeAndTargetId(targetType, targetId)
+            .map(file -> resolve(file).getUrl())
+            .orElse(null);
     }
 }

@@ -6,8 +6,10 @@ import org.springframework.util.ObjectUtils;
 
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestResponseDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestResponse;
+import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class GetWorkspaceRequest implements GetWorkspaceRequestUseCase {
 
 	private final WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
+	private final FileUrlService fileUrlService;
 
 	@Override
 	public WorkspaceRequestResponseDto execute(User user, Long workspaceRequestId) {
@@ -29,6 +32,12 @@ public class GetWorkspaceRequest implements GetWorkspaceRequestUseCase {
 			throw new CustomException(ErrorCode.NOT_FOUND, "등록 신청한 업장을 찾을 수 없습니다.");
 		}
 
-		return WorkspaceRequestResponseDto.of(workspaceRequest);
+		String targetId = workspaceRequestId.toString();
+		return WorkspaceRequestResponseDto.of(
+			workspaceRequest,
+			fileUrlService.resolveUrlByTarget(FileTargetType.WORKSPACE_CERTIFICATE, targetId),
+			fileUrlService.resolveUrlByTarget(FileTargetType.WORKSPACE_OWN_IDENTITY, targetId),
+			fileUrlService.resolveUrlByTarget(FileTargetType.WORKSPACE_WARRANT, targetId)
+		);
 	}
 }

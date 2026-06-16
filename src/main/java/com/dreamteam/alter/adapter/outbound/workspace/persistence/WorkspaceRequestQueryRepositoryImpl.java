@@ -8,15 +8,10 @@ import org.springframework.stereotype.Repository;
 import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestListResponse;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestResponse;
-import com.dreamteam.alter.domain.file.entity.QFile;
-import com.dreamteam.alter.domain.file.type.FileStatus;
-import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspaceRequest;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
 import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -78,10 +73,6 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 	@Override
 	public WorkspaceRequestResponse getWorkspaceRequest(Long userId, Long workspaceRequestId) {
 		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
-		QFile certFile = new QFile("certFile");
-		QFile ownIdentityFile = new QFile("ownIdentityFile");
-		QFile warrantFile = new QFile("warrantFile");
-		String targetId = workspaceRequestId.toString();
 
 		return queryFactory
 			.select(Projections.constructor(
@@ -95,30 +86,6 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 				qWorkspaceRequest.latitude,
 				qWorkspaceRequest.longitude,
 				qWorkspaceRequest.status,
-				JPAExpressions
-					.select(certFile.fileUrl)
-					.from(certFile)
-					.where(
-						certFile.targetId.eq(targetId),
-						certFile.targetType.eq(FileTargetType.WORKSPACE_CERTIFICATE),
-						certFile.status.eq(FileStatus.ATTACHED)
-					),
-				JPAExpressions
-					.select(ownIdentityFile.fileUrl)
-					.from(ownIdentityFile)
-					.where(
-						ownIdentityFile.targetId.eq(targetId),
-						ownIdentityFile.targetType.eq(FileTargetType.WORKSPACE_OWN_IDENTITY),
-						ownIdentityFile.status.eq(FileStatus.ATTACHED)
-					),
-				JPAExpressions
-					.select(warrantFile.fileUrl)
-					.from(warrantFile)
-					.where(
-						warrantFile.targetId.eq(targetId),
-						warrantFile.targetType.eq(FileTargetType.WORKSPACE_WARRANT),
-						warrantFile.status.eq(FileStatus.ATTACHED)
-					),
 				qWorkspaceRequest.createdAt,
 				qWorkspaceRequest.updatedAt
 			))
@@ -175,10 +142,6 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 	@Override
 	public WorkspaceRequestResponse getWorkspaceRequest(Long workspaceRequestId) {
 		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
-		QFile certFile = new QFile("certFile");
-		QFile ownIdentityFile = new QFile("ownIdentityFile");
-		QFile warrantFile = new QFile("warrantFile");
-		String targetId = workspaceRequestId.toString();
 
 		return queryFactory
 			.select(Projections.constructor(
@@ -192,30 +155,6 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 				qWorkspaceRequest.latitude,
 				qWorkspaceRequest.longitude,
 				qWorkspaceRequest.status,
-				JPAExpressions
-					.select(certFile.fileUrl)
-					.from(certFile)
-					.where(
-						certFile.targetId.eq(targetId),
-						certFile.targetType.eq(FileTargetType.WORKSPACE_CERTIFICATE),
-						certFile.status.eq(FileStatus.ATTACHED)
-					),
-				JPAExpressions
-					.select(ownIdentityFile.fileUrl)
-					.from(ownIdentityFile)
-					.where(
-						ownIdentityFile.targetId.eq(targetId),
-						ownIdentityFile.targetType.eq(FileTargetType.WORKSPACE_OWN_IDENTITY),
-						ownIdentityFile.status.eq(FileStatus.ATTACHED)
-					),
-				JPAExpressions
-					.select(warrantFile.fileUrl)
-					.from(warrantFile)
-					.where(
-						warrantFile.targetId.eq(targetId),
-						warrantFile.targetType.eq(FileTargetType.WORKSPACE_WARRANT),
-						warrantFile.status.eq(FileStatus.ATTACHED)
-					),
 				qWorkspaceRequest.createdAt,
 				qWorkspaceRequest.updatedAt
 			))

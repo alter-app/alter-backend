@@ -63,7 +63,12 @@ public class WorkspaceRequestResponseDto {
 	@Schema(description = "업장 등록 신청 수정 일시", example = "2023-10-01T12:00:00")
 	private LocalDateTime updatedAt;
 
-	public static WorkspaceRequestResponseDto of(WorkspaceRequestResponse workspaceRequest) {
+	public static WorkspaceRequestResponseDto of(
+		WorkspaceRequestResponse workspaceRequest,
+		String workspaceCertFileUrl,
+		String workspaceOwnIdentityFileUrl,
+		String workspaceWarrantFileUrl
+	) {
 		return WorkspaceRequestResponseDto.builder()
 			.id(workspaceRequest.getId())
 			.businessRegistrationNo(workspaceRequest.getBusinessRegistrationNo())
@@ -74,9 +79,9 @@ public class WorkspaceRequestResponseDto {
 			.fullAddress(workspaceRequest.getFullAddress())
 			.latitude(workspaceRequest.getLatitude())
 			.longitude(workspaceRequest.getLongitude())
-			.workspaceCertFileUrl(workspaceRequest.getWorkspaceCertFileUrl())
-			.workspaceOwnIdentityFileUrl(workspaceRequest.getWorkspaceOwnIdentityFileUrl())
-			.workspaceWarrantFileUrl(workspaceRequest.getWorkspaceWarrantFileUrl())
+			.workspaceCertFileUrl(workspaceCertFileUrl)
+			.workspaceOwnIdentityFileUrl(workspaceOwnIdentityFileUrl)
+			.workspaceWarrantFileUrl(workspaceWarrantFileUrl)
 			.createdAt(workspaceRequest.getCreatedAt())
 			.updatedAt(workspaceRequest.getUpdatedAt())
 			.build();
