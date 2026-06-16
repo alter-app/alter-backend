@@ -12,10 +12,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "유저 - 반려 사유 댓글 등록 DTO")
-public class CreateWorkspaceReasonCommentRequestDto {
+@Schema(description = "업장 등록 신청 댓글 등록 DTO")
+public class CreateWorkspaceRequestCommentRequestDto {
 
-	@Schema(description = "댓글 내용", example = "왜 반려죠")
+	@Schema(description = "댓글 내용", example = "보완 자료 첨부드립니다.")
 	@Size(max = 255)
 	@NotBlank
 	private String comment;

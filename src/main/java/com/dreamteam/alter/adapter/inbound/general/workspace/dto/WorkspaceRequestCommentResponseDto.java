@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceReasonCommentListResponse;
+import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestCommentListResponse;
 import com.dreamteam.alter.domain.workspace.type.CommentOwner;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,14 +18,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-@Schema(description = "업장 등록 요청 반려 댓글 조회 DTO")
-public class WorkspaceReasonCommentResponseDto {
+@Schema(description = "업장 등록 신청 댓글 조회 DTO")
+public class WorkspaceRequestCommentResponseDto {
 
 	@Schema(description = "댓글 ID", example = "1")
 	private Long id;
-
-	@Schema(description = "업장 등록 요청 반려사유 ID", example = "1")
-	private Long workspaceReasonId;
 
 	@Schema(description = "작성 유저 ID", example = "1")
 	private Long userId;
@@ -33,7 +30,7 @@ public class WorkspaceReasonCommentResponseDto {
 	@Schema(description = "댓글 작성자 구분", example = "USER")
 	private CommentOwner commentOwner;
 
-	@Schema(description = "댓글 내용", example = "자료 누락")
+	@Schema(description = "댓글 내용", example = "보완 자료 첨부드립니다.")
 	private String comment;
 
 	@Schema(description = "첨부파일 목록")
@@ -42,17 +39,12 @@ public class WorkspaceReasonCommentResponseDto {
 	@Schema(description = "댓글 생성시각", example = "2026-03-01T10:00:00")
 	private LocalDateTime createdAt;
 
-	public static WorkspaceReasonCommentResponseDto from(WorkspaceReasonCommentListResponse entity) {
-		return from(entity, List.of());
-	}
-
-	public static WorkspaceReasonCommentResponseDto from(
-		WorkspaceReasonCommentListResponse entity,
+	public static WorkspaceRequestCommentResponseDto from(
+		WorkspaceRequestCommentListResponse entity,
 		List<FileResponseDto> files
 	) {
-		return WorkspaceReasonCommentResponseDto.builder()
+		return WorkspaceRequestCommentResponseDto.builder()
 			.id(entity.getId())
-			.workspaceReasonId(entity.getWorkspaceReasonId())
 			.userId(entity.getUserId())
 			.commentOwner(entity.getCommentOwner())
 			.comment(entity.getComment())
