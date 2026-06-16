@@ -50,7 +50,7 @@ public class ManagerUpdateWorkspaceImages implements ManagerUpdateWorkspaceImage
             : request.getFileIds().stream().distinct().toList();
 
         if (newFileIds.size() > MAX_IMAGE_COUNT) {
-            throw new CustomException(ErrorCode.FILE_LIMIT_EXCEEDED);
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "대표이미지는 최대 " + MAX_IMAGE_COUNT + "개까지 등록할 수 있습니다.");
         }
 
         Workspace workspace = workspaceQueryRepository.findById(workspaceId)
@@ -63,19 +63,8 @@ public class ManagerUpdateWorkspaceImages implements ManagerUpdateWorkspaceImage
         Map<String, WorkspaceImage> existingByFileId = existingImages.stream()
             .collect(Collectors.toMap(WorkspaceImage::getFileId, Function.identity()));
 
-        // 1. 빠진 이미지 제거 (파일 soft-delete + WorkspaceImage 삭제)
-        List<WorkspaceImage> removedImages = existingImages.stream()
-            .filter(image -> !newFileIds.contains(image.getFileId()))
-            .toList();
-        if (!removedImages.isEmpty()) {
-            List<String> removedFileIds = removedImages.stream()
-                .map(WorkspaceImage::getFileId)
-                .toList();
-            fileQueryRepository.findAllByIdIn(removedFileIds).forEach(fileDeleteService::delete);
-            workspaceImageRepository.deleteAll(removedImages);
-        }
-
-        // 2. 신규 파일 attach (requestId 단계 없이 바로 workspaceId 로 연결)
+        // 1. 신규 파일 attach (requestId 단계 없이 바로 workspaceId 로 연결)
+        //    검증 실패(FILE_NOT_FOUND 등)를 S3 물리 삭제 이전에 조기에 걸러내 정합성 보장
         List<String> addFileIds = newFileIds.stream()
             .filter(fileId -> !existingByFileId.containsKey(fileId))
             .toList();
@@ -88,7 +77,7 @@ public class ManagerUpdateWorkspaceImages implements ManagerUpdateWorkspaceImage
             );
         }
 
-        // 3. 순서 재계산: 유지 이미지는 sortOrder 갱신, 신규는 생성
+        // 2. 순서 재계산: 유지 이미지는 sortOrder 갱신, 신규는 생성
         List<WorkspaceImage> newImages = new ArrayList<>();
         for (int sortOrder = 0; sortOrder < newFileIds.size(); sortOrder++) {
             String fileId = newFileIds.get(sortOrder);
@@ -101,6 +90,19 @@ public class ManagerUpdateWorkspaceImages implements ManagerUpdateWorkspaceImage
         }
         if (!newImages.isEmpty()) {
             workspaceImageRepository.saveAll(newImages);
+        }
+
+        // 3. 빠진 이미지 제거 (파일 soft-delete + WorkspaceImage 삭제)
+        //    S3 물리 삭제는 롤백 불가하므로 attach/검증이 모두 성공한 마지막 단계에서 수행
+        List<WorkspaceImage> removedImages = existingImages.stream()
+            .filter(image -> !newFileIds.contains(image.getFileId()))
+            .toList();
+        if (!removedImages.isEmpty()) {
+            List<String> removedFileIds = removedImages.stream()
+                .map(WorkspaceImage::getFileId)
+                .toList();
+            fileQueryRepository.findAllByIdIn(removedFileIds).forEach(fileDeleteService::delete);
+            workspaceImageRepository.deleteAll(removedImages);
         }
     }
 }

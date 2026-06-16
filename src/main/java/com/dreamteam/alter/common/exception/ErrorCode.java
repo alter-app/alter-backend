@@ -51,7 +51,6 @@ public enum ErrorCode {
     INVALID_FILE_TYPE(400, "B023", "허용되지 않는 파일 형식입니다."),
     FILE_SIZE_EXCEEDED(400, "B024", "파일 크기가 제한을 초과합니다."),
     FILE_ALREADY_ATTACHED(409, "B025", "이미 연결된 파일입니다."),
-    FILE_LIMIT_EXCEEDED(400, "B026", "대표이미지는 최대 5개까지 등록할 수 있습니다."),
 
     TOO_MANY_REQUESTS(429, "E001", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
 
