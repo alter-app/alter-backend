@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestCommentListResponse;
+import com.dreamteam.alter.domain.workspace.model.WorkspaceRequestCommentListResponse;
 import com.dreamteam.alter.domain.workspace.type.CommentOwner;
 
 import io.swagger.v3.oas.annotations.media.Schema;

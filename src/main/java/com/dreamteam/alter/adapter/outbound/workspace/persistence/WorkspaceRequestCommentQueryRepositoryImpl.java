@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestCommentListResponse;
+import com.dreamteam.alter.domain.workspace.model.WorkspaceRequestCommentListResponse;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspaceRequestComment;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestCommentQueryRepository;
 import com.querydsl.core.types.Projections;
