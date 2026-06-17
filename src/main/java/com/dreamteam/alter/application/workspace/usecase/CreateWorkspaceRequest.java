@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceImageRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.User;
@@ -25,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional
 public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
+
+	private static final int MAX_IMAGE_COUNT = 5;
 
 	private final WorkspaceRequestRepository workspaceRequestRepository;
 	private final WorkspaceRequestImageRepository workspaceRequestImageRepository;
@@ -58,6 +62,9 @@ public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 
 		List<String> representativeImageFileIds =
 			WorkspaceImageRequestDto.toOrderedFileIds(request.getRepresentativeImages());
+		if (representativeImageFileIds.size() > MAX_IMAGE_COUNT) {
+			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "대표이미지는 최대 " + MAX_IMAGE_COUNT + "개까지 등록할 수 있습니다.");
+		}
 		if (!representativeImageFileIds.isEmpty()) {
 			attachFiles.execute(
 				representativeImageFileIds,
