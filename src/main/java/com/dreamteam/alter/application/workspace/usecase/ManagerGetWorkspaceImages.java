@@ -41,6 +41,11 @@ public class ManagerGetWorkspaceImages implements ManagerGetWorkspaceImagesUseCa
             throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
         }
 
+        return getImagesWithoutOwnershipCheck(workspaceId);
+    }
+
+    @Override
+    public List<WorkspaceImageResponseDto> getImagesWithoutOwnershipCheck(Long workspaceId) {
         List<WorkspaceImage> images = workspaceImageQueryRepository.findAllByWorkspaceId(workspaceId);
         if (images.isEmpty()) {
             return List.of();

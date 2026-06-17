@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ManagerGetWorkspaceImages 테스트")
@@ -118,5 +119,19 @@ class ManagerGetWorkspaceImagesTests {
             .containsExactly("https://url/A", "https://url/B");
         assertThat(result).extracting(WorkspaceImageResponseDto::getSortOrder)
             .containsExactly(0, 1);
+    }
+
+    @Test
+    @DisplayName("getImagesWithoutOwnershipCheck는 소유 검증 없이 이미지를 조회한다")
+    void getImagesWithoutOwnershipCheck_소유검증생략_이미지조회() {
+        // given
+        given(workspaceImageQueryRepository.findAllByWorkspaceId(1L)).willReturn(List.of());
+
+        // when
+        List<WorkspaceImageResponseDto> result = managerGetWorkspaceImages.getImagesWithoutOwnershipCheck(1L);
+
+        // then
+        assertThat(result).isEmpty();
+        verifyNoInteractions(workspaceQueryRepository);
     }
 }

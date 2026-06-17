@@ -30,7 +30,8 @@ public class ManagerGetWorkspace implements ManagerGetWorkspaceUseCase {
             throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
         }
 
-        return ManagerWorkspaceResponseDto.of(workspace, managerGetWorkspaceImages.execute(actor, workspaceId));
+        return ManagerWorkspaceResponseDto.of(
+            workspace, managerGetWorkspaceImages.getImagesWithoutOwnershipCheck(workspaceId));
     }
 
 }
