@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestCommentResponseDto;
-import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.WorkspaceRequestCommentListResponse;
+import com.dreamteam.alter.domain.workspace.model.WorkspaceRequestCommentListResponse;
 import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -58,6 +58,10 @@ public class GetWorkspaceRequestCommentList implements GetWorkspaceRequestCommen
 	}
 
 	private Map<String, List<FileResponseDto>> getFilesByCommentId(List<WorkspaceRequestCommentListResponse> comments) {
+		if (comments.isEmpty()) {
+			return Map.of();
+		}
+
 		List<String> commentIds = comments.stream()
 			.map(comment -> comment.getId().toString())
 			.toList();

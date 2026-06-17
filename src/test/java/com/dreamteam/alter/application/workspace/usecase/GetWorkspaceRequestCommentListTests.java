@@ -73,7 +73,6 @@ class GetWorkspaceRequestCommentListTests {
             given(requester.getId()).willReturn(1L);
             given(workspaceRequestQueryRepository.existsByIdAndUserId(1L, 1L)).willReturn(true);
             given(workspaceRequestCommentQueryRepository.getCommentList(1L)).willReturn(List.of());
-            given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(any(), any())).willReturn(List.of());
 
             // when
             List<WorkspaceRequestCommentResponseDto> result =
@@ -82,6 +81,7 @@ class GetWorkspaceRequestCommentListTests {
             // then
             assertThat(result).isEmpty();
             then(workspaceRequestCommentQueryRepository).should().getCommentList(1L);
+            then(fileQueryRepository).should(never()).findAllByTargetTypeAndTargetIdIn(any(), any());
         }
 
         @Test
@@ -105,7 +105,6 @@ class GetWorkspaceRequestCommentListTests {
             User admin = mock(User.class);
             given(workspaceRequestQueryRepository.existsById(1L)).willReturn(true);
             given(workspaceRequestCommentQueryRepository.getCommentList(1L)).willReturn(List.of());
-            given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(any(), any())).willReturn(List.of());
 
             // when
             List<WorkspaceRequestCommentResponseDto> result =
@@ -114,6 +113,7 @@ class GetWorkspaceRequestCommentListTests {
             // then
             assertThat(result).isEmpty();
             then(workspaceRequestQueryRepository).should(never()).existsByIdAndUserId(any(), any());
+            then(fileQueryRepository).should(never()).findAllByTargetTypeAndTargetIdIn(any(), any());
         }
     }
 }
