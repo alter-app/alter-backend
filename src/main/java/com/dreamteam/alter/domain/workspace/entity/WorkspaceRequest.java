@@ -127,6 +127,10 @@ public class WorkspaceRequest {
 	}
 
 	public void reject() {
+		if (WorkspaceRequestStatus.ACTIVATED.equals(status)) {
+			throw new CustomException(ErrorCode.CONFLICT, "이미 승인된 요청입니다.");
+		}
+
 		this.status = WorkspaceRequestStatus.REVOKED;
 	}
 

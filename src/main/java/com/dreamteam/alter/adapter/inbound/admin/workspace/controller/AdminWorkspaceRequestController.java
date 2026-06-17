@@ -3,21 +3,24 @@ package com.dreamteam.alter.adapter.inbound.admin.workspace.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminWorkspaceRequestListResponseDto;
 import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminWorkspaceRequestResponseDto;
+import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.UpdateWorkspaceRequestStatusDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.PageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.PaginatedResponseDto;
-import com.dreamteam.alter.domain.workspace.port.inbound.ApproveWorkspaceRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetAdminWorkspaceRequestListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetAdminWorkspaceRequestUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.UpdateWorkspaceRequestStatusUseCase;
 
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -32,8 +35,8 @@ public class AdminWorkspaceRequestController implements AdminWorkspaceRequestCon
 	@Resource(name = "getAdminWorkspaceRequest")
 	private final GetAdminWorkspaceRequestUseCase getAdminWorkspaceRequest;
 
-	@Resource(name = "approveWorkspaceRequest")
-	private final ApproveWorkspaceRequestUseCase approveWorkspaceRequest;
+	@Resource(name = "updateWorkspaceRequestStatus")
+	private final UpdateWorkspaceRequestStatusUseCase updateWorkspaceRequestStatus;
 
 	@Override
 	@GetMapping
@@ -52,9 +55,12 @@ public class AdminWorkspaceRequestController implements AdminWorkspaceRequestCon
 	}
 
 	@Override
-	@PostMapping("/{workspaceRequestId}/approve")
-	public ResponseEntity<CommonApiResponse<Void>> approve(@PathVariable Long workspaceRequestId) {
-		approveWorkspaceRequest.execute(workspaceRequestId);
+	@PatchMapping("/{workspaceRequestId}/status")
+	public ResponseEntity<CommonApiResponse<Void>> updateStatus(
+		@PathVariable Long workspaceRequestId,
+		@RequestBody @Valid UpdateWorkspaceRequestStatusDto request
+	) {
+		updateWorkspaceRequestStatus.execute(workspaceRequestId, request.getStatus());
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 }

@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
-@DisplayName("WorkspaceRequest.cancel 테스트")
+@DisplayName("WorkspaceRequest 테스트")
 class WorkspaceRequestTests {
 
     private WorkspaceRequest pendingRequest() {
@@ -85,6 +85,82 @@ class WorkspaceRequestTests {
 
             // when & then
             assertThatThrownBy(request::cancel)
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+        }
+    }
+
+    @Nested
+    @DisplayName("approve")
+    class ApproveTests {
+
+        @Test
+        @DisplayName("PENDING 상태면 ACTIVATED 로 변경된다")
+        void approve_PENDING_정상승인() {
+            // given
+            WorkspaceRequest request = pendingRequest();
+
+            // when
+            request.approve();
+
+            // then
+            assertThat(request.getStatus()).isEqualTo(WorkspaceRequestStatus.ACTIVATED);
+        }
+
+        @Test
+        @DisplayName("이미 ACTIVATED 상태면 CONFLICT 예외가 발생한다")
+        void approve_이미승인됨_예외발생() {
+            // given
+            WorkspaceRequest request = pendingRequest();
+            request.approve();
+
+            // when & then
+            assertThatThrownBy(request::approve)
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+        }
+    }
+
+    @Nested
+    @DisplayName("reject")
+    class RejectTests {
+
+        @Test
+        @DisplayName("PENDING 상태면 REVOKED 로 변경된다")
+        void reject_PENDING_정상반려() {
+            // given
+            WorkspaceRequest request = pendingRequest();
+
+            // when
+            request.reject();
+
+            // then
+            assertThat(request.getStatus()).isEqualTo(WorkspaceRequestStatus.REVOKED);
+        }
+
+        @Test
+        @DisplayName("이미 REVOKED 상태면 멱등하게 REVOKED 를 유지한다")
+        void reject_REVOKED_멱등() {
+            // given
+            WorkspaceRequest request = pendingRequest();
+            request.reject();
+
+            // when
+            request.reject();
+
+            // then
+            assertThat(request.getStatus()).isEqualTo(WorkspaceRequestStatus.REVOKED);
+        }
+
+        @Test
+        @DisplayName("ACTIVATED 상태면 CONFLICT 예외가 발생한다")
+        void reject_ACTIVATED_예외발생() {
+            // given
+            WorkspaceRequest request = pendingRequest();
+            request.approve();
+
+            // when & then
+            assertThatThrownBy(request::reject)
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
         }
