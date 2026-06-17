@@ -28,7 +28,7 @@ import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ManagerGetWorkspaceImages 테스트")
-class ManagerGetWorkspaceImagesTest {
+class ManagerGetWorkspaceImagesTests {
 
     @Mock
     private WorkspaceQueryRepository workspaceQueryRepository;

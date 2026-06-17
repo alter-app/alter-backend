@@ -31,7 +31,7 @@ import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CreateWorkspaceRequest 테스트")
-class CreateWorkspaceRequestTest {
+class CreateWorkspaceRequestTests {
 
     @Mock
     private WorkspaceRequestRepository workspaceRequestRepository;

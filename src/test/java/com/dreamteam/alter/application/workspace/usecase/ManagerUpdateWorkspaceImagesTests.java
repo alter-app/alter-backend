@@ -41,7 +41,7 @@ import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ManagerUpdateWorkspaceImages 테스트")
-class ManagerUpdateWorkspaceImagesTest {
+class ManagerUpdateWorkspaceImagesTests {
 
     @Mock
     private WorkspaceQueryRepository workspaceQueryRepository;
