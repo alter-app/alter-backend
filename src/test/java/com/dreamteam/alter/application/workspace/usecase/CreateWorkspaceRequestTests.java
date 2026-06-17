@@ -2,6 +2,8 @@ package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceImageRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.User;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -115,5 +118,27 @@ class CreateWorkspaceRequestTests {
             .containsExactly("img1", "img2");
         assertThat(imagesCaptor.getValue()).extracting(WorkspaceRequestImage::getSortOrder)
             .containsExactly(0, 1);
+    }
+
+    @Test
+    @DisplayName("대표이미지가 5개를 초과하면 ILLEGAL_ARGUMENT 예외가 발생한다")
+    void execute_대표이미지5개초과_예외() {
+        // given
+        User user = mock(User.class);
+        given(user.getId()).willReturn(100L);
+        given(workspaceRequestRepository.save(any())).willReturn(1L);
+
+        CreateWorkspaceRequestDto dto = baseRequest();
+        Set<WorkspaceImageRequestDto> images = new LinkedHashSet<>();
+        for (int i = 1; i <= 6; i++) {
+            images.add(new WorkspaceImageRequestDto("img" + i, i));
+        }
+        dto.setRepresentativeImages(images);
+
+        // when & then
+        assertThatThrownBy(() -> createWorkspaceRequest.execute(user, dto))
+            .isInstanceOf(CustomException.class)
+            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
+        then(workspaceRequestImageRepository).should(never()).saveAll(any());
     }
 }

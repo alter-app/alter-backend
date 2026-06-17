@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceImageRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.UpdateWorkspaceImagesRequestDto;
 import com.dreamteam.alter.application.file.FileDeleteService;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -45,7 +44,7 @@ public class ManagerUpdateWorkspaceImages implements ManagerUpdateWorkspaceImage
 
     @Override
     public void execute(ManagerActor actor, Long workspaceId, UpdateWorkspaceImagesRequestDto request) {
-        List<String> newFileIds = WorkspaceImageRequestDto.toOrderedFileIds(request.getImages());
+        List<String> newFileIds = request.getOrderedImageFileIds();
 
         if (newFileIds.size() > MAX_IMAGE_COUNT) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "대표이미지는 최대 " + MAX_IMAGE_COUNT + "개까지 등록할 수 있습니다.");

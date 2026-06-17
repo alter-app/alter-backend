@@ -8,7 +8,6 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceImageRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -60,8 +59,7 @@ public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 		}
 		attachFiles.executeMap(fileMap, savedWorkspaceRequestId.toString(), user.getId());
 
-		List<String> representativeImageFileIds =
-			WorkspaceImageRequestDto.toOrderedFileIds(request.getRepresentativeImages());
+		List<String> representativeImageFileIds = request.getOrderedRepresentativeImageFileIds();
 		if (representativeImageFileIds.size() > MAX_IMAGE_COUNT) {
 			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "대표이미지는 최대 " + MAX_IMAGE_COUNT + "개까지 등록할 수 있습니다.");
 		}

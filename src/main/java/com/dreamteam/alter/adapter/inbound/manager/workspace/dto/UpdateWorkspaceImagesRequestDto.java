@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
 
+import java.util.List;
 import java.util.Set;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceImageRequestDto;
@@ -22,4 +23,8 @@ public class UpdateWorkspaceImagesRequestDto {
     @Size(max = 5, message = "대표이미지는 최대 5개까지 등록할 수 있습니다.")
     @Schema(description = "대표이미지 목록 (fileId 중복 자동 제거, sortOrder 오름차순으로 노출, 비우면 전체 삭제)")
     private Set<@Valid WorkspaceImageRequestDto> images;
+
+    public List<String> getOrderedImageFileIds() {
+        return WorkspaceImageRequestDto.toOrderedFileIds(images);
+    }
 }

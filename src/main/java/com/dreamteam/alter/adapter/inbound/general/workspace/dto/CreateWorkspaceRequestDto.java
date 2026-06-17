@@ -1,6 +1,7 @@
 package com.dreamteam.alter.adapter.inbound.general.workspace.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Set;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceImageRequestDto;
@@ -74,4 +75,8 @@ public class CreateWorkspaceRequestDto {
 	@Size(max = 5, message = "대표이미지는 최대 5개까지 등록할 수 있습니다.")
 	@Schema(description = "업장 대표이미지 목록 (최대 5개, fileId 중복 자동 제거, sortOrder 오름차순으로 노출)")
 	private Set<@Valid WorkspaceImageRequestDto> representativeImages;
+
+	public List<String> getOrderedRepresentativeImageFileIds() {
+		return WorkspaceImageRequestDto.toOrderedFileIds(representativeImages);
+	}
 }
