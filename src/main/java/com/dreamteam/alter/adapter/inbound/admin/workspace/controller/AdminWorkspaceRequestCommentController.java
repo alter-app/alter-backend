@@ -41,7 +41,9 @@ public class AdminWorkspaceRequestCommentController implements AdminWorkspaceReq
 	public ResponseEntity<CommonApiResponse<List<WorkspaceRequestCommentResponseDto>>> getCommentList(
 		@PathVariable Long workspaceRequestId
 	) {
-		return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceRequestCommentList.execute(workspaceRequestId)));
+		AdminActor actor = AdminActionContext.getInstance().getActor();
+		return ResponseEntity.ok(CommonApiResponse.of(
+			getWorkspaceRequestCommentList.execute(workspaceRequestId, actor.getUser(), CommentOwner.ADMIN)));
 	}
 
 	@Override

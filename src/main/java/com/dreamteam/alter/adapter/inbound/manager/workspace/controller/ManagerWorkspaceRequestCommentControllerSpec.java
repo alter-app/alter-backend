@@ -22,6 +22,7 @@ public interface ManagerWorkspaceRequestCommentControllerSpec {
 	@Operation(summary = "매니저 - 댓글 등록")
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "댓글 등록 성공"),
+		@ApiResponse(responseCode = "403", description = "본인의 업장 등록 신청이 아님"),
 		@ApiResponse(responseCode = "404", description = "존재하지 않는 업장 등록 신청")
 	})
 	ResponseEntity<CommonApiResponse<Void>> createComment(
@@ -32,7 +33,7 @@ public interface ManagerWorkspaceRequestCommentControllerSpec {
 	@Operation(summary = "매니저 - 댓글 목록 조회")
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "댓글 목록 조회 성공"),
-		@ApiResponse(responseCode = "404", description = "존재하지 않는 업장 등록 신청")
+		@ApiResponse(responseCode = "403", description = "본인의 업장 등록 신청이 아님")
 	})
 	ResponseEntity<CommonApiResponse<List<WorkspaceRequestCommentResponseDto>>> getCommentList(
 		@PathVariable Long workspaceRequestId

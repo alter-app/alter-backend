@@ -52,6 +52,8 @@ public class UserWorkspaceRequestCommentController implements UserWorkspaceReque
 	public ResponseEntity<CommonApiResponse<List<WorkspaceRequestCommentResponseDto>>> getCommentList(
 		@PathVariable Long workspaceRequestId
 	) {
-		return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceRequestCommentList.execute(workspaceRequestId)));
+		AppActor actor = AppActionContext.getInstance().getActor();
+		return ResponseEntity.ok(CommonApiResponse.of(
+			getWorkspaceRequestCommentList.execute(workspaceRequestId, actor.getUser(), CommentOwner.USER)));
 	}
 }

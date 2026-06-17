@@ -33,6 +33,10 @@ public class CreateWorkspaceRequestComment implements CreateWorkspaceRequestComm
 		WorkspaceRequest workspaceRequest = workspaceRequestQueryRepository.findByIdWithUser(workspaceRequestId)
 			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 업장 등록 신청을 찾을 수 없습니다."));
 
+		if (commentOwner == CommentOwner.USER && !workspaceRequest.getUser().getId().equals(user.getId())) {
+			throw new CustomException(ErrorCode.FORBIDDEN);
+		}
+
 		WorkspaceRequestComment saved = workspaceRequestCommentRepository.save(
 			WorkspaceRequestComment.create(workspaceRequest, user, commentOwner, comment)
 		);

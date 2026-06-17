@@ -16,9 +16,11 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestCommentListUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestCommentQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
+import com.dreamteam.alter.domain.workspace.type.CommentOwner;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,8 +35,12 @@ public class GetWorkspaceRequestCommentList implements GetWorkspaceRequestCommen
 	private final FileUrlService fileUrlService;
 
 	@Override
-	public List<WorkspaceRequestCommentResponseDto> execute(Long workspaceRequestId) {
-		if (!workspaceRequestQueryRepository.existsById(workspaceRequestId)) {
+	public List<WorkspaceRequestCommentResponseDto> execute(Long workspaceRequestId, User requester, CommentOwner ownerType) {
+		if (ownerType == CommentOwner.USER) {
+			if (!workspaceRequestQueryRepository.existsByIdAndUserId(workspaceRequestId, requester.getId())) {
+				throw new CustomException(ErrorCode.FORBIDDEN);
+			}
+		} else if (!workspaceRequestQueryRepository.existsById(workspaceRequestId)) {
 			throw new CustomException(ErrorCode.NOT_FOUND, "해당 업장 등록 신청을 찾을 수 없습니다.");
 		}
 

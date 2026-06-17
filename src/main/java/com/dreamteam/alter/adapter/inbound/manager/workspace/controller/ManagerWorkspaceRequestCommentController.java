@@ -52,6 +52,8 @@ public class ManagerWorkspaceRequestCommentController implements ManagerWorkspac
 	public ResponseEntity<CommonApiResponse<List<WorkspaceRequestCommentResponseDto>>> getCommentList(
 		@PathVariable Long workspaceRequestId
 	) {
-		return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceRequestCommentList.execute(workspaceRequestId)));
+		ManagerActor actor = ManagerActionContext.getInstance().getActor();
+		return ResponseEntity.ok(CommonApiResponse.of(
+			getWorkspaceRequestCommentList.execute(workspaceRequestId, actor.getManagerUser().getUser(), CommentOwner.USER)));
 	}
 }
