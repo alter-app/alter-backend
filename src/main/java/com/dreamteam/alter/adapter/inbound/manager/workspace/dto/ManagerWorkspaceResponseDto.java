@@ -11,6 +11,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -69,7 +70,13 @@ public class ManagerWorkspaceResponseDto {
     @Schema(description = "업장 평판 요약 정보")
     private SelfReputationSummaryDto reputationSummary;
 
-    public static ManagerWorkspaceResponseDto of(ManagerWorkspaceResponse entity) {
+    @Schema(description = "업장 대표이미지 목록 (노출 순서 오름차순, 최대 5개)")
+    private List<WorkspaceImageResponseDto> representativeImages;
+
+    public static ManagerWorkspaceResponseDto of(
+        ManagerWorkspaceResponse entity,
+        List<WorkspaceImageResponseDto> representativeImages
+    ) {
         return ManagerWorkspaceResponseDto.builder()
             .id(entity.getId())
             .businessRegistrationNo(entity.getBusinessRegistrationNo())
@@ -84,6 +91,7 @@ public class ManagerWorkspaceResponseDto {
             .nextMonthShiftGenDay(entity.getNextMonthShiftGenDay())
             .createdAt(entity.getCreatedAt())
             .reputationSummary(SelfReputationSummaryDto.from(entity.getReputationSummary()))
+            .representativeImages(representativeImages)
             .build();
     }
 

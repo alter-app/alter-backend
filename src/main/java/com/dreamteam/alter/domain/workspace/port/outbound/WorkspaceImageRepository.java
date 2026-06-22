@@ -1,0 +1,10 @@
+package com.dreamteam.alter.domain.workspace.port.outbound;
+
+import java.util.List;
+
+import com.dreamteam.alter.domain.workspace.entity.WorkspaceImage;
+
+public interface WorkspaceImageRepository {
+    void saveAll(List<WorkspaceImage> workspaceImages);
+    void deleteAll(List<WorkspaceImage> workspaceImages);
+}
