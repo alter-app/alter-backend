@@ -135,6 +135,7 @@ jobs:
             REDIS_HOST=${{ secrets.REDIS_HOST }}
             REDIS_PORT=${{ secrets.REDIS_PORT }}
             DDL_AUTO=${{ secrets.DDL_AUTO }}
+            FLYWAY_BASELINE_ON_MIGRATE=${{ secrets.FLYWAY_BASELINE_ON_MIGRATE }}
             SHOW_SQL=${{ secrets.SHOW_SQL }}
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
