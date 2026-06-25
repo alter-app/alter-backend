@@ -1,2 +1,0 @@
-ALTER TABLE notifications
-    ADD COLUMN IF NOT EXISTS is_read BOOLEAN NOT NULL DEFAULT false;
