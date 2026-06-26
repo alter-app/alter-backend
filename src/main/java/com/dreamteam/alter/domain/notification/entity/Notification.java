@@ -30,7 +30,7 @@ public class Notification {
     private User targetUser;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "scope", nullable = false)
+    @Column(name = "scope", length = 20, nullable = false)
     private TokenScope scope;
 
     @Enumerated(EnumType.STRING)

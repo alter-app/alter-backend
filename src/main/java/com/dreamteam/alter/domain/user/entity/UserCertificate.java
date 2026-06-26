@@ -33,7 +33,7 @@ public class UserCertificate {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
+    @Column(name = "type", length = 24, nullable = false)
     private CertificateType type;
 
     @Column(name = "certificate_name", length = 255, nullable = false)

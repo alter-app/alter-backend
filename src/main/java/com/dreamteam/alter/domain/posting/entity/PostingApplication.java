@@ -41,7 +41,7 @@ public class PostingApplication {
 
     @Enumerated(EnumType.STRING)
     @SQLRestriction("status != 'DELETED'")
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 50, nullable = false)
     private PostingApplicationStatus status;
 
     @CreatedDate

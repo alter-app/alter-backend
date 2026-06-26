@@ -39,7 +39,7 @@ public class Workspace {
     @Column(name = "business_type", length = 128, nullable = false)
     private String businessType; // Enum 으로 정의 고려
 
-    @Column(name = "contact", length = 13, nullable = false)
+    @Column(name = "contact", length = 11, nullable = false)
     private String contact;
 
     @Column(name = "description", length = Integer.MAX_VALUE, nullable = true)

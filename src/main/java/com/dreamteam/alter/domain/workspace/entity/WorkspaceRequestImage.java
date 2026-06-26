@@ -39,7 +39,7 @@ public class WorkspaceRequestImage {
     @ManyToOne(fetch = FetchType.LAZY)
     private WorkspaceRequest workspaceRequest;
 
-    @Column(name = "file_id", nullable = false)
+    @Column(name = "file_id", length = 36, nullable = false)
     private String fileId;
 
     @Column(name = "sort_order", nullable = false)

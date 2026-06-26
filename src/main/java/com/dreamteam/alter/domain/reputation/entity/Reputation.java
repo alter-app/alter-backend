@@ -34,14 +34,14 @@ public class Reputation {
     @ManyToOne(fetch = FetchType.LAZY)
     private ReputationRequest reputationRequest;
 
-    @Column(name = "writer_type", nullable = false)
+    @Column(name = "writer_type", length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
     private ReputationType writerType;
 
     @Column(name = "writer_id", nullable = false)
     private Long writerId;
 
-    @Column(name = "target_type", nullable = false)
+    @Column(name = "target_type", length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
     private ReputationType targetType;
 

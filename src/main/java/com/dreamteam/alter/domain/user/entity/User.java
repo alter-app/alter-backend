@@ -41,18 +41,18 @@ public class User {
     @Column(name = "nickname", length = 64, nullable = false, unique = true)
     private String nickname;
 
-    @Column(name = "contact", length = 13, nullable = false)
+    @Column(name = "contact", length = 11, nullable = false)
     private String contact;
 
     @Column(name = "birthday", length = 8, nullable = false)
     private String birthday;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", nullable = false)
+    @Column(name = "gender", length = 20, nullable = false)
     private UserGender gender;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @Column(name = "role", length = 20, nullable = false)
     private UserRole role;
 
     @Enumerated(EnumType.STRING)

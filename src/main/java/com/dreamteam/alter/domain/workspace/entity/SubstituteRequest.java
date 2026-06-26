@@ -39,7 +39,7 @@ public class SubstituteRequest {
     private Long requesterId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "request_type", nullable = false)
+    @Column(name = "request_type", length = 20, nullable = false)
     private SubstituteRequestType requestType;
 
     @OneToMany(mappedBy = "substituteRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -52,16 +52,16 @@ public class SubstituteRequest {
     private Long approverId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 20, nullable = false)
     private SubstituteRequestStatus status;
 
-    @Column(name = "request_reason")
+    @Column(name = "request_reason", length = 500)
     private String requestReason;
 
-    @Column(name = "approver_rejection_reason")
+    @Column(name = "approver_rejection_reason", length = 500)
     private String approverRejectionReason;
 
-    @Column(name = "approval_comment")
+    @Column(name = "approval_comment", length = 500)
     private String approvalComment;
 
     @Column(name = "accepted_at")

@@ -35,7 +35,7 @@ public class WorkspaceWorker {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 20, nullable = false)
     private WorkspaceWorkerStatus status;
 
     @Builder.Default
