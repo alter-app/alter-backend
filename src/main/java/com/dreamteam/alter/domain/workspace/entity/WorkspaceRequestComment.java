@@ -49,7 +49,7 @@ public class WorkspaceRequestComment {
 	private User user;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "comment_owner", nullable = false)
+	@Column(name = "comment_owner", length = 50, nullable = false)
 	private CommentOwner commentOwner;
 
 	@Column(name = "comment", nullable = false)

@@ -38,7 +38,7 @@ public class ReputationSummary {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = COLUMN_TARGET_TYPE, nullable = false)
+    @Column(name = COLUMN_TARGET_TYPE, length = 20, nullable = false)
     private ReputationType targetType;
 
     @Column(name = COLUMN_TARGET_ID, nullable = false)
@@ -51,7 +51,7 @@ public class ReputationSummary {
     @Column(name = COLUMN_TOP_KEYWORDS, columnDefinition = "jsonb")
     private List<KeywordSummaryDto> topKeywords;
 
-    @Column(name = COLUMN_SUMMARY_DESCRIPTION)
+    @Column(name = COLUMN_SUMMARY_DESCRIPTION, length = 500)
     private String summaryDescription;
 
     @CreatedDate

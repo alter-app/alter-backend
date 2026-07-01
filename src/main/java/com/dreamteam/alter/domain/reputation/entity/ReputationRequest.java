@@ -34,7 +34,7 @@ public class ReputationRequest {
     private Workspace workspace;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "request_type", length = 20, nullable = false)
+    @Column(name = "request_type", length = 24, nullable = false)
     private ReputationRequestType requestType;
 
     @Column(name = "requester_type", length = 20, nullable = false)

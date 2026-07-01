@@ -31,7 +31,7 @@ public class ManagerUser {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 50, nullable = false)
     private ManagerUserStatus status;
 
     @CreatedDate

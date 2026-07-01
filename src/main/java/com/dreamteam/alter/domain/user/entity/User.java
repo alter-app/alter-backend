@@ -35,24 +35,25 @@ public class User {
     @Column(name = "password", length = 255, nullable = true)
     private String password;
 
-    @Column(name = "name", length = 12, nullable = false)
+    @Column(name = "name", length = 30, nullable = false)
     private String name;
 
     @Column(name = "nickname", length = 64, nullable = false, unique = true)
     private String nickname;
 
-    @Column(name = "contact", length = 13, nullable = false)
+    // length 30: withdraw() 익명화 값(id + "_탈퇴") 수용 (전화번호 자체는 11자)
+    @Column(name = "contact", length = 30, nullable = false)
     private String contact;
 
     @Column(name = "birthday", length = 8, nullable = false)
     private String birthday;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", nullable = false)
+    @Column(name = "gender", length = 20, nullable = false)
     private UserGender gender;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @Column(name = "role", length = 20, nullable = false)
     private UserRole role;
 
     @Enumerated(EnumType.STRING)

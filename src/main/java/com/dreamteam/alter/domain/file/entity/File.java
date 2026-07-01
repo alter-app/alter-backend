@@ -26,37 +26,37 @@ import java.time.LocalDateTime;
 public class File {
 
     @Id
-    @Column(name = "id", nullable = false, unique = true)
+    @Column(name = "id", length = 36, nullable = false, unique = true)
     private String id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "target_type", nullable = false)
+    @Column(name = "target_type", length = 40, nullable = false)
     private FileTargetType targetType;
 
-    @Column(name = "target_id")
+    @Column(name = "target_id", length = 36)
     private String targetId;
 
     @Column(name = "original_file_name", nullable = false)
     private String originalFileName;
 
-    @Column(name = "stored_key", nullable = false, unique = true)
+    @Column(name = "stored_key", length = 512, nullable = false, unique = true)
     private String storedKey;
 
-    @Column(name = "file_url")
+    @Column(name = "file_url", length = 1024)
     private String fileUrl;
 
-    @Column(name = "content_type", nullable = false)
+    @Column(name = "content_type", length = 100, nullable = false)
     private String contentType;
 
     @Column(name = "file_size", nullable = false)
     private Long fileSize;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "bucket_type", nullable = false)
+    @Column(name = "bucket_type", length = 10, nullable = false)
     private BucketType bucketType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10)
     private FileStatus status;
 
     @Column(name = "uploaded_by", nullable = false)

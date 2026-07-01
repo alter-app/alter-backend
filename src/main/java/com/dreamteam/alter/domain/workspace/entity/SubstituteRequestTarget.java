@@ -30,10 +30,10 @@ public class SubstituteRequestTarget {
     private Long targetWorkerId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 20, nullable = false)
     private SubstituteRequestTargetStatus status;
 
-    @Column(name = "rejection_reason")
+    @Column(name = "rejection_reason", length = 500)
     private String rejectionReason;
 
     @Column(name = "responded_at")

@@ -38,7 +38,7 @@ public class ReputationKeywordMap {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private ReputationKeyword keyword;
 
-    @Column(name = "description")
+    @Column(name = "description", length = 128)
     private String description;
 
     @CreatedDate

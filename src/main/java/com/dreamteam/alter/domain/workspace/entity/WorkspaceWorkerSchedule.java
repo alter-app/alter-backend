@@ -48,21 +48,21 @@ public class WorkspaceWorkerSchedule {
 	private WorkspaceWorker workspaceWorker;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "start_day_of_week", nullable = false)
+	@Column(name = "start_day_of_week", length = 16, nullable = false)
 	private DayOfWeek startDayOfWeek;
 
 	@Column(name = "start_time", nullable = false)
 	private LocalTime startTime;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "end_day_of_week", nullable = false)
+	@Column(name = "end_day_of_week", length = 16, nullable = false)
 	private DayOfWeek endDayOfWeek;
 
 	@Column(name = "end_time", nullable = false)
 	private LocalTime endTime;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "status", nullable = false)
+	@Column(name = "status", length = 32, nullable = false)
 	private WorkspaceWorkerScheduleStatus status;
 
 	@CreatedDate

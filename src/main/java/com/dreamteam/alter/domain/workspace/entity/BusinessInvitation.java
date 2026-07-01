@@ -39,7 +39,7 @@ public class BusinessInvitation {
     private ManagerUser invitedBy;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 20, nullable = false)
     private BusinessInvitationStatus status;
 
     @Column(name = "expires_at", nullable = false)

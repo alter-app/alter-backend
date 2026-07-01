@@ -34,7 +34,7 @@ public class BusinessJoinRequest {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 20, nullable = false)
     private BusinessJoinRequestStatus status;
 
     @CreatedDate

@@ -30,7 +30,7 @@ public class EmailSendLog {
     private String email;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", length = 20, nullable = false)
     private EmailSendStatus status;
 
     @CreatedDate
