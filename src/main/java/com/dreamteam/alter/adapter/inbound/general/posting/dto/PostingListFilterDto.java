@@ -37,4 +37,7 @@ public class PostingListFilterDto {
 
     @Parameter(description = "급여순 정렬 여부")
     private Boolean payAmountSort;
+
+    @Parameter(description = "업종 검색어 (마스터 업종명 또는 직접입력 업종 부분일치)")
+    private String keyword;
 }

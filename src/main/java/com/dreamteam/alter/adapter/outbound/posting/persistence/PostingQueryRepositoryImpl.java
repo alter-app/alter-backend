@@ -19,6 +19,7 @@ import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
@@ -41,6 +42,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     public long getCountOfPostings(PostingListFilterDto filter) {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
+        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
+        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
         QWorkspace qWorkspace = QWorkspace.workspace;
 
         Long count = queryFactory
@@ -48,6 +51,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .from(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule)
             .leftJoin(qPosting.workspace, qWorkspace)
+            .leftJoin(qPosting.keywords, qPostingKeywordMap)
+            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword)
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
                 eqProvince(qWorkspace, filter.getProvince()),
@@ -56,7 +61,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 gtePayAmount(qPosting, filter.getMinPayAmount()),
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
-                lteEndTime(qPostingSchedule, filter.getEndTime())
+                lteEndTime(qPostingSchedule, filter.getEndTime()),
+                keywordMatches(qPostingKeyword, qPosting, filter.getKeyword())
             )
             .fetchOne();
 
@@ -96,6 +102,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .from(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule)
             .leftJoin(qPosting.workspace, qWorkspace)
+            .leftJoin(qPosting.keywords, qPostingKeywordMap)
+            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword)
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
                 cursorConditions(qPosting, request.cursor(), filter.getPayAmountSort()),
@@ -105,7 +113,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 gtePayAmount(qPosting, filter.getMinPayAmount()),
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
-                lteEndTime(qPostingSchedule, filter.getEndTime())
+                lteEndTime(qPostingSchedule, filter.getEndTime()),
+                keywordMatches(qPostingKeyword, qPosting, filter.getKeyword())
             )
             .groupBy(qPosting.id, qPosting.payAmount, qPosting.createdAt)
             .orderBy(getOrderSpecifiers(qPosting, filter.getPayAmountSort()))
@@ -583,6 +592,21 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         }
         return qPosting.title.containsIgnoreCase(searchKeyword)
             .or(qWorkspace.businessName.containsIgnoreCase(searchKeyword));
+    }
+
+    /**
+     * 업종 필터: 입력 텍스트가 (마스터 연결 업종명 OR 직접입력 업종 라벨)에 부분일치.
+     * 직접입력 라벨은 jsonb(custom_keywords)라 text 캐스팅 후 ilike로 매칭한다.
+     */
+    private BooleanExpression keywordMatches(QPostingKeyword qPostingKeyword, QPosting qPosting, String keyword) {
+        if (ObjectUtils.isEmpty(keyword) || keyword.isBlank()) {
+            return null;
+        }
+        BooleanExpression masterMatch = qPostingKeyword.name.containsIgnoreCase(keyword);
+        BooleanExpression customMatch = Expressions.booleanTemplate(
+            "cast({0} as string) ilike {1}", qPosting.customKeywords, "%" + keyword + "%"
+        );
+        return masterMatch.or(customMatch);
     }
 
     private OrderSpecifier<?>[] getOrderSpecifiersForMapList(QPosting qPosting, PostingSortType sortType) {
