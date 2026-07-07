@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.outbound.posting.persistence;
 
 import com.dreamteam.alter.domain.posting.entity.PostingKeyword;
 import com.dreamteam.alter.domain.posting.entity.QPostingKeyword;
+import com.dreamteam.alter.domain.posting.entity.QPostingKeywordMap;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingKeywordQueryRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,19 @@ public class PostingKeywordQueryRepositoryImpl implements PostingKeywordQueryRep
         return queryFactory
             .selectFrom(qPostingKeyword)
             .fetch();
+    }
+
+    @Override
+    public boolean existsPostingUsingKeyword(Long keywordId) {
+        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
+
+        Integer exists = queryFactory
+            .selectOne()
+            .from(qPostingKeywordMap)
+            .where(qPostingKeywordMap.postingKeyword.id.eq(keywordId))
+            .fetchFirst();
+
+        return exists != null;
     }
 
 }
