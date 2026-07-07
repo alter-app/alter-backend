@@ -2,6 +2,7 @@ package com.dreamteam.alter.application.posting.usecase;
 
 import java.util.List;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,8 +34,11 @@ public class ManagerUpdatePosting implements ManagerUpdatePostingUseCase {
         Posting posting = postingQueryRepository.findByManagerAndId(postingId, managerUser)
             .orElseThrow(() -> new CustomException(ErrorCode.POSTING_NOT_FOUND));
 
-        List<PostingKeyword> postingKeywords = postingKeywordQueryRepository.findByIds(request.getKeywords());
-        if (postingKeywords.size() != request.getKeywords().size()) {
+        List<PostingKeyword> postingKeywords = ObjectUtils.isEmpty(request.getKeywords())
+            ? List.of()
+            : postingKeywordQueryRepository.findByIds(request.getKeywords());
+        if (ObjectUtils.isNotEmpty(request.getKeywords())
+            && postingKeywords.size() != request.getKeywords().size()) {
             throw new CustomException(ErrorCode.INVALID_KEYWORD);
         }
 
@@ -44,6 +48,7 @@ public class ManagerUpdatePosting implements ManagerUpdatePostingUseCase {
             request.getPayAmount(),
             request.getPaymentType(),
             postingKeywords,
+            request.getCustomKeywords(),
             request.getCreateSchedules(),
             request.getUpdateSchedules(),
             request.getDeleteScheduleIds()

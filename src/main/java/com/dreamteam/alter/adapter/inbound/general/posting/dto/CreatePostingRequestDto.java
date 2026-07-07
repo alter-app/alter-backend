@@ -3,10 +3,12 @@ package com.dreamteam.alter.adapter.inbound.general.posting.dto;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.List;
 
@@ -39,9 +41,12 @@ public class CreatePostingRequestDto {
     @NotNull
     private PaymentType paymentType;
 
-    @Schema(description = "키워드", example = "[2, 3, 1]")
-    @NotEmpty
+    @Schema(description = "마스터 업종 ID 목록 (선택)", example = "[2, 3, 1]")
     private List<Long> keywords;
+
+    @Schema(description = "직접입력 업종 (마스터 미등록, 공고 라벨로 저장)", example = "[\"브런치카페\"]")
+    @Size(max = 10)
+    private List<@NotBlank @Size(max = 128) String> customKeywords;
 
     @Schema(description = "공고 스케줄", example = "[" +
             "{" +
@@ -53,5 +58,11 @@ public class CreatePostingRequestDto {
         "]")
     @Valid
     private List<CreatePostingScheduleRequestDto> schedules;
+
+    @Schema(hidden = true)
+    @AssertTrue(message = "업종은 최소 1개 이상 선택하거나 직접 입력해야 합니다.")
+    public boolean isKeywordProvided() {
+        return ObjectUtils.isNotEmpty(keywords) || ObjectUtils.isNotEmpty(customKeywords);
+    }
 
 }

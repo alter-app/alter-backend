@@ -8,17 +8,20 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import jakarta.persistence.*;
 import lombok.*;
 import org.apache.commons.lang3.ObjectUtils;
+import org.hibernate.annotations.Type;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -70,6 +73,10 @@ public class Posting {
     @OneToMany(mappedBy = "posting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostingKeywordMap> keywords;
 
+    @Type(JsonBinaryType.class)
+    @Column(name = "custom_keywords", columnDefinition = "jsonb")
+    private List<String> customKeywords;
+
     public static Posting create(CreatePostingRequestDto request, Workspace workspace, List<PostingKeyword> postingKeywords) {
         Posting posting = Posting.builder()
             .workspace(workspace)
@@ -84,6 +91,10 @@ public class Posting {
             .stream()
             .map(keyword -> PostingKeywordMap.create(keyword, posting))
             .toList();
+
+        posting.customKeywords = ObjectUtils.isNotEmpty(request.getCustomKeywords())
+            ? request.getCustomKeywords()
+            : new ArrayList<>();
 
         if (ObjectUtils.isNotEmpty(request.getSchedules())) {
             posting.schedules = request.getSchedules()
@@ -112,6 +123,7 @@ public class Posting {
         int payAmount,
         PaymentType paymentType,
         List<PostingKeyword> postingKeywords,
+        List<String> customKeywords,
         List<CreatePostingScheduleRequestDto> createSchedules,
         List<UpdatePostingScheduleDto> updateSchedules,
         List<Long> deleteScheduleIds
@@ -120,6 +132,7 @@ public class Posting {
         this.description = description;
         this.payAmount = payAmount;
         this.paymentType = paymentType;
+        this.customKeywords = ObjectUtils.isNotEmpty(customKeywords) ? customKeywords : new ArrayList<>();
 
         // 키워드 업데이트
         updateKeyword(postingKeywords);

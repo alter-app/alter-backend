@@ -2,6 +2,7 @@ package com.dreamteam.alter.application.posting.usecase;
 
 import java.util.List;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,8 +30,11 @@ public class CreatePosting implements CreatePostingUseCase {
 
     @Override
     public void execute(CreatePostingRequestDto request) {
-        List<PostingKeyword> postingKeywords = postingKeywordQueryRepository.findByIds(request.getKeywords());
-        if (postingKeywords.size() != request.getKeywords().size()) {
+        List<PostingKeyword> postingKeywords = ObjectUtils.isEmpty(request.getKeywords())
+            ? List.of()
+            : postingKeywordQueryRepository.findByIds(request.getKeywords());
+        if (ObjectUtils.isNotEmpty(request.getKeywords())
+            && postingKeywords.size() != request.getKeywords().size()) {
             throw new CustomException(ErrorCode.INVALID_KEYWORD);
         }
 
