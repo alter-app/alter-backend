@@ -10,6 +10,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -36,6 +37,8 @@ public class ManagerPostingDetailResponse {
 
     private List<PostingKeyword> postingKeywords;
 
+    private List<String> customKeywords;
+
     private List<PostingSchedule> schedules;
 
     public static ManagerPostingDetailResponse of(
@@ -53,6 +56,7 @@ public class ManagerPostingDetailResponse {
             posting.getCreatedAt(),
             posting.getUpdatedAt(),
             postingKeywords,
+            Objects.requireNonNullElse(posting.getCustomKeywords(), List.of()),
             posting.getSchedules()
         );
     }

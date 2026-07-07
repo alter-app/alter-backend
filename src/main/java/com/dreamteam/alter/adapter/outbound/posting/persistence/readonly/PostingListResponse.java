@@ -10,6 +10,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -29,6 +30,8 @@ public class PostingListResponse {
 
     private List<PostingKeyword> postingKeywords;
 
+    private List<String> customKeywords;
+
     private List<PostingSchedule> schedules;
 
     private Workspace workspace;
@@ -43,7 +46,8 @@ public class PostingListResponse {
             .paymentType(posting.getPaymentType())
             .createdAt(posting.getCreatedAt())
             .schedules(posting.getSchedules())
-            .postingKeywords(keywordsMap.get(posting.getId()))
+            .postingKeywords(keywordsMap.getOrDefault(posting.getId(), List.of()))
+            .customKeywords(Objects.requireNonNullElse(posting.getCustomKeywords(), List.of()))
             .workspace(posting.getWorkspace())
             .scrapped(scrapped)
             .build();

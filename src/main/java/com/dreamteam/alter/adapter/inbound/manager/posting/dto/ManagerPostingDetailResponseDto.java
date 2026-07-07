@@ -59,8 +59,12 @@ public class ManagerPostingDetailResponseDto {
     private LocalDateTime updatedAt;
 
     @NotNull
-    @Schema(description = "키워드", example = "[{\"id\":1,\"name\":\"카페\"},{\"id\":4,\"name\":\"분식\"}]")
+    @Schema(description = "키워드(마스터 업종)", example = "[{\"id\":1,\"name\":\"카페\"},{\"id\":4,\"name\":\"분식\"}]")
     private List<PostingKeywordListResponseDto> keywords;
+
+    @NotNull
+    @Schema(description = "직접입력 업종", example = "[\"브런치카페\"]")
+    private List<String> customKeywords;
 
     @NotNull
     @Schema(description = "공고 스케줄", example = "[{\"id\":1,\"workingDays\":[\"MONDAY\",\"WEDNESDAY\"],\"startTime\":\"09:00\",\"endTime\":\"18:00\",\"positionsNeeded\":3,\"positionsAvailable\":2,\"position\":\"홀서빙\"}]")
@@ -83,6 +87,7 @@ public class ManagerPostingDetailResponseDto {
             .keywords(entity.getPostingKeywords().stream()
                 .map(PostingKeywordListResponseDto::from)
                 .toList())
+            .customKeywords(entity.getCustomKeywords())
             .build();
     }
 }

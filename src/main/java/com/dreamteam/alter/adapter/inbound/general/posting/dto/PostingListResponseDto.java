@@ -38,8 +38,12 @@ public class PostingListResponseDto {
     private LocalDateTime createdAt;
 
     @NotNull
-    @Schema(description = "키워드", example = "[{\"id\":1,\"name\":\"카페\"},{\"id\":4,\"name\":\"분식\"}]")
+    @Schema(description = "키워드(마스터 업종)", example = "[{\"id\":1,\"name\":\"카페\"},{\"id\":4,\"name\":\"분식\"}]")
     private List<PostingKeywordListResponseDto> keywords;
+
+    @NotNull
+    @Schema(description = "직접입력 업종", example = "[\"브런치카페\"]")
+    private List<String> customKeywords;
 
     @NotNull
     @Schema(description = "공고 스케줄", example = "[" +
@@ -73,6 +77,7 @@ public class PostingListResponseDto {
             .keywords(entity.getPostingKeywords().stream()
                 .map(PostingKeywordListResponseDto::from)
                 .toList())
+            .customKeywords(entity.getCustomKeywords())
             .workspace(PostingListWorkspaceResponseDto.from(entity.getWorkspace()))
             .scrapped(entity.isScrapped())
             .build();
