@@ -17,6 +17,11 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryReposito
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
+import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
+import com.dreamteam.alter.application.file.FileUrlService;
+import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -41,6 +46,9 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
     protected final SimpMessagingTemplate messagingTemplate;
     protected final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
     protected final ChatPresenceStore chatPresenceStore;
+    protected final AttachFilesUseCase attachFilesUseCase;
+    protected final FileQueryRepository fileQueryRepository;
+    protected final FileUrlService fileUrlService;
 
     public final void execute(U user, SendChatMessageRequestDto request, Long chatRoomId) {
         TokenScope senderScope = getParticipantScope(user);
@@ -70,6 +78,16 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
             throw new CustomException(ErrorCode.CHAT_NOTICE_FORBIDDEN);
         }
 
+        // 3-1. 내용/첨부 검증
+        List<String> fileIds = request.getFileIds() == null ? List.of() : request.getFileIds();
+        boolean hasText = !ObjectUtils.isEmpty(request.getContent());
+        if (!hasText && fileIds.isEmpty()) {
+            throw new CustomException(ErrorCode.CHAT_EMPTY_MESSAGE);
+        }
+        if (fileIds.size() > SendChatMessageRequestDto.MAX_ATTACHMENTS) {
+            throw new CustomException(ErrorCode.CHAT_TOO_MANY_ATTACHMENTS);
+        }
+
         // 4. 메시지 저장
         ChatMessage chatMessage = ChatMessage.create(
             chatRoom.getId(),
@@ -79,6 +97,22 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
             request.getContent()
         );
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
+
+        // 4-1. 첨부 파일 연결
+        List<FileResponseDto> attachments = List.of();
+        if (!fileIds.isEmpty()) {
+            attachFilesUseCase.execute(
+                fileIds,
+                FileTargetType.CHAT_MESSAGE,
+                String.valueOf(savedMessage.getId()),
+                senderId
+            );
+            attachments = fileQueryRepository
+                .findAllByTargetTypeAndTargetIdIn(FileTargetType.CHAT_MESSAGE, List.of(String.valueOf(savedMessage.getId())))
+                .stream()
+                .map(fileUrlService::resolve)
+                .toList();
+        }
 
         // 5. ChatRoom의 updatedAt 갱신
         chatRoom.updateUpdatedAt();
@@ -93,6 +127,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
                 savedMessage.getContent(),
                 savedMessage.getCreatedAt()
             );
+            messageResponse.setAttachments(attachments);
             messagingTemplate.convertAndSend("/sub/chat." + chatRoom.getId(), messageResponse);
         } catch (Exception e) {
             log.error("WebSocket 메시지 전송 실패. ChatRoomId: {}, Error: {}", chatRoom.getId(), e.getMessage(), e);

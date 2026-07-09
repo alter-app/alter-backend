@@ -1,6 +1,7 @@
 package com.dreamteam.alter.application.chat.usecase;
 
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.SendChatMessageRequestDto;
+import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -15,11 +16,18 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
+import com.dreamteam.alter.domain.file.entity.File;
+import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
+import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
+import com.dreamteam.alter.application.file.FileUrlService;
+import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -64,6 +72,15 @@ class SendChatMessageTest {
 
     @Mock
     private ChatPresenceStore chatPresenceStore;
+
+    @Mock
+    private AttachFilesUseCase attachFilesUseCase;
+
+    @Mock
+    private FileQueryRepository fileQueryRepository;
+
+    @Mock
+    private FileUrlService fileUrlService;
 
     @InjectMocks
     private SendChatMessage sut;
@@ -278,5 +295,114 @@ class SendChatMessageTest {
         then(notificationService).should().sendNotificationOnly(eq(3L), any(), anyString(), anyString());
         then(notificationService).should(never()).sendNotificationOnly(eq(1L), any(), anyString(), anyString());
         then(notificationService).should(never()).sendNotificationOnly(eq(2L), any(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("내용도 이미지도 없으면 CHAT_EMPTY_MESSAGE 예외, 저장 안 됨")
+    void execute_내용도_이미지도_없으면_예외() {
+        // given
+        User user = mock(User.class);
+        given(user.getId()).willReturn(1L);
+
+        ChatRoom directRoom = mock(ChatRoom.class);
+        given(directRoom.getType()).willReturn(ChatRoomType.DIRECT);
+
+        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
+
+        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
+        given(request.getContent()).willReturn(null);
+        given(request.getFileIds()).willReturn(List.of());
+
+        // when & then
+        assertThatThrownBy(() -> sut.execute(user, request, 100L))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CHAT_EMPTY_MESSAGE);
+
+        then(chatMessageRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("첨부 이미지가 10개 초과이면 CHAT_TOO_MANY_ATTACHMENTS 예외, 저장 안 됨")
+    void execute_첨부가_10개_초과이면_예외() {
+        // given
+        User user = mock(User.class);
+        given(user.getId()).willReturn(1L);
+
+        ChatRoom directRoom = mock(ChatRoom.class);
+        given(directRoom.getType()).willReturn(ChatRoomType.DIRECT);
+
+        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
+
+        List<String> fileIds = java.util.stream.IntStream.range(0, 11)
+            .mapToObj(i -> "f" + i)
+            .toList();
+
+        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
+        given(request.getContent()).willReturn(null);
+        given(request.getFileIds()).willReturn(fileIds);
+
+        // when & then
+        assertThatThrownBy(() -> sut.execute(user, request, 100L))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CHAT_TOO_MANY_ATTACHMENTS);
+
+        then(chatMessageRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("이미지 첨부시 attachFilesUseCase 호출 및 브로드캐스트 payload에 attachments 포함")
+    void execute_이미지_첨부시_attach_호출_및_payload_포함() {
+        // given
+        User user = mock(User.class);
+        given(user.getId()).willReturn(1L);
+
+        ChatRoom directRoom = mock(ChatRoom.class);
+        given(directRoom.getId()).willReturn(100L);
+        given(directRoom.getType()).willReturn(ChatRoomType.DIRECT);
+        given(directRoom.getParticipant1Id()).willReturn(1L);
+        given(directRoom.getParticipant1Scope()).willReturn(TokenScope.APP);
+        given(directRoom.getParticipant2Id()).willReturn(2L);
+        given(directRoom.getParticipant2Scope()).willReturn(TokenScope.APP);
+
+        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
+
+        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
+        given(request.getContent()).willReturn(null);
+        given(request.getFileIds()).willReturn(List.of("f1", "f2"));
+
+        ChatMessage savedMessage = ChatMessage.create(100L, 1L, TokenScope.APP, ChatMessageType.NORMAL, null);
+        given(chatMessageRepository.save(any(ChatMessage.class))).willReturn(savedMessage);
+        given(userQueryRepository.findById(1L)).willReturn(Optional.empty());
+        given(chatPresenceStore.isOnline(TokenScope.APP, 2L)).willReturn(false);
+
+        File file1 = mock(File.class);
+        File file2 = mock(File.class);
+        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(
+            eq(FileTargetType.CHAT_MESSAGE), eq(List.of(String.valueOf(savedMessage.getId())))
+        )).willReturn(List.of(file1, file2));
+
+        FileResponseDto dto1 = FileResponseDto.of(file1, "https://cdn.example.com/f1");
+        FileResponseDto dto2 = FileResponseDto.of(file2, "https://cdn.example.com/f2");
+        given(fileUrlService.resolve(file1)).willReturn(dto1);
+        given(fileUrlService.resolve(file2)).willReturn(dto2);
+
+        // when
+        sut.execute(user, request, 100L);
+
+        // then
+        then(attachFilesUseCase).should().execute(
+            eq(List.of("f1", "f2")), eq(FileTargetType.CHAT_MESSAGE), anyString(), eq(1L)
+        );
+
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        then(messagingTemplate).should().convertAndSend(eq("/sub/chat.100"), captor.capture());
+        ChatMessageResponse payload = (ChatMessageResponse) captor.getValue();
+        assertThat(payload.getAttachments()).containsExactly(dto1, dto2);
     }
 }

@@ -8,6 +8,9 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryReposito
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.application.file.FileUrlService;
+import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
+import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -24,11 +27,15 @@ public class SendChatMessage extends AbstractSendChatMessageUseCase<User> implem
         NotificationService notificationService,
         SimpMessagingTemplate messagingTemplate,
         ChatRoomMemberQueryRepository chatRoomMemberQueryRepository,
-        ChatPresenceStore chatPresenceStore
+        ChatPresenceStore chatPresenceStore,
+        AttachFilesUseCase attachFilesUseCase,
+        FileQueryRepository fileQueryRepository,
+        FileUrlService fileUrlService
     ) {
         super(
             chatRoomQueryRepository, chatRoomRepository, chatMessageRepository, userQueryRepository,
-            notificationService, messagingTemplate, chatRoomMemberQueryRepository, chatPresenceStore
+            notificationService, messagingTemplate, chatRoomMemberQueryRepository, chatPresenceStore,
+            attachFilesUseCase, fileQueryRepository, fileUrlService
         );
     }
 
