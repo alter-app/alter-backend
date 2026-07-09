@@ -3,6 +3,7 @@ package com.dreamteam.alter.application.chat.usecase;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.CreateChatRoomResponseDto;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.port.inbound.CreateOrGetChatRoomUseCase;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import com.dreamteam.alter.domain.user.context.AppActor;
@@ -14,9 +15,10 @@ public class CreateOrGetChatRoom extends AbstractCreateOrGetChatRoomUseCase<AppA
 
     public CreateOrGetChatRoom(
         ChatRoomQueryRepository chatRoomQueryRepository,
-        ChatRoomRepository chatRoomRepository
+        ChatRoomRepository chatRoomRepository,
+        ChatRoomMemberRepository chatRoomMemberRepository
     ) {
-        super(chatRoomQueryRepository, chatRoomRepository);
+        super(chatRoomQueryRepository, chatRoomRepository, chatRoomMemberRepository);
     }
 
     @Override
