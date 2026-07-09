@@ -6,6 +6,7 @@ import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatMessageResponseD
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.port.inbound.GetChatMessagesUseCase;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,9 +18,10 @@ public class GetChatMessages extends AbstractGetChatMessagesUseCase<AppActor> im
     public GetChatMessages(
         ChatRoomQueryRepository chatRoomQueryRepository,
         ChatMessageQueryRepository chatMessageQueryRepository,
-        ObjectMapper objectMapper
+        ObjectMapper objectMapper,
+        ChatRoomMemberQueryRepository chatRoomMemberQueryRepository
     ) {
-        super(chatRoomQueryRepository, chatMessageQueryRepository, objectMapper);
+        super(chatRoomQueryRepository, chatMessageQueryRepository, objectMapper, chatRoomMemberQueryRepository);
     }
 
     @Override

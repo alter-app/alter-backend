@@ -33,6 +33,9 @@ public class ChatMessageResponseDto {
     @Schema(description = "본인이 보낸 메시지 여부")
     private Boolean isMine;
 
+    @Schema(description = "안 읽은 사람 수")
+    private Integer unreadCount;
+
     public static ChatMessageResponseDto from(ChatMessageResponse response) {
         return ChatMessageResponseDto.builder()
             .id(response.getId())
@@ -55,6 +58,26 @@ public class ChatMessageResponseDto {
             .content(response.getContent())
             .createdAt(response.getCreatedAt())
             .isMine(isMine)
+            .build();
+    }
+
+    public static ChatMessageResponseDto from(
+        ChatMessageResponse response,
+        Long currentUserId,
+        TokenScope currentUserScope,
+        Integer unreadCount
+    ) {
+        boolean isMine = response.getSenderId().equals(currentUserId)
+            && response.getSenderScope().equals(currentUserScope);
+
+        return ChatMessageResponseDto.builder()
+            .id(response.getId())
+            .senderId(response.getSenderId())
+            .senderScope(DescribedEnumDto.of(response.getSenderScope(), TokenScope.describe()))
+            .content(response.getContent())
+            .createdAt(response.getCreatedAt())
+            .isMine(isMine)
+            .unreadCount(unreadCount)
             .build();
     }
 

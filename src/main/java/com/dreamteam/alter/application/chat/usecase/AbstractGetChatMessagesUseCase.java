@@ -11,7 +11,9 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.util.CursorUtil;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
     protected final ChatRoomQueryRepository chatRoomQueryRepository;
     protected final ChatMessageQueryRepository chatMessageQueryRepository;
     protected final ObjectMapper objectMapper;
+    protected final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
 
     protected CursorPaginatedApiResponse<ChatMessageResponseDto> execute(
         A actor,
@@ -60,12 +63,20 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
         // 4. 클라이언트 표시 순서에 맞게 오름차순으로 변환 (가장 오래된 메시지가 첫 번째)
         List<ChatMessageResponse> sortedMessages = messages.reversed();
 
-        // 5. DTO 변환 (본인 메시지 여부 포함)
+        // 5. 방의 활성 멤버 목록을 한 번만 로드 (메시지별 안 읽은 사람 수 계산용, N+1 방지)
+        List<ChatRoomMember> activeMembers = chatRoomMemberQueryRepository.findActiveByRoom(chatRoomId);
+
+        // 6. DTO 변환 (본인 메시지 여부 + 안 읽은 사람 수 포함)
         List<ChatMessageResponseDto> messageList = sortedMessages.stream()
-            .map(message -> ChatMessageResponseDto.from(message, participantId, participantScope))
+            .map(message -> ChatMessageResponseDto.from(
+                message,
+                participantId,
+                participantScope,
+                calculateUnreadCount(message, activeMembers)
+            ))
             .toList();
 
-        // 6. 커서 생성 (가장 오래된 메시지 기준으로 설정하여 다음 페이지 조회 시 이전 메시지 조회)
+        // 7. 커서 생성 (가장 오래된 메시지 기준으로 설정하여 다음 페이지 조회 시 이전 메시지 조회)
         ChatMessageResponse oldestMessage = sortedMessages.getFirst();
         CursorPageResponseDto pageResponseDto = CursorPageResponseDto.of(
             CursorUtil.encodeCursor(new CursorDto(oldestMessage.getId(), oldestMessage.getCreatedAt()), objectMapper),
@@ -79,4 +90,21 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
     protected abstract TokenScope getParticipantScope(A actor);
 
     protected abstract Long getParticipantId(A actor);
+
+    // 메시지별 안 읽은 사람 수 = 활성 멤버 중 (아직 읽지 않았고) AND (발신자 본인이 아닌) 인원 수
+    private int calculateUnreadCount(ChatMessageResponse message, List<ChatRoomMember> activeMembers) {
+        return (int) activeMembers.stream()
+            .filter(member -> hasNotRead(member, message))
+            .filter(member -> !isSender(member, message))
+            .count();
+    }
+
+    private boolean hasNotRead(ChatRoomMember member, ChatMessageResponse message) {
+        return member.getLastReadMessageId() == null || member.getLastReadMessageId() < message.getId();
+    }
+
+    private boolean isSender(ChatRoomMember member, ChatMessageResponse message) {
+        return member.getMemberId().equals(message.getSenderId())
+            && member.getMemberScope().equals(message.getSenderScope());
+    }
 }
