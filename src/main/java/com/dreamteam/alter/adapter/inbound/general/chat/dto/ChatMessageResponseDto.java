@@ -1,12 +1,14 @@
 package com.dreamteam.alter.adapter.inbound.general.chat.dto;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -35,6 +37,9 @@ public class ChatMessageResponseDto {
 
     @Schema(description = "안 읽은 사람 수")
     private Integer unreadCount;
+
+    @Schema(description = "첨부 파일 목록")
+    private List<FileResponseDto> attachments;
 
     public static ChatMessageResponseDto from(ChatMessageResponse response) {
         return ChatMessageResponseDto.builder()
@@ -78,6 +83,7 @@ public class ChatMessageResponseDto {
             .createdAt(response.getCreatedAt())
             .isMine(isMine)
             .unreadCount(unreadCount)
+            .attachments(response.getAttachments())
             .build();
     }
 

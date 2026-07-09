@@ -2,14 +2,19 @@ package com.dreamteam.alter.application.chat.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
+import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatMessageResponseDto;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
+import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.file.entity.File;
+import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -21,12 +26,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GetChatMessages 테스트")
@@ -41,6 +50,12 @@ class GetChatMessagesTest {
     @Mock
     private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
 
+    @Mock
+    private FileQueryRepository fileQueryRepository;
+
+    @Mock
+    private FileUrlService fileUrlService;
+
     private GetChatMessages sut;
 
     @BeforeEach
@@ -49,7 +64,9 @@ class GetChatMessagesTest {
             chatRoomQueryRepository,
             chatMessageQueryRepository,
             new ObjectMapper().registerModule(new JavaTimeModule()),
-            chatRoomMemberQueryRepository
+            chatRoomMemberQueryRepository,
+            fileQueryRepository,
+            fileUrlService
         );
     }
 
@@ -88,5 +105,72 @@ class GetChatMessagesTest {
         // then
         assertThat(response.data()).hasSize(1);
         assertThat(response.data().getFirst().getUnreadCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("메시지 목록 조회 시 첨부 파일을 일괄 조회하여 각 메시지에 매핑한다 (N+1 방지)")
+    void execute_첨부파일_일괄조회_매핑() {
+        // given
+        Long chatRoomId = 1L;
+        Long senderId = 100L;
+        AppActor actor = new AppActor(senderId, null, null);
+
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, senderId, TokenScope.APP))
+            .willReturn(Optional.of(ChatRoom.createGroup(1L)));
+
+        ChatMessageResponse messageWithFile = new ChatMessageResponse(
+            1L, chatRoomId, senderId, TokenScope.APP, "첨부 있음", LocalDateTime.now()
+        );
+        ChatMessageResponse messageWithoutFile = new ChatMessageResponse(
+            2L, chatRoomId, senderId, TokenScope.APP, "첨부 없음", LocalDateTime.now()
+        );
+        given(chatMessageQueryRepository.getChatMessagesWithCursor(any(), any()))
+            .willReturn(List.of(messageWithoutFile, messageWithFile));
+
+        given(chatRoomMemberQueryRepository.findActiveByRoom(chatRoomId))
+            .willReturn(Collections.emptyList());
+
+        File file = File.create(
+            FileTargetType.CHAT_MESSAGE,
+            "photo.png",
+            "stored/key.png",
+            "https://cdn.example.com/photo.png",
+            "image/png",
+            1024L,
+            com.dreamteam.alter.domain.file.type.BucketType.PUBLIC,
+            senderId
+        );
+        file.attach(String.valueOf(messageWithFile.getId()));
+
+        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(
+            eq(FileTargetType.CHAT_MESSAGE),
+            any()
+        )).willReturn(List.of(file));
+
+        FileResponseDto fileResponseDto = FileResponseDto.of(file, "https://cdn.example.com/photo.png");
+        given(fileUrlService.resolve(file)).willReturn(fileResponseDto);
+
+        // when
+        CursorPaginatedApiResponse<ChatMessageResponseDto> response =
+            sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10));
+
+        // then
+        assertThat(response.data()).hasSize(2);
+
+        ChatMessageResponseDto dtoWithFile = response.data().stream()
+            .filter(dto -> dto.getId().equals(messageWithFile.getId()))
+            .findFirst()
+            .orElseThrow();
+        ChatMessageResponseDto dtoWithoutFile = response.data().stream()
+            .filter(dto -> dto.getId().equals(messageWithoutFile.getId()))
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(dtoWithFile.getAttachments()).hasSize(1);
+        assertThat(dtoWithFile.getAttachments().getFirst().getUrl()).isEqualTo("https://cdn.example.com/photo.png");
+        assertThat(dtoWithoutFile.getAttachments()).isEmpty();
+
+        verify(fileQueryRepository, times(1))
+            .findAllByTargetTypeAndTargetIdIn(eq(FileTargetType.CHAT_MESSAGE), any());
     }
 }
