@@ -33,7 +33,7 @@ public class ChatMessage {
     @Column(name = "sender_scope", length = 20, nullable = false)
     private TokenScope senderScope;
 
-    @Column(name = "content", length = 1000, nullable = false)
+    @Column(name = "content", length = 1000)
     private String content;
 
     @Enumerated(EnumType.STRING)
