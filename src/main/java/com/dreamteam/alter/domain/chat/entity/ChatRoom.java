@@ -1,6 +1,7 @@
 package com.dreamteam.alter.domain.chat.entity;
 
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -23,19 +24,26 @@ public class ChatRoom {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "participant1_id", nullable = false)
+    @Column(name = "participant1_id")
     private Long participant1Id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "participant1_scope", length = 20, nullable = false)
+    @Column(name = "participant1_scope", length = 20)
     private TokenScope participant1Scope;
 
-    @Column(name = "participant2_id", nullable = false)
+    @Column(name = "participant2_id")
     private Long participant2Id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "participant2_scope", length = 20, nullable = false)
+    @Column(name = "participant2_scope", length = 20)
     private TokenScope participant2Scope;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", length = 20, nullable = false)
+    private ChatRoomType type;
+
+    @Column(name = "workspace_id")
+    private Long workspaceId;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -56,6 +64,15 @@ public class ChatRoom {
             .participant1Scope(participant1Scope)
             .participant2Id(participant2Id)
             .participant2Scope(participant2Scope)
+            .type(ChatRoomType.DIRECT)
+            .build();
+    }
+
+    public static ChatRoom createGroup(Long workspaceId) {
+        return ChatRoom.builder()
+            .type(ChatRoomType.GROUP)
+            .workspaceId(workspaceId)
+            // participant 컬럼은 DIRECT 전용: 그룹은 멤버 테이블로 관리하므로 사용 안 함
             .build();
     }
 

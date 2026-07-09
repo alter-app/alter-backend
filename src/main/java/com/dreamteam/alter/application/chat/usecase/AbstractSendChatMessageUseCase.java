@@ -8,6 +8,7 @@ import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatMessage;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
+import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
@@ -50,6 +51,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
             chatRoom.getId(),
             senderId,
             senderScope,
+            ChatMessageType.NORMAL,
             request.getContent()
         );
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
