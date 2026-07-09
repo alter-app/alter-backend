@@ -79,3 +79,7 @@ aws:
     public-bucket: mock-public-bucket
     private-bucket: mock-private-bucket
     presigned-url-expiration-minutes: 30
+chat:
+  broker:
+    relay:
+      enabled: false
