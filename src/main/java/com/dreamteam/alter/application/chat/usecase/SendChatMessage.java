@@ -3,6 +3,7 @@ package com.dreamteam.alter.application.chat.usecase;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.port.inbound.SendChatMessageUseCase;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
@@ -22,11 +23,12 @@ public class SendChatMessage extends AbstractSendChatMessageUseCase<User> implem
         UserQueryRepository userQueryRepository,
         NotificationService notificationService,
         SimpMessagingTemplate messagingTemplate,
-        ChatRoomMemberQueryRepository chatRoomMemberQueryRepository
+        ChatRoomMemberQueryRepository chatRoomMemberQueryRepository,
+        ChatPresenceStore chatPresenceStore
     ) {
         super(
             chatRoomQueryRepository, chatRoomRepository, chatMessageRepository, userQueryRepository,
-            notificationService, messagingTemplate, chatRoomMemberQueryRepository
+            notificationService, messagingTemplate, chatRoomMemberQueryRepository, chatPresenceStore
         );
     }
 

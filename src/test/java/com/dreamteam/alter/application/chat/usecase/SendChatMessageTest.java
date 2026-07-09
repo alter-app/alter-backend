@@ -7,7 +7,9 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatMessage;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
+import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
@@ -22,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,6 +61,9 @@ class SendChatMessageTest {
 
     @Mock
     private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
+
+    @Mock
+    private ChatPresenceStore chatPresenceStore;
 
     @InjectMocks
     private SendChatMessage sut;
@@ -116,6 +122,7 @@ class SendChatMessageTest {
         given(directRoom.getParticipant1Id()).willReturn(1L);
         given(directRoom.getParticipant1Scope()).willReturn(TokenScope.APP);
         given(directRoom.getParticipant2Id()).willReturn(2L);
+        given(directRoom.getParticipant2Scope()).willReturn(TokenScope.APP);
 
         given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
         given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP))
@@ -127,6 +134,7 @@ class SendChatMessageTest {
         ChatMessage savedMessage = ChatMessage.create(100L, 1L, TokenScope.APP, ChatMessageType.NORMAL, "안녕하세요");
         given(chatMessageRepository.save(any(ChatMessage.class))).willReturn(savedMessage);
         given(userQueryRepository.findById(1L)).willReturn(Optional.empty());
+        given(chatPresenceStore.isOnline(TokenScope.APP, 2L)).willReturn(false);
 
         // when
         sut.execute(user, request, 100L);
@@ -135,6 +143,40 @@ class SendChatMessageTest {
         then(chatMessageRepository).should().save(any(ChatMessage.class));
         then(messagingTemplate).should().convertAndSend(eq("/sub/chat.100"), any(Object.class));
         then(notificationService).should().sendNotificationOnly(eq(2L), any(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("DIRECT 방에서 상대가 온라인이면 FCM 미발송")
+    void execute_DIRECT_상대_온라인이면_FCM_미발송() {
+        // given
+        User user = mock(User.class);
+        given(user.getId()).willReturn(1L);
+
+        ChatRoom directRoom = mock(ChatRoom.class);
+        given(directRoom.getId()).willReturn(100L);
+        given(directRoom.getType()).willReturn(ChatRoomType.DIRECT);
+        given(directRoom.getParticipant1Id()).willReturn(1L);
+        given(directRoom.getParticipant1Scope()).willReturn(TokenScope.APP);
+        given(directRoom.getParticipant2Id()).willReturn(2L);
+        given(directRoom.getParticipant2Scope()).willReturn(TokenScope.APP);
+
+        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
+
+        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
+        given(request.getContent()).willReturn("안녕하세요");
+
+        ChatMessage savedMessage = ChatMessage.create(100L, 1L, TokenScope.APP, ChatMessageType.NORMAL, "안녕하세요");
+        given(chatMessageRepository.save(any(ChatMessage.class))).willReturn(savedMessage);
+        given(chatPresenceStore.isOnline(TokenScope.APP, 2L)).willReturn(true);
+
+        // when
+        sut.execute(user, request, 100L);
+
+        // then
+        then(messagingTemplate).should().convertAndSend(eq("/sub/chat.100"), any(Object.class));
+        then(notificationService).should(never()).sendNotificationOnly(any(), any(), anyString(), anyString());
     }
 
     @Test
@@ -161,7 +203,7 @@ class SendChatMessageTest {
     }
 
     @Test
-    @DisplayName("GROUP 방 멤버가 NORMAL 전송시 FCM은 스킵되고 브로드캐스트만 발생")
+    @DisplayName("GROUP 방에 발신자 외 멤버가 없으면 FCM은 미발송, 브로드캐스트만 발생")
     void execute_GROUP_멤버가_NORMAL_전송시_FCM_스킵() {
         // given
         User user = mock(User.class);
@@ -173,12 +215,14 @@ class SendChatMessageTest {
 
         given(chatRoomQueryRepository.findById(200L)).willReturn(Optional.of(groupRoom));
         given(chatRoomMemberQueryRepository.existsActive(200L, 1L, TokenScope.APP)).willReturn(true);
+        given(chatRoomMemberQueryRepository.findActiveByRoom(200L)).willReturn(List.of());
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
         given(request.getContent()).willReturn("그룹 메시지");
 
         ChatMessage savedMessage = ChatMessage.create(200L, 1L, TokenScope.APP, ChatMessageType.NORMAL, "그룹 메시지");
         given(chatMessageRepository.save(any(ChatMessage.class))).willReturn(savedMessage);
+        given(userQueryRepository.findById(1L)).willReturn(Optional.empty());
 
         // when
         sut.execute(user, request, 200L);
@@ -187,5 +231,52 @@ class SendChatMessageTest {
         then(messagingTemplate).should().convertAndSend(eq("/sub/chat.200"), any(Object.class));
         then(notificationService).should(never()).sendNotificationOnly(any(), any(), anyString(), anyString());
         assertThat(savedMessage.getType()).isEqualTo(ChatMessageType.NORMAL);
+    }
+
+    @Test
+    @DisplayName("GROUP 방에서 발신자·온라인 멤버는 제외하고 오프라인 멤버에게만 FCM 발송")
+    void execute_GROUP_오프라인_멤버에게만_FCM_발송() {
+        // given
+        User user = mock(User.class);
+        given(user.getId()).willReturn(1L);
+
+        ChatRoom groupRoom = mock(ChatRoom.class);
+        given(groupRoom.getId()).willReturn(200L);
+        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
+
+        given(chatRoomQueryRepository.findById(200L)).willReturn(Optional.of(groupRoom));
+        given(chatRoomMemberQueryRepository.existsActive(200L, 1L, TokenScope.APP)).willReturn(true);
+
+        ChatRoomMember senderMember = mock(ChatRoomMember.class);
+        given(senderMember.getMemberId()).willReturn(1L);
+        given(senderMember.getMemberScope()).willReturn(TokenScope.APP);
+
+        ChatRoomMember onlineMember = mock(ChatRoomMember.class);
+        given(onlineMember.getMemberId()).willReturn(2L);
+        given(onlineMember.getMemberScope()).willReturn(TokenScope.APP);
+
+        ChatRoomMember offlineMember = mock(ChatRoomMember.class);
+        given(offlineMember.getMemberId()).willReturn(3L);
+        given(offlineMember.getMemberScope()).willReturn(TokenScope.APP);
+
+        given(chatRoomMemberQueryRepository.findActiveByRoom(200L))
+            .willReturn(List.of(senderMember, onlineMember, offlineMember));
+        given(chatPresenceStore.isOnline(TokenScope.APP, 2L)).willReturn(true);
+        given(chatPresenceStore.isOnline(TokenScope.APP, 3L)).willReturn(false);
+
+        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
+        given(request.getContent()).willReturn("그룹 메시지");
+
+        ChatMessage savedMessage = ChatMessage.create(200L, 1L, TokenScope.APP, ChatMessageType.NORMAL, "그룹 메시지");
+        given(chatMessageRepository.save(any(ChatMessage.class))).willReturn(savedMessage);
+        given(userQueryRepository.findById(1L)).willReturn(Optional.empty());
+
+        // when
+        sut.execute(user, request, 200L);
+
+        // then
+        then(notificationService).should().sendNotificationOnly(eq(3L), any(), anyString(), anyString());
+        then(notificationService).should(never()).sendNotificationOnly(eq(1L), any(), anyString(), anyString());
+        then(notificationService).should(never()).sendNotificationOnly(eq(2L), any(), anyString(), anyString());
     }
 }

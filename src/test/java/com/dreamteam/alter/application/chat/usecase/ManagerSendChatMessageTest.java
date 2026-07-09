@@ -7,7 +7,9 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatMessage;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
+import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
@@ -24,6 +26,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,6 +63,9 @@ class ManagerSendChatMessageTest {
     @Mock
     private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
 
+    @Mock
+    private ChatPresenceStore chatPresenceStore;
+
     @InjectMocks
     private ManagerSendChatMessage sut;
 
@@ -78,6 +84,7 @@ class ManagerSendChatMessageTest {
 
         given(chatRoomQueryRepository.findById(5L)).willReturn(Optional.of(groupRoom));
         given(chatRoomMemberQueryRepository.existsActive(5L, 2L, TokenScope.MANAGER)).willReturn(true);
+        given(chatRoomMemberQueryRepository.findActiveByRoom(5L)).willReturn(List.of());
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
         given(request.getType()).willReturn(ChatMessageType.NOTICE);
@@ -94,6 +101,50 @@ class ManagerSendChatMessageTest {
         assertThat(captor.getValue().getType()).isEqualTo(ChatMessageType.NOTICE);
         then(messagingTemplate).should().convertAndSend(eq("/sub/chat.5"), any(Object.class));
         then(notificationService).should(never()).sendNotificationOnly(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("매니저가 GROUP 방에서 NORMAL 전송시 오프라인 멤버에게만 FCM 발송")
+    void execute_매니저가_GROUP_방에서_NORMAL_전송시_오프라인_멤버에게_FCM_발송() {
+        // given
+        User innerUser = mock(User.class);
+        given(innerUser.getId()).willReturn(2L);
+        ManagerUser managerUser = mock(ManagerUser.class);
+        given(managerUser.getUser()).willReturn(innerUser);
+
+        ChatRoom groupRoom = mock(ChatRoom.class);
+        given(groupRoom.getId()).willReturn(5L);
+        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
+
+        given(chatRoomQueryRepository.findById(5L)).willReturn(Optional.of(groupRoom));
+        given(chatRoomMemberQueryRepository.existsActive(5L, 2L, TokenScope.MANAGER)).willReturn(true);
+
+        ChatRoomMember senderMember = mock(ChatRoomMember.class);
+        given(senderMember.getMemberId()).willReturn(2L);
+        given(senderMember.getMemberScope()).willReturn(TokenScope.MANAGER);
+
+        ChatRoomMember offlineMember = mock(ChatRoomMember.class);
+        given(offlineMember.getMemberId()).willReturn(10L);
+        given(offlineMember.getMemberScope()).willReturn(TokenScope.APP);
+
+        given(chatRoomMemberQueryRepository.findActiveByRoom(5L))
+            .willReturn(List.of(senderMember, offlineMember));
+        given(chatPresenceStore.isOnline(TokenScope.APP, 10L)).willReturn(false);
+
+        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
+        given(request.getType()).willReturn(ChatMessageType.NORMAL);
+        given(request.getContent()).willReturn("일반 메시지");
+
+        ChatMessage savedMessage = ChatMessage.create(5L, 2L, TokenScope.MANAGER, ChatMessageType.NORMAL, "일반 메시지");
+        given(chatMessageRepository.save(any(ChatMessage.class))).willReturn(savedMessage);
+        given(userQueryRepository.findById(2L)).willReturn(Optional.empty());
+
+        // when
+        sut.execute(managerUser, request, 5L);
+
+        // then
+        then(notificationService).should().sendNotificationOnly(eq(10L), any(), any(), any());
+        then(notificationService).should(never()).sendNotificationOnly(eq(2L), any(), any(), any());
     }
 
     @Test

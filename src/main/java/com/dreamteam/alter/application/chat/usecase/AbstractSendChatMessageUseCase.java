@@ -8,9 +8,11 @@ import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatMessage;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
+import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
@@ -24,6 +26,8 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
@@ -36,6 +40,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
     protected final NotificationService notificationService;
     protected final SimpMessagingTemplate messagingTemplate;
     protected final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
+    protected final ChatPresenceStore chatPresenceStore;
 
     public final void execute(U user, SendChatMessageRequestDto request, Long chatRoomId) {
         TokenScope senderScope = getParticipantScope(user);
@@ -93,13 +98,15 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
             log.error("WebSocket 메시지 전송 실패. ChatRoomId: {}, Error: {}", chatRoom.getId(), e.getMessage(), e);
         }
 
-        // 7. DIRECT 방일 때만 상대방에게 FCM 알림 전송 (그룹 팬아웃은 Phase 5)
+        // 7. FCM 알림 전송 (온라인 멤버는 제외한 presence 기반 폴백)
         if (chatRoom.getType() == ChatRoomType.DIRECT) {
-            sendFcmNotification(chatRoom, senderId, senderScope, request.getContent());
+            sendDirectFcmNotification(chatRoom, senderId, senderScope, request.getContent());
+        } else {
+            sendGroupFcmNotification(chatRoom, senderId, senderScope, request.getContent());
         }
     }
 
-    private void sendFcmNotification(
+    private void sendDirectFcmNotification(
         ChatRoom chatRoom,
         Long senderId,
         TokenScope senderScope,
@@ -108,12 +115,20 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
         try {
             // 상대방 정보 확인
             Long opponentId;
+            TokenScope opponentScope;
             if (chatRoom.getParticipant1Id()
                 .equals(senderId) && chatRoom.getParticipant1Scope()
                 .equals(senderScope)) {
                 opponentId = chatRoom.getParticipant2Id();
+                opponentScope = chatRoom.getParticipant2Scope();
             } else {
                 opponentId = chatRoom.getParticipant1Id();
+                opponentScope = chatRoom.getParticipant1Scope();
+            }
+
+            // 상대방이 온라인이면 FCM 생략 (WebSocket으로 이미 수신)
+            if (chatPresenceStore.isOnline(opponentScope, opponentId)) {
+                return;
             }
 
             // 발신자 이름 조회
@@ -129,6 +144,42 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
 
             // FCM 알림 전송
             notificationService.sendNotificationOnly(opponentId, NotificationType.CHAT, title, body);
+
+        } catch (Exception e) {
+            // 알림 실패는 로그만 남기고 메시지 전송은 성공 처리
+            log.error("채팅 메시지 FCM 알림 발송 실패. ChatRoomId: {}, Error: {}", chatRoom.getId(), e.getMessage(), e);
+        }
+    }
+
+    private void sendGroupFcmNotification(
+        ChatRoom chatRoom,
+        Long senderId,
+        TokenScope senderScope,
+        String content
+    ) {
+        try {
+            // 발신자 이름 조회
+            String senderName = getSenderName(senderId);
+
+            // 알림 메시지 생성
+            String title = NotificationMessageConstants.Chat.NEW_MESSAGE_TITLE;
+            String body = String.format(
+                NotificationMessageConstants.Chat.NEW_MESSAGE_BODY,
+                senderName,
+                truncateContent(content)
+            );
+
+            // 활성 멤버 중 발신자를 제외한 오프라인 멤버에게만 FCM 발송
+            List<ChatRoomMember> members = chatRoomMemberQueryRepository.findActiveByRoom(chatRoom.getId());
+            for (ChatRoomMember member : members) {
+                if (member.getMemberId().equals(senderId) && member.getMemberScope() == senderScope) {
+                    continue;
+                }
+                if (chatPresenceStore.isOnline(member.getMemberScope(), member.getMemberId())) {
+                    continue;
+                }
+                notificationService.sendNotificationOnly(member.getMemberId(), NotificationType.CHAT, title, body);
+            }
 
         } catch (Exception e) {
             // 알림 실패는 로그만 남기고 메시지 전송은 성공 처리
