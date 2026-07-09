@@ -1,10 +1,10 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.application.chat.event.ChatMembershipJoinedEvent;
 import com.dreamteam.alter.application.file.FileDeleteService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
-import com.dreamteam.alter.domain.chat.port.inbound.SyncWorkspaceChatMembershipUseCase;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -28,10 +28,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,10 +40,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -76,7 +74,7 @@ class UpdateWorkspaceRequestStatusTests {
     private FileDeleteService fileDeleteService;
 
     @Mock
-    private SyncWorkspaceChatMembershipUseCase syncWorkspaceChatMembership;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private UpdateWorkspaceRequestStatus updateWorkspaceRequestStatus;
@@ -86,6 +84,9 @@ class UpdateWorkspaceRequestStatusTests {
 
     @Captor
     private ArgumentCaptor<Workspace> workspaceCaptor;
+
+    @Captor
+    private ArgumentCaptor<ChatMembershipJoinedEvent> eventCaptor;
 
     @Nested
     @DisplayName("execute")
@@ -205,8 +206,8 @@ class UpdateWorkspaceRequestStatusTests {
         }
 
         @Test
-        @DisplayName("ACTIVATED 면 업장 저장 후 그룹 채팅방을 생성하고 매니저를 그룹방에 입장시킨다")
-        void execute_ACTIVATED_그룹채팅방생성및매니저입장() {
+        @DisplayName("ACTIVATED 면 업장 저장 후 채팅 멤버십 join 이벤트를 발행한다")
+        void execute_ACTIVATED_채팅멤버십join이벤트발행() {
             // given
             User user = mock(User.class);
             WorkspaceRequest request = mock(WorkspaceRequest.class);
@@ -226,11 +227,12 @@ class UpdateWorkspaceRequestStatusTests {
             updateWorkspaceRequestStatus.execute(1L, WorkspaceRequestStatus.ACTIVATED);
 
             // then
-            InOrder inOrder = inOrder(workspaceRepository, syncWorkspaceChatMembership);
-            inOrder.verify(workspaceRepository).save(any(Workspace.class));
-            inOrder.verify(syncWorkspaceChatMembership).createGroupRoom(any());
+            then(workspaceRepository).should().save(any(Workspace.class));
+            then(eventPublisher).should().publishEvent(eventCaptor.capture());
+            ChatMembershipJoinedEvent event = eventCaptor.getValue();
             // 참여자 id는 ManagerUser 엔티티 id가 아닌, 채팅 도메인 기준 식별자인 User(계정) id 여야 한다
-            inOrder.verify(syncWorkspaceChatMembership).join(any(), eq(42L), eq(TokenScope.MANAGER));
+            assertThat(event.getMemberId()).isEqualTo(42L);
+            assertThat(event.getScope()).isEqualTo(TokenScope.MANAGER);
         }
 
         @Test
@@ -248,8 +250,7 @@ class UpdateWorkspaceRequestStatusTests {
             then(workspaceRepository).should(never()).save(any());
             then(managerUserRepository).should(never()).save(any());
             then(fileDeleteService).should(never()).delete(any());
-            then(syncWorkspaceChatMembership).should(never()).createGroupRoom(any());
-            then(syncWorkspaceChatMembership).should(never()).join(any(), any(), any());
+            then(eventPublisher).should(never()).publishEvent(any());
         }
 
         @Test

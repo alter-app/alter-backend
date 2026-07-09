@@ -1,7 +1,7 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.application.chat.event.ChatMembershipLeftEvent;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
-import com.dreamteam.alter.domain.chat.port.inbound.SyncWorkspaceChatMembershipUseCase;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
@@ -14,13 +14,17 @@ import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerSchedul
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -41,10 +45,13 @@ class WorkerResignationServiceImplTest {
     private SubstituteRequestQueryRepository substituteRequestQueryRepository;
 
     @Mock
-    private SyncWorkspaceChatMembershipUseCase syncWorkspaceChatMembership;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private WorkerResignationServiceImpl workerResignationService;
+
+    @Captor
+    private ArgumentCaptor<ChatMembershipLeftEvent> eventCaptor;
 
     @Test
     @DisplayName("퇴직 정리 대상을 일괄 정리하고 worker를 퇴직 처리한다")
@@ -84,7 +91,11 @@ class WorkerResignationServiceImplTest {
         verify(requesterRequest, times(1)).cancel();
         verify(targetRequest, times(1)).cancelPendingTargetAndCancelIfNoPendingTargets(10L);
         verify(worker, times(1)).resign();
-        verify(syncWorkspaceChatMembership, times(1)).leave(100L, 200L, TokenScope.APP);
+        verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
+        ChatMembershipLeftEvent event = eventCaptor.getValue();
+        assertThat(event.getWorkspaceId()).isEqualTo(100L);
+        assertThat(event.getMemberId()).isEqualTo(200L);
+        assertThat(event.getScope()).isEqualTo(TokenScope.APP);
     }
 
     @Test
@@ -110,6 +121,10 @@ class WorkerResignationServiceImplTest {
 
         // then
         verify(worker, times(1)).resign();
-        verify(syncWorkspaceChatMembership, times(1)).leave(300L, 400L, TokenScope.APP);
+        verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
+        ChatMembershipLeftEvent event = eventCaptor.getValue();
+        assertThat(event.getWorkspaceId()).isEqualTo(300L);
+        assertThat(event.getMemberId()).isEqualTo(400L);
+        assertThat(event.getScope()).isEqualTo(TokenScope.APP);
     }
 }
