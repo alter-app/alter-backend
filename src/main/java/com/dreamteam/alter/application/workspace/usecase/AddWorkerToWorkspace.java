@@ -2,6 +2,8 @@ package com.dreamteam.alter.application.workspace.usecase;
 
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.port.inbound.SyncWorkspaceChatMembershipUseCase;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
@@ -19,6 +21,7 @@ public class AddWorkerToWorkspace implements CreateWorkspaceWorkerUseCase {
 
     private final WorkspaceWorkerRepository workspaceWorkerRepository;
     private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
+    private final SyncWorkspaceChatMembershipUseCase syncWorkspaceChatMembership;
 
     @Override
     public void execute(Workspace workspace, User user) {
@@ -28,6 +31,8 @@ public class AddWorkerToWorkspace implements CreateWorkspaceWorkerUseCase {
         }
 
         workspaceWorkerRepository.save(WorkspaceWorker.create(workspace, user));
+
+        syncWorkspaceChatMembership.join(workspace.getId(), user.getId(), TokenScope.APP);
     }
 
 }

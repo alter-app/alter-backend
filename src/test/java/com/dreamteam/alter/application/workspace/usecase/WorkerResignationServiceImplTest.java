@@ -1,6 +1,10 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.port.inbound.SyncWorkspaceChatMembershipUseCase;
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
+import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
@@ -36,6 +40,9 @@ class WorkerResignationServiceImplTest {
     @Mock
     private SubstituteRequestQueryRepository substituteRequestQueryRepository;
 
+    @Mock
+    private SyncWorkspaceChatMembershipUseCase syncWorkspaceChatMembership;
+
     @InjectMocks
     private WorkerResignationServiceImpl workerResignationService;
 
@@ -45,6 +52,12 @@ class WorkerResignationServiceImplTest {
         // given
         WorkspaceWorker worker = mock(WorkspaceWorker.class);
         when(worker.getId()).thenReturn(10L);
+        Workspace workspace = mock(Workspace.class);
+        when(workspace.getId()).thenReturn(100L);
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(200L);
+        when(worker.getWorkspace()).thenReturn(workspace);
+        when(worker.getUser()).thenReturn(user);
 
         WorkspaceShift futureShift = mock(WorkspaceShift.class);
         when(workspaceShiftQueryRepository.findFutureShiftsByAssignedWorker(any(), any(LocalDateTime.class)))
@@ -71,6 +84,7 @@ class WorkerResignationServiceImplTest {
         verify(requesterRequest, times(1)).cancel();
         verify(targetRequest, times(1)).cancelPendingTargetAndCancelIfNoPendingTargets(10L);
         verify(worker, times(1)).resign();
+        verify(syncWorkspaceChatMembership, times(1)).leave(100L, 200L, TokenScope.APP);
     }
 
     @Test
@@ -79,6 +93,12 @@ class WorkerResignationServiceImplTest {
         // given
         WorkspaceWorker worker = mock(WorkspaceWorker.class);
         when(worker.getId()).thenReturn(20L);
+        Workspace workspace = mock(Workspace.class);
+        when(workspace.getId()).thenReturn(300L);
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(400L);
+        when(worker.getWorkspace()).thenReturn(workspace);
+        when(worker.getUser()).thenReturn(user);
         when(workspaceShiftQueryRepository.findFutureShiftsByAssignedWorker(any(), any(LocalDateTime.class)))
             .thenReturn(List.of());
         when(workspaceWorkerScheduleQueryRepository.getByWorkspaceWorker(worker)).thenReturn(List.of());
@@ -90,5 +110,6 @@ class WorkerResignationServiceImplTest {
 
         // then
         verify(worker, times(1)).resign();
+        verify(syncWorkspaceChatMembership, times(1)).leave(300L, 400L, TokenScope.APP);
     }
 }

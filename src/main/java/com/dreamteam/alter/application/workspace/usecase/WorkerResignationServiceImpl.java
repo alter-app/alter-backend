@@ -1,5 +1,7 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.port.inbound.SyncWorkspaceChatMembershipUseCase;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
@@ -23,6 +25,7 @@ public class WorkerResignationServiceImpl implements WorkerResignationService {
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
     private final WorkspaceWorkerScheduleQueryRepository workspaceWorkerScheduleQueryRepository;
     private final SubstituteRequestQueryRepository substituteRequestQueryRepository;
+    private final SyncWorkspaceChatMembershipUseCase syncWorkspaceChatMembership;
 
     @Override
     public void resign(WorkspaceWorker worker) {
@@ -45,5 +48,7 @@ public class WorkerResignationServiceImpl implements WorkerResignationService {
         );
 
         worker.resign();
+
+        syncWorkspaceChatMembership.leave(worker.getWorkspace().getId(), worker.getUser().getId(), TokenScope.APP);
     }
 }
