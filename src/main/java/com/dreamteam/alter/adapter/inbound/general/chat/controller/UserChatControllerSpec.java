@@ -62,4 +62,12 @@ public interface UserChatControllerSpec {
         @PathVariable Long chatRoomId,
         @Valid @RequestBody MarkChatRoomReadRequestDto request
     );
+
+    @Operation(summary = "업장 그룹 채팅방 조회", description = "업장의 그룹 채팅방 ID를 조회합니다. 해당 채팅방의 활성 멤버인 경우에만 조회됩니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "업장 그룹 채팅방 조회 성공")
+    })
+    ResponseEntity<CommonApiResponse<CreateChatRoomResponseDto>> getWorkspaceGroupChatRoom(
+        @PathVariable Long workspaceId
+    );
 }

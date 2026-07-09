@@ -15,6 +15,7 @@ import com.dreamteam.alter.domain.chat.port.inbound.CreateOrGetChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetChatMessagesUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetChatRoomInfoUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetMyChatRoomListUseCase;
+import com.dreamteam.alter.domain.chat.port.inbound.GetWorkspaceGroupChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.MarkChatRoomReadUseCase;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
@@ -45,6 +46,9 @@ public class UserChatController implements UserChatControllerSpec {
 
     @Resource(name = "markChatRoomRead")
     private final MarkChatRoomReadUseCase markChatRoomRead;
+
+    @Resource(name = "getWorkspaceGroupChatRoom")
+    private final GetWorkspaceGroupChatRoomUseCase getWorkspaceGroupChatRoom;
 
     @Override
     @PostMapping("/rooms")
@@ -94,5 +98,15 @@ public class UserChatController implements UserChatControllerSpec {
         AppActor actor = AppActionContext.getInstance().getActor();
         markChatRoomRead.execute(actor.getUserId(), TokenScope.APP, chatRoomId, request.getLastReadMessageId());
         return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @GetMapping("/workspace/{workspaceId}/room")
+    public ResponseEntity<CommonApiResponse<CreateChatRoomResponseDto>> getWorkspaceGroupChatRoom(
+        @PathVariable Long workspaceId
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        Long roomId = getWorkspaceGroupChatRoom.execute(actor.getUserId(), TokenScope.APP, workspaceId);
+        return ResponseEntity.ok(CommonApiResponse.of(CreateChatRoomResponseDto.of(roomId)));
     }
 }
