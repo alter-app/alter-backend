@@ -51,6 +51,7 @@ public enum ErrorCode {
     INVALID_FILE_TYPE(400, "B023", "허용되지 않는 파일 형식입니다."),
     FILE_SIZE_EXCEEDED(400, "B024", "파일 크기가 제한을 초과합니다."),
     FILE_ALREADY_ATTACHED(409, "B025", "이미 연결된 파일입니다."),
+    CHAT_NOTICE_FORBIDDEN(400, "B026", "공지는 매니저만 작성할 수 있습니다."),
 
     TOO_MANY_REQUESTS(429, "E001", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
 

@@ -9,7 +9,9 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatMessage;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
+import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import com.dreamteam.alter.application.notification.NotificationService;
@@ -33,33 +35,50 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
     protected final UserQueryRepository userQueryRepository;
     protected final NotificationService notificationService;
     protected final SimpMessagingTemplate messagingTemplate;
+    protected final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
 
     public final void execute(U user, SendChatMessageRequestDto request, Long chatRoomId) {
         TokenScope senderScope = getParticipantScope(user);
         Long senderId = getParticipantId(user);
 
-        // 1. 채팅방 존재 확인 및 참여자 검증
-        ChatRoom chatRoom = chatRoomQueryRepository.findByIdAndParticipant(
-                chatRoomId,
-                senderId,
-                senderScope
-            )
+        // 1. 채팅방 존재 확인
+        ChatRoom chatRoom = chatRoomQueryRepository.findById(chatRoomId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다."));
 
-        // 2. 메시지 저장
+        // 2. 참여자 검증 (DIRECT: participant 컬럼 기반, GROUP: 멤버 테이블 기반)
+        if (chatRoom.getType() == ChatRoomType.GROUP) {
+            if (!chatRoomMemberQueryRepository.existsActive(chatRoomId, senderId, senderScope)) {
+                throw new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다.");
+            }
+        } else {
+            chatRoom = chatRoomQueryRepository.findByIdAndParticipant(
+                    chatRoomId,
+                    senderId,
+                    senderScope
+                )
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다."));
+        }
+
+        // 3. NOTICE 권한 검증 (매니저만 공지 작성 가능)
+        ChatMessageType type = request.getType() == null ? ChatMessageType.NORMAL : request.getType();
+        if (type == ChatMessageType.NOTICE && senderScope != TokenScope.MANAGER) {
+            throw new CustomException(ErrorCode.CHAT_NOTICE_FORBIDDEN);
+        }
+
+        // 4. 메시지 저장
         ChatMessage chatMessage = ChatMessage.create(
             chatRoom.getId(),
             senderId,
             senderScope,
-            ChatMessageType.NORMAL,
+            type,
             request.getContent()
         );
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
 
-        // 3. ChatRoom의 updatedAt 갱신
+        // 5. ChatRoom의 updatedAt 갱신
         chatRoom.updateUpdatedAt();
 
-        // 4. WebSocket으로 실시간 전송
+        // 6. WebSocket으로 실시간 전송
         try {
             ChatMessageResponse messageResponse = new ChatMessageResponse(
                 savedMessage.getId(),
@@ -74,8 +93,10 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
             log.error("WebSocket 메시지 전송 실패. ChatRoomId: {}, Error: {}", chatRoom.getId(), e.getMessage(), e);
         }
 
-        // 5. 상대방에게 FCM 알림 전송
-        sendFcmNotification(chatRoom, senderId, senderScope, request.getContent());
+        // 7. DIRECT 방일 때만 상대방에게 FCM 알림 전송 (그룹 팬아웃은 Phase 5)
+        if (chatRoom.getType() == ChatRoomType.DIRECT) {
+            sendFcmNotification(chatRoom, senderId, senderScope, request.getContent());
+        }
     }
 
     private void sendFcmNotification(

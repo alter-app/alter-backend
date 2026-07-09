@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.general.chat.dto;
 
+import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -12,4 +13,7 @@ public class SendChatMessageRequestDto {
     @NotBlank
     @Schema(description = "메시지 내용")
     private String content;
+
+    @Schema(description = "메시지 타입(NORMAL/NOTICE), 기본 NORMAL)")
+    private ChatMessageType type;
 }
