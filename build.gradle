@@ -52,7 +52,7 @@ dependencies {
 	implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
 
 	// STOMP broker relay (RabbitMQ) — 런타임 relay 연결용
-	implementation 'io.projectreactor.netty:reactor-netty-core'
+	implementation 'io.projectreactor.netty:reactor-netty'
 
 	compileOnly 'org.projectlombok:lombok'
 
