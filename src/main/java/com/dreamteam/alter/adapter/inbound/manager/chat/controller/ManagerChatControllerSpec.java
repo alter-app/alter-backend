@@ -8,6 +8,7 @@ import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomListResponse
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.CreateChatRoomRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.CreateChatRoomResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.chat.dto.MarkChatRoomReadRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -51,6 +52,15 @@ public interface ManagerChatControllerSpec {
     ResponseEntity<CursorPaginatedApiResponse<ChatMessageResponseDto>> getChatMessages(
         @PathVariable Long chatRoomId,
         CursorPageRequestDto pageRequest
+    );
+
+    @Operation(summary = "채팅방 읽음 처리", description = "특정 채팅방을 마지막으로 읽은 메시지까지 읽음 처리합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "읽음 처리 성공")
+    })
+    ResponseEntity<CommonApiResponse<Void>> markChatRoomRead(
+        @PathVariable Long chatRoomId,
+        @Valid @RequestBody MarkChatRoomReadRequestDto request
     );
 }
 

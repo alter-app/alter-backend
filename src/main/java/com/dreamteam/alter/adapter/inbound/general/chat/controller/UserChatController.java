@@ -8,11 +8,14 @@ import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomListResponse
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.CreateChatRoomRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.CreateChatRoomResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.chat.dto.MarkChatRoomReadRequestDto;
 import com.dreamteam.alter.application.aop.AppActionContext;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.port.inbound.CreateOrGetChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetChatMessagesUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetChatRoomInfoUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetMyChatRoomListUseCase;
+import com.dreamteam.alter.domain.chat.port.inbound.MarkChatRoomReadUseCase;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +42,9 @@ public class UserChatController implements UserChatControllerSpec {
 
     @Resource(name = "getChatRoomInfo")
     private final GetChatRoomInfoUseCase getChatRoomInfo;
+
+    @Resource(name = "markChatRoomRead")
+    private final MarkChatRoomReadUseCase markChatRoomRead;
 
     @Override
     @PostMapping("/rooms")
@@ -77,5 +83,16 @@ public class UserChatController implements UserChatControllerSpec {
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
         return ResponseEntity.ok(getChatMessages.execute(actor, chatRoomId, pageRequest));
+    }
+
+    @Override
+    @PostMapping("/rooms/{chatRoomId}/read")
+    public ResponseEntity<CommonApiResponse<Void>> markChatRoomRead(
+        @PathVariable Long chatRoomId,
+        @RequestBody MarkChatRoomReadRequestDto request
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        markChatRoomRead.execute(actor.getUserId(), TokenScope.APP, chatRoomId, request.getLastReadMessageId());
+        return ResponseEntity.ok(CommonApiResponse.empty());
     }
 }
