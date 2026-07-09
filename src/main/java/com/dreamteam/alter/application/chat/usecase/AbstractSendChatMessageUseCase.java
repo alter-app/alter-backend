@@ -171,11 +171,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
 
             // 알림 메시지 생성
             String title = NotificationMessageConstants.Chat.NEW_MESSAGE_TITLE;
-            String body = String.format(
-                NotificationMessageConstants.Chat.NEW_MESSAGE_BODY,
-                senderName,
-                truncateContent(content)
-            );
+            String body = buildNotificationBody(senderName, content);
 
             // FCM 알림 전송
             notificationService.sendNotificationOnly(opponentId, NotificationType.CHAT, title, body);
@@ -198,11 +194,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
 
             // 알림 메시지 생성
             String title = NotificationMessageConstants.Chat.NEW_MESSAGE_TITLE;
-            String body = String.format(
-                NotificationMessageConstants.Chat.NEW_MESSAGE_BODY,
-                senderName,
-                truncateContent(content)
-            );
+            String body = buildNotificationBody(senderName, content);
 
             // 활성 멤버 중 발신자를 제외한 오프라인 멤버에게만 FCM 발송
             List<ChatRoomMember> members = chatRoomMemberQueryRepository.findActiveByRoom(chatRoom.getId());
@@ -226,6 +218,13 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
         return userQueryRepository.findById(senderId)
             .map(User::getName)
             .orElse("알 수 없음");
+    }
+
+    private String buildNotificationBody(String senderName, String content) {
+        if (ObjectUtils.isEmpty(content)) {
+            return String.format(NotificationMessageConstants.Chat.PHOTO_MESSAGE_BODY, senderName);
+        }
+        return String.format(NotificationMessageConstants.Chat.NEW_MESSAGE_BODY, senderName, truncateContent(content));
     }
 
     private String truncateContent(String content) {

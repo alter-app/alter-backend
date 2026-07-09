@@ -354,6 +354,87 @@ class SendChatMessageTest {
     }
 
     @Test
+    @DisplayName("이미지만 있는 메시지 전송시 FCM 알림 본문은 '이름: 사진을 보냈습니다'")
+    void execute_이미지만_있으면_FCM_본문_사진안내() {
+        // given
+        User user = mock(User.class);
+        given(user.getId()).willReturn(1L);
+
+        ChatRoom directRoom = mock(ChatRoom.class);
+        given(directRoom.getId()).willReturn(100L);
+        given(directRoom.getType()).willReturn(ChatRoomType.DIRECT);
+        given(directRoom.getParticipant1Id()).willReturn(1L);
+        given(directRoom.getParticipant1Scope()).willReturn(TokenScope.APP);
+        given(directRoom.getParticipant2Id()).willReturn(2L);
+        given(directRoom.getParticipant2Scope()).willReturn(TokenScope.APP);
+
+        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
+
+        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
+        given(request.getContent()).willReturn(null);
+        given(request.getFileIds()).willReturn(List.of("f1"));
+
+        ChatMessage savedMessage = ChatMessage.create(100L, 1L, TokenScope.APP, ChatMessageType.NORMAL, null);
+        given(chatMessageRepository.save(any(ChatMessage.class))).willReturn(savedMessage);
+
+        User sender = mock(User.class);
+        given(sender.getName()).willReturn("홍길동");
+        given(userQueryRepository.findById(1L)).willReturn(Optional.of(sender));
+        given(chatPresenceStore.isOnline(TokenScope.APP, 2L)).willReturn(false);
+
+        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(any(), any())).willReturn(List.of());
+
+        // when
+        sut.execute(user, request, 100L);
+
+        // then
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        then(notificationService).should().sendNotificationOnly(eq(2L), any(), anyString(), bodyCaptor.capture());
+        assertThat(bodyCaptor.getValue()).isEqualTo("홍길동: 사진을 보냈습니다");
+    }
+
+    @Test
+    @DisplayName("텍스트 메시지 전송시 FCM 알림 본문은 기존 텍스트 미리보기 유지")
+    void execute_텍스트_메시지면_FCM_본문_기존유지() {
+        // given
+        User user = mock(User.class);
+        given(user.getId()).willReturn(1L);
+
+        ChatRoom directRoom = mock(ChatRoom.class);
+        given(directRoom.getId()).willReturn(100L);
+        given(directRoom.getType()).willReturn(ChatRoomType.DIRECT);
+        given(directRoom.getParticipant1Id()).willReturn(1L);
+        given(directRoom.getParticipant1Scope()).willReturn(TokenScope.APP);
+        given(directRoom.getParticipant2Id()).willReturn(2L);
+        given(directRoom.getParticipant2Scope()).willReturn(TokenScope.APP);
+
+        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
+
+        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
+        given(request.getContent()).willReturn("안녕하세요");
+
+        ChatMessage savedMessage = ChatMessage.create(100L, 1L, TokenScope.APP, ChatMessageType.NORMAL, "안녕하세요");
+        given(chatMessageRepository.save(any(ChatMessage.class))).willReturn(savedMessage);
+
+        User sender = mock(User.class);
+        given(sender.getName()).willReturn("홍길동");
+        given(userQueryRepository.findById(1L)).willReturn(Optional.of(sender));
+        given(chatPresenceStore.isOnline(TokenScope.APP, 2L)).willReturn(false);
+
+        // when
+        sut.execute(user, request, 100L);
+
+        // then
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        then(notificationService).should().sendNotificationOnly(eq(2L), any(), anyString(), bodyCaptor.capture());
+        assertThat(bodyCaptor.getValue()).isEqualTo("홍길동: 안녕하세요");
+    }
+
+    @Test
     @DisplayName("이미지 첨부시 attachFilesUseCase 호출 및 브로드캐스트 payload에 attachments 포함")
     void execute_이미지_첨부시_attach_호출_및_payload_포함() {
         // given
