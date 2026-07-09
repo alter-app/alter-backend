@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.any;
@@ -87,6 +88,46 @@ class SyncWorkspaceChatMembershipTest {
             // then
             assertThat(left.isActive()).isTrue();
             then(chatRoomMemberRepository).should().save(left);
+        }
+
+        @Test
+        @DisplayName("업장 단톡방이 없으면(레거시 업장) 단톡방을 새로 생성하고 멤버로 추가하며 예외를 던지지 않는다")
+        void join_단톡방없으면_단톡방생성후_멤버추가_예외없음() {
+            // given
+            given(chatRoomQueryRepository.findGroupRoomByWorkspaceId(1L))
+                .willReturn(Optional.empty());
+
+            ChatRoom createdRoom = mock(ChatRoom.class);
+            given(createdRoom.getId()).willReturn(7L);
+            given(chatRoomRepository.save(any(ChatRoom.class))).willReturn(createdRoom);
+
+            given(chatRoomMemberQueryRepository.findByRoomAndMember(7L, 10L, TokenScope.APP))
+                .willReturn(Optional.empty());
+
+            // when & then
+            assertThatCode(() -> sut.join(1L, 10L, TokenScope.APP)).doesNotThrowAnyException();
+
+            then(chatRoomRepository).should().save(any(ChatRoom.class));
+            then(chatRoomMemberRepository).should().save(any(ChatRoomMember.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("leave")
+    class LeaveTests {
+
+        @Test
+        @DisplayName("업장 단톡방이 없으면 아무 작업도 하지 않고 예외를 던지지 않는다")
+        void leave_단톡방없으면_noop_예외없음() {
+            // given
+            given(chatRoomQueryRepository.findGroupRoomByWorkspaceId(1L))
+                .willReturn(Optional.empty());
+
+            // when & then
+            assertThatCode(() -> sut.leave(1L, 10L, TokenScope.APP)).doesNotThrowAnyException();
+
+            then(chatRoomMemberQueryRepository).should(never()).findByRoomAndMember(any(), any(), any());
+            then(chatRoomMemberRepository).should(never()).save(any());
         }
     }
 }

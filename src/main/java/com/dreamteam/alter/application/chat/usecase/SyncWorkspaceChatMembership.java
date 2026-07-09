@@ -1,7 +1,5 @@
 package com.dreamteam.alter.application.chat.usecase;
 
-import com.dreamteam.alter.common.exception.CustomException;
-import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
@@ -32,9 +30,10 @@ public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipU
 
     @Override
     public void join(Long workspaceId, Long memberId, TokenScope scope) {
-        ChatRoom room = resolveGroupRoom(workspaceId);
+        // 레거시 업장 등 단톡방이 아직 없으면 여기서 생성 (self-healing, 절대 throw하지 않음)
+        Long roomId = createGroupRoom(workspaceId);
         Optional<ChatRoomMember> existing =
-            chatRoomMemberQueryRepository.findByRoomAndMember(room.getId(), memberId, scope);
+            chatRoomMemberQueryRepository.findByRoomAndMember(roomId, memberId, scope);
         if (existing.isPresent()) {
             ChatRoomMember member = existing.get();
             if (!member.isActive()) {
@@ -43,22 +42,18 @@ public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipU
             }
             return;
         }
-        chatRoomMemberRepository.save(ChatRoomMember.create(room.getId(), memberId, scope));
+        chatRoomMemberRepository.save(ChatRoomMember.create(roomId, memberId, scope));
     }
 
     @Override
     public void leave(Long workspaceId, Long memberId, TokenScope scope) {
-        ChatRoom room = resolveGroupRoom(workspaceId);
-        chatRoomMemberQueryRepository.findByRoomAndMember(room.getId(), memberId, scope)
-            .filter(ChatRoomMember::isActive)
-            .ifPresent(member -> {
-                member.leave();
-                chatRoomMemberRepository.save(member);
-            });
-    }
-
-    private ChatRoom resolveGroupRoom(Long workspaceId) {
-        return chatRoomQueryRepository.findGroupRoomByWorkspaceId(workspaceId)
-            .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "업장 단톡방을 찾을 수 없습니다."));
+        // 단톡방이 없으면(레거시 업장 등) 정리할 멤버십도 없으므로 조용히 무시 (throw하지 않음)
+        chatRoomQueryRepository.findGroupRoomByWorkspaceId(workspaceId)
+            .ifPresent(room -> chatRoomMemberQueryRepository.findByRoomAndMember(room.getId(), memberId, scope)
+                .filter(ChatRoomMember::isActive)
+                .ifPresent(member -> {
+                    member.leave();
+                    chatRoomMemberRepository.save(member);
+                }));
     }
 }
