@@ -6,12 +6,15 @@ import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatMessageResponseDto;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.application.file.FileUrlService;
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -31,9 +34,12 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -78,8 +84,10 @@ class GetChatMessagesTest {
         Long senderId = 100L;
         AppActor actor = new AppActor(senderId, null, null);
 
+        ChatRoom directRoom = ChatRoom.create(senderId, TokenScope.APP, 999L, TokenScope.APP);
+        given(chatRoomQueryRepository.findById(chatRoomId)).willReturn(Optional.of(directRoom));
         given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, senderId, TokenScope.APP))
-            .willReturn(Optional.of(ChatRoom.createGroup(1L)));
+            .willReturn(Optional.of(directRoom));
 
         ChatMessageResponse message = new ChatMessageResponse(
             8L, chatRoomId, senderId, TokenScope.APP, "hello", LocalDateTime.now()
@@ -115,8 +123,10 @@ class GetChatMessagesTest {
         Long senderId = 100L;
         AppActor actor = new AppActor(senderId, null, null);
 
+        ChatRoom directRoom = ChatRoom.create(senderId, TokenScope.APP, 999L, TokenScope.APP);
+        given(chatRoomQueryRepository.findById(chatRoomId)).willReturn(Optional.of(directRoom));
         given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, senderId, TokenScope.APP))
-            .willReturn(Optional.of(ChatRoom.createGroup(1L)));
+            .willReturn(Optional.of(directRoom));
 
         ChatMessageResponse messageWithFile = new ChatMessageResponse(
             1L, chatRoomId, senderId, TokenScope.APP, "첨부 있음", LocalDateTime.now()
@@ -172,5 +182,59 @@ class GetChatMessagesTest {
 
         verify(fileQueryRepository, times(1))
             .findAllByTargetTypeAndTargetIdIn(eq(FileTargetType.CHAT_MESSAGE), any());
+    }
+
+    @Test
+    @DisplayName("GROUP 채팅방의 활성 멤버는 메시지 목록을 조회할 수 있다")
+    void execute_GROUP_활성멤버는_메시지목록_조회_성공() {
+        // given
+        Long chatRoomId = 2L;
+        Long participantId = 500L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        ChatRoom groupRoom = mock(ChatRoom.class);
+        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
+        given(chatRoomQueryRepository.findById(chatRoomId)).willReturn(Optional.of(groupRoom));
+        given(chatRoomMemberQueryRepository.existsActive(chatRoomId, participantId, TokenScope.APP))
+            .willReturn(true);
+
+        ChatMessageResponse message = new ChatMessageResponse(
+            10L, chatRoomId, participantId, TokenScope.APP, "안녕하세요", LocalDateTime.now()
+        );
+        given(chatMessageQueryRepository.getChatMessagesWithCursor(any(), any()))
+            .willReturn(List.of(message));
+        given(chatRoomMemberQueryRepository.findActiveByRoom(chatRoomId))
+            .willReturn(Collections.emptyList());
+
+        // when
+        CursorPaginatedApiResponse<ChatMessageResponseDto> response =
+            sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10));
+
+        // then
+        assertThat(response.data()).hasSize(1);
+        verify(chatRoomMemberQueryRepository).existsActive(chatRoomId, participantId, TokenScope.APP);
+        verify(chatRoomQueryRepository, never()).findByIdAndParticipant(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("GROUP 채팅방의 비멤버는 메시지 목록을 조회할 수 없다 (NOT_FOUND)")
+    void execute_GROUP_비멤버는_NOT_FOUND() {
+        // given
+        Long chatRoomId = 3L;
+        Long participantId = 999L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        ChatRoom groupRoom = mock(ChatRoom.class);
+        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
+        given(chatRoomQueryRepository.findById(chatRoomId)).willReturn(Optional.of(groupRoom));
+        given(chatRoomMemberQueryRepository.existsActive(chatRoomId, participantId, TokenScope.APP))
+            .willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10)))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FOUND);
+
+        verify(chatMessageQueryRepository, never()).getChatMessagesWithCursor(any(), any());
     }
 }
