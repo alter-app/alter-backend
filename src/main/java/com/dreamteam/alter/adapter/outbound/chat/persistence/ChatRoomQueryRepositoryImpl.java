@@ -7,6 +7,7 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.QChatRoom;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.user.entity.QUser;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -147,6 +148,21 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
             .where(
                 idCondition,
                 participantCondition
+            )
+            .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
+
+    @Override
+    public Optional<ChatRoom> findGroupRoomByWorkspaceId(Long workspaceId) {
+        QChatRoom qChatRoom = QChatRoom.chatRoom;
+
+        ChatRoom result = queryFactory
+            .selectFrom(qChatRoom)
+            .where(
+                qChatRoom.type.eq(ChatRoomType.GROUP),
+                qChatRoom.workspaceId.eq(workspaceId)
             )
             .fetchOne();
 
