@@ -3,6 +3,8 @@ package com.dreamteam.alter.application.workspace.usecase;
 import com.dreamteam.alter.application.file.FileDeleteService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.port.inbound.SyncWorkspaceChatMembershipUseCase;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -26,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,8 +40,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -69,6 +74,9 @@ class UpdateWorkspaceRequestStatusTests {
 
     @Mock
     private FileDeleteService fileDeleteService;
+
+    @Mock
+    private SyncWorkspaceChatMembershipUseCase syncWorkspaceChatMembership;
 
     @InjectMocks
     private UpdateWorkspaceRequestStatus updateWorkspaceRequestStatus;
@@ -147,10 +155,12 @@ class UpdateWorkspaceRequestStatusTests {
             // given
             User user = mock(User.class);
             WorkspaceRequest request = mock(WorkspaceRequest.class);
+            ManagerUser newManagerUser = mock(ManagerUser.class);
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
             given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
             given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.empty());
+            given(managerUserRepository.save(any(ManagerUser.class))).willReturn(newManagerUser);
             given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
             given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
                 .willReturn(Optional.empty());
@@ -191,6 +201,32 @@ class UpdateWorkspaceRequestStatusTests {
         }
 
         @Test
+        @DisplayName("ACTIVATED 면 업장 저장 후 그룹 채팅방을 생성하고 매니저를 그룹방에 입장시킨다")
+        void execute_ACTIVATED_그룹채팅방생성및매니저입장() {
+            // given
+            User user = mock(User.class);
+            WorkspaceRequest request = mock(WorkspaceRequest.class);
+            ManagerUser managerUser = mock(ManagerUser.class);
+            given(request.getUser()).willReturn(user);
+            given(user.getId()).willReturn(1L);
+            given(managerUser.getId()).willReturn(99L);
+            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
+            given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
+            given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
+                .willReturn(Optional.empty());
+
+            // when
+            updateWorkspaceRequestStatus.execute(1L, WorkspaceRequestStatus.ACTIVATED);
+
+            // then
+            InOrder inOrder = inOrder(workspaceRepository, syncWorkspaceChatMembership);
+            inOrder.verify(workspaceRepository).save(any(Workspace.class));
+            inOrder.verify(syncWorkspaceChatMembership).createGroupRoom(any());
+            inOrder.verify(syncWorkspaceChatMembership).join(any(), eq(99L), eq(TokenScope.MANAGER));
+        }
+
+        @Test
         @DisplayName("REVOKED 면 reject 만 처리하고 업장/매니저는 생성하지 않는다")
         void execute_REVOKED_반려() {
             // given
@@ -205,6 +241,8 @@ class UpdateWorkspaceRequestStatusTests {
             then(workspaceRepository).should(never()).save(any());
             then(managerUserRepository).should(never()).save(any());
             then(fileDeleteService).should(never()).delete(any());
+            then(syncWorkspaceChatMembership).should(never()).createGroupRoom(any());
+            then(syncWorkspaceChatMembership).should(never()).join(any(), any(), any());
         }
 
         @Test
