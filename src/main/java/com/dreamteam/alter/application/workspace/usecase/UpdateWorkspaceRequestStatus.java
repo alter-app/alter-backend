@@ -95,7 +95,7 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 		workspaceRepository.save(workspace);
 
 		syncWorkspaceChatMembership.createGroupRoom(workspace.getId());
-		syncWorkspaceChatMembership.join(workspace.getId(), managerUser.getId(), TokenScope.MANAGER);
+		syncWorkspaceChatMembership.join(workspace.getId(), managerUser.getUser().getId(), TokenScope.MANAGER);
 
 		attachRepresentativeImages(workspaceRequestId, workspace);
 

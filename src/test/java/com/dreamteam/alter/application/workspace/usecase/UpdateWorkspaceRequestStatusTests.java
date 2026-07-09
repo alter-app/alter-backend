@@ -130,9 +130,12 @@ class UpdateWorkspaceRequestStatusTests {
             User user = mock(User.class);
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             ManagerUser managerUser = mock(ManagerUser.class);
+            User managerUnderlyingUser = mock(User.class);
             File identityFile = mock(File.class);
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
+            given(managerUser.getUser()).willReturn(managerUnderlyingUser);
+            given(managerUnderlyingUser.getId()).willReturn(2L);
             given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
             given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
             given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
@@ -158,6 +161,7 @@ class UpdateWorkspaceRequestStatusTests {
             ManagerUser newManagerUser = mock(ManagerUser.class);
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
+            given(newManagerUser.getUser()).willReturn(user);
             given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
             given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.empty());
             given(managerUserRepository.save(any(ManagerUser.class))).willReturn(newManagerUser);
@@ -207,9 +211,11 @@ class UpdateWorkspaceRequestStatusTests {
             User user = mock(User.class);
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             ManagerUser managerUser = mock(ManagerUser.class);
+            User managerUnderlyingUser = mock(User.class);
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
-            given(managerUser.getId()).willReturn(99L);
+            given(managerUser.getUser()).willReturn(managerUnderlyingUser);
+            given(managerUnderlyingUser.getId()).willReturn(42L);
             given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
             given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
             given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
@@ -223,7 +229,8 @@ class UpdateWorkspaceRequestStatusTests {
             InOrder inOrder = inOrder(workspaceRepository, syncWorkspaceChatMembership);
             inOrder.verify(workspaceRepository).save(any(Workspace.class));
             inOrder.verify(syncWorkspaceChatMembership).createGroupRoom(any());
-            inOrder.verify(syncWorkspaceChatMembership).join(any(), eq(99L), eq(TokenScope.MANAGER));
+            // 참여자 id는 ManagerUser 엔티티 id가 아닌, 채팅 도메인 기준 식별자인 User(계정) id 여야 한다
+            inOrder.verify(syncWorkspaceChatMembership).join(any(), eq(42L), eq(TokenScope.MANAGER));
         }
 
         @Test
@@ -319,7 +326,11 @@ class UpdateWorkspaceRequestStatusTests {
         given(user.getId()).willReturn(1L);
         given(request.getUser()).willReturn(user);
         given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
-        given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(mock(ManagerUser.class)));
+        ManagerUser managerUser = mock(ManagerUser.class);
+        User managerUnderlyingUser = mock(User.class);
+        given(managerUser.getUser()).willReturn(managerUnderlyingUser);
+        given(managerUnderlyingUser.getId()).willReturn(2L);
+        given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
         return request;
     }
 
