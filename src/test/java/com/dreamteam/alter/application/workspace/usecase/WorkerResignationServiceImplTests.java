@@ -26,10 +26,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("WorkerResignationServiceImpl 테스트")
@@ -58,29 +58,29 @@ class WorkerResignationServiceImplTest {
     void resign_정리대상존재_일괄정리() {
         // given
         WorkspaceWorker worker = mock(WorkspaceWorker.class);
-        when(worker.getId()).thenReturn(10L);
+        given(worker.getId()).willReturn(10L);
         Workspace workspace = mock(Workspace.class);
-        when(workspace.getId()).thenReturn(100L);
+        given(workspace.getId()).willReturn(100L);
         User user = mock(User.class);
-        when(user.getId()).thenReturn(200L);
-        when(worker.getWorkspace()).thenReturn(workspace);
-        when(worker.getUser()).thenReturn(user);
+        given(user.getId()).willReturn(200L);
+        given(worker.getWorkspace()).willReturn(workspace);
+        given(worker.getUser()).willReturn(user);
 
         WorkspaceShift futureShift = mock(WorkspaceShift.class);
-        when(workspaceShiftQueryRepository.findFutureShiftsByAssignedWorker(any(), any(LocalDateTime.class)))
-            .thenReturn(List.of(futureShift));
+        given(workspaceShiftQueryRepository.findFutureShiftsByAssignedWorker(any(), any(LocalDateTime.class)))
+            .willReturn(List.of(futureShift));
 
         WorkspaceWorkerSchedule fixedSchedule = mock(WorkspaceWorkerSchedule.class);
-        when(workspaceWorkerScheduleQueryRepository.getByWorkspaceWorker(worker))
-            .thenReturn(List.of(fixedSchedule));
+        given(workspaceWorkerScheduleQueryRepository.getByWorkspaceWorker(worker))
+            .willReturn(List.of(fixedSchedule));
 
         SubstituteRequest requesterRequest = mock(SubstituteRequest.class);
-        when(substituteRequestQueryRepository.findAllActiveByRequesterWorkerId(10L))
-            .thenReturn(List.of(requesterRequest));
+        given(substituteRequestQueryRepository.findAllActiveByRequesterWorkerId(10L))
+            .willReturn(List.of(requesterRequest));
 
         SubstituteRequest targetRequest = mock(SubstituteRequest.class);
-        when(substituteRequestQueryRepository.findAllPendingTargetRequestsByTargetWorkerId(10L))
-            .thenReturn(List.of(targetRequest));
+        given(substituteRequestQueryRepository.findAllPendingTargetRequestsByTargetWorkerId(10L))
+            .willReturn(List.of(targetRequest));
 
         // when
         workerResignationService.resign(worker);
@@ -103,18 +103,18 @@ class WorkerResignationServiceImplTest {
     void resign_정리대상없음_퇴직처리() {
         // given
         WorkspaceWorker worker = mock(WorkspaceWorker.class);
-        when(worker.getId()).thenReturn(20L);
+        given(worker.getId()).willReturn(20L);
         Workspace workspace = mock(Workspace.class);
-        when(workspace.getId()).thenReturn(300L);
+        given(workspace.getId()).willReturn(300L);
         User user = mock(User.class);
-        when(user.getId()).thenReturn(400L);
-        when(worker.getWorkspace()).thenReturn(workspace);
-        when(worker.getUser()).thenReturn(user);
-        when(workspaceShiftQueryRepository.findFutureShiftsByAssignedWorker(any(), any(LocalDateTime.class)))
-            .thenReturn(List.of());
-        when(workspaceWorkerScheduleQueryRepository.getByWorkspaceWorker(worker)).thenReturn(List.of());
-        when(substituteRequestQueryRepository.findAllActiveByRequesterWorkerId(20L)).thenReturn(List.of());
-        when(substituteRequestQueryRepository.findAllPendingTargetRequestsByTargetWorkerId(20L)).thenReturn(List.of());
+        given(user.getId()).willReturn(400L);
+        given(worker.getWorkspace()).willReturn(workspace);
+        given(worker.getUser()).willReturn(user);
+        given(workspaceShiftQueryRepository.findFutureShiftsByAssignedWorker(any(), any(LocalDateTime.class)))
+            .willReturn(List.of());
+        given(workspaceWorkerScheduleQueryRepository.getByWorkspaceWorker(worker)).willReturn(List.of());
+        given(substituteRequestQueryRepository.findAllActiveByRequesterWorkerId(20L)).willReturn(List.of());
+        given(substituteRequestQueryRepository.findAllPendingTargetRequestsByTargetWorkerId(20L)).willReturn(List.of());
 
         // when
         workerResignationService.resign(worker);

@@ -23,10 +23,10 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AddWorkerToWorkspace 테스트")
@@ -52,12 +52,12 @@ class AddWorkerToWorkspaceTest {
     void execute_신규추가_단톡join이벤트발행() {
         // given
         Workspace workspace = mock(Workspace.class);
-        when(workspace.getId()).thenReturn(1L);
+        given(workspace.getId()).willReturn(1L);
         User user = mock(User.class);
-        when(user.getId()).thenReturn(2L);
+        given(user.getId()).willReturn(2L);
 
-        when(workspaceWorkerQueryRepository.findActiveWorkerByWorkspaceAndUser(workspace, user))
-            .thenReturn(Optional.empty());
+        given(workspaceWorkerQueryRepository.findActiveWorkerByWorkspaceAndUser(workspace, user))
+            .willReturn(Optional.empty());
 
         // when
         addWorkerToWorkspace.execute(workspace, user);
@@ -78,8 +78,8 @@ class AddWorkerToWorkspaceTest {
         User user = mock(User.class);
         WorkspaceWorker existingWorker = mock(WorkspaceWorker.class);
 
-        when(workspaceWorkerQueryRepository.findActiveWorkerByWorkspaceAndUser(workspace, user))
-            .thenReturn(Optional.of(existingWorker));
+        given(workspaceWorkerQueryRepository.findActiveWorkerByWorkspaceAndUser(workspace, user))
+            .willReturn(Optional.of(existingWorker));
 
         // when & then
         assertThatThrownBy(() -> addWorkerToWorkspace.execute(workspace, user))
