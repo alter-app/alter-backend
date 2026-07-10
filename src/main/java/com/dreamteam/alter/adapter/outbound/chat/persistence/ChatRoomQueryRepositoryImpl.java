@@ -164,7 +164,9 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
                 qChatRoom.type.eq(ChatRoomType.GROUP),
                 qChatRoom.workspaceId.eq(workspaceId)
             )
-            .fetchOne();
+            // 유니크 인덱스(V7)로 단일성이 보장되지만, 혹시 모를 중복 데이터에도
+            // NonUniqueResultException을 던지지 않도록 fetchFirst 사용
+            .fetchFirst();
 
         return Optional.ofNullable(result);
     }
