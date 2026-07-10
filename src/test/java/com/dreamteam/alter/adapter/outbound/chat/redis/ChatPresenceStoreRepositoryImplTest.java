@@ -7,8 +7,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
 
@@ -27,48 +27,47 @@ class ChatPresenceStoreRepositoryImplTest {
     @InjectMocks
     private ChatPresenceStoreRepositoryImpl chatPresenceStoreRepository;
 
-    private static final String KEY = "chat:presence:APP:1";
+    private static final String KEY = "chat:presence:sessions:APP:1";
 
     @Test
-    @DisplayName("markOnline 시 TTL 60초로 키를 저장한다")
-    void markOnline_키저장() {
+    @DisplayName("markOnline 시 세션 id를 SET에 추가하고 TTL 60초로 갱신한다")
+    void markOnline_세션추가() {
         // given
         @SuppressWarnings("unchecked")
-        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
-        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        SetOperations<String, String> setOperations = mock(SetOperations.class);
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
 
         // when
-        chatPresenceStoreRepository.markOnline(TokenScope.APP, 1L);
+        chatPresenceStoreRepository.markOnline(TokenScope.APP, 1L, "sess1");
 
         // then
-        then(valueOperations).should().set(KEY, "1", Duration.ofSeconds(60));
-    }
-
-    @Test
-    @DisplayName("refresh 시 TTL을 60초로 갱신한다")
-    void refresh_TTL갱신() {
-        // when
-        chatPresenceStoreRepository.refresh(TokenScope.APP, 1L);
-
-        // then
+        then(setOperations).should().add(KEY, "sess1");
         then(redisTemplate).should().expire(KEY, Duration.ofSeconds(60));
     }
 
     @Test
-    @DisplayName("markOffline 시 키를 삭제한다")
-    void markOffline_키삭제() {
+    @DisplayName("markOffline 시 세션 id만 SET에서 제거한다")
+    void markOffline_세션제거() {
+        // given
+        @SuppressWarnings("unchecked")
+        SetOperations<String, String> setOperations = mock(SetOperations.class);
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
+
         // when
-        chatPresenceStoreRepository.markOffline(TokenScope.APP, 1L);
+        chatPresenceStoreRepository.markOffline(TokenScope.APP, 1L, "sess1");
 
         // then
-        then(redisTemplate).should().delete(KEY);
+        then(setOperations).should().remove(KEY, "sess1");
     }
 
     @Test
-    @DisplayName("isOnline은 hasKey 결과를 그대로 반환한다 - true")
+    @DisplayName("isOnline은 SET 크기가 0보다 크면 true")
     void isOnline_true() {
         // given
-        given(redisTemplate.hasKey(KEY)).willReturn(true);
+        @SuppressWarnings("unchecked")
+        SetOperations<String, String> setOperations = mock(SetOperations.class);
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
+        given(setOperations.size(KEY)).willReturn(2L);
 
         // when
         boolean result = chatPresenceStoreRepository.isOnline(TokenScope.APP, 1L);
@@ -78,10 +77,29 @@ class ChatPresenceStoreRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("isOnline은 hasKey 결과를 그대로 반환한다 - false")
-    void isOnline_false() {
+    @DisplayName("isOnline은 SET 크기가 0이면 false")
+    void isOnline_false_크기0() {
         // given
-        given(redisTemplate.hasKey(KEY)).willReturn(false);
+        @SuppressWarnings("unchecked")
+        SetOperations<String, String> setOperations = mock(SetOperations.class);
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
+        given(setOperations.size(KEY)).willReturn(0L);
+
+        // when
+        boolean result = chatPresenceStoreRepository.isOnline(TokenScope.APP, 1L);
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("isOnline은 SET이 없어(size=null) 오프라인이면 false")
+    void isOnline_false_null() {
+        // given
+        @SuppressWarnings("unchecked")
+        SetOperations<String, String> setOperations = mock(SetOperations.class);
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
+        given(setOperations.size(KEY)).willReturn(null);
 
         // when
         boolean result = chatPresenceStoreRepository.isOnline(TokenScope.APP, 1L);

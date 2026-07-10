@@ -14,7 +14,7 @@ public class ChatPresenceStoreRepositoryImpl implements ChatPresenceStore {
 
     private final StringRedisTemplate redisTemplate;
 
-    private static final String KEY_PREFIX = "chat:presence:";
+    private static final String KEY_PREFIX = "chat:presence:sessions:";
     private static final Duration TTL = Duration.ofSeconds(60);
 
     private String key(TokenScope scope, Long memberId) {
@@ -22,22 +22,20 @@ public class ChatPresenceStoreRepositoryImpl implements ChatPresenceStore {
     }
 
     @Override
-    public void markOnline(TokenScope scope, Long memberId) {
-        redisTemplate.opsForValue().set(key(scope, memberId), "1", TTL);
+    public void markOnline(TokenScope scope, Long memberId, String sessionId) {
+        String key = key(scope, memberId);
+        redisTemplate.opsForSet().add(key, sessionId);
+        redisTemplate.expire(key, TTL);
     }
 
     @Override
-    public void refresh(TokenScope scope, Long memberId) {
-        redisTemplate.expire(key(scope, memberId), TTL);
-    }
-
-    @Override
-    public void markOffline(TokenScope scope, Long memberId) {
-        redisTemplate.delete(key(scope, memberId));
+    public void markOffline(TokenScope scope, Long memberId, String sessionId) {
+        redisTemplate.opsForSet().remove(key(scope, memberId), sessionId);
     }
 
     @Override
     public boolean isOnline(TokenScope scope, Long memberId) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key(scope, memberId)));
+        Long size = redisTemplate.opsForSet().size(key(scope, memberId));
+        return size != null && size > 0;
     }
 }
