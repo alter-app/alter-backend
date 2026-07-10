@@ -19,6 +19,7 @@ import com.dreamteam.alter.domain.chat.port.inbound.GetWorkspaceGroupChatRoomUse
 import com.dreamteam.alter.domain.chat.port.inbound.MarkChatRoomReadUseCase;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -93,7 +94,7 @@ public class UserChatController implements UserChatControllerSpec {
     @PostMapping("/rooms/{chatRoomId}/read")
     public ResponseEntity<CommonApiResponse<Void>> markChatRoomRead(
         @PathVariable Long chatRoomId,
-        @RequestBody MarkChatRoomReadRequestDto request
+        @Valid @RequestBody MarkChatRoomReadRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
         markChatRoomRead.execute(actor.getUserId(), TokenScope.APP, chatRoomId, request.getLastReadMessageId());

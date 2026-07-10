@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
-@Setter
 @NoArgsConstructor
 public class ChatMessageResponse {
     private Long id;
@@ -19,6 +18,9 @@ public class ChatMessageResponse {
     private TokenScope senderScope;
     private String content;
     private LocalDateTime createdAt;
+
+    // 조회/전송 시 후처리로 세팅되는 첨부(다른 필드는 생성자/프로젝션으로만 설정)
+    @Setter
     private List<FileResponseDto> attachments;
 
     public ChatMessageResponse(
