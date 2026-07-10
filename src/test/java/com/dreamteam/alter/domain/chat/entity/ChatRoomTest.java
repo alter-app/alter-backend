@@ -4,6 +4,7 @@ import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ChatRoomTest {
 
@@ -13,5 +14,11 @@ class ChatRoomTest {
 
         assertThat(room.getType()).isEqualTo(ChatRoomType.GROUP);
         assertThat(room.getWorkspaceId()).isEqualTo(100L);
+    }
+
+    @Test
+    void createGroup_workspaceId_null이면_예외() {
+        assertThatThrownBy(() -> ChatRoom.createGroup(null))
+            .isInstanceOf(IllegalArgumentException.class);
     }
 }

@@ -69,6 +69,10 @@ public class ChatRoom {
     }
 
     public static ChatRoom createGroup(Long workspaceId) {
+        // GROUP 방은 반드시 업장과 연관되어야 한다 (도메인 불변식)
+        if (workspaceId == null) {
+            throw new IllegalArgumentException("GROUP 채팅방은 workspaceId가 필수입니다.");
+        }
         return ChatRoom.builder()
             .type(ChatRoomType.GROUP)
             .workspaceId(workspaceId)
