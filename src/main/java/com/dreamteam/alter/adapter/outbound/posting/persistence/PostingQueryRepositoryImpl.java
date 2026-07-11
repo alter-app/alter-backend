@@ -596,15 +596,21 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
 
     /**
      * 업종 필터: 입력 텍스트가 (마스터 연결 업종명 OR 직접입력 업종 라벨)에 부분일치.
-     * 직접입력 라벨은 jsonb(custom_keywords)라 text 캐스팅 후 ilike로 매칭한다.
+     * 직접입력 라벨은 jsonb(custom_keywords)라 text 캐스팅(HQL string → PostgreSQL text) 후 ilike로 매칭한다.
+     * LIKE 와일드카드(%, _)는 '!'로 이스케이프해 마스터 매칭(containsIgnoreCase)과 동일하게 부분일치만 허용한다.
      */
     private BooleanExpression keywordMatches(QPostingKeyword qPostingKeyword, QPosting qPosting, String keyword) {
         if (ObjectUtils.isEmpty(keyword) || keyword.isBlank()) {
             return null;
         }
         BooleanExpression masterMatch = qPostingKeyword.name.containsIgnoreCase(keyword);
+
+        String escaped = keyword
+            .replace("!", "!!")
+            .replace("%", "!%")
+            .replace("_", "!_");
         BooleanExpression customMatch = Expressions.booleanTemplate(
-            "cast({0} as string) ilike {1}", qPosting.customKeywords, "%" + keyword + "%"
+            "cast({0} as string) ilike {1} escape '!'", qPosting.customKeywords, "%" + escaped + "%"
         );
         return masterMatch.or(customMatch);
     }
