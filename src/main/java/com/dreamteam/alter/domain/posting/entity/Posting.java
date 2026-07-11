@@ -93,7 +93,7 @@ public class Posting {
             .toList();
 
         posting.customKeywords = ObjectUtils.isNotEmpty(request.getCustomKeywords())
-            ? request.getCustomKeywords()
+            ? new ArrayList<>(request.getCustomKeywords())
             : new ArrayList<>();
 
         if (ObjectUtils.isNotEmpty(request.getSchedules())) {
@@ -132,7 +132,7 @@ public class Posting {
         this.description = description;
         this.payAmount = payAmount;
         this.paymentType = paymentType;
-        this.customKeywords = ObjectUtils.isNotEmpty(customKeywords) ? customKeywords : new ArrayList<>();
+        this.customKeywords = ObjectUtils.isNotEmpty(customKeywords) ? new ArrayList<>(customKeywords) : new ArrayList<>();
 
         // 키워드 업데이트
         updateKeyword(postingKeywords);
