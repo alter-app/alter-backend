@@ -2,7 +2,6 @@ package com.dreamteam.alter.application.posting.usecase;
 
 import java.util.List;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,7 +11,6 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.entity.Posting;
 import com.dreamteam.alter.domain.posting.entity.PostingKeyword;
 import com.dreamteam.alter.domain.posting.port.inbound.ManagerUpdatePostingUseCase;
-import com.dreamteam.alter.domain.posting.port.outbound.PostingKeywordQueryRepository;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
@@ -25,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class ManagerUpdatePosting implements ManagerUpdatePostingUseCase {
 
     private final PostingQueryRepository postingQueryRepository;
-    private final PostingKeywordQueryRepository postingKeywordQueryRepository;
+    private final PostingKeywordResolver postingKeywordResolver;
 
     @Override
     public void execute(Long postingId, UpdatePostingRequestDto request, ManagerActor actor) {
@@ -34,13 +32,7 @@ public class ManagerUpdatePosting implements ManagerUpdatePostingUseCase {
         Posting posting = postingQueryRepository.findByManagerAndId(postingId, managerUser)
             .orElseThrow(() -> new CustomException(ErrorCode.POSTING_NOT_FOUND));
 
-        List<PostingKeyword> postingKeywords = ObjectUtils.isEmpty(request.getKeywords())
-            ? List.of()
-            : postingKeywordQueryRepository.findByIds(request.getKeywords());
-        if (ObjectUtils.isNotEmpty(request.getKeywords())
-            && postingKeywords.size() != request.getKeywords().size()) {
-            throw new CustomException(ErrorCode.INVALID_KEYWORD);
-        }
+        List<PostingKeyword> postingKeywords = postingKeywordResolver.resolveAndValidate(request.getKeywords());
 
         posting.updateContent(
             request.getTitle(),
