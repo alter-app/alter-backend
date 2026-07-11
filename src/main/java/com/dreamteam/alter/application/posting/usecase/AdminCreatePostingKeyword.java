@@ -18,12 +18,12 @@ public class AdminCreatePostingKeyword implements AdminCreatePostingKeywordUseCa
     private final PostingKeywordRepository postingKeywordRepository;
 
     @Override
-    public Long execute(AdminCreatePostingKeywordCommand command) {
+    public PostingKeyword execute(AdminCreatePostingKeywordCommand command) {
         if (postingKeywordRepository.existsByName(command.name())) {
             throw new CustomException(ErrorCode.INVALID_KEYWORD, "이미 존재하는 업종입니다.");
         }
 
         PostingKeyword keyword = PostingKeyword.create(command.name(), command.description());
-        return postingKeywordRepository.save(keyword).getId();
+        return postingKeywordRepository.save(keyword);
     }
 }

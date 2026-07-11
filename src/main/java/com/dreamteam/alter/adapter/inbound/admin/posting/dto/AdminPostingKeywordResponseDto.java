@@ -31,12 +31,4 @@ public class AdminPostingKeywordResponseDto {
             .description(keyword.getDescription())
             .build();
     }
-
-    public static AdminPostingKeywordResponseDto of(Long id, String name, String description) {
-        return AdminPostingKeywordResponseDto.builder()
-            .id(id)
-            .name(name)
-            .description(description)
-            .build();
-    }
 }

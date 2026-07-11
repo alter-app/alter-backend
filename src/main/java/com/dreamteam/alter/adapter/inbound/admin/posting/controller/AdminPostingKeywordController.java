@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.admin.posting.dto.AdminPostingKeyword
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.domain.posting.command.AdminCreatePostingKeywordCommand;
 import com.dreamteam.alter.domain.posting.command.AdminUpdatePostingKeywordCommand;
+import com.dreamteam.alter.domain.posting.entity.PostingKeyword;
 import com.dreamteam.alter.domain.posting.port.inbound.AdminCreatePostingKeywordUseCase;
 import com.dreamteam.alter.domain.posting.port.inbound.AdminDeletePostingKeywordUseCase;
 import com.dreamteam.alter.domain.posting.port.inbound.AdminGetPostingKeywordListUseCase;
@@ -53,13 +54,11 @@ public class AdminPostingKeywordController implements AdminPostingKeywordControl
     public ResponseEntity<CommonApiResponse<AdminPostingKeywordResponseDto>> createPostingKeyword(
         @Valid @RequestBody AdminPostingKeywordRequestDto request
     ) {
-        Long id = adminCreatePostingKeyword.execute(
+        PostingKeyword created = adminCreatePostingKeyword.execute(
             new AdminCreatePostingKeywordCommand(request.getName(), request.getDescription())
         );
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(CommonApiResponse.of(
-                AdminPostingKeywordResponseDto.of(id, request.getName(), request.getDescription())
-            ));
+            .body(CommonApiResponse.of(AdminPostingKeywordResponseDto.from(created)));
     }
 
     @Override
