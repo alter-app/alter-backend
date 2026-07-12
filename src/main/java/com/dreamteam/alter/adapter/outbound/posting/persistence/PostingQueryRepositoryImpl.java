@@ -15,6 +15,7 @@ import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.user.entity.QUserFavoritePosting;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
+import com.dreamteam.alter.domain.workspace.entity.QBusinessType;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
@@ -27,7 +28,6 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -53,6 +53,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 eqProvince(qWorkspace, filter.getProvince()),
                 eqDistrict(qWorkspace, filter.getDistrict()),
                 eqTown(qWorkspace, filter.getTown()),
+                businessTypeIn(qWorkspace, filter.getBusinessTypeIds()),
                 gtePayAmount(qPosting, filter.getMinPayAmount()),
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
@@ -86,8 +87,6 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     public List<PostingListResponse> getPostingsWithCursor(CursorPageRequest<CursorDto> request, PostingListFilterDto filter, User user) {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
-        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
-        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUserFavoritePosting qUserFavoritePosting = QUserFavoritePosting.userFavoritePosting;
 
@@ -102,6 +101,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 eqProvince(qWorkspace, filter.getProvince()),
                 eqDistrict(qWorkspace, filter.getDistrict()),
                 eqTown(qWorkspace, filter.getTown()),
+                businessTypeIn(qWorkspace, filter.getBusinessTypeIds()),
                 gtePayAmount(qPosting, filter.getMinPayAmount()),
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
@@ -120,6 +120,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
+            .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(qPosting.id.in(postingIds))
             .orderBy(getOrderSpecifiers(qPosting, filter.getPayAmountSort()))
             .distinct()
@@ -134,25 +135,10 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 )
                 .fetch());
 
-        List<PostingKeywordMap> keywordMaps = queryFactory
-            .selectFrom(qPostingKeywordMap)
-            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword).fetchJoin()
-            .where(qPostingKeywordMap.posting.id.in(postingIds))
-            .fetch();
-
-        Map<Long, List<PostingKeyword>> postingIdToKeywords = keywordMaps.stream()
-            .collect(
-                Collectors.groupingBy(
-                    pkMap -> pkMap.getPosting().getId(),
-                    Collectors.mapping(PostingKeywordMap::getPostingKeyword, Collectors.toList())
-                )
-            );
-
         return postings.stream()
             .map(
                 posting -> PostingListResponse.of(
                     posting,
-                    postingIdToKeywords,
                     scrappedPostingIds.contains(posting.getId())
                 )
             )
@@ -163,8 +149,6 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     public List<PostingListResponse> getPostingMapListWithCursor(CursorPageRequest<CursorDto> request, PostingMapListFilterDto filter, User user) {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
-        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
-        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUserFavoritePosting qUserFavoritePosting = QUserFavoritePosting.userFavoritePosting;
 
@@ -191,6 +175,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
+            .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(qPosting.id.in(postingIds))
             .orderBy(getOrderSpecifiersForMapList(qPosting, filter.getSortType()))
             .distinct()
@@ -205,25 +190,10 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 )
                 .fetch());
 
-        List<PostingKeywordMap> keywordMaps = queryFactory
-            .selectFrom(qPostingKeywordMap)
-            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword).fetchJoin()
-            .where(qPostingKeywordMap.posting.id.in(postingIds))
-            .fetch();
-
-        Map<Long, List<PostingKeyword>> postingIdToKeywords = keywordMaps.stream()
-            .collect(
-                Collectors.groupingBy(
-                    pkMap -> pkMap.getPosting().getId(),
-                    java.util.stream.Collectors.mapping(PostingKeywordMap::getPostingKeyword, java.util.stream.Collectors.toList())
-                )
-            );
-
         return postings.stream()
             .map(
                 posting -> PostingListResponse.of(
                     posting,
-                    postingIdToKeywords,
                     scrappedPostingIds.contains(posting.getId())
                 )
             )
@@ -266,14 +236,13 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     public List<PostingListResponse> getWorkspacePostingList(Long workspaceId, User user) {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
-        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
-        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUserFavoritePosting qUserFavoritePosting = QUserFavoritePosting.userFavoritePosting;
 
         List<Posting> postings = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
+            .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
@@ -300,24 +269,9 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 .fetch()
         );
 
-        List<PostingKeywordMap> keywordMaps = queryFactory
-            .selectFrom(qPostingKeywordMap)
-            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword).fetchJoin()
-            .where(qPostingKeywordMap.posting.id.in(postingIds))
-            .fetch();
-
-        Map<Long, List<PostingKeyword>> postingIdToKeywords = keywordMaps.stream()
-            .collect(
-                Collectors.groupingBy(
-                    pkMap -> pkMap.getPosting().getId(),
-                    Collectors.mapping(PostingKeywordMap::getPostingKeyword, Collectors.toList())
-                )
-            );
-
         return postings.stream()
             .map(posting -> PostingListResponse.of(
                 posting,
-                postingIdToKeywords,
                 scrappedPostingIds.contains(posting.getId())
             ))
             .toList();
@@ -327,8 +281,6 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     public PostingDetailResponse getPostingDetail(Long postingId, User user) {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
-        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
-        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUserFavoritePosting qUserFavoritePosting = QUserFavoritePosting.userFavoritePosting;
 
@@ -336,6 +288,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
+            .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(
                 qPosting.id.eq(postingId),
                 qPosting.status.eq(PostingStatus.OPEN)
@@ -345,13 +298,6 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         if (ObjectUtils.isEmpty(posting)) {
             return null;
         }
-
-        List<PostingKeyword> postingKeywords = queryFactory
-            .select(qPostingKeyword)
-            .from(qPostingKeywordMap)
-            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword)
-            .where(qPostingKeywordMap.posting.id.eq(postingId))
-            .fetch();
 
         boolean scrapped = ObjectUtils.isNotEmpty(
             queryFactory
@@ -364,7 +310,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 .fetchFirst()
         );
 
-        return PostingDetailResponse.of(posting, postingKeywords, scrapped);
+        return PostingDetailResponse.of(posting, scrapped);
     }
 
     @Override
@@ -411,8 +357,6 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     ) {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
-        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
-        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
         QWorkspace qWorkspace = QWorkspace.workspace;
 
         List<Long> postingIds = queryFactory
@@ -438,32 +382,14 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
+            .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(qPosting.id.in(postingIds))
             .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
             .distinct()
             .fetch();
 
-        List<PostingKeywordMap> keywordMaps = queryFactory
-            .selectFrom(qPostingKeywordMap)
-            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword).fetchJoin()
-            .where(qPostingKeywordMap.posting.id.in(postingIds))
-            .fetch();
-
-        Map<Long, List<PostingKeyword>> postingIdToKeywords = keywordMaps.stream()
-            .collect(
-                Collectors.groupingBy(
-                    pkMap -> pkMap.getPosting().getId(),
-                    Collectors.mapping(PostingKeywordMap::getPostingKeyword, Collectors.toList())
-                )
-            );
-
         return postings.stream()
-            .map(
-                posting -> ManagerPostingListResponse.of(
-                    posting,
-                    postingIdToKeywords
-                )
-            )
+            .map(ManagerPostingListResponse::of)
             .toList();
     }
 
@@ -551,6 +477,10 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         return town != null ? qWorkspace.town.eq(town) : null;
     }
 
+    private BooleanExpression businessTypeIn(QWorkspace qWorkspace, java.util.List<Long> businessTypeIds) {
+        return ObjectUtils.isNotEmpty(businessTypeIds) ? qWorkspace.businessType.id.in(businessTypeIds) : null;
+    }
+
     private BooleanExpression gtePayAmount(QPosting qPosting, Integer minPayAmount) {
         return minPayAmount != null ? qPosting.payAmount.goe(minPayAmount) : null;
     }
@@ -636,14 +566,13 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     public Optional<ManagerPostingDetailResponse> getManagerPostingDetail(Long postingId, ManagerUser managerUser) {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
-        QPostingKeywordMap qPostingKeywordMap = QPostingKeywordMap.postingKeywordMap;
-        QPostingKeyword qPostingKeyword = QPostingKeyword.postingKeyword;
         QWorkspace qWorkspace = QWorkspace.workspace;
 
         Posting posting = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
+            .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(
                 qPosting.id.eq(postingId),
                 qWorkspace.managerUser.eq(managerUser)
@@ -654,14 +583,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             return Optional.empty();
         }
 
-        List<PostingKeyword> postingKeywords = queryFactory
-            .select(qPostingKeyword)
-            .from(qPostingKeywordMap)
-            .leftJoin(qPostingKeywordMap.postingKeyword, qPostingKeyword)
-            .where(qPostingKeywordMap.posting.id.eq(postingId))
-            .fetch();
-
-        return Optional.of(ManagerPostingDetailResponse.of(posting, postingKeywords));
+        return Optional.of(ManagerPostingDetailResponse.of(posting));
     }
 
     @Override

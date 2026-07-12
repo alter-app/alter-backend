@@ -1,7 +1,9 @@
 package com.dreamteam.alter.adapter.inbound.general.posting.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.BusinessTypeResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.domain.posting.type.PostingSortType;
+import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -26,11 +28,15 @@ public class PostingFilterOptionsResponseDto {
     @Schema(description = "정렬 옵션 목록")
     private List<DescribedEnumDto<PostingSortType>> sortOptions;
 
+    @Schema(description = "업종 목록")
+    private List<BusinessTypeResponseDto> businessTypes;
+
     public static PostingFilterOptionsResponseDto of(
         List<String> provinces,
         List<String> districts,
         List<String> towns,
-        List<PostingSortType> sortOptions
+        List<PostingSortType> sortOptions,
+        List<BusinessType> businessTypes
     ) {
         return PostingFilterOptionsResponseDto.builder()
             .provinces(provinces)
@@ -38,6 +44,10 @@ public class PostingFilterOptionsResponseDto {
             .towns(towns)
             .sortOptions(sortOptions.stream()
                 .map(sortType -> DescribedEnumDto.of(sortType, PostingSortType.describe()))
+                .toList()
+            )
+            .businessTypes(businessTypes.stream()
+                .map(BusinessTypeResponseDto::from)
                 .toList()
             )
             .build();
