@@ -17,7 +17,6 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingKeywordListResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingDetailResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListFilterDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListResponseDto;
@@ -29,7 +28,6 @@ import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingRequ
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingStatusRequestDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.posting.port.inbound.CreatePostingUseCase;
-import com.dreamteam.alter.domain.posting.port.inbound.GetPostingKeywordListUseCase;
 import com.dreamteam.alter.domain.posting.port.inbound.ManagerGetPostingApplicationDetailUseCase;
 import com.dreamteam.alter.domain.posting.port.inbound.ManagerGetPostingApplicationListWithCursorUseCase;
 import com.dreamteam.alter.domain.posting.port.inbound.ManagerGetPostingDetailUseCase;
@@ -52,9 +50,6 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
 
     @Resource(name = "createPosting")
     private final CreatePostingUseCase createPosting;
-
-    @Resource(name = "getPostingKeywordList")
-    private final GetPostingKeywordListUseCase getPostingKeywordList;
 
     @Resource(name = "managerGetPostingApplicationListWithCursor")
     private final ManagerGetPostingApplicationListWithCursorUseCase managerGetPostingApplicationListWithCursor;
@@ -84,12 +79,6 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
     ) {
         createPosting.execute(request);
         return ResponseEntity.ok(CommonApiResponse.empty());
-    }
-
-    @Override
-    @GetMapping("/available-keywords")
-    public ResponseEntity<CommonApiResponse<List<PostingKeywordListResponseDto>>> getAvailablePostingKeywords() {
-        return ResponseEntity.ok(CommonApiResponse.of(getPostingKeywordList.execute()));
     }
 
     @Override

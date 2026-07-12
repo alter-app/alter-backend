@@ -1,6 +1,5 @@
 package com.dreamteam.alter.adapter.outbound.posting.persistence.readonly;
 
-import com.dreamteam.alter.domain.posting.entity.PostingKeyword;
 import com.dreamteam.alter.domain.posting.entity.Posting;
 import com.dreamteam.alter.domain.posting.entity.PostingSchedule;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
@@ -29,15 +28,12 @@ public class PostingDetailResponse {
 
     private LocalDateTime createdAt;
 
-    private List<PostingKeyword> postingKeywords;
-
     private List<PostingSchedule> schedules;
 
     private boolean scrapped;
 
     public static PostingDetailResponse of(
         Posting posting,
-        List<PostingKeyword> postingKeywords,
         boolean scrapped
     ) {
         return new PostingDetailResponse(
@@ -48,7 +44,6 @@ public class PostingDetailResponse {
             posting.getPayAmount(),
             posting.getPaymentType(),
             posting.getCreatedAt(),
-            postingKeywords,
             posting.getSchedules(),
             scrapped
         );

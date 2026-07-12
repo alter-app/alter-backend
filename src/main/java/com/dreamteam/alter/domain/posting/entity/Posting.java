@@ -67,10 +67,7 @@ public class Posting {
     @OneToMany(mappedBy = "posting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostingSchedule> schedules;
 
-    @OneToMany(mappedBy = "posting", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostingKeywordMap> keywords;
-
-    public static Posting create(CreatePostingRequestDto request, Workspace workspace, List<PostingKeyword> postingKeywords) {
+    public static Posting create(CreatePostingRequestDto request, Workspace workspace) {
         Posting posting = Posting.builder()
             .workspace(workspace)
             .title(request.getTitle())
@@ -79,11 +76,6 @@ public class Posting {
             .paymentType(request.getPaymentType())
             .status(PostingStatus.OPEN)
             .build();
-
-        posting.keywords = postingKeywords
-            .stream()
-            .map(keyword -> PostingKeywordMap.create(keyword, posting))
-            .toList();
 
         if (ObjectUtils.isNotEmpty(request.getSchedules())) {
             posting.schedules = request.getSchedules()
@@ -111,7 +103,6 @@ public class Posting {
         String description,
         int payAmount,
         PaymentType paymentType,
-        List<PostingKeyword> postingKeywords,
         List<CreatePostingScheduleRequestDto> createSchedules,
         List<UpdatePostingScheduleDto> updateSchedules,
         List<Long> deleteScheduleIds
@@ -120,9 +111,6 @@ public class Posting {
         this.description = description;
         this.payAmount = payAmount;
         this.paymentType = paymentType;
-
-        // 키워드 업데이트
-        updateKeyword(postingKeywords);
 
         // 스케줄 삭제 처리
         if (ObjectUtils.isNotEmpty(deleteScheduleIds))
@@ -135,19 +123,6 @@ public class Posting {
         // 스케줄 추가 처리
         if (ObjectUtils.isNotEmpty(createSchedules))
             addSchedules(createSchedules);
-    }
-
-    /**
-     * 키워드 수정
-     * @param postingKeywords 수정 키워드 List
-     */
-    public void updateKeyword(List<PostingKeyword> postingKeywords) {
-        this.keywords.clear();
-
-        this.keywords.addAll(postingKeywords.stream()
-            .map(keywords -> PostingKeywordMap.create(keywords, this))
-            .toList()
-        );
     }
 
     /**

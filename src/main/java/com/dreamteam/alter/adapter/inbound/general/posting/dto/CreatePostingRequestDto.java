@@ -4,7 +4,6 @@ import com.dreamteam.alter.domain.posting.type.PaymentType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 
@@ -38,10 +37,6 @@ public class CreatePostingRequestDto {
     @Schema(description = "급여 타입", example = "HOURLY")
     @NotNull
     private PaymentType paymentType;
-
-    @Schema(description = "키워드", example = "[2, 3, 1]")
-    @NotEmpty
-    private List<Long> keywords;
 
     @Schema(description = "공고 스케줄", example = "[" +
             "{" +

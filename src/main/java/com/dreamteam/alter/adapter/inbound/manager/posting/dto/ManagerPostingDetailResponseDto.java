@@ -1,7 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingKeywordListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.PostingDetailWorkspaceResponseDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingDetailResponse;
@@ -59,10 +58,6 @@ public class ManagerPostingDetailResponseDto {
     private LocalDateTime updatedAt;
 
     @NotNull
-    @Schema(description = "키워드", example = "[{\"id\":1,\"name\":\"카페\"},{\"id\":4,\"name\":\"분식\"}]")
-    private List<PostingKeywordListResponseDto> keywords;
-
-    @NotNull
     @Schema(description = "공고 스케줄", example = "[{\"id\":1,\"workingDays\":[\"MONDAY\",\"WEDNESDAY\"],\"startTime\":\"09:00\",\"endTime\":\"18:00\",\"positionsNeeded\":3,\"positionsAvailable\":2,\"position\":\"홀서빙\"}]")
     private List<PostingScheduleResponseDto> schedules;
 
@@ -79,9 +74,6 @@ public class ManagerPostingDetailResponseDto {
             .updatedAt(entity.getUpdatedAt())
             .schedules(entity.getSchedules().stream()
                 .map(PostingScheduleResponseDto::from)
-                .toList())
-            .keywords(entity.getPostingKeywords().stream()
-                .map(PostingKeywordListResponseDto::from)
                 .toList())
             .build();
     }

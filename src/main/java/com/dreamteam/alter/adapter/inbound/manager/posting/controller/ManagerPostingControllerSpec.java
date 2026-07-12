@@ -6,7 +6,6 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingKeywordListResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingDetailResponseDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListFilterDto;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.PostingApplicationListFilterDto;
@@ -47,22 +46,6 @@ public interface ManagerPostingControllerSpec {
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> createPosting(@Valid @RequestBody CreatePostingRequestDto request);
-
-    @Operation(summary = "등록 가능한 공고 키워드 조회", description = "")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "공고 키워드 리스트 조회 성공"),
-        @ApiResponse(responseCode = "400", description = "실패 케이스",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = ErrorResponse.class),
-                examples = {
-                    @ExampleObject(
-                        name = "키워드 리스트 찾을 수 없음",
-                        value = "{\"code\" : \"B009\"}"
-                    ),
-                }))
-    })
-    ResponseEntity<CommonApiResponse<List<PostingKeywordListResponseDto>>> getAvailablePostingKeywords();
 
     @Operation(summary = "매니저 - 내가 등록한 공고 목록 조회 (커서 페이징)", description = "")
     @ApiResponses(value = {

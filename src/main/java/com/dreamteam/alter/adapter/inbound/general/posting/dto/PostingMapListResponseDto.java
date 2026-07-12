@@ -38,10 +38,6 @@ public class PostingMapListResponseDto {
     private LocalDateTime createdAt;
 
     @NotNull
-    @Schema(description = "키워드", example = "[{\"id\":1,\"name\":\"카페\"},{\"id\":4,\"name\":\"분식\"}]")
-    private List<PostingKeywordListResponseDto> keywords;
-
-    @NotNull
     @Schema(description = "공고 스케줄", example = "[" +
         "{" +
         "\"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"positionsNeeded\": 3, \"position\": 3" +
@@ -67,9 +63,6 @@ public class PostingMapListResponseDto {
             .payAmount(entity.getPayAmount())
             .paymentType(entity.getPaymentType())
             .createdAt(entity.getCreatedAt())
-            .keywords(entity.getPostingKeywords().stream()
-                .map(PostingKeywordListResponseDto::from)
-                .toList())
             .schedules(entity.getSchedules().stream()
                 .map(PostingScheduleResponseDto::from)
                 .toList())
