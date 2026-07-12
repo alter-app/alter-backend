@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.inbound.general.workspace.controller;
 
 import java.util.List;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.BusinessTypeResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestListResponseDto;
@@ -39,6 +40,12 @@ public interface UserWorkspaceRequestControllerSpec {
         @ApiResponse(responseCode = "200", description = "업장 등록 신청 목록 조회 성공"),
     })
     ResponseEntity<CommonApiResponse<List<WorkspaceRequestListResponseDto>>> getWorkspaceRequestList();
+
+    @Operation(summary = "업종(BusinessType) 목록 조회", description = "업장 등록 신청 폼에서 선택 가능한 업종 목록을 조회합니다. '기타'는 목록 마지막에 위치합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "업종 목록 조회 성공"),
+    })
+    ResponseEntity<CommonApiResponse<List<BusinessTypeResponseDto>>> getBusinessTypeList();
 
 
     @Operation(summary = "업장 등록 신청 상세 조회")
