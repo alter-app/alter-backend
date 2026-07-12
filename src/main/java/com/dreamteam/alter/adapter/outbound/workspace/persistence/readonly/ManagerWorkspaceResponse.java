@@ -24,6 +24,8 @@ public class ManagerWorkspaceResponse {
 
     private String businessType;
 
+    private String businessTypeDetail;
+
     private String contact;
 
     private String description;

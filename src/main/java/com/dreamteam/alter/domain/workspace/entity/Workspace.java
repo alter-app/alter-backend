@@ -36,8 +36,12 @@ public class Workspace {
     @Column(name = "business_name", length = 128, nullable = false)
     private String businessName;
 
-    @Column(name = "business_type", length = 128, nullable = false)
-    private String businessType; // Enum 으로 정의 고려
+    @JoinColumn(name = "business_type_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private BusinessType businessType;
+
+    @Column(name = "business_type_detail", length = 128, nullable = true)
+    private String businessTypeDetail;
 
     @Column(name = "contact", length = 11, nullable = false)
     private String contact;
@@ -84,7 +88,8 @@ public class Workspace {
         ManagerUser managerUser,
         String businessRegistrationNo,
         String businessName,
-        String businessType,
+        BusinessType businessType,
+        String businessTypeDetail,
         String contact,
         String description,
         WorkspaceStatus status,
@@ -100,6 +105,7 @@ public class Workspace {
             .businessRegistrationNo(businessRegistrationNo)
             .businessName(businessName)
             .businessType(businessType)
+            .businessTypeDetail(businessTypeDetail)
             .contact(contact)
             .description(description)
             .status(status)

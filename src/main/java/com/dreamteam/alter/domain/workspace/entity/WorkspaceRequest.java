@@ -57,8 +57,12 @@ public class WorkspaceRequest {
 	@Column(name = "business_name", length = 128, nullable = false)
 	private String businessName;
 
-	@Column(name = "business_type", length = 128, nullable = false)
-	private String businessType;
+	@JoinColumn(name = "business_type_id", nullable = false)
+	@ManyToOne(fetch = FetchType.LAZY)
+	private BusinessType businessType;
+
+	@Column(name = "business_type_detail", length = 128, nullable = true)
+	private String businessTypeDetail;
 
 	@Column(name = "contact", length = 13, nullable = false)
 	private String contact;
@@ -93,7 +97,8 @@ public class WorkspaceRequest {
 		User user,
 		String brn,
 		String bizName,
-		String type,
+		BusinessType businessType,
+		String businessTypeDetail,
 		String contact,
 		String address,
 		String province,
@@ -107,7 +112,8 @@ public class WorkspaceRequest {
 			.status(WorkspaceRequestStatus.PENDING)
 			.businessRegistrationNo(brn)
 			.businessName(bizName)
-			.businessType(type)
+			.businessType(businessType)
+			.businessTypeDetail(businessTypeDetail)
 			.contact(contact)
 			.fullAddress(address)
 			.province(province)

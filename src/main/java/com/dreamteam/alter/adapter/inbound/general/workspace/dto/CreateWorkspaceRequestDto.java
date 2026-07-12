@@ -53,9 +53,13 @@ public class CreateWorkspaceRequestDto {
 	@Schema(description = "경도", example = "129.115717")
 	private BigDecimal longitude;
 
-	@NotBlank
-	@Schema(description = "업장 형태", example = "음식점")
-	private String type;
+	@NotNull
+	@Schema(description = "업종(BusinessType) ID", example = "1")
+	private Long businessTypeId;
+
+	@Size(max = 128)
+	@Schema(description = "업종 상세 (업종이 '기타'인 경우 필수)", example = "떡볶이 전문점")
+	private String businessTypeDetail;
 
 	@NotBlank
 	@Schema(description = "업장 연락처", example = "02-1234-5678")
