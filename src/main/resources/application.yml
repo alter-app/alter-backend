@@ -94,11 +94,3 @@ aws:
     public-bucket: ${AWS_S3_PUBLIC_BUCKET}
     private-bucket: ${AWS_S3_PRIVATE_BUCKET}
     presigned-url-expiration-minutes: ${AWS_S3_PRESIGNED_URL_EXPIRATION_MINUTES}
-chat:
-  broker:
-    relay:
-      enabled: ${CHAT_BROKER_RELAY_ENABLED:false}
-      host: ${RABBITMQ_RELAY_HOST:localhost}
-      port: ${RABBITMQ_RELAY_PORT:61613}
-      client-login: ${RABBITMQ_RELAY_USER:guest}
-      client-passcode: ${RABBITMQ_RELAY_PASS:guest}

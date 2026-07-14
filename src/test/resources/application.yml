@@ -80,9 +80,6 @@ aws:
     private-bucket: mock-private-bucket
     presigned-url-expiration-minutes: 30
 chat:
-  broker:
-    relay:
-      enabled: false
   redis:
     subscriber:
       enabled: false
