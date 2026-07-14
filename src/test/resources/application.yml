@@ -83,3 +83,6 @@ chat:
   broker:
     relay:
       enabled: false
+  redis:
+    subscriber:
+      enabled: false
