@@ -3,7 +3,6 @@ package com.dreamteam.alter.adapter.outbound.chat.redis;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.adapter.outbound.chat.redis.dto.ChatBroadcastEnvelope;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageBroadcaster;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +24,8 @@ public class RedisChatMessageBroadcaster implements ChatMessageBroadcaster {
         try {
             String payload = objectMapper.writeValueAsString(new ChatBroadcastEnvelope(roomId, message));
             redisTemplate.convertAndSend(CHANNEL, payload);
-        } catch (JsonProcessingException e) {
-            log.error("채팅 메시지 Redis 발행 직렬화 실패. RoomId: {}, Error: {}", roomId, e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("채팅 메시지 Redis 발행 실패. RoomId: {}, Error: {}", roomId, e.getMessage(), e);
         }
     }
 }

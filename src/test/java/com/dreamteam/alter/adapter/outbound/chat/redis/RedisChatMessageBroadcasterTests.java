@@ -16,7 +16,10 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RedisChatMessageBroadcaster 테스트")
@@ -49,5 +52,19 @@ class RedisChatMessageBroadcasterTest {
         assertThat(decoded.getRoomId()).isEqualTo(100L);
         assertThat(decoded.getMessage().getId()).isEqualTo(10L);
         assertThat(decoded.getMessage().getContent()).isEqualTo("안녕하세요");
+    }
+
+    @Test
+    @DisplayName("Redis publish 중 RuntimeException이 발생해도 broadcast는 예외를 전파하지 않는다")
+    void broadcast_publish_실패시_예외를_전파하지_않는다() {
+        // given
+        RedisChatMessageBroadcaster sut = new RedisChatMessageBroadcaster(redisTemplate, objectMapper);
+        ChatMessageResponse message = new ChatMessageResponse(
+            10L, 100L, 1L, TokenScope.APP, "안녕하세요", LocalDateTime.of(2026, 7, 14, 12, 0, 0)
+        );
+        willThrow(new RuntimeException("redis connection failed")).given(redisTemplate).convertAndSend(any(), any());
+
+        // when & then
+        assertThatCode(() -> sut.broadcast(100L, message)).doesNotThrowAnyException();
     }
 }
