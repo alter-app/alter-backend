@@ -16,6 +16,7 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageBroadcaster;
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
@@ -28,7 +29,6 @@ import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -43,7 +43,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
     protected final ChatMessageRepository chatMessageRepository;
     protected final UserQueryRepository userQueryRepository;
     protected final NotificationService notificationService;
-    protected final SimpMessagingTemplate messagingTemplate;
+    protected final ChatMessageBroadcaster chatMessageBroadcaster;
     protected final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
     protected final ChatPresenceStore chatPresenceStore;
     protected final AttachFilesUseCase attachFilesUseCase;
@@ -128,7 +128,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
                 savedMessage.getCreatedAt()
             );
             messageResponse.setAttachments(attachments);
-            messagingTemplate.convertAndSend("/sub/chat." + chatRoom.getId(), messageResponse);
+            chatMessageBroadcaster.broadcast(chatRoom.getId(), messageResponse);
         } catch (Exception e) {
             log.error("WebSocket 메시지 전송 실패. ChatRoomId: {}, Error: {}", chatRoom.getId(), e.getMessage(), e);
         }

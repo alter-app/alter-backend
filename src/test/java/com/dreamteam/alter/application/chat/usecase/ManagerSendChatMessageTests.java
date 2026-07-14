@@ -14,6 +14,7 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageBroadcaster;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.file.entity.File;
@@ -66,7 +67,7 @@ class ManagerSendChatMessageTest {
     private NotificationService notificationService;
 
     @Mock
-    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+    private ChatMessageBroadcaster chatMessageBroadcaster;
 
     @Mock
     private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
@@ -116,7 +117,7 @@ class ManagerSendChatMessageTest {
 
         // then
         assertThat(captor.getValue().getType()).isEqualTo(ChatMessageType.NOTICE);
-        then(messagingTemplate).should().convertAndSend(eq("/sub/chat.5"), any(Object.class));
+        then(chatMessageBroadcaster).should().broadcast(eq(5L), any(ChatMessageResponse.class));
         then(notificationService).should(never()).sendNotificationOnly(any(), any(), any(), any());
     }
 
@@ -290,9 +291,9 @@ class ManagerSendChatMessageTest {
             eq(List.of("f1", "f2")), eq(FileTargetType.CHAT_MESSAGE), anyString(), eq(2L)
         );
 
-        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
-        then(messagingTemplate).should().convertAndSend(eq("/sub/chat.5"), captor.capture());
-        ChatMessageResponse payload = (ChatMessageResponse) captor.getValue();
+        ArgumentCaptor<ChatMessageResponse> captor = ArgumentCaptor.forClass(ChatMessageResponse.class);
+        then(chatMessageBroadcaster).should().broadcast(eq(5L), captor.capture());
+        ChatMessageResponse payload = captor.getValue();
         assertThat(payload.getAttachments()).containsExactly(dto1, dto2);
     }
 }

@@ -7,13 +7,13 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageBroadcaster;
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 @Service("sendChatMessage")
@@ -25,7 +25,7 @@ public class SendChatMessage extends AbstractSendChatMessageUseCase<User> implem
         ChatMessageRepository chatMessageRepository,
         UserQueryRepository userQueryRepository,
         NotificationService notificationService,
-        SimpMessagingTemplate messagingTemplate,
+        ChatMessageBroadcaster chatMessageBroadcaster,
         ChatRoomMemberQueryRepository chatRoomMemberQueryRepository,
         ChatPresenceStore chatPresenceStore,
         AttachFilesUseCase attachFilesUseCase,
@@ -34,7 +34,7 @@ public class SendChatMessage extends AbstractSendChatMessageUseCase<User> implem
     ) {
         super(
             chatRoomQueryRepository, chatRoomRepository, chatMessageRepository, userQueryRepository,
-            notificationService, messagingTemplate, chatRoomMemberQueryRepository, chatPresenceStore,
+            notificationService, chatMessageBroadcaster, chatRoomMemberQueryRepository, chatPresenceStore,
             attachFilesUseCase, fileQueryRepository, fileUrlService
         );
     }

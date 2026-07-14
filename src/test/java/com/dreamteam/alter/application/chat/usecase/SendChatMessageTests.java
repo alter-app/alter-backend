@@ -14,6 +14,7 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageBroadcaster;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.file.entity.File;
@@ -65,7 +66,7 @@ class SendChatMessageTest {
     private NotificationService notificationService;
 
     @Mock
-    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+    private ChatMessageBroadcaster chatMessageBroadcaster;
 
     @Mock
     private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
@@ -158,7 +159,7 @@ class SendChatMessageTest {
 
         // then
         then(chatMessageRepository).should().save(any(ChatMessage.class));
-        then(messagingTemplate).should().convertAndSend(eq("/sub/chat.100"), any(Object.class));
+        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class));
         then(notificationService).should().sendNotificationOnly(eq(2L), any(), anyString(), anyString());
     }
 
@@ -192,7 +193,7 @@ class SendChatMessageTest {
         sut.execute(user, request, 100L);
 
         // then
-        then(messagingTemplate).should().convertAndSend(eq("/sub/chat.100"), any(Object.class));
+        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class));
         then(notificationService).should(never()).sendNotificationOnly(any(), any(), anyString(), anyString());
     }
 
@@ -245,7 +246,7 @@ class SendChatMessageTest {
         sut.execute(user, request, 200L);
 
         // then
-        then(messagingTemplate).should().convertAndSend(eq("/sub/chat.200"), any(Object.class));
+        then(chatMessageBroadcaster).should().broadcast(eq(200L), any(ChatMessageResponse.class));
         then(notificationService).should(never()).sendNotificationOnly(any(), any(), anyString(), anyString());
         assertThat(savedMessage.getType()).isEqualTo(ChatMessageType.NORMAL);
     }
@@ -481,9 +482,9 @@ class SendChatMessageTest {
             eq(List.of("f1", "f2")), eq(FileTargetType.CHAT_MESSAGE), anyString(), eq(1L)
         );
 
-        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
-        then(messagingTemplate).should().convertAndSend(eq("/sub/chat.100"), captor.capture());
-        ChatMessageResponse payload = (ChatMessageResponse) captor.getValue();
+        ArgumentCaptor<ChatMessageResponse> captor = ArgumentCaptor.forClass(ChatMessageResponse.class);
+        then(chatMessageBroadcaster).should().broadcast(eq(100L), captor.capture());
+        ChatMessageResponse payload = captor.getValue();
         assertThat(payload.getAttachments()).containsExactly(dto1, dto2);
     }
 }
