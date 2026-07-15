@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +40,7 @@ public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 	public void execute(User user, CreateWorkspaceRequestDto request) {
 		BusinessType businessType = businessTypeRepository.findById(request.getBusinessTypeId())
 			.orElseThrow(() -> new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "존재하지 않는 업종입니다."));
-		String businessTypeDetail = resolveBusinessTypeDetail(businessType, request.getBusinessTypeDetail());
+		String businessTypeDetail = businessType.resolveDetail(request.getBusinessTypeDetail());
 
 		WorkspaceRequest workspaceRequest = WorkspaceRequest.create(
 			user,
@@ -86,16 +85,5 @@ public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 			}
 			workspaceRequestImageRepository.saveAll(images);
 		}
-	}
-
-	// '기타' 업종만 상세 입력을 요구·저장하고, 그 외 업종의 상세 입력은 무시한다.
-	private String resolveBusinessTypeDetail(BusinessType businessType, String rawDetail) {
-		if (!businessType.isRequiresDetail()) {
-			return null;
-		}
-		if (StringUtils.isBlank(rawDetail)) {
-			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "'기타' 업종은 상세 입력이 필요합니다.");
-		}
-		return StringUtils.trim(rawDetail);
 	}
 }

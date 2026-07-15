@@ -1,7 +1,10 @@
 package com.dreamteam.alter.domain.workspace.entity;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -51,6 +54,17 @@ public class BusinessType {
     public void update(String name, String description) {
         this.name = name;
         this.description = description;
+    }
+
+    // '기타' 업종만 상세 입력을 요구·저장하고, 그 외 업종의 상세 입력은 무시한다.
+    public String resolveDetail(String rawDetail) {
+        if (!requiresDetail) {
+            return null;
+        }
+        if (StringUtils.isBlank(rawDetail)) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "'기타' 업종은 상세 입력이 필요합니다.");
+        }
+        return StringUtils.trim(rawDetail);
     }
 
 }
