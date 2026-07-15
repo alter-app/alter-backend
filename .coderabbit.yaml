@@ -42,8 +42,10 @@ reviews:
       instructions: |
         Review as a senior developer. This is the domain layer.
         Verify that:
-        - ZERO infrastructure dependencies (no Spring, no JPA annotations, no external libs).
-        - Entities encapsulate business rules and invariants.
+        - Entities are JPA-mapped (@Entity/@Column/@ManyToOne) — this is the established
+          pattern across all domain entities; do not flag it as a violation.
+        - NO @Setter. Entities use @Getter + private @Builder with static factory methods.
+        - Entities encapsulate business rules and invariants (state transitions).
         - Port interfaces (inbound/outbound) are clean contracts with no implementation details.
         - Enums in type/ package follow project conventions.
     - path: "src/main/java/com/dreamteam/alter/common/exception/**"
