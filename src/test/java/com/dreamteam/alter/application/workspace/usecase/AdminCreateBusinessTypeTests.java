@@ -6,6 +6,7 @@ import com.dreamteam.alter.domain.workspace.command.AdminCreateBusinessTypeComma
 import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessTypeRepository;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -31,36 +32,41 @@ class AdminCreateBusinessTypeTests {
     @InjectMocks
     private AdminCreateBusinessType adminCreateBusinessType;
 
-    @Test
-    @DisplayName("이름이 중복되면 CONFLICT 예외가 발생하고 저장하지 않는다")
-    void execute_이름중복_예외() {
-        // given
-        given(businessTypeRepository.existsByName("카페")).willReturn(true);
+    @Nested
+    @DisplayName("execute")
+    class ExecuteTests {
 
-        // when & then
-        assertThatThrownBy(() -> adminCreateBusinessType.execute(new AdminCreateBusinessTypeCommand("카페", null)))
-            .isInstanceOf(CustomException.class)
-            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
-        then(businessTypeRepository).should(never()).save(any());
-    }
+        @Test
+        @DisplayName("이름이 중복되면 CONFLICT 예외가 발생하고 저장하지 않는다")
+        void execute_이름중복_예외() {
+            // given
+            given(businessTypeRepository.existsByName("카페")).willReturn(true);
 
-    @Test
-    @DisplayName("중복이 없으면 업종을 저장하고 id 를 반환한다")
-    void execute_성공() {
-        // given
-        given(businessTypeRepository.existsByName("고기집")).willReturn(false);
-        BusinessType saved = mock(BusinessType.class);
-        given(saved.getId()).willReturn(7L);
-        given(businessTypeRepository.save(any(BusinessType.class))).willReturn(saved);
+            // when & then
+            assertThatThrownBy(() -> adminCreateBusinessType.execute(new AdminCreateBusinessTypeCommand("카페", null)))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+            then(businessTypeRepository).should(never()).save(any());
+        }
 
-        // when
-        Long id = adminCreateBusinessType.execute(new AdminCreateBusinessTypeCommand("고기집", "고기 전문점"));
+        @Test
+        @DisplayName("중복이 없으면 업종을 저장하고 id 를 반환한다")
+        void execute_성공() {
+            // given
+            given(businessTypeRepository.existsByName("고기집")).willReturn(false);
+            BusinessType saved = mock(BusinessType.class);
+            given(saved.getId()).willReturn(7L);
+            given(businessTypeRepository.save(any(BusinessType.class))).willReturn(saved);
 
-        // then
-        assertThat(id).isEqualTo(7L);
-        ArgumentCaptor<BusinessType> captor = ArgumentCaptor.forClass(BusinessType.class);
-        then(businessTypeRepository).should().save(captor.capture());
-        assertThat(captor.getValue().getName()).isEqualTo("고기집");
-        assertThat(captor.getValue().isRequiresDetail()).isFalse();
+            // when
+            Long id = adminCreateBusinessType.execute(new AdminCreateBusinessTypeCommand("고기집", "고기 전문점"));
+
+            // then
+            assertThat(id).isEqualTo(7L);
+            ArgumentCaptor<BusinessType> captor = ArgumentCaptor.forClass(BusinessType.class);
+            then(businessTypeRepository).should().save(captor.capture());
+            assertThat(captor.getValue().getName()).isEqualTo("고기집");
+            assertThat(captor.getValue().isRequiresDetail()).isFalse();
+        }
     }
 }

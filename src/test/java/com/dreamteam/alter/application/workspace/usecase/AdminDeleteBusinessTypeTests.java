@@ -6,6 +6,7 @@ import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessTypeQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessTypeRepository;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,81 +36,86 @@ class AdminDeleteBusinessTypeTests {
     @InjectMocks
     private AdminDeleteBusinessType adminDeleteBusinessType;
 
-    @Test
-    @DisplayName("존재하지 않는 업종이면 NOT_FOUND 예외가 발생한다")
-    void execute_미존재_예외() {
-        // given
-        given(businessTypeRepository.findById(1L)).willReturn(Optional.empty());
+    @Nested
+    @DisplayName("execute")
+    class ExecuteTests {
 
-        // when & then
-        assertThatThrownBy(() -> adminDeleteBusinessType.execute(1L))
-            .isInstanceOf(CustomException.class)
-            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND));
-        then(businessTypeRepository).should(never()).delete(any());
-    }
+        @Test
+        @DisplayName("존재하지 않는 업종이면 NOT_FOUND 예외가 발생한다")
+        void execute_미존재_예외() {
+            // given
+            given(businessTypeRepository.findById(1L)).willReturn(Optional.empty());
 
-    @Test
-    @DisplayName("'기타'(requiresDetail) 업종은 삭제할 수 없어 CONFLICT 예외가 발생한다")
-    void execute_기타_예외() {
-        // given
-        BusinessType etc = mock(BusinessType.class);
-        given(etc.isRequiresDetail()).willReturn(true);
-        given(businessTypeRepository.findById(1L)).willReturn(Optional.of(etc));
+            // when & then
+            assertThatThrownBy(() -> adminDeleteBusinessType.execute(1L))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND));
+            then(businessTypeRepository).should(never()).delete(any());
+        }
 
-        // when & then
-        assertThatThrownBy(() -> adminDeleteBusinessType.execute(1L))
-            .isInstanceOf(CustomException.class)
-            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
-        then(businessTypeRepository).should(never()).delete(any());
-    }
+        @Test
+        @DisplayName("'기타'(requiresDetail) 업종은 삭제할 수 없어 CONFLICT 예외가 발생한다")
+        void execute_기타_예외() {
+            // given
+            BusinessType etc = mock(BusinessType.class);
+            given(etc.isRequiresDetail()).willReturn(true);
+            given(businessTypeRepository.findById(1L)).willReturn(Optional.of(etc));
 
-    @Test
-    @DisplayName("업장에서 사용 중이면 CONFLICT 예외가 발생한다")
-    void execute_업장사용중_예외() {
-        // given
-        BusinessType businessType = mock(BusinessType.class);
-        given(businessType.isRequiresDetail()).willReturn(false);
-        given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
-        given(businessTypeQueryRepository.existsWorkspaceUsingBusinessType(1L)).willReturn(true);
+            // when & then
+            assertThatThrownBy(() -> adminDeleteBusinessType.execute(1L))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+            then(businessTypeRepository).should(never()).delete(any());
+        }
 
-        // when & then
-        assertThatThrownBy(() -> adminDeleteBusinessType.execute(1L))
-            .isInstanceOf(CustomException.class)
-            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
-        then(businessTypeRepository).should(never()).delete(any());
-    }
+        @Test
+        @DisplayName("업장에서 사용 중이면 CONFLICT 예외가 발생한다")
+        void execute_업장사용중_예외() {
+            // given
+            BusinessType businessType = mock(BusinessType.class);
+            given(businessType.isRequiresDetail()).willReturn(false);
+            given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
+            given(businessTypeQueryRepository.existsWorkspaceUsingBusinessType(1L)).willReturn(true);
 
-    @Test
-    @DisplayName("업장 신청에서 사용 중이면 CONFLICT 예외가 발생한다")
-    void execute_신청사용중_예외() {
-        // given
-        BusinessType businessType = mock(BusinessType.class);
-        given(businessType.isRequiresDetail()).willReturn(false);
-        given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
-        given(businessTypeQueryRepository.existsWorkspaceUsingBusinessType(1L)).willReturn(false);
-        given(businessTypeQueryRepository.existsWorkspaceRequestUsingBusinessType(1L)).willReturn(true);
+            // when & then
+            assertThatThrownBy(() -> adminDeleteBusinessType.execute(1L))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+            then(businessTypeRepository).should(never()).delete(any());
+        }
 
-        // when & then
-        assertThatThrownBy(() -> adminDeleteBusinessType.execute(1L))
-            .isInstanceOf(CustomException.class)
-            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
-        then(businessTypeRepository).should(never()).delete(any());
-    }
+        @Test
+        @DisplayName("업장 신청에서 사용 중이면 CONFLICT 예외가 발생한다")
+        void execute_신청사용중_예외() {
+            // given
+            BusinessType businessType = mock(BusinessType.class);
+            given(businessType.isRequiresDetail()).willReturn(false);
+            given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
+            given(businessTypeQueryRepository.existsWorkspaceUsingBusinessType(1L)).willReturn(false);
+            given(businessTypeQueryRepository.existsWorkspaceRequestUsingBusinessType(1L)).willReturn(true);
 
-    @Test
-    @DisplayName("사용 중이 아닌 일반 업종은 삭제된다")
-    void execute_성공() {
-        // given
-        BusinessType businessType = mock(BusinessType.class);
-        given(businessType.isRequiresDetail()).willReturn(false);
-        given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
-        given(businessTypeQueryRepository.existsWorkspaceUsingBusinessType(1L)).willReturn(false);
-        given(businessTypeQueryRepository.existsWorkspaceRequestUsingBusinessType(1L)).willReturn(false);
+            // when & then
+            assertThatThrownBy(() -> adminDeleteBusinessType.execute(1L))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+            then(businessTypeRepository).should(never()).delete(any());
+        }
 
-        // when
-        adminDeleteBusinessType.execute(1L);
+        @Test
+        @DisplayName("사용 중이 아닌 일반 업종은 삭제된다")
+        void execute_성공() {
+            // given
+            BusinessType businessType = mock(BusinessType.class);
+            given(businessType.isRequiresDetail()).willReturn(false);
+            given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
+            given(businessTypeQueryRepository.existsWorkspaceUsingBusinessType(1L)).willReturn(false);
+            given(businessTypeQueryRepository.existsWorkspaceRequestUsingBusinessType(1L)).willReturn(false);
 
-        // then
-        then(businessTypeRepository).should().delete(businessType);
+            // when
+            adminDeleteBusinessType.execute(1L);
+
+            // then
+            then(businessTypeRepository).should().delete(businessType);
+        }
     }
 }
