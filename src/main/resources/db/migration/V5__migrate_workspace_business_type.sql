@@ -20,14 +20,16 @@ SET business_type_id = bt.id
 FROM business_types bt
 WHERE btrim(w.business_type) = bt.name;
 
--- 미일치분은 '기타'(requires_detail) FK 로 매핑하고 원문을 상세에 보존한다.
+-- 미일치분은 '기타' FK 로 매핑하고 원문을 상세에 보존한다.
+-- '기타' 는 V4 시드에서 항상 생성되므로 이름으로 정확히 참조한다.
+-- (requires_detail 플래그로 찾으면 향후 다른 상세요구 업종이 추가될 때 잘못 매핑될 수 있음)
 UPDATE workspace_requests
-SET business_type_id = (SELECT id FROM business_types WHERE requires_detail LIMIT 1),
+SET business_type_id = (SELECT id FROM business_types WHERE name = '기타'),
     business_type_detail = btrim(business_type)
 WHERE business_type_id IS NULL;
 
 UPDATE workspaces
-SET business_type_id = (SELECT id FROM business_types WHERE requires_detail LIMIT 1),
+SET business_type_id = (SELECT id FROM business_types WHERE name = '기타'),
     business_type_detail = btrim(business_type)
 WHERE business_type_id IS NULL;
 
