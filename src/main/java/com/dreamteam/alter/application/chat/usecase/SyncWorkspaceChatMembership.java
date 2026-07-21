@@ -6,6 +6,7 @@ import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.inbound.SyncWorkspaceChatMembershipUseCase;
 import com.dreamteam.alter.domain.chat.port.outbound.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,16 +17,22 @@ import java.util.Optional;
 @Transactional
 public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipUseCase {
 
-    private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomQueryRepository chatRoomQueryRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
+    private final GroupChatRoomProvider groupChatRoomProvider;
 
     @Override
     public Long createGroupRoom(Long workspaceId) {
-        return chatRoomQueryRepository.findGroupRoomByWorkspaceId(workspaceId)
-            .map(ChatRoom::getId)
-            .orElseGet(() -> chatRoomRepository.save(ChatRoom.createGroup(workspaceId)).getId());
+        // 방 생성은 독립 트랜잭션(REQUIRES_NEW)에서 수행. 동시 생성 경쟁으로 유니크 위반이 나면
+        // 그 롤백은 이 트랜잭션에 영향을 주지 않으므로, 승자가 커밋한 방을 재조회해 반환한다.
+        try {
+            return groupChatRoomProvider.getOrCreate(workspaceId);
+        } catch (DataIntegrityViolationException e) {
+            return chatRoomQueryRepository.findGroupRoomByWorkspaceId(workspaceId)
+                .map(ChatRoom::getId)
+                .orElseThrow(() -> e);
+        }
     }
 
     @Override
