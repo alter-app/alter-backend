@@ -1,18 +1,23 @@
 package com.dreamteam.alter.adapter.outbound.chat.redis;
 
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -106,5 +111,32 @@ class ChatPresenceStoreRepositoryImplTest {
 
         // then
         assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("filterOnline은 파이프라인 결과에서 SET 크기>0인 대상만 online으로 반환한다")
+    void filterOnline_파이프라인_결과_매핑() {
+        // given: 대상 1(APP:1)=2건, 대상 2(APP:2)=0건 → 1만 online
+        ChatPresenceStore.PresenceTarget t1 = new ChatPresenceStore.PresenceTarget(TokenScope.APP, 1L);
+        ChatPresenceStore.PresenceTarget t2 = new ChatPresenceStore.PresenceTarget(TokenScope.APP, 2L);
+        given(redisTemplate.executePipelined(any(RedisCallback.class)))
+            .willReturn(List.of(2L, 0L));
+
+        // when
+        Set<ChatPresenceStore.PresenceTarget> online = chatPresenceStoreRepository.filterOnline(List.of(t1, t2));
+
+        // then
+        assertThat(online).containsExactly(t1);
+    }
+
+    @Test
+    @DisplayName("filterOnline은 대상이 비어있으면 빈 결과, 파이프라인 미호출")
+    void filterOnline_대상없음() {
+        // when
+        Set<ChatPresenceStore.PresenceTarget> online = chatPresenceStoreRepository.filterOnline(List.of());
+
+        // then
+        assertThat(online).isEmpty();
+        then(redisTemplate).should(org.mockito.Mockito.never()).executePipelined(any(RedisCallback.class));
     }
 }
