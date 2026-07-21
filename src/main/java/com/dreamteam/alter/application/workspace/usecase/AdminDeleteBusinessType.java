@@ -29,8 +29,7 @@ public class AdminDeleteBusinessType implements AdminDeleteBusinessTypeUseCase {
             throw new CustomException(ErrorCode.CONFLICT, "'기타' 업종은 삭제할 수 없습니다.");
         }
 
-        if (businessTypeQueryRepository.existsWorkspaceUsingBusinessType(id)
-            || businessTypeQueryRepository.existsWorkspaceRequestUsingBusinessType(id)) {
+        if (businessTypeQueryRepository.existsReferenced(id)) {
             throw new CustomException(ErrorCode.CONFLICT, "사용 중인 업종은 삭제할 수 없습니다.");
         }
 

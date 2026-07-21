@@ -69,30 +69,13 @@ class AdminDeleteBusinessTypeTests {
         }
 
         @Test
-        @DisplayName("업장에서 사용 중이면 CONFLICT 예외가 발생한다")
-        void execute_업장사용중_예외() {
+        @DisplayName("업장 또는 업장 신청에서 사용 중이면 CONFLICT 예외가 발생한다")
+        void execute_사용중_예외() {
             // given
             BusinessType businessType = mock(BusinessType.class);
             given(businessType.isRequiresDetail()).willReturn(false);
             given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
-            given(businessTypeQueryRepository.existsWorkspaceUsingBusinessType(1L)).willReturn(true);
-
-            // when & then
-            assertThatThrownBy(() -> adminDeleteBusinessType.execute(1L))
-                .isInstanceOf(CustomException.class)
-                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
-            then(businessTypeRepository).should(never()).delete(any());
-        }
-
-        @Test
-        @DisplayName("업장 신청에서 사용 중이면 CONFLICT 예외가 발생한다")
-        void execute_신청사용중_예외() {
-            // given
-            BusinessType businessType = mock(BusinessType.class);
-            given(businessType.isRequiresDetail()).willReturn(false);
-            given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
-            given(businessTypeQueryRepository.existsWorkspaceUsingBusinessType(1L)).willReturn(false);
-            given(businessTypeQueryRepository.existsWorkspaceRequestUsingBusinessType(1L)).willReturn(true);
+            given(businessTypeQueryRepository.existsReferenced(1L)).willReturn(true);
 
             // when & then
             assertThatThrownBy(() -> adminDeleteBusinessType.execute(1L))
@@ -108,8 +91,7 @@ class AdminDeleteBusinessTypeTests {
             BusinessType businessType = mock(BusinessType.class);
             given(businessType.isRequiresDetail()).willReturn(false);
             given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
-            given(businessTypeQueryRepository.existsWorkspaceUsingBusinessType(1L)).willReturn(false);
-            given(businessTypeQueryRepository.existsWorkspaceRequestUsingBusinessType(1L)).willReturn(false);
+            given(businessTypeQueryRepository.existsReferenced(1L)).willReturn(false);
 
             // when
             adminDeleteBusinessType.execute(1L);
