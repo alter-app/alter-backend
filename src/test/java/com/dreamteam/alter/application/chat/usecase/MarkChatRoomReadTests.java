@@ -4,6 +4,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,9 @@ class MarkChatRoomReadTest {
     @Mock
     private ChatRoomMemberRepository chatRoomMemberRepository;
 
+    @Mock
+    private ChatMessageQueryRepository chatMessageQueryRepository;
+
     @InjectMocks
     private MarkChatRoomRead sut;
 
@@ -40,6 +44,7 @@ class MarkChatRoomReadTest {
         ChatRoomMember member = ChatRoomMember.create(1L, 10L, TokenScope.APP);
         given(chatRoomMemberQueryRepository.findByRoomAndMember(1L, 10L, TokenScope.APP))
             .willReturn(Optional.of(member));
+        given(chatMessageQueryRepository.findLatestMessageIdByRoom(1L)).willReturn(200L);
 
         // when
         sut.execute(10L, TokenScope.APP, 1L, 100L);
@@ -63,6 +68,22 @@ class MarkChatRoomReadTest {
 
         // then
         assertThat(member.getLastReadMessageId()).isEqualTo(100L);
+    }
+
+    @Test
+    @DisplayName("방 최신 메시지 id를 초과하는 값은 최신 id로 clamp된다")
+    void execute_범위초과값은_clamp() {
+        // given
+        ChatRoomMember member = ChatRoomMember.create(1L, 10L, TokenScope.APP);
+        given(chatRoomMemberQueryRepository.findByRoomAndMember(1L, 10L, TokenScope.APP))
+            .willReturn(Optional.of(member));
+        given(chatMessageQueryRepository.findLatestMessageIdByRoom(1L)).willReturn(80L);
+
+        // when: 클라이언트가 범위 밖(Long.MAX_VALUE) 값을 보냄
+        sut.execute(10L, TokenScope.APP, 1L, Long.MAX_VALUE);
+
+        // then: 방 최신 id(80)로 clamp
+        assertThat(member.getLastReadMessageId()).isEqualTo(80L);
     }
 
     @Test

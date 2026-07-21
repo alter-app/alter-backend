@@ -1,5 +1,7 @@
 package com.dreamteam.alter.domain.chat.entity;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import jakarta.persistence.*;
@@ -9,6 +11,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -71,7 +74,7 @@ public class ChatRoom {
     public static ChatRoom createGroup(Long workspaceId) {
         // GROUP 방은 반드시 업장과 연관되어야 한다 (도메인 불변식)
         if (workspaceId == null) {
-            throw new IllegalArgumentException("GROUP 채팅방은 workspaceId가 필수입니다.");
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "GROUP 채팅방은 workspaceId가 필수입니다.");
         }
         return ChatRoom.builder()
             .type(ChatRoomType.GROUP)
@@ -82,5 +85,11 @@ public class ChatRoom {
 
     public void updateUpdatedAt() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    // DIRECT 방의 참여자 여부(participant 컬럼 기반). 이미 로드된 방으로 검증해 재조회를 피한다.
+    public boolean isParticipant(Long memberId, TokenScope scope) {
+        return (Objects.equals(participant1Id, memberId) && participant1Scope == scope)
+            || (Objects.equals(participant2Id, memberId) && participant2Scope == scope);
     }
 }

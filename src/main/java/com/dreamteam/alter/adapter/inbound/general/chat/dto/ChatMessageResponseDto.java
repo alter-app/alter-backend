@@ -4,6 +4,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -26,6 +27,9 @@ public class ChatMessageResponseDto {
     @Schema(description = "발신자 스코프")
     private DescribedEnumDto<TokenScope> senderScope;
 
+    @Schema(description = "메시지 타입 (NORMAL: 일반, NOTICE: 공지)")
+    private ChatMessageType type;
+
     @Schema(description = "메시지 내용")
     private String content;
 
@@ -46,6 +50,7 @@ public class ChatMessageResponseDto {
             .id(response.getId())
             .senderId(response.getSenderId())
             .senderScope(DescribedEnumDto.of(response.getSenderScope(), TokenScope.describe()))
+            .type(response.getType())
             .content(response.getContent())
             .createdAt(response.getCreatedAt())
             .isMine(null)
@@ -60,6 +65,7 @@ public class ChatMessageResponseDto {
             .id(response.getId())
             .senderId(response.getSenderId())
             .senderScope(DescribedEnumDto.of(response.getSenderScope(), TokenScope.describe()))
+            .type(response.getType())
             .content(response.getContent())
             .createdAt(response.getCreatedAt())
             .isMine(isMine)
@@ -79,6 +85,7 @@ public class ChatMessageResponseDto {
             .id(response.getId())
             .senderId(response.getSenderId())
             .senderScope(DescribedEnumDto.of(response.getSenderScope(), TokenScope.describe()))
+            .type(response.getType())
             .content(response.getContent())
             .createdAt(response.getCreatedAt())
             .isMine(isMine)

@@ -226,6 +226,62 @@ public class NotificationService {
     }
 
     /**
+     * 여러 사용자에게 FCM 알림만 배치 발송 (Notification 엔티티 저장 없음)
+     * 채팅 그룹 메시지처럼 멤버별 발송을 한 번의 토큰 조회 + FCM 배치로 처리할 때 사용.
+     */
+    public void sendNotificationOnlyToMany(List<Long> userIds, NotificationType type, String title, String body) {
+        if (ObjectUtils.isEmpty(userIds)) {
+            return;
+        }
+
+        // 1. 사용자 배치 조회
+        List<User> users = userQueryRepository.findAllById(userIds);
+        if (ObjectUtils.isEmpty(users)) {
+            return;
+        }
+
+        // 2. 디바이스 토큰 배치 조회
+        List<FcmDeviceToken> deviceTokens = userFCMDeviceTokenQueryRepository.findByUsers(users);
+        if (ObjectUtils.isEmpty(deviceTokens)) {
+            return;
+        }
+
+        // 3. 수신 동의 기반 필터링
+        Map<Long, NotificationConsent> consentMap = notificationConsentQueryRepository.findByUsers(users)
+            .stream()
+            .collect(Collectors.toMap(c -> c.getUser().getId(), c -> c));
+
+        boolean daytime = isDaytime();
+        List<FcmDeviceToken> eligibleTokens = deviceTokens.stream()
+            .filter(dt -> {
+                NotificationConsent consent = consentMap.get(dt.getUser().getId());
+                if (consent == null) {
+                    log.warn("알림 수신 동의 레코드가 없어 발송을 스킵합니다. userId={}", dt.getUser().getId());
+                    return false;
+                }
+                return !consent.isBlocked(type, daytime);
+            })
+            .toList();
+
+        if (eligibleTokens.isEmpty()) {
+            return;
+        }
+
+        // 4. FCM 배치 발송 (채팅 알림은 best-effort — 실패해도 예외를 던지지 않음)
+        try {
+            List<String> deviceTokenStrings = eligibleTokens.stream()
+                .map(FcmDeviceToken::getDeviceToken)
+                .toList();
+
+            BatchResponse response = fcmClient.sendMultipleNotifications(deviceTokenStrings, title, body);
+            processBatchResponse(response, eligibleTokens);
+
+        } catch (FirebaseMessagingException e) {
+            log.error("FCM 배치 알림(무저장) 발송 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
      * FCM 알림 발송 내부 로직 (공통)
      * @param user 대상 사용자
      * @param title 알림 제목

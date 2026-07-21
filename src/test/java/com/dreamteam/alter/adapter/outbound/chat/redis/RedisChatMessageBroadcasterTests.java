@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.outbound.chat.redis;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.adapter.outbound.chat.redis.dto.ChatBroadcastEnvelope;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +37,7 @@ class RedisChatMessageBroadcasterTest {
         // given
         RedisChatMessageBroadcaster sut = new RedisChatMessageBroadcaster(redisTemplate, objectMapper);
         ChatMessageResponse message = new ChatMessageResponse(
-            10L, 100L, 1L, TokenScope.APP, "안녕하세요", LocalDateTime.of(2026, 7, 14, 12, 0, 0)
+            10L, 100L, 1L, TokenScope.APP, ChatMessageType.NORMAL, "안녕하세요", LocalDateTime.of(2026, 7, 14, 12, 0, 0)
         );
 
         // when
@@ -60,7 +61,7 @@ class RedisChatMessageBroadcasterTest {
         // given
         RedisChatMessageBroadcaster sut = new RedisChatMessageBroadcaster(redisTemplate, objectMapper);
         ChatMessageResponse message = new ChatMessageResponse(
-            10L, 100L, 1L, TokenScope.APP, "안녕하세요", LocalDateTime.of(2026, 7, 14, 12, 0, 0)
+            10L, 100L, 1L, TokenScope.APP, ChatMessageType.NORMAL, "안녕하세요", LocalDateTime.of(2026, 7, 14, 12, 0, 0)
         );
         willThrow(new RuntimeException("redis connection failed")).given(redisTemplate).convertAndSend(any(), any());
 

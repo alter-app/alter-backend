@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.outbound.chat.persistence.readonly;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,6 +17,7 @@ public class ChatMessageResponse {
     private Long chatRoomId;
     private Long senderId;
     private TokenScope senderScope;
+    private ChatMessageType type;
     private String content;
     private LocalDateTime createdAt;
 
@@ -28,6 +30,7 @@ public class ChatMessageResponse {
         Long chatRoomId,
         Long senderId,
         TokenScope senderScope,
+        ChatMessageType type,
         String content,
         LocalDateTime createdAt
     ) {
@@ -35,6 +38,7 @@ public class ChatMessageResponse {
         this.chatRoomId = chatRoomId;
         this.senderId = senderId;
         this.senderScope = senderScope;
+        this.type = type;
         this.content = content;
         this.createdAt = createdAt;
     }

@@ -14,6 +14,7 @@ import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
@@ -86,11 +87,9 @@ class GetChatMessagesTest {
 
         ChatRoom directRoom = ChatRoom.create(senderId, TokenScope.APP, 999L, TokenScope.APP);
         given(chatRoomQueryRepository.findById(chatRoomId)).willReturn(Optional.of(directRoom));
-        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, senderId, TokenScope.APP))
-            .willReturn(Optional.of(directRoom));
 
         ChatMessageResponse message = new ChatMessageResponse(
-            8L, chatRoomId, senderId, TokenScope.APP, "hello", LocalDateTime.now()
+            8L, chatRoomId, senderId, TokenScope.APP, ChatMessageType.NORMAL, "hello", LocalDateTime.now()
         );
         given(chatMessageQueryRepository.getChatMessagesWithCursor(any(), any()))
             .willReturn(List.of(message));
@@ -125,14 +124,12 @@ class GetChatMessagesTest {
 
         ChatRoom directRoom = ChatRoom.create(senderId, TokenScope.APP, 999L, TokenScope.APP);
         given(chatRoomQueryRepository.findById(chatRoomId)).willReturn(Optional.of(directRoom));
-        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, senderId, TokenScope.APP))
-            .willReturn(Optional.of(directRoom));
 
         ChatMessageResponse messageWithFile = new ChatMessageResponse(
-            1L, chatRoomId, senderId, TokenScope.APP, "첨부 있음", LocalDateTime.now()
+            1L, chatRoomId, senderId, TokenScope.APP, ChatMessageType.NORMAL, "첨부 있음", LocalDateTime.now()
         );
         ChatMessageResponse messageWithoutFile = new ChatMessageResponse(
-            2L, chatRoomId, senderId, TokenScope.APP, "첨부 없음", LocalDateTime.now()
+            2L, chatRoomId, senderId, TokenScope.APP, ChatMessageType.NORMAL, "첨부 없음", LocalDateTime.now()
         );
         given(chatMessageQueryRepository.getChatMessagesWithCursor(any(), any()))
             .willReturn(List.of(messageWithoutFile, messageWithFile));
@@ -199,7 +196,7 @@ class GetChatMessagesTest {
             .willReturn(true);
 
         ChatMessageResponse message = new ChatMessageResponse(
-            10L, chatRoomId, participantId, TokenScope.APP, "안녕하세요", LocalDateTime.now()
+            10L, chatRoomId, participantId, TokenScope.APP, ChatMessageType.NORMAL, "안녕하세요", LocalDateTime.now()
         );
         given(chatMessageQueryRepository.getChatMessagesWithCursor(any(), any()))
             .willReturn(List.of(message));

@@ -1,5 +1,7 @@
 package com.dreamteam.alter.domain.chat.entity;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +21,7 @@ class ChatRoomTest {
     @Test
     void createGroup_workspaceId_null이면_예외() {
         assertThatThrownBy(() -> ChatRoom.createGroup(null))
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ILLEGAL_ARGUMENT);
     }
 }

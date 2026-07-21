@@ -3,17 +3,14 @@ package com.dreamteam.alter.application.chat.usecase;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.port.inbound.SendChatMessageUseCase;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
-import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
-import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageBroadcaster;
-import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.user.entity.User;
-import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service("sendChatMessage")
@@ -23,19 +20,15 @@ public class SendChatMessage extends AbstractSendChatMessageUseCase<User> implem
         ChatRoomQueryRepository chatRoomQueryRepository,
         ChatRoomRepository chatRoomRepository,
         ChatMessageRepository chatMessageRepository,
-        UserQueryRepository userQueryRepository,
-        NotificationService notificationService,
-        ChatMessageBroadcaster chatMessageBroadcaster,
         ChatRoomMemberQueryRepository chatRoomMemberQueryRepository,
-        ChatPresenceStore chatPresenceStore,
         AttachFilesUseCase attachFilesUseCase,
         FileQueryRepository fileQueryRepository,
-        FileUrlService fileUrlService
+        FileUrlService fileUrlService,
+        ApplicationEventPublisher eventPublisher
     ) {
         super(
-            chatRoomQueryRepository, chatRoomRepository, chatMessageRepository, userQueryRepository,
-            notificationService, chatMessageBroadcaster, chatRoomMemberQueryRepository, chatPresenceStore,
-            attachFilesUseCase, fileQueryRepository, fileUrlService
+            chatRoomQueryRepository, chatRoomRepository, chatMessageRepository, chatRoomMemberQueryRepository,
+            attachFilesUseCase, fileQueryRepository, fileUrlService, eventPublisher
         );
     }
 

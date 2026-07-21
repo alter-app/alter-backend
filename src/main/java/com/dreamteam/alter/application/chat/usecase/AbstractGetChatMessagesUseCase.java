@@ -59,9 +59,8 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
             if (!chatRoomMemberQueryRepository.existsActive(chatRoomId, participantId, participantScope)) {
                 throw new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다.");
             }
-        } else {
-            chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, participantScope)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다."));
+        } else if (!chatRoom.isParticipant(participantId, participantScope)) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다.");
         }
 
         // 2. 커서 디코딩
