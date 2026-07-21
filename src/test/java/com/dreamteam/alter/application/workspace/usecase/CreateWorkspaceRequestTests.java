@@ -8,6 +8,7 @@ import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.BusinessType;
+import com.dreamteam.alter.domain.workspace.entity.BusinessTypeFixture;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequestImage;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessTypeRepository;
@@ -22,7 +23,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -81,13 +81,6 @@ class CreateWorkspaceRequestTests {
         return dto;
     }
 
-    // requiresDetail = true 인 '기타' 는 시드로만 생성되어 create() 로는 만들 수 없다.
-    private BusinessType businessType(boolean requiresDetail) {
-        BusinessType businessType = BusinessType.create(requiresDetail ? "기타" : "카페", null);
-        ReflectionTestUtils.setField(businessType, "requiresDetail", requiresDetail);
-        return businessType;
-    }
-
     @Nested
     @DisplayName("execute")
     class ExecuteTests {
@@ -98,7 +91,7 @@ class CreateWorkspaceRequestTests {
             // given
             User user = mock(User.class);
             given(user.getId()).willReturn(100L);
-            BusinessType businessType = businessType(false);
+            BusinessType businessType = BusinessTypeFixture.of(false);
             given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
             given(workspaceRequestRepository.save(any())).willReturn(1L);
 
@@ -117,7 +110,7 @@ class CreateWorkspaceRequestTests {
             // given
             User user = mock(User.class);
             given(user.getId()).willReturn(100L);
-            BusinessType businessType = businessType(false);
+            BusinessType businessType = BusinessTypeFixture.of(false);
             given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
             given(workspaceRequestRepository.save(any())).willReturn(1L);
 
@@ -153,7 +146,7 @@ class CreateWorkspaceRequestTests {
             // given
             User user = mock(User.class);
             given(user.getId()).willReturn(100L);
-            BusinessType businessType = businessType(false);
+            BusinessType businessType = BusinessTypeFixture.of(false);
             given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
             given(workspaceRequestRepository.save(any())).willReturn(1L);
 
@@ -194,7 +187,7 @@ class CreateWorkspaceRequestTests {
             User user = mock(User.class);
             CreateWorkspaceRequestDto dto = baseRequest();
             dto.setBusinessTypeDetail("   ");
-            BusinessType businessType = businessType(true);
+            BusinessType businessType = BusinessTypeFixture.of(true);
             given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
 
             // when & then
@@ -210,7 +203,7 @@ class CreateWorkspaceRequestTests {
             // given
             User user = mock(User.class);
             given(user.getId()).willReturn(100L);
-            BusinessType etc = businessType(true);
+            BusinessType etc = BusinessTypeFixture.of(true);
             given(businessTypeRepository.findById(1L)).willReturn(Optional.of(etc));
             given(workspaceRequestRepository.save(any())).willReturn(1L);
 
@@ -232,7 +225,7 @@ class CreateWorkspaceRequestTests {
             // given
             User user = mock(User.class);
             given(user.getId()).willReturn(100L);
-            BusinessType businessType = businessType(false);
+            BusinessType businessType = BusinessTypeFixture.of(false);
             given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
             given(workspaceRequestRepository.save(any())).willReturn(1L);
 
