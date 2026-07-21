@@ -16,14 +16,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminBusinessTypeRequestDto;
-import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminBusinessTypeResponseDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.BusinessTypeResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.domain.workspace.command.AdminCreateBusinessTypeCommand;
 import com.dreamteam.alter.domain.workspace.command.AdminUpdateBusinessTypeCommand;
+import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.port.inbound.AdminCreateBusinessTypeUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.AdminDeleteBusinessTypeUseCase;
-import com.dreamteam.alter.domain.workspace.port.inbound.AdminGetBusinessTypeListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.AdminUpdateBusinessTypeUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.GetBusinessTypeListUseCase;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -36,8 +37,8 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class AdminBusinessTypeController implements AdminBusinessTypeControllerSpec {
 
-    @Resource(name = "adminGetBusinessTypeList")
-    private final AdminGetBusinessTypeListUseCase adminGetBusinessTypeList;
+    @Resource(name = "getBusinessTypeList")
+    private final GetBusinessTypeListUseCase getBusinessTypeList;
 
     @Resource(name = "adminCreateBusinessType")
     private final AdminCreateBusinessTypeUseCase adminCreateBusinessType;
@@ -50,25 +51,23 @@ public class AdminBusinessTypeController implements AdminBusinessTypeControllerS
 
     @Override
     @GetMapping
-    public ResponseEntity<CommonApiResponse<List<AdminBusinessTypeResponseDto>>> getBusinessTypeList() {
-        List<AdminBusinessTypeResponseDto> result = adminGetBusinessTypeList.execute().stream()
-            .map(AdminBusinessTypeResponseDto::from)
+    public ResponseEntity<CommonApiResponse<List<BusinessTypeResponseDto>>> getBusinessTypeList() {
+        List<BusinessTypeResponseDto> result = getBusinessTypeList.execute().stream()
+            .map(BusinessTypeResponseDto::from)
             .toList();
         return ResponseEntity.ok(CommonApiResponse.of(result));
     }
 
     @Override
     @PostMapping
-    public ResponseEntity<CommonApiResponse<AdminBusinessTypeResponseDto>> createBusinessType(
+    public ResponseEntity<CommonApiResponse<BusinessTypeResponseDto>> createBusinessType(
         @Valid @RequestBody AdminBusinessTypeRequestDto request
     ) {
-        Long id = adminCreateBusinessType.execute(
+        BusinessType created = adminCreateBusinessType.execute(
             new AdminCreateBusinessTypeCommand(request.getName(), request.getDescription())
         );
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(CommonApiResponse.of(
-                AdminBusinessTypeResponseDto.of(id, request.getName(), request.getDescription())
-            ));
+            .body(CommonApiResponse.of(BusinessTypeResponseDto.from(created)));
     }
 
     @Override

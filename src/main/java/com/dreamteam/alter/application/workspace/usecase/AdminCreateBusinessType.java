@@ -20,12 +20,12 @@ public class AdminCreateBusinessType implements AdminCreateBusinessTypeUseCase {
     private final BusinessTypeRepository businessTypeRepository;
 
     @Override
-    public Long execute(AdminCreateBusinessTypeCommand command) {
+    public BusinessType execute(AdminCreateBusinessTypeCommand command) {
         if (businessTypeRepository.existsByName(command.name())) {
             throw new CustomException(ErrorCode.CONFLICT, "이미 존재하는 업종입니다.");
         }
 
         BusinessType businessType = BusinessType.create(command.name(), command.description());
-        return businessTypeRepository.save(businessType).getId();
+        return businessTypeRepository.save(businessType);
     }
 }

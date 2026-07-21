@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminBusinessTypeRequestDto;
-import com.dreamteam.alter.adapter.inbound.admin.workspace.dto.AdminBusinessTypeResponseDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.BusinessTypeResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,14 +23,14 @@ public interface AdminBusinessTypeControllerSpec {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "업종 목록 조회 성공")
     })
-    ResponseEntity<CommonApiResponse<List<AdminBusinessTypeResponseDto>>> getBusinessTypeList();
+    ResponseEntity<CommonApiResponse<List<BusinessTypeResponseDto>>> getBusinessTypeList();
 
     @Operation(summary = "업종 생성", description = "관리자가 새 업종을 등록합니다. 이름은 중복될 수 없습니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "업종 생성 성공"),
         @ApiResponse(responseCode = "409", description = "이미 존재하는 업종 (CONFLICT)")
     })
-    ResponseEntity<CommonApiResponse<AdminBusinessTypeResponseDto>> createBusinessType(
+    ResponseEntity<CommonApiResponse<BusinessTypeResponseDto>> createBusinessType(
         @Valid @RequestBody AdminBusinessTypeRequestDto request
     );
 

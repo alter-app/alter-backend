@@ -59,10 +59,10 @@ class AdminCreateBusinessTypeTests {
             given(businessTypeRepository.save(any(BusinessType.class))).willReturn(saved);
 
             // when
-            Long id = adminCreateBusinessType.execute(new AdminCreateBusinessTypeCommand("고기집", "고기 전문점"));
+            BusinessType created = adminCreateBusinessType.execute(new AdminCreateBusinessTypeCommand("고기집", "고기 전문점"));
 
             // then
-            assertThat(id).isEqualTo(7L);
+            assertThat(created.getId()).isEqualTo(7L);
             ArgumentCaptor<BusinessType> captor = ArgumentCaptor.forClass(BusinessType.class);
             then(businessTypeRepository).should().save(captor.capture());
             assertThat(captor.getValue().getName()).isEqualTo("고기집");
