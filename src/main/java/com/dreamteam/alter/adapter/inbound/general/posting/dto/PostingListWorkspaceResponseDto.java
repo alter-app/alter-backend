@@ -23,6 +23,18 @@ public class PostingListWorkspaceResponseDto {
     @Schema(description = "업장 이름", example = "카페 알터")
     private String businessName;
 
+    @NotBlank
+    @Schema(description = "업장 시/도", example = "서울특별시")
+    private String province;
+
+    @NotBlank
+    @Schema(description = "업장 시/군/구", example = "강남구")
+    private String district;
+
+    @NotBlank
+    @Schema(description = "업장 읍/면/동", example = "역삼동")
+    private String town;
+
     @NotNull
     @Schema(description = "위도", example = "37.5665")
     private BigDecimal latitude;
@@ -35,6 +47,9 @@ public class PostingListWorkspaceResponseDto {
         return PostingListWorkspaceResponseDto.builder()
             .id(entity.getId())
             .businessName(entity.getBusinessName())
+            .province(entity.getProvince())
+            .district(entity.getDistrict())
+            .town(entity.getTown())
             .latitude(entity.getLatitude())
             .longitude(entity.getLongitude())
             .build();
