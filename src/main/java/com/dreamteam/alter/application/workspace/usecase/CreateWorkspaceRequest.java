@@ -40,14 +40,13 @@ public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 	public void execute(User user, CreateWorkspaceRequestDto request) {
 		BusinessType businessType = businessTypeRepository.findById(request.getBusinessTypeId())
 			.orElseThrow(() -> new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "존재하지 않는 업종입니다."));
-		String businessTypeDetail = businessType.resolveDetail(request.getBusinessTypeDetail());
 
 		WorkspaceRequest workspaceRequest = WorkspaceRequest.create(
 			user,
 			request.getBrn(),
 			request.getBizName(),
 			businessType,
-			businessTypeDetail,
+			request.getBusinessTypeDetail(),
 			request.getContact(),
 			request.getAddress(),
 			request.getProvince(),

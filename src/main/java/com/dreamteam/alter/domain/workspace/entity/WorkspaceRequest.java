@@ -98,7 +98,7 @@ public class WorkspaceRequest {
 		String brn,
 		String bizName,
 		BusinessType businessType,
-		String businessTypeDetail,
+		String rawBusinessTypeDetail,
 		String contact,
 		String address,
 		String province,
@@ -107,13 +107,14 @@ public class WorkspaceRequest {
 		BigDecimal latitude,
 		BigDecimal longitude
 	) {
+		// '기타' 업종 상세 필수 불변식을 팩토리에서 강제해 다른 생성 경로가 우회하지 못하게 한다.
 		return WorkspaceRequest.builder()
 			.user(user)
 			.status(WorkspaceRequestStatus.PENDING)
 			.businessRegistrationNo(brn)
 			.businessName(bizName)
 			.businessType(businessType)
-			.businessTypeDetail(businessTypeDetail)
+			.businessTypeDetail(businessType.resolveDetail(rawBusinessTypeDetail))
 			.contact(contact)
 			.fullAddress(address)
 			.province(province)
