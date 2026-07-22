@@ -24,10 +24,6 @@ public class AdminUpdateBusinessType implements AdminUpdateBusinessTypeUseCase {
         BusinessType businessType = businessTypeRepository.findById(id)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 업종입니다."));
 
-        if (businessTypeRepository.existsByNameAndIdNot(command.name(), id)) {
-            throw new CustomException(ErrorCode.CONFLICT, "이미 존재하는 업종입니다.");
-        }
-
         businessType.update(command.name(), command.description());
     }
 }

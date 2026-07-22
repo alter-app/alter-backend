@@ -54,4 +54,35 @@ class BusinessTypeTests {
             assertThat(detail).isEqualTo("떡볶이 전문점");
         }
     }
+
+    @Nested
+    @DisplayName("update")
+    class UpdateTests {
+
+        @Test
+        @DisplayName("기존 이름과 다른 이름으로 변경하려 하면 ILLEGAL_ARGUMENT 예외가 발생한다")
+        void update_이름변경시_예외() {
+            // given
+            BusinessType businessType = BusinessType.create("카페", "old");
+
+            // when & then
+            assertThatThrownBy(() -> businessType.update("레스토랑", "new"))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
+        }
+
+        @Test
+        @DisplayName("이름이 같으면 설명만 수정된다")
+        void update_설명만변경시_성공() {
+            // given
+            BusinessType businessType = BusinessType.create("카페", "old");
+
+            // when
+            businessType.update("카페", "new");
+
+            // then
+            assertThat(businessType.getName()).isEqualTo("카페");
+            assertThat(businessType.getDescription()).isEqualTo("new");
+        }
+    }
 }

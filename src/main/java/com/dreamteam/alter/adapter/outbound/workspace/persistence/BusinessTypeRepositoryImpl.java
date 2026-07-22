@@ -34,9 +34,4 @@ public class BusinessTypeRepositoryImpl implements BusinessTypeRepository {
     public boolean existsByName(String name) {
         return businessTypeJpaRepository.existsByName(name);
     }
-
-    @Override
-    public boolean existsByNameAndIdNot(String name, Long id) {
-        return businessTypeJpaRepository.existsByNameAndIdNot(name, id);
-    }
 }

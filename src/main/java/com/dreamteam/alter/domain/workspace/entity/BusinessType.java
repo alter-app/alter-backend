@@ -52,7 +52,9 @@ public class BusinessType {
     }
 
     public void update(String name, String description) {
-        this.name = name;
+        if (!this.name.equals(name)) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "업종 이름은 변경할 수 없습니다.");
+        }
         this.description = description;
     }
 

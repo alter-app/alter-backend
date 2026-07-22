@@ -12,6 +12,4 @@ public interface BusinessTypeRepository {
     void delete(BusinessType businessType);
 
     boolean existsByName(String name);
-
-    boolean existsByNameAndIdNot(String name, Long id);
 }

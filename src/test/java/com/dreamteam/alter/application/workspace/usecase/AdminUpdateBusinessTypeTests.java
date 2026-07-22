@@ -17,11 +17,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AdminUpdateBusinessType 테스트")
@@ -50,27 +48,11 @@ class AdminUpdateBusinessTypeTests {
         }
 
         @Test
-        @DisplayName("자신을 제외한 다른 업종과 이름이 중복되면 CONFLICT 예외가 발생한다")
-        void execute_이름중복_예외() {
-            // given
-            BusinessType businessType = mock(BusinessType.class);
-            given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
-            given(businessTypeRepository.existsByNameAndIdNot("카페", 1L)).willReturn(true);
-
-            // when & then
-            assertThatThrownBy(() -> adminUpdateBusinessType.execute(1L, new AdminUpdateBusinessTypeCommand("카페", null)))
-                .isInstanceOf(CustomException.class)
-                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
-            then(businessType).should(never()).update(any(), any());
-        }
-
-        @Test
-        @DisplayName("중복이 없으면 이름/설명을 수정한다")
+        @DisplayName("업종을 조회하여 이름/설명 수정을 위임한다")
         void execute_성공() {
             // given
             BusinessType businessType = mock(BusinessType.class);
             given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
-            given(businessTypeRepository.existsByNameAndIdNot("카페", 1L)).willReturn(false);
 
             // when
             adminUpdateBusinessType.execute(1L, new AdminUpdateBusinessTypeCommand("카페", "카페/디저트"));

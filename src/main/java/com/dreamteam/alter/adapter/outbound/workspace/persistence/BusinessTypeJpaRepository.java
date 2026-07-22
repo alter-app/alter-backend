@@ -6,6 +6,4 @@ import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 
 public interface BusinessTypeJpaRepository extends JpaRepository<BusinessType, Long> {
     boolean existsByName(String name);
-
-    boolean existsByNameAndIdNot(String name, Long id);
 }
