@@ -24,7 +24,7 @@ import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChatPresenceStoreRepositoryImpl 테스트")
-class ChatPresenceStoreRepositoryImplTest {
+class ChatPresenceStoreRepositoryImplTests {
 
     @Mock
     private StringRedisTemplate redisTemplate;

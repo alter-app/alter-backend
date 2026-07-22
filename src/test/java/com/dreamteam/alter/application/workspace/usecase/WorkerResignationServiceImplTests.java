@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("WorkerResignationServiceImpl 테스트")
-class WorkerResignationServiceImplTest {
+class WorkerResignationServiceImplTests {
 
     @Mock
     private WorkspaceShiftQueryRepository workspaceShiftQueryRepository;

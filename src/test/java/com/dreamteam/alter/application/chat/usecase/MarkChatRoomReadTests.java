@@ -23,7 +23,7 @@ import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MarkChatRoomRead 테스트")
-class MarkChatRoomReadTest {
+class MarkChatRoomReadTests {
 
     @Mock
     private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;

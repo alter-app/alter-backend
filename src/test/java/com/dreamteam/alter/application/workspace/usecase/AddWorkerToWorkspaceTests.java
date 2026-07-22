@@ -30,7 +30,7 @@ import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AddWorkerToWorkspace 테스트")
-class AddWorkerToWorkspaceTest {
+class AddWorkerToWorkspaceTests {
 
     @Mock
     private WorkspaceWorkerRepository workspaceWorkerRepository;

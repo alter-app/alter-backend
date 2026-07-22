@@ -46,7 +46,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GetChatMessages 테스트")
-class GetChatMessagesTest {
+class GetChatMessagesTests {
 
     @Mock
     private ChatRoomQueryRepository chatRoomQueryRepository;

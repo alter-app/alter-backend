@@ -1,4 +1,4 @@
-package com.dreamteam.alter.application.chat.usecase;
+package com.dreamteam.alter.application.chat.support;
 
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;

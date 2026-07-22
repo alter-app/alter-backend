@@ -24,7 +24,7 @@ import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChatMessageRedisSubscriber 테스트")
-class ChatMessageRedisSubscriberTest {
+class ChatMessageRedisSubscriberTests {
 
     @Mock
     private SimpMessagingTemplate messagingTemplate;

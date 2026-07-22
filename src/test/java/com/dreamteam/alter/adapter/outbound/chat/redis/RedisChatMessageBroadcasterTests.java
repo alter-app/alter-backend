@@ -24,7 +24,7 @@ import static org.mockito.BDDMockito.willThrow;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RedisChatMessageBroadcaster 테스트")
-class RedisChatMessageBroadcasterTest {
+class RedisChatMessageBroadcasterTests {
 
     @Mock
     private StringRedisTemplate redisTemplate;

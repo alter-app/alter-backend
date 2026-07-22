@@ -29,7 +29,7 @@ import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CreateOrGetChatRoom 테스트")
-class CreateOrGetChatRoomTest {
+class CreateOrGetChatRoomTests {
 
     @Mock
     private ChatRoomQueryRepository chatRoomQueryRepository;

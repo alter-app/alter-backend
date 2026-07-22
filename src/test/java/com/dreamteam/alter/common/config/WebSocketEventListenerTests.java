@@ -30,7 +30,7 @@ import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("WebSocketEventListener 테스트")
-class WebSocketEventListenerTest {
+class WebSocketEventListenerTests {
 
     @Mock
     private ChatPresenceStore chatPresenceStore;

@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
     ChatRoomMemberRepositoryImpl.class,
     ChatRoomMemberQueryRepositoryImpl.class
 })
-class ChatRoomMemberRepositoryImplTest {
+class ChatRoomMemberRepositoryImplTests {
 
     @Autowired
     private ChatRoomMemberRepositoryImpl repository;

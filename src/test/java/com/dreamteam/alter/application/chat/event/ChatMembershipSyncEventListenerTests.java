@@ -15,7 +15,7 @@ import static org.mockito.BDDMockito.willThrow;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChatMembershipSyncEventListener 테스트")
-class ChatMembershipSyncEventListenerTest {
+class ChatMembershipSyncEventListenerTests {
 
     @Mock
     private SyncWorkspaceChatMembershipUseCase syncWorkspaceChatMembership;

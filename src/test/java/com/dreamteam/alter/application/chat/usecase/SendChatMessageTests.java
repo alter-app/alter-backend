@@ -44,7 +44,7 @@ import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SendChatMessage 테스트")
-class SendChatMessageTest {
+class SendChatMessageTests {
 
     @Mock
     private ChatRoomQueryRepository chatRoomQueryRepository;

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class ChatRoomTest {
+class ChatRoomTests {
 
     @Test
     void createGroup_업장_그룹방_생성() {

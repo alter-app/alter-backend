@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GetWorkspaceGroupChatRoom 테스트")
-class GetWorkspaceGroupChatRoomTest {
+class GetWorkspaceGroupChatRoomTests {
 
     @Mock
     private ChatRoomQueryRepository chatRoomQueryRepository;

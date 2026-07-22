@@ -6,6 +6,7 @@ import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.application.chat.support.GroupChatRoomProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SyncWorkspaceChatMembership 테스트")
-class SyncWorkspaceChatMembershipTest {
+class SyncWorkspaceChatMembershipTests {
 
     @Mock
     private ChatRoomQueryRepository chatRoomQueryRepository;
