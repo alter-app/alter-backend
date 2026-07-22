@@ -133,45 +133,9 @@ public class NotificationService {
             .toList();
         notificationRepository.saveAll(notifications);
 
-        // 수신 동의 기반 디바이스 토큰 필터링
-        Map<Long, NotificationConsent> consentMap = notificationConsentQueryRepository.findByUsers(users)
-            .stream()
-            .collect(Collectors.toMap(c -> c.getUser().getId(), c -> c));
-
-        boolean daytime = isDaytime();
-        NotificationType type = request.getType();
-        List<FcmDeviceToken> eligibleTokens = deviceTokens.stream()
-            .filter(dt -> {
-                NotificationConsent consent = consentMap.get(dt.getUser().getId());
-                if (consent == null) {
-                    log.warn("알림 수신 동의 레코드가 없어 발송을 스킵합니다. userId={}", dt.getUser().getId());
-                    return false;
-                }
-                return !consent.isBlocked(type, daytime);
-            })
-            .toList();
-
-        // 4. FCM 배치 발송
-        if (eligibleTokens.isEmpty()) {
-            return;
-        }
-
-        try {
-            List<String> deviceTokenStrings = eligibleTokens.stream()
-                .map(FcmDeviceToken::getDeviceToken)
-                .toList();
-
-            BatchResponse response = fcmClient.sendMultipleNotifications(
-                deviceTokenStrings, request.getTitle(), request.getBody()
-            );
-
-            // 5. 결과 처리
-            processBatchResponse(response, eligibleTokens);
-
-        } catch (FirebaseMessagingException e) {
-            log.error("FCM 다중 알림 발송 실패: {}", e.getMessage(), e);
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "FCM 다중 알림 발송 실패");
-        }
+        // 4. 수신 동의 기반 필터링 후 FCM 배치 발송 (실패 시 예외 전파)
+        List<FcmDeviceToken> eligibleTokens = filterEligibleTokens(users, deviceTokens, request.getType());
+        dispatchBatch(eligibleTokens, request.getTitle(), request.getBody(), true);
     }
 
     /**
@@ -246,13 +210,23 @@ public class NotificationService {
             return;
         }
 
-        // 3. 수신 동의 기반 필터링
+        // 3. 수신 동의 기반 필터링 후 FCM 배치 발송 (채팅 알림은 best-effort — 실패해도 예외를 던지지 않음)
+        List<FcmDeviceToken> eligibleTokens = filterEligibleTokens(users, deviceTokens, type);
+        dispatchBatch(eligibleTokens, title, body, false);
+    }
+
+    /**
+     * 사용자·디바이스 토큰 목록에서 수신 동의(시간대 포함)를 통과한 토큰만 필터링.
+     */
+    private List<FcmDeviceToken> filterEligibleTokens(
+        List<User> users, List<FcmDeviceToken> deviceTokens, NotificationType type
+    ) {
         Map<Long, NotificationConsent> consentMap = notificationConsentQueryRepository.findByUsers(users)
             .stream()
             .collect(Collectors.toMap(c -> c.getUser().getId(), c -> c));
 
         boolean daytime = isDaytime();
-        List<FcmDeviceToken> eligibleTokens = deviceTokens.stream()
+        return deviceTokens.stream()
             .filter(dt -> {
                 NotificationConsent consent = consentMap.get(dt.getUser().getId());
                 if (consent == null) {
@@ -262,12 +236,19 @@ public class NotificationService {
                 return !consent.isBlocked(type, daytime);
             })
             .toList();
+    }
 
+    /**
+     * 대상 토큰들에 FCM 배치 발송 후 결과 처리.
+     * @param throwOnError true면 실패 시 예외 전파, false면 로그만 남기는 best-effort
+     */
+    private void dispatchBatch(
+        List<FcmDeviceToken> eligibleTokens, String title, String body, boolean throwOnError
+    ) {
         if (eligibleTokens.isEmpty()) {
             return;
         }
 
-        // 4. FCM 배치 발송 (채팅 알림은 best-effort — 실패해도 예외를 던지지 않음)
         try {
             List<String> deviceTokenStrings = eligibleTokens.stream()
                 .map(FcmDeviceToken::getDeviceToken)
@@ -277,7 +258,10 @@ public class NotificationService {
             processBatchResponse(response, eligibleTokens);
 
         } catch (FirebaseMessagingException e) {
-            log.error("FCM 배치 알림(무저장) 발송 실패: {}", e.getMessage(), e);
+            log.error("FCM 배치 알림 발송 실패: {}", e.getMessage(), e);
+            if (throwOnError) {
+                throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "FCM 다중 알림 발송 실패");
+            }
         }
     }
 
