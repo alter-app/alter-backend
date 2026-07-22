@@ -477,7 +477,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         return town != null ? qWorkspace.town.eq(town) : null;
     }
 
-    private BooleanExpression businessTypeIn(QWorkspace qWorkspace, java.util.List<Long> businessTypeIds) {
+    private BooleanExpression businessTypeIn(QWorkspace qWorkspace, List<Long> businessTypeIds) {
         return ObjectUtils.isNotEmpty(businessTypeIds) ? qWorkspace.businessType.id.in(businessTypeIds) : null;
     }
 
