@@ -21,7 +21,7 @@ import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,10 +65,20 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
         }
 
         // 3-1. 내용/첨부 검증
-        List<String> fileIds = request.getFileIds() == null ? List.of() : request.getFileIds();
-        boolean hasText = !ObjectUtils.isEmpty(request.getContent());
+        //   - fileIds: blank 원소 제거 후 중복 제거
+        //   - content: 공백-only는 미입력으로 간주(isBlank), 길이 상한 검사로 DB 제약 위반(500) 대신 400 반환
+        List<String> fileIds = request.getFileIds() == null
+            ? List.of()
+            : request.getFileIds().stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .toList();
+        boolean hasText = StringUtils.isNotBlank(request.getContent());
         if (!hasText && fileIds.isEmpty()) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "내용 또는 이미지를 첨부해야 합니다.");
+        }
+        if (hasText && request.getContent().length() > SendChatMessageRequestDto.MAX_CONTENT_LENGTH) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "메시지는 최대 1000자까지 입력할 수 있습니다.");
         }
         if (fileIds.size() > SendChatMessageRequestDto.MAX_ATTACHMENTS) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이미지는 최대 10개까지 첨부할 수 있습니다.");
