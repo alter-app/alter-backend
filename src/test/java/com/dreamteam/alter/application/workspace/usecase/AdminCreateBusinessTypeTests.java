@@ -5,6 +5,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.workspace.command.AdminCreateBusinessTypeCommand;
 import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessTypeRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,9 @@ class AdminCreateBusinessTypeTests {
 
     @Mock
     private BusinessTypeRepository businessTypeRepository;
+
+    @Mock
+    private EntityManager entityManager;
 
     @InjectMocks
     private AdminCreateBusinessType adminCreateBusinessType;
