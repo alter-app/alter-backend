@@ -45,33 +45,6 @@ public class ChatMessageResponseDto {
     @Schema(description = "첨부 파일 목록")
     private List<FileResponseDto> attachments;
 
-    public static ChatMessageResponseDto from(ChatMessageResponse response) {
-        return ChatMessageResponseDto.builder()
-            .id(response.getId())
-            .senderId(response.getSenderId())
-            .senderScope(DescribedEnumDto.of(response.getSenderScope(), TokenScope.describe()))
-            .type(response.getType())
-            .content(response.getContent())
-            .createdAt(response.getCreatedAt())
-            .isMine(null)
-            .build();
-    }
-
-    public static ChatMessageResponseDto from(ChatMessageResponse response, Long currentUserId, TokenScope currentUserScope) {
-        boolean isMine = response.getSenderId().equals(currentUserId)
-            && response.getSenderScope().equals(currentUserScope);
-
-        return ChatMessageResponseDto.builder()
-            .id(response.getId())
-            .senderId(response.getSenderId())
-            .senderScope(DescribedEnumDto.of(response.getSenderScope(), TokenScope.describe()))
-            .type(response.getType())
-            .content(response.getContent())
-            .createdAt(response.getCreatedAt())
-            .isMine(isMine)
-            .build();
-    }
-
     public static ChatMessageResponseDto from(
         ChatMessageResponse response,
         Long currentUserId,
