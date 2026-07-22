@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,6 +48,20 @@ class AdminCreateBusinessTypeTests {
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
             then(businessTypeRepository).should(never()).save(any());
+        }
+
+        @Test
+        @DisplayName("사전 체크를 동시에 통과해 저장 시 제약 위반이 발생하면 CONFLICT 예외로 변환한다")
+        void execute_동시중복_예외() {
+            // given
+            given(businessTypeRepository.existsByName("카페")).willReturn(false);
+            given(businessTypeRepository.save(any(BusinessType.class)))
+                .willThrow(new DataIntegrityViolationException("duplicate name"));
+
+            // when & then
+            assertThatThrownBy(() -> adminCreateBusinessType.execute(new AdminCreateBusinessTypeCommand("카페", null)))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
         }
 
         @Test

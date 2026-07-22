@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,10 @@ public class AdminCreateBusinessType implements AdminCreateBusinessTypeUseCase {
         }
 
         BusinessType businessType = BusinessType.create(command.name(), command.description());
-        return businessTypeRepository.save(businessType);
+        try {
+            return businessTypeRepository.save(businessType);
+        } catch (DataIntegrityViolationException e) {
+            throw new CustomException(ErrorCode.CONFLICT, "이미 존재하는 업종입니다.");
+        }
     }
 }
