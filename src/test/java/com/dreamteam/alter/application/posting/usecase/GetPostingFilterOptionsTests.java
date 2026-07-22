@@ -32,7 +32,7 @@ class GetPostingFilterOptionsTests {
 
     @Test
     @DisplayName("필터 옵션에 지역/정렬과 함께 업종 목록이 포함된다")
-    void execute_업종포함() {
+    void execute_정상호출시_업종목록포함() {
         // given
         given(postingQueryRepository.getPostingFilterOptions())
             .willReturn(PostingFilterOptionsResponse.of(List.of("서울특별시"), List.of("강남구"), List.of("역삼동")));
