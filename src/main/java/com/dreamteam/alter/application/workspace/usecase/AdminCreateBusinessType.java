@@ -11,6 +11,7 @@ import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.port.inbound.AdminCreateBusinessTypeUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessTypeRepository;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 
 @Service("adminCreateBusinessType")
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminCreateBusinessType implements AdminCreateBusinessTypeUseCase {
 
     private final BusinessTypeRepository businessTypeRepository;
+    private final EntityManager entityManager;
 
     @Override
     public BusinessType execute(AdminCreateBusinessTypeCommand command) {
@@ -28,7 +30,9 @@ public class AdminCreateBusinessType implements AdminCreateBusinessTypeUseCase {
 
         BusinessType businessType = BusinessType.create(command.name(), command.description());
         try {
-            return businessTypeRepository.save(businessType);
+            BusinessType saved = businessTypeRepository.save(businessType);
+            entityManager.flush();
+            return saved;
         } catch (DataIntegrityViolationException e) {
             throw new CustomException(ErrorCode.CONFLICT, "이미 존재하는 업종입니다.");
         }
