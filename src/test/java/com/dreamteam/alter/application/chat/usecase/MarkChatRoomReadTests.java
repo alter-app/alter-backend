@@ -87,6 +87,23 @@ class MarkChatRoomReadTest {
     }
 
     @Test
+    @DisplayName("빈 방(메시지 0건)이면 no-op — 읽음 상태를 갱신하지 않는다")
+    void execute_빈방이면_noop() {
+        // given
+        ChatRoomMember member = ChatRoomMember.create(1L, 10L, TokenScope.APP);
+        given(chatRoomMemberQueryRepository.findByRoomAndMember(1L, 10L, TokenScope.APP))
+            .willReturn(Optional.of(member));
+        given(chatMessageQueryRepository.findLatestMessageIdByRoom(1L)).willReturn(null);
+
+        // when: 빈 방에 클라이언트가 Long.MAX_VALUE를 보냄
+        sut.execute(10L, TokenScope.APP, 1L, Long.MAX_VALUE);
+
+        // then: 갱신·저장되지 않음 (영구 오염 방지)
+        assertThat(member.getLastReadMessageId()).isNull();
+        then(chatRoomMemberRepository).shouldHaveNoInteractions();
+    }
+
+    @Test
     @DisplayName("채팅방 멤버가 아니면 NOT_FOUND 예외")
     void execute_멤버_아니면_NOT_FOUND() {
         // given
