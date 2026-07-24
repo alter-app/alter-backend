@@ -77,6 +77,7 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 			workspaceRequest.getBusinessRegistrationNo(),
 			workspaceRequest.getBusinessName(),
 			workspaceRequest.getBusinessType(),
+			workspaceRequest.getBusinessTypeDetail(),
 			workspaceRequest.getContact(),
 			null,
 			WorkspaceStatus.ACTIVATED,

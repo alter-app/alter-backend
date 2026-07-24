@@ -40,7 +40,7 @@ public class CreatePostingApplication implements CreatePostingApplicationUseCase
                 .orElseThrow(() -> new CustomException(ErrorCode.POSTING_SCHEDULE_NOT_FOUND));
 
         Posting posting = postingSchedule.getPosting();
-        if (PostingStatus.OPEN.equals(posting.getStatus())) {
+        if (!PostingStatus.OPEN.equals(posting.getStatus())) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "모집이 종료된 공고입니다.");
         }
 

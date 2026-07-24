@@ -10,6 +10,7 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserRepository;
+import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceImage;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
@@ -74,6 +75,9 @@ class UpdateWorkspaceRequestStatusTests {
 
     @Captor
     private ArgumentCaptor<List<WorkspaceImage>> imagesCaptor;
+
+    @Captor
+    private ArgumentCaptor<Workspace> workspaceCaptor;
 
     @Nested
     @DisplayName("execute")
@@ -159,6 +163,31 @@ class UpdateWorkspaceRequestStatusTests {
             then(managerUserRepository).should().save(any(ManagerUser.class));
             then(workspaceRepository).should().save(any(Workspace.class));
             then(fileDeleteService).should(never()).delete(any());
+        }
+
+        @Test
+        @DisplayName("승인 시 신청의 업종 FK 와 상세를 업장으로 복사한다")
+        void execute_ACTIVATED_업종복사() {
+            // given
+            User user = mock(User.class);
+            WorkspaceRequest request = mock(WorkspaceRequest.class);
+            BusinessType businessType = mock(BusinessType.class);
+            given(request.getUser()).willReturn(user);
+            given(user.getId()).willReturn(1L);
+            given(request.getBusinessType()).willReturn(businessType);
+            given(request.getBusinessTypeDetail()).willReturn("떡볶이 전문점");
+            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(mock(ManagerUser.class)));
+            given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
+            given(fileQueryRepository.findByTargetTypeAndTargetId(any(), any())).willReturn(Optional.empty());
+
+            // when
+            updateWorkspaceRequestStatus.execute(1L, WorkspaceRequestStatus.ACTIVATED);
+
+            // then
+            then(workspaceRepository).should().save(workspaceCaptor.capture());
+            assertThat(workspaceCaptor.getValue().getBusinessType()).isEqualTo(businessType);
+            assertThat(workspaceCaptor.getValue().getBusinessTypeDetail()).isEqualTo("떡볶이 전문점");
         }
 
         @Test

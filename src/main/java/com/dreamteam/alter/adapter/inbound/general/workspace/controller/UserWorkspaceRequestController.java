@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.BusinessTypeResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.workspace.dto.WorkspaceRequestListResponseDto;
@@ -20,6 +21,7 @@ import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.port.inbound.CancelWorkspaceRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.CreateWorkspaceRequestUseCase;
+import com.dreamteam.alter.domain.workspace.port.inbound.GetBusinessTypeListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestListUseCase;
 import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceRequestUseCase;
 
@@ -45,6 +47,9 @@ public class UserWorkspaceRequestController implements UserWorkspaceRequestContr
     @Resource(name = "cancelWorkspaceRequest")
     private final CancelWorkspaceRequestUseCase cancelWorkspaceRequest;
 
+    @Resource(name = "getBusinessTypeList")
+    private final GetBusinessTypeListUseCase getBusinessTypeList;
+
     @Override
     @PostMapping
     public ResponseEntity<CommonApiResponse<Void>> createWorkspaceRequest(
@@ -60,6 +65,15 @@ public class UserWorkspaceRequestController implements UserWorkspaceRequestContr
     public ResponseEntity<CommonApiResponse<List<WorkspaceRequestListResponseDto>>> getWorkspaceRequestList() {
         AppActor actor = AppActionContext.getInstance().getActor();
         return ResponseEntity.ok(CommonApiResponse.of(getWorkspaceRequestList.execute(actor.getUser())));
+    }
+
+    @Override
+    @GetMapping("/business-types")
+    public ResponseEntity<CommonApiResponse<List<BusinessTypeResponseDto>>> getBusinessTypeList() {
+        List<BusinessTypeResponseDto> businessTypes = getBusinessTypeList.execute().stream()
+            .map(BusinessTypeResponseDto::from)
+            .toList();
+        return ResponseEntity.ok(CommonApiResponse.of(businessTypes));
     }
 
     @Override

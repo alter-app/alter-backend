@@ -1,7 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
 
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.ManagerPostingListWorkspaceResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingKeywordListResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingScheduleResponseDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingListResponse;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
@@ -41,10 +40,6 @@ public class ManagerPostingListResponseDto {
     private LocalDateTime createdAt;
 
     @NotNull
-    @Schema(description = "키워드", example = "[{\"id\":1,\"name\":\"카페\"},{\"id\":4,\"name\":\"분식\"}]")
-    private List<PostingKeywordListResponseDto> keywords;
-
-    @NotNull
     @Schema(description = "공고 스케줄", example = "[" +
         "{" +
         "\"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"positionsNeeded\": 3, \"position\": 3" +
@@ -66,9 +61,6 @@ public class ManagerPostingListResponseDto {
             .payAmount(response.getPayAmount())
             .paymentType(response.getPaymentType())
             .createdAt(response.getCreatedAt())
-            .keywords(response.getPostingKeywords().stream()
-                .map(PostingKeywordListResponseDto::from)
-                .toList())
             .schedules(response.getSchedules().stream()
                 .map(PostingScheduleResponseDto::from)
                 .toList())

@@ -18,6 +18,7 @@ public class WorkspaceRequestResponse {
 	private String businessRegistrationNo;
 	private String businessName;
 	private String businessType;
+	private String businessTypeDetail;
 	private String contact;
 	private String fullAddress;
 	private BigDecimal latitude;

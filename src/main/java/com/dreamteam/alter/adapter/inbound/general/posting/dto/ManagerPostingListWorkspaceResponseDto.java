@@ -21,10 +21,19 @@ public class ManagerPostingListWorkspaceResponseDto {
     @Schema(description = "업장 이름", example = "카페 알터")
     private String businessName;
 
+    @NotBlank
+    @Schema(description = "업종", example = "카페")
+    private String businessType;
+
+    @Schema(description = "업종 상세 (업종이 '기타'인 경우)", example = "떡볶이 전문점")
+    private String businessTypeDetail;
+
     public static ManagerPostingListWorkspaceResponseDto from(Workspace entity) {
         return ManagerPostingListWorkspaceResponseDto.builder()
             .id(entity.getId())
             .businessName(entity.getBusinessName())
+            .businessType(entity.getBusinessType().getName())
+            .businessTypeDetail(entity.getBusinessTypeDetail())
             .build();
     }
 

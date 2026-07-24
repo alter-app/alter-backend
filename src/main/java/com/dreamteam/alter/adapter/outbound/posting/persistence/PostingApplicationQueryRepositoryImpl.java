@@ -15,6 +15,7 @@ import com.dreamteam.alter.domain.posting.entity.QPostingSchedule;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationQueryRepository;
 import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
 import com.dreamteam.alter.domain.user.entity.*;
+import com.dreamteam.alter.domain.workspace.entity.QBusinessType;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -89,6 +90,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .join(qPostingApplication.postingSchedule.posting, qPosting)
             .join(qPostingApplication.postingSchedule, qPostingSchedule)
             .join(qPosting.workspace, qWorkspace).fetchJoin()
+            .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(whereCondition)
             .orderBy(qPostingApplication.createdAt.desc(), qPostingApplication.id.desc())
             .limit(pageRequest.pageSize())

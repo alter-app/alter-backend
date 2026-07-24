@@ -8,7 +8,6 @@ import com.dreamteam.alter.domain.posting.type.PaymentType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AccessLevel;
@@ -38,10 +37,6 @@ public class UpdatePostingRequestDto {
     @NotNull
     @Schema(description = "급여 타입", example = "HOURLY")
     private PaymentType paymentType;
-
-    @NotEmpty
-    @Schema(description = "키워드", example = "[2, 3, 1]")
-    private List<Long> keywords;
 
     @Valid
     @Schema(description = "새로 추가할 스케줄", example = "[{\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"positionsNeeded\": 1, \"position\": \"설거지\"}]")

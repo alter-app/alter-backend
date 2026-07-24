@@ -25,6 +25,13 @@ public class PostingDetailWorkspaceResponseDto {
     private String name;
 
     @NotBlank
+    @Schema(description = "업종", example = "카페")
+    private String businessType;
+
+    @Schema(description = "업종 상세 (업종이 '기타'인 경우)", example = "떡볶이 전문점")
+    private String businessTypeDetail;
+
+    @NotBlank
     @Schema(description = "업장 상세 주소", example = "서울특별시 강남구 테헤란로 123")
     private String fullAddress;
 
@@ -55,6 +62,8 @@ public class PostingDetailWorkspaceResponseDto {
         return PostingDetailWorkspaceResponseDto.builder()
             .id(workspace.getId())
             .name(workspace.getBusinessName())
+            .businessType(workspace.getBusinessType().getName())
+            .businessTypeDetail(workspace.getBusinessTypeDetail())
             .fullAddress(workspace.getFullAddress())
             .province(workspace.getProvince())
             .district(workspace.getDistrict())
@@ -68,6 +77,8 @@ public class PostingDetailWorkspaceResponseDto {
         return PostingDetailWorkspaceResponseDto.builder()
             .id(workspace.getId())
             .name(workspace.getBusinessName())
+            .businessType(workspace.getBusinessType().getName())
+            .businessTypeDetail(workspace.getBusinessTypeDetail())
             .fullAddress(workspace.getFullAddress())
             .province(workspace.getProvince())
             .district(workspace.getDistrict())

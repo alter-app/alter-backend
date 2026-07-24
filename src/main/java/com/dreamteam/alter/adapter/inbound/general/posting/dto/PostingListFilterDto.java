@@ -6,6 +6,7 @@ import lombok.*;
 import org.springdoc.core.annotations.ParameterObject;
 
 import java.time.LocalTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -22,6 +23,9 @@ public class PostingListFilterDto {
 
     @Parameter(description = "읍/면/동 (town)")
     private String town;
+
+    @Parameter(description = "업종 ID 목록 (businessTypeIds) — 다중 선택 시 OR 조건")
+    private List<Long> businessTypeIds;
 
     @Parameter(description = "최소 급여")
     private Integer minPayAmount;

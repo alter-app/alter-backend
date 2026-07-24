@@ -24,6 +24,13 @@ public class PostingListWorkspaceResponseDto {
     private String businessName;
 
     @NotBlank
+    @Schema(description = "업종", example = "카페")
+    private String businessType;
+
+    @Schema(description = "업종 상세 (업종이 '기타'인 경우)", example = "떡볶이 전문점")
+    private String businessTypeDetail;
+
+    @NotBlank
     @Schema(description = "업장 시/도", example = "서울특별시")
     private String province;
 
@@ -47,6 +54,8 @@ public class PostingListWorkspaceResponseDto {
         return PostingListWorkspaceResponseDto.builder()
             .id(entity.getId())
             .businessName(entity.getBusinessName())
+            .businessType(entity.getBusinessType().getName())
+            .businessTypeDetail(entity.getBusinessTypeDetail())
             .province(entity.getProvince())
             .district(entity.getDistrict())
             .town(entity.getTown())
