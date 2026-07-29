@@ -40,6 +40,10 @@ public interface ManagerPostingControllerSpec {
                 schema = @Schema(implementation = ErrorResponse.class),
                 examples = {
                     @ExampleObject(
+                        name = "존재하지 않거나 자신이 관리하지 않는 업장",
+                        value = "{\"code\" : \"B008\"}"
+                    ),
+                    @ExampleObject(
                         name = "서버 내부 오류",
                         value = "{\"code\" : \"C001\"}"
                     ),
@@ -166,14 +170,6 @@ public interface ManagerPostingControllerSpec {
                     @ExampleObject(
                         name = "존재하지 않는 공고",
                         value = "{\"code\" : \"B007\"}"
-                    ),
-                    @ExampleObject(
-                        name = "등록되지 않은 키워드로 요청",
-                        value = "{\"code\" : \"B006\"}"
-                    ),
-                    @ExampleObject(
-                        name = "요청에 키워드가 포함되지 않은 경우",
-                        value = "{\"code\" : \"B001\"}"
                     ),
                 })),
         @ApiResponse(responseCode = "404", description = "404 Error 실패 케이스",
