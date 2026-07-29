@@ -1,8 +1,10 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.application.chat.event.ChatMembershipJoinedEvent;
 import com.dreamteam.alter.application.file.FileDeleteService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -29,6 +31,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -70,6 +73,9 @@ class UpdateWorkspaceRequestStatusTests {
     @Mock
     private FileDeleteService fileDeleteService;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private UpdateWorkspaceRequestStatus updateWorkspaceRequestStatus;
 
@@ -78,6 +84,9 @@ class UpdateWorkspaceRequestStatusTests {
 
     @Captor
     private ArgumentCaptor<Workspace> workspaceCaptor;
+
+    @Captor
+    private ArgumentCaptor<ChatMembershipJoinedEvent> eventCaptor;
 
     @Nested
     @DisplayName("execute")
@@ -122,9 +131,12 @@ class UpdateWorkspaceRequestStatusTests {
             User user = mock(User.class);
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             ManagerUser managerUser = mock(ManagerUser.class);
+            User managerUnderlyingUser = mock(User.class);
             File identityFile = mock(File.class);
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
+            given(managerUser.getUser()).willReturn(managerUnderlyingUser);
+            given(managerUnderlyingUser.getId()).willReturn(2L);
             given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
             given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
             given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
@@ -147,10 +159,13 @@ class UpdateWorkspaceRequestStatusTests {
             // given
             User user = mock(User.class);
             WorkspaceRequest request = mock(WorkspaceRequest.class);
+            ManagerUser newManagerUser = mock(ManagerUser.class);
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
+            given(newManagerUser.getUser()).willReturn(user);
             given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
             given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.empty());
+            given(managerUserRepository.save(any(ManagerUser.class))).willReturn(newManagerUser);
             given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
             given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
                 .willReturn(Optional.empty());
@@ -172,12 +187,14 @@ class UpdateWorkspaceRequestStatusTests {
             User user = mock(User.class);
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             BusinessType businessType = mock(BusinessType.class);
+            ManagerUser managerUser = mock(ManagerUser.class);
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
+            given(managerUser.getUser()).willReturn(user);
             given(request.getBusinessType()).willReturn(businessType);
             given(request.getBusinessTypeDetail()).willReturn("떡볶이 전문점");
             given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
-            given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(mock(ManagerUser.class)));
+            given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
             given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
             given(fileQueryRepository.findByTargetTypeAndTargetId(any(), any())).willReturn(Optional.empty());
 
@@ -188,6 +205,36 @@ class UpdateWorkspaceRequestStatusTests {
             then(workspaceRepository).should().save(workspaceCaptor.capture());
             assertThat(workspaceCaptor.getValue().getBusinessType()).isEqualTo(businessType);
             assertThat(workspaceCaptor.getValue().getBusinessTypeDetail()).isEqualTo("떡볶이 전문점");
+        }
+
+        @Test
+        @DisplayName("ACTIVATED 면 업장 저장 후 채팅 멤버십 join 이벤트를 발행한다")
+        void execute_ACTIVATED_채팅멤버십join이벤트발행() {
+            // given
+            User user = mock(User.class);
+            WorkspaceRequest request = mock(WorkspaceRequest.class);
+            ManagerUser managerUser = mock(ManagerUser.class);
+            User managerUnderlyingUser = mock(User.class);
+            given(request.getUser()).willReturn(user);
+            given(user.getId()).willReturn(1L);
+            given(managerUser.getUser()).willReturn(managerUnderlyingUser);
+            given(managerUnderlyingUser.getId()).willReturn(42L);
+            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
+            given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
+            given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
+                .willReturn(Optional.empty());
+
+            // when
+            updateWorkspaceRequestStatus.execute(1L, WorkspaceRequestStatus.ACTIVATED);
+
+            // then
+            then(workspaceRepository).should().save(any(Workspace.class));
+            then(eventPublisher).should().publishEvent(eventCaptor.capture());
+            ChatMembershipJoinedEvent event = eventCaptor.getValue();
+            // 참여자 id는 ManagerUser 엔티티 id가 아닌, 채팅 도메인 기준 식별자인 User(계정) id 여야 한다
+            assertThat(event.getMemberId()).isEqualTo(42L);
+            assertThat(event.getScope()).isEqualTo(TokenScope.MANAGER);
         }
 
         @Test
@@ -205,6 +252,7 @@ class UpdateWorkspaceRequestStatusTests {
             then(workspaceRepository).should(never()).save(any());
             then(managerUserRepository).should(never()).save(any());
             then(fileDeleteService).should(never()).delete(any());
+            then(eventPublisher).should(never()).publishEvent(any());
         }
 
         @Test
@@ -281,7 +329,11 @@ class UpdateWorkspaceRequestStatusTests {
         given(user.getId()).willReturn(1L);
         given(request.getUser()).willReturn(user);
         given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
-        given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(mock(ManagerUser.class)));
+        ManagerUser managerUser = mock(ManagerUser.class);
+        User managerUnderlyingUser = mock(User.class);
+        given(managerUser.getUser()).willReturn(managerUnderlyingUser);
+        given(managerUnderlyingUser.getId()).willReturn(2L);
+        given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
         return request;
     }
 

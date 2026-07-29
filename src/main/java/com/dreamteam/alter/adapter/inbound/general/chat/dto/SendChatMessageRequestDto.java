@@ -1,7 +1,10 @@
 package com.dreamteam.alter.adapter.inbound.general.chat.dto;
 
+import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import java.util.List;
 import lombok.*;
 
 @Getter
@@ -9,7 +12,16 @@ import lombok.*;
 @AllArgsConstructor
 @Schema(description = "채팅 메시지 전송 요청 DTO")
 public class SendChatMessageRequestDto {
-    @NotBlank
+    public static final int MAX_ATTACHMENTS = 10;
+    public static final int MAX_CONTENT_LENGTH = 1000;
+
+    @Size(max = MAX_CONTENT_LENGTH)
     @Schema(description = "메시지 내용")
     private String content;
+
+    @Schema(description = "메시지 타입(NORMAL/NOTICE), 기본 NORMAL)")
+    private ChatMessageType type;
+
+    @Schema(description = "첨부 이미지 fileId 목록", example = "[\"...\"]")
+    private List<@NotBlank String> fileIds;
 }

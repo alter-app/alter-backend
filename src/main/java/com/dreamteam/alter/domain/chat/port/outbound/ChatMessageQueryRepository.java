@@ -19,4 +19,9 @@ public interface ChatMessageQueryRepository {
      * @return 채팅방 ID를 키로, 최신 메시지 내용을 값으로 하는 Map
      */
     Map<Long, String> getLatestMessageContentsByChatRoomIds(List<Long> chatRoomIds);
+
+    /**
+     * 채팅방의 최신(최대) 메시지 ID 조회. 메시지가 없으면 null.
+     */
+    Long findLatestMessageIdByRoom(Long chatRoomId);
 }

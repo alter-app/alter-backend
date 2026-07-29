@@ -43,6 +43,7 @@ public class ChatMessageQueryRepositoryImpl implements ChatMessageQueryRepositor
                 qChatMessage.chatRoomId,
                 qChatMessage.senderId,
                 qChatMessage.senderScope,
+                qChatMessage.type,
                 qChatMessage.content,
                 qChatMessage.createdAt
             ))
@@ -112,6 +113,16 @@ public class ChatMessageQueryRepositoryImpl implements ChatMessageQueryRepositor
         }
 
         return result;
+    }
+
+    @Override
+    public Long findLatestMessageIdByRoom(Long chatRoomId) {
+        QChatMessage qChatMessage = QChatMessage.chatMessage;
+        return queryFactory
+            .select(qChatMessage.id.max())
+            .from(qChatMessage)
+            .where(qChatMessage.chatRoomId.eq(chatRoomId))
+            .fetchOne();
     }
 
     private BooleanExpression buildCursorCondition(

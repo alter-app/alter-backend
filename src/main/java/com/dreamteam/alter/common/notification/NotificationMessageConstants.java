@@ -66,6 +66,7 @@ public final class NotificationMessageConstants {
     public static final class Chat {
         public static final String NEW_MESSAGE_TITLE = "새로운 메시지";
         public static final String NEW_MESSAGE_BODY = "%s: %s";
+        public static final String PHOTO_MESSAGE_BODY = "%s: 사진을 보냈습니다";
     }
 
     /**

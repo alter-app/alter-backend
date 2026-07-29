@@ -26,7 +26,8 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-        if (ObjectUtils.isEmpty(accessor)) {
+        // immutable 헤더는 세션 종료 등 프레임워크가 만든 합성 메시지 — 인증 대상이 아니다.
+        if (ObjectUtils.isEmpty(accessor) || !accessor.isMutable()) {
             return message;
         }
 

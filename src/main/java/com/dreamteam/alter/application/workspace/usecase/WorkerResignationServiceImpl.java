@@ -1,5 +1,7 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import com.dreamteam.alter.application.chat.event.ChatMembershipLeftEvent;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
@@ -9,6 +11,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.SubstituteRequestQuery
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerScheduleQueryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +26,7 @@ public class WorkerResignationServiceImpl implements WorkerResignationService {
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
     private final WorkspaceWorkerScheduleQueryRepository workspaceWorkerScheduleQueryRepository;
     private final SubstituteRequestQueryRepository substituteRequestQueryRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void resign(WorkspaceWorker worker) {
@@ -45,5 +49,8 @@ public class WorkerResignationServiceImpl implements WorkerResignationService {
         );
 
         worker.resign();
+
+        eventPublisher.publishEvent(
+            new ChatMembershipLeftEvent(worker.getWorkspace().getId(), worker.getUser().getId(), TokenScope.APP));
     }
 }

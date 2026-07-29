@@ -30,4 +30,6 @@ public interface ChatRoomQueryRepository {
         Long userId,
         TokenScope userScope
     );
+
+    Optional<ChatRoom> findGroupRoomByWorkspaceId(Long workspaceId);
 }

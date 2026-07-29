@@ -8,13 +8,18 @@ import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomListResponse
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.CreateChatRoomRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.CreateChatRoomResponseDto;
+import com.dreamteam.alter.adapter.inbound.general.chat.dto.MarkChatRoomReadRequestDto;
 import com.dreamteam.alter.application.aop.ManagerActionContext;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.port.inbound.GetWorkspaceGroupChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerCreateOrGetChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerGetChatMessagesUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerGetChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerGetMyChatRoomListUseCase;
+import com.dreamteam.alter.domain.chat.port.inbound.MarkChatRoomReadUseCase;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,6 +44,12 @@ public class ManagerChatController implements ManagerChatControllerSpec {
 
     @Resource(name = "managerGetChatRoom")
     private final ManagerGetChatRoomUseCase managerGetChatRoomUseCase;
+
+    @Resource(name = "markChatRoomRead")
+    private final MarkChatRoomReadUseCase markChatRoomRead;
+
+    @Resource(name = "getWorkspaceGroupChatRoom")
+    private final GetWorkspaceGroupChatRoomUseCase getWorkspaceGroupChatRoom;
 
     @Override
     @PostMapping("/rooms")
@@ -76,5 +87,26 @@ public class ManagerChatController implements ManagerChatControllerSpec {
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
         return ResponseEntity.ok(managerGetChatMessagesUseCase.execute(actor, chatRoomId, pageRequest));
+    }
+
+    @Override
+    @PostMapping("/rooms/{chatRoomId}/read")
+    public ResponseEntity<CommonApiResponse<Void>> markChatRoomRead(
+        @PathVariable Long chatRoomId,
+        @Valid @RequestBody MarkChatRoomReadRequestDto request
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        markChatRoomRead.execute(actor.getUserId(), TokenScope.MANAGER, chatRoomId, request.getLastReadMessageId());
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @GetMapping("/workspace/{workspaceId}/room")
+    public ResponseEntity<CommonApiResponse<CreateChatRoomResponseDto>> getWorkspaceGroupChatRoom(
+        @PathVariable Long workspaceId
+    ) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        Long roomId = getWorkspaceGroupChatRoom.execute(actor.getUserId(), TokenScope.MANAGER, workspaceId);
+        return ResponseEntity.ok(CommonApiResponse.of(CreateChatRoomResponseDto.of(roomId)));
     }
 }

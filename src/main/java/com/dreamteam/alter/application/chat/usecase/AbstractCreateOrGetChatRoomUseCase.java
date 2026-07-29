@@ -5,10 +5,14 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
+import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Transactional
@@ -16,6 +20,7 @@ public abstract class AbstractCreateOrGetChatRoomUseCase<A> extends AbstractChat
 
     protected final ChatRoomQueryRepository chatRoomQueryRepository;
     protected final ChatRoomRepository chatRoomRepository;
+    protected final ChatRoomMemberRepository chatRoomMemberRepository;
 
     protected CreateChatRoomResponseDto execute(A actor, Long opponentUserId, TokenScope opponentScope) {
         Long currentUserId = getParticipantId(actor);
@@ -42,8 +47,12 @@ public abstract class AbstractCreateOrGetChatRoomUseCase<A> extends AbstractChat
                     opponentUserId,
                     opponentScope
                 );
-                return chatRoomRepository.save(newChatRoom)
-                    .getId();
+                ChatRoom saved = chatRoomRepository.save(newChatRoom);
+                chatRoomMemberRepository.saveAll(List.of(
+                    ChatRoomMember.create(saved.getId(), currentUserId, currentScope),
+                    ChatRoomMember.create(saved.getId(), opponentUserId, opponentScope)
+                ));
+                return saved.getId();
             });
 
         return CreateChatRoomResponseDto.of(chatRoomId);

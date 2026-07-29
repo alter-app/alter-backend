@@ -14,6 +14,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtChannelInterceptor jwtChannelInterceptor;
+    private final PresenceHeartbeatChannelInterceptor presenceHeartbeatChannelInterceptor;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -29,6 +30,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(jwtChannelInterceptor);
+        // jwtChannelInterceptor가 먼저 user를 세팅한 뒤, presence TTL을 갱신한다.
+        registration.interceptors(jwtChannelInterceptor, presenceHeartbeatChannelInterceptor);
     }
 }
