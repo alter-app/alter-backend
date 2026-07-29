@@ -187,12 +187,14 @@ class UpdateWorkspaceRequestStatusTests {
             User user = mock(User.class);
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             BusinessType businessType = mock(BusinessType.class);
+            ManagerUser managerUser = mock(ManagerUser.class);
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
+            given(managerUser.getUser()).willReturn(user);
             given(request.getBusinessType()).willReturn(businessType);
             given(request.getBusinessTypeDetail()).willReturn("떡볶이 전문점");
             given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
-            given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(mock(ManagerUser.class)));
+            given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
             given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
             given(fileQueryRepository.findByTargetTypeAndTargetId(any(), any())).willReturn(Optional.empty());
 
