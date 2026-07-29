@@ -1,16 +1,15 @@
 package com.dreamteam.alter.domain.posting.entity;
 
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingScheduleRequestDto;
-import com.dreamteam.alter.adapter.inbound.manager.posting.dto.UpdatePostingScheduleDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.posting.command.CreatePostingCommand;
+import com.dreamteam.alter.domain.posting.command.PostingScheduleCommand;
+import com.dreamteam.alter.domain.posting.command.UpdatePostingCommand;
+import com.dreamteam.alter.domain.posting.command.UpdatePostingScheduleCommand;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 
-import java.time.DayOfWeek;
-import java.time.LocalTime;
 import jakarta.persistence.*;
 import lombok.*;
 import org.apache.commons.lang3.ObjectUtils;
@@ -19,6 +18,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -67,28 +67,19 @@ public class Posting {
     @OneToMany(mappedBy = "posting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostingSchedule> schedules;
 
-    public static Posting create(CreatePostingRequestDto request, Workspace workspace) {
+    public static Posting create(CreatePostingCommand command, Workspace workspace) {
         Posting posting = Posting.builder()
             .workspace(workspace)
-            .title(request.getTitle())
-            .description(request.getDescription())
-            .payAmount(request.getPayAmount())
-            .paymentType(request.getPaymentType())
+            .title(command.title())
+            .description(command.description())
+            .payAmount(command.payAmount())
+            .paymentType(command.paymentType())
             .status(PostingStatus.OPEN)
             .build();
 
-        if (ObjectUtils.isNotEmpty(request.getSchedules())) {
-            posting.schedules = request.getSchedules()
-                .stream()
-                .map(scheduleDto -> PostingSchedule.create(
-                    scheduleDto.getWorkingDays(),
-                    scheduleDto.getStartTime(),
-                    scheduleDto.getEndTime(),
-                    scheduleDto.getPositionsNeeded(),
-                    scheduleDto.getPosition(),
-                    posting
-                ))
-                .toList();
+        posting.schedules = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(command.schedules())) {
+            posting.addSchedules(command.schedules());
         }
 
         return posting;
@@ -98,45 +89,50 @@ public class Posting {
         this.status = status;
     }
 
-    public void updateContent(
-        String title,
-        String description,
-        int payAmount,
-        PaymentType paymentType,
-        List<CreatePostingScheduleRequestDto> createSchedules,
-        List<UpdatePostingScheduleDto> updateSchedules,
-        List<Long> deleteScheduleIds
-    ) {
-        this.title = title;
-        this.description = description;
-        this.payAmount = payAmount;
-        this.paymentType = paymentType;
+    /**
+     * 삭제되지 않은 근무일정만 반환한다. (응답 노출 기준)
+     */
+    public List<PostingSchedule> getActiveSchedules() {
+        if (ObjectUtils.isEmpty(this.schedules)) {
+            return List.of();
+        }
+
+        return this.schedules.stream()
+            .filter(schedule -> !PostingStatus.DELETED.equals(schedule.getStatus()))
+            .toList();
+    }
+
+    public void updateContent(UpdatePostingCommand command) {
+        this.title = command.title();
+        this.description = command.description();
+        this.payAmount = command.payAmount();
+        this.paymentType = command.paymentType();
 
         // 스케줄 삭제 처리
-        if (ObjectUtils.isNotEmpty(deleteScheduleIds))
-            deleteSchedules(deleteScheduleIds);
+        if (ObjectUtils.isNotEmpty(command.deleteScheduleIds()))
+            deleteSchedules(command.deleteScheduleIds());
 
         // 스케줄 수정 처리
-        if (ObjectUtils.isNotEmpty(updateSchedules))
-            updateSchedules(updateSchedules);
+        if (ObjectUtils.isNotEmpty(command.updateSchedules()))
+            updateSchedules(command.updateSchedules());
 
         // 스케줄 추가 처리
-        if (ObjectUtils.isNotEmpty(createSchedules))
-            addSchedules(createSchedules);
+        if (ObjectUtils.isNotEmpty(command.createSchedules()))
+            addSchedules(command.createSchedules());
     }
 
     /**
      * 스케줄 추가
      * @param createSchedules 스케줄 추가 정보 List
      */
-    public void addSchedules(List<CreatePostingScheduleRequestDto> createSchedules) {
-        for (CreatePostingScheduleRequestDto createDto : createSchedules) {
+    public void addSchedules(List<PostingScheduleCommand> createSchedules) {
+        for (PostingScheduleCommand createCommand : createSchedules) {
             PostingSchedule newSchedule = PostingSchedule.create(
-                createDto.getWorkingDays(),
-                createDto.getStartTime(),
-                createDto.getEndTime(),
-                createDto.getPositionsNeeded(),
-                createDto.getPosition(),
+                createCommand.workingDays(),
+                createCommand.startTime(),
+                createCommand.endTime(),
+                createCommand.positionsNeeded(),
+                createCommand.position(),
                 this
             );
             this.schedules.add(newSchedule);
@@ -147,21 +143,19 @@ public class Posting {
      * 스케줄 수정
      * @param updateSchedules 스케줄 수정 정보 List
      */
-    public void updateSchedules(List<UpdatePostingScheduleDto> updateSchedules) {
-        for (UpdatePostingScheduleDto updateDto : updateSchedules) {
+    public void updateSchedules(List<UpdatePostingScheduleCommand> updateSchedules) {
+        for (UpdatePostingScheduleCommand updateCommand : updateSchedules) {
             PostingSchedule existingSchedule = this.schedules.stream()
-                .filter(schedule -> schedule.getId().equals(updateDto.getId()))
+                .filter(schedule -> schedule.getId().equals(updateCommand.id()))
                 .findFirst()
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "수정할 스케줄을 찾을 수 없습니다."));
 
             existingSchedule.update(
-                updateDto.getWorkingDays().stream()
-                    .map(DayOfWeek::valueOf)
-                    .toList(),
-                LocalTime.parse(updateDto.getStartTime()),
-                LocalTime.parse(updateDto.getEndTime()),
-                updateDto.getPositionsNeeded(),
-                updateDto.getPosition()
+                updateCommand.workingDays(),
+                updateCommand.startTime(),
+                updateCommand.endTime(),
+                updateCommand.positionsNeeded(),
+                updateCommand.position()
             );
         }
     }
