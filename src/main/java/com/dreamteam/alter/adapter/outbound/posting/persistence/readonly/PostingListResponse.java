@@ -38,7 +38,7 @@ public class PostingListResponse {
             .payAmount(posting.getPayAmount())
             .paymentType(posting.getPaymentType())
             .createdAt(posting.getCreatedAt())
-            .schedules(posting.getSchedules())
+            .schedules(posting.getActiveSchedules())
             .workspace(posting.getWorkspace())
             .scrapped(scrapped)
             .build();

@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.outbound.posting.persistence.readonly;
 import com.dreamteam.alter.domain.posting.entity.Posting;
 import com.dreamteam.alter.domain.posting.entity.PostingSchedule;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
+import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import lombok.*;
 
@@ -23,6 +24,8 @@ public class ManagerPostingListResponse {
 
     private PaymentType paymentType;
 
+    private PostingStatus status;
+
     private LocalDateTime createdAt;
 
     private List<PostingSchedule> schedules;
@@ -35,8 +38,9 @@ public class ManagerPostingListResponse {
             .title(posting.getTitle())
             .payAmount(posting.getPayAmount())
             .paymentType(posting.getPaymentType())
+            .status(posting.getStatus())
             .createdAt(posting.getCreatedAt())
-            .schedules(posting.getSchedules())
+            .schedules(posting.getActiveSchedules())
             .workspace(posting.getWorkspace())
             .build();
     }
