@@ -25,15 +25,15 @@ public class UpdatePostingScheduleDto {
 
     @NotEmpty
     @Schema(description = "근무일", example = "[\"MONDAY\", \"WEDNESDAY\"]")
-    private List<String> workingDays;
+    private List<DayOfWeek> workingDays;
 
     @NotNull
     @Schema(description = "시작 시간", example = "09:00")
-    private String startTime;
+    private LocalTime startTime;
 
     @NotNull
     @Schema(description = "종료 시간", example = "18:00")
-    private String endTime;
+    private LocalTime endTime;
 
     @Positive
     @Schema(description = "필요 인원", example = "3")
@@ -44,13 +44,6 @@ public class UpdatePostingScheduleDto {
     private String position;
 
     public UpdatePostingScheduleCommand toCommand() {
-        return new UpdatePostingScheduleCommand(
-            id,
-            workingDays.stream().map(DayOfWeek::valueOf).toList(),
-            LocalTime.parse(startTime),
-            LocalTime.parse(endTime),
-            positionsNeeded,
-            position
-        );
+        return new UpdatePostingScheduleCommand(id, workingDays, startTime, endTime, positionsNeeded, position);
     }
 }
