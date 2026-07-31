@@ -359,4 +359,19 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         return ObjectUtils.isEmpty(count) ? 0 : count;
     }
 
+    @Override
+    public boolean existsActiveByPostingIdAndUser(Long postingId, User user) {
+        QPostingApplication qPostingApplication = QPostingApplication.postingApplication;
+
+        return queryFactory
+            .selectOne()
+            .from(qPostingApplication)
+            .where(
+                qPostingApplication.posting.id.eq(postingId),
+                qPostingApplication.user.eq(user),
+                qPostingApplication.status.in(PostingApplicationStatus.ACTIVE_STATUSES)
+            )
+            .fetchFirst() != null;
+    }
+
 }

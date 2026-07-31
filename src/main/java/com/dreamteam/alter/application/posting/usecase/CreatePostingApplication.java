@@ -14,6 +14,7 @@ import com.dreamteam.alter.domain.posting.entity.PostingApplication;
 import com.dreamteam.alter.domain.posting.entity.PostingSchedule;
 import com.dreamteam.alter.domain.posting.port.inbound.CreatePostingApplicationUseCase;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
+import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationQueryRepository;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationRepository;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingScheduleQueryRepository;
 import com.dreamteam.alter.domain.user.context.AppActor;
@@ -29,6 +30,7 @@ public class CreatePostingApplication implements CreatePostingApplicationUseCase
 
     private final PostingScheduleQueryRepository postingScheduleQueryRepository;
     private final PostingApplicationRepository postingApplicationRepository;
+    private final PostingApplicationQueryRepository postingApplicationQueryRepository;
     private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
     private final NotificationService notificationService;
 
@@ -51,6 +53,11 @@ public class CreatePostingApplication implements CreatePostingApplicationUseCase
             .isPresent()
         ) {
             throw new CustomException(ErrorCode.WORKSPACE_WORKER_ALREADY_EXISTS);
+        }
+
+        // 같은 공고의 다른 스케줄에 이미 지원한 경우도 중복으로 본다
+        if (postingApplicationQueryRepository.existsActiveByPostingIdAndUser(posting.getId(), actor.getUser())) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이미 지원한 공고입니다.");
         }
 
         PostingApplication postingApplication = PostingApplication.create(

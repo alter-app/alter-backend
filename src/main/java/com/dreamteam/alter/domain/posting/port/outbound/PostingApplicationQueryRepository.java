@@ -39,4 +39,6 @@ public interface PostingApplicationQueryRepository {
 
     long countActiveApplicationsByPostingId(Long postingId);
 
+    boolean existsActiveByPostingIdAndUser(Long postingId, User user);
+
 }
