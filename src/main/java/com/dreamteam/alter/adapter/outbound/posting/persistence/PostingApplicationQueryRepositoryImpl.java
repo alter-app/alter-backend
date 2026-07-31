@@ -136,7 +136,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .join(qPosting.workspace, qWorkspace)
             .join(qWorkspace.managerUser, qManagerUser)
             .where(
-                getManagerPostingApplicationBaseConditions(qManagerUser, managerUser, qWorkspace, filter),
+                getManagerPostingApplicationBaseConditions(qManagerUser, managerUser, qWorkspace, qPosting, filter),
                 eqApplicationStatusOrDefault(qPostingApplication, filter.getStatus())
             )
             .fetchOne();
@@ -185,7 +185,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
                 qReputationSummary.targetId.eq(qUser.id)
             )
             .where(
-                getManagerPostingApplicationBaseConditions(qManagerUser, managerUser, qWorkspace, filter),
+                getManagerPostingApplicationBaseConditions(qManagerUser, managerUser, qWorkspace, qPosting, filter),
                 eqApplicationStatusOrDefault(qPostingApplication, filter.getStatus()),
                 cursorConditions(qPostingApplication, request.cursor())
             )
@@ -266,6 +266,10 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         return workspaceId != null ? qWorkspace.id.eq(workspaceId) : null;
     }
 
+    private BooleanExpression eqPostingId(QPosting qPosting, Long postingId) {
+        return postingId != null ? qPosting.id.eq(postingId) : null;
+    }
+
     private BooleanExpression cursorConditions(QPostingApplication qPostingApplication, CursorDto cursor) {
         if (ObjectUtils.isEmpty(cursor)) {
             return null;
@@ -311,13 +315,18 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         QManagerUser qManagerUser,
         ManagerUser managerUser,
         QWorkspace qWorkspace,
+        QPosting qPosting,
         PostingApplicationListFilterDto filter
     ) {
         BooleanExpression managerCondition = qManagerUser.eq(managerUser);
         BooleanExpression workspaceCondition = eqWorkspaceId(qWorkspace, filter.getWorkspaceId());
+        BooleanExpression postingCondition = eqPostingId(qPosting, filter.getPostingId());
 
         if (ObjectUtils.isNotEmpty(workspaceCondition)) {
-            return managerCondition.and(workspaceCondition);
+            managerCondition = managerCondition.and(workspaceCondition);
+        }
+        if (ObjectUtils.isNotEmpty(postingCondition)) {
+            managerCondition = managerCondition.and(postingCondition);
         }
         return managerCondition;
     }
