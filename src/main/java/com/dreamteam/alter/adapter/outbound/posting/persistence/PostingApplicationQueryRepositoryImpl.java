@@ -329,11 +329,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .selectFrom(qPostingApplication)
             .where(
                 qPostingApplication.user.id.eq(userId),
-                qPostingApplication.status.in(
-                    PostingApplicationStatus.SUBMITTED,
-                    PostingApplicationStatus.SHORTLISTED,
-                    PostingApplicationStatus.ACCEPTED
-                )
+                qPostingApplication.status.in(PostingApplicationStatus.ACTIVE_STATUSES)
             )
             .fetch();
     }
