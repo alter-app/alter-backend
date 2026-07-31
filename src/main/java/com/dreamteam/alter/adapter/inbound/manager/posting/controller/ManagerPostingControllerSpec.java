@@ -40,7 +40,7 @@ public interface ManagerPostingControllerSpec {
                 schema = @Schema(implementation = ErrorResponse.class),
                 examples = {
                     @ExampleObject(
-                        name = "존재하지 않거나 자신이 관리하지 않는 업장",
+                        name = "존재하지 않거나, 자신이 관리하지 않거나, 활성화되지 않은 업장",
                         value = "{\"code\" : \"B008\"}"
                     ),
                     @ExampleObject(

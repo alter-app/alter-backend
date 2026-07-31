@@ -72,7 +72,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 .selectFrom(qWorkspace)
                 .where(
                     qWorkspace.id.eq(id),
-                    qWorkspace.managerUser.eq(managerUser)
+                    qWorkspace.managerUser.eq(managerUser),
+                    qWorkspace.status.eq(WorkspaceStatus.ACTIVATED)
                 )
                 .fetchOne()
         );
