@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -67,7 +68,7 @@ class ManagerUpdatePostingTests {
         assertThatThrownBy(() -> managerUpdatePosting.execute(1L, command(), actor))
             .isInstanceOf(CustomException.class)
             .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
-        then(posting).should(never()).updateContent(command());
+        then(posting).should(never()).updateContent(any());
     }
 
     @Test
