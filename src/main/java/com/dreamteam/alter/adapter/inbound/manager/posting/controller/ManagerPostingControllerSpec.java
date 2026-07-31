@@ -186,6 +186,16 @@ public interface ManagerPostingControllerSpec {
                         value = "{\"code\" : \"B019\"}"
                     ),
                 })),
+        @ApiResponse(responseCode = "409", description = "409 Error 실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "DELETED 상태의 공고는 내용 수정 불가",
+                        value = "{\"code\" : \"B020\"}"
+                    ),
+                })),
     })
     ResponseEntity<CommonApiResponse<Void>> updatePosting(
         @PathVariable Long postingId,
