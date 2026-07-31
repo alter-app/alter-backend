@@ -341,8 +341,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .where(
                 qWorkspace.managerUser.eq(managerUser),
                 eqWorkspaceId(qWorkspace, filter.getWorkspaceId()),
-                eqPostingStatus(qPosting, filter.getStatus()),
-                qPosting.status.ne(PostingStatus.DELETED)
+                inPostingStatusOrDefault(qPosting, filter.getStatus())
             )
             .fetchOne();
 
@@ -366,9 +365,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .where(
                 qWorkspace.managerUser.eq(managerUser),
                 eqWorkspaceId(qWorkspace, filter.getWorkspaceId()),
-                eqPostingStatus(qPosting, filter.getStatus()),
-                cursorConditions(qPosting, request.cursor(), false),
-                qPosting.status.ne(PostingStatus.DELETED)
+                inPostingStatusOrDefault(qPosting, filter.getStatus()),
+                cursorConditions(qPosting, request.cursor(), false)
             )
             .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
             .limit(request.pageSize())
@@ -461,8 +459,15 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         return workspaceId != null ? qWorkspace.id.eq(workspaceId) : null;
     }
 
-    private BooleanExpression eqPostingStatus(QPosting qPosting, PostingStatus status) {
-        return status != null ? qPosting.status.eq(status) : null;
+    private BooleanExpression inPostingStatusOrDefault(QPosting qPosting, Set<PostingStatus> statuses) {
+        BooleanExpression statusCondition = ObjectUtils.isNotEmpty(statuses)
+            ? qPosting.status.in(statuses)
+            : null;
+
+        // DELETED 상태는 항상 제외
+        return statusCondition != null
+            ? statusCondition.and(qPosting.status.ne(PostingStatus.DELETED))
+            : qPosting.status.ne(PostingStatus.DELETED);
     }
 
     private BooleanExpression eqProvince(QWorkspace qWorkspace, String province) {
