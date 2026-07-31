@@ -37,4 +37,6 @@ public interface PostingApplicationQueryRepository {
 
     List<PostingApplication> findAllActiveByUserId(Long userId);
 
+    long countActiveApplicationsByPostingId(Long postingId);
+
 }

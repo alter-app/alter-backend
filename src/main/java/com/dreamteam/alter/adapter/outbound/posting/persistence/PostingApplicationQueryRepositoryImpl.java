@@ -343,4 +343,20 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .fetch();
     }
 
+    @Override
+    public long countActiveApplicationsByPostingId(Long postingId) {
+        QPostingApplication qPostingApplication = QPostingApplication.postingApplication;
+
+        Long count = queryFactory
+            .select(qPostingApplication.count())
+            .from(qPostingApplication)
+            .where(
+                qPostingApplication.posting.id.eq(postingId),
+                qPostingApplication.status.in(PostingApplicationStatus.ACTIVE_STATUSES)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
 }
