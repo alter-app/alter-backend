@@ -145,7 +145,7 @@ public class Posting {
      */
     public void updateSchedules(List<UpdatePostingScheduleCommand> updateSchedules) {
         for (UpdatePostingScheduleCommand updateCommand : updateSchedules) {
-            PostingSchedule existingSchedule = this.schedules.stream()
+            PostingSchedule existingSchedule = getActiveSchedules().stream()
                 .filter(schedule -> schedule.getId().equals(updateCommand.id()))
                 .findFirst()
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "수정할 스케줄을 찾을 수 없습니다."));
@@ -166,7 +166,7 @@ public class Posting {
      */
     public void deleteSchedules(List<Long> deleteScheduleIds) {
         for (Long scheduleId : deleteScheduleIds) {
-            PostingSchedule existingSchedule = this.schedules.stream()
+            PostingSchedule existingSchedule = getActiveSchedules().stream()
                 .filter(schedule -> schedule.getId().equals(scheduleId))
                 .findFirst()
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "삭제할 스케줄을 찾을 수 없습니다."));
