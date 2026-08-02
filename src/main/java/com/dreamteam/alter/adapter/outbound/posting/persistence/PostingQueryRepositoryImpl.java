@@ -21,6 +21,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -324,6 +325,19 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 qPosting.id.eq(postingId),
                 qPosting.status.eq(PostingStatus.OPEN)
             )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(posting) ? Optional.empty() : Optional.of(posting);
+    }
+
+    @Override
+    public Optional<Posting> findByIdWithPessimisticLock(Long postingId) {
+        QPosting qPosting = QPosting.posting;
+
+        Posting posting = queryFactory
+            .selectFrom(qPosting)
+            .where(qPosting.id.eq(postingId))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
             .fetchOne();
 
         return ObjectUtils.isEmpty(posting) ? Optional.empty() : Optional.of(posting);

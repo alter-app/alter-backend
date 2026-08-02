@@ -19,6 +19,7 @@ public interface PostingQueryRepository {
     List<PostingListResponse> getPostingsWithCursor(CursorPageRequest<CursorDto> request, PostingListFilterDto filter, User user);
     PostingDetailResponse getPostingDetail(Long postingId, User user);
     Optional<Posting> findById(Long postingId);
+    Optional<Posting> findByIdWithPessimisticLock(Long postingId);
     
     long getCountOfPostingMapList(PostingMapListFilterDto filter);
     List<PostingListResponse> getPostingMapListWithCursor(CursorPageRequest<CursorDto> request, PostingMapListFilterDto filter, User user);

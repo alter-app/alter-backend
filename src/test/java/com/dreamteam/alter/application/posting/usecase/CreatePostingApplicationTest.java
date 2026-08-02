@@ -1,7 +1,7 @@
 package com.dreamteam.alter.application.posting.usecase;
 
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingApplicationRequestDto;
-import com.dreamteam.alter.application.notification.NotificationService;
+import com.dreamteam.alter.application.notification.FcmNotificationEvent;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.entity.Posting;
@@ -9,6 +9,7 @@ import com.dreamteam.alter.domain.posting.entity.PostingApplication;
 import com.dreamteam.alter.domain.posting.entity.PostingSchedule;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationQueryRepository;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationRepository;
+import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingScheduleQueryRepository;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.user.context.AppActor;
@@ -24,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
@@ -47,6 +49,9 @@ class CreatePostingApplicationTest {
     private PostingScheduleQueryRepository postingScheduleQueryRepository;
 
     @Mock
+    private PostingQueryRepository postingQueryRepository;
+
+    @Mock
     private PostingApplicationRepository postingApplicationRepository;
 
     @Mock
@@ -56,7 +61,7 @@ class CreatePostingApplicationTest {
     private WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
 
     @Mock
-    private NotificationService notificationService;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private CreatePostingApplication createPostingApplication;
@@ -86,6 +91,8 @@ class CreatePostingApplicationTest {
         PostingSchedule schedule = mock(PostingSchedule.class);
         given(schedule.getPosting()).willReturn(posting);
 
+        given(postingQueryRepository.findByIdWithPessimisticLock(POSTING_ID))
+            .willReturn(Optional.of(posting));
         given(postingScheduleQueryRepository.findByIdAndPostingId(POSTING_ID, POSTING_SCHEDULE_ID))
             .willReturn(Optional.of(schedule));
 
@@ -133,6 +140,7 @@ class CreatePostingApplicationTest {
         createPostingApplication.execute(actor, POSTING_ID, givenRequest());
 
         verify(postingApplicationRepository).save(any(PostingApplication.class));
+        verify(eventPublisher).publishEvent(any(FcmNotificationEvent.class));
     }
 
     @Test
@@ -164,6 +172,8 @@ class CreatePostingApplicationTest {
 
         PostingSchedule schedule = mock(PostingSchedule.class);
         given(schedule.getPosting()).willReturn(posting);
+        given(postingQueryRepository.findByIdWithPessimisticLock(POSTING_ID))
+            .willReturn(Optional.of(posting));
         given(postingScheduleQueryRepository.findByIdAndPostingId(POSTING_ID, POSTING_SCHEDULE_ID))
             .willReturn(Optional.of(schedule));
 
