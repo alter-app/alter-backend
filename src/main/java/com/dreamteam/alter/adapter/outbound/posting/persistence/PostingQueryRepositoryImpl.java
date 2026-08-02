@@ -8,8 +8,6 @@ import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingMapListFil
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingMapMarkerFilterDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.*;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListFilterDto;
-import com.dreamteam.alter.common.exception.CustomException;
-import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.entity.*;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
 import com.dreamteam.alter.domain.posting.type.PostingSortType;
@@ -24,7 +22,6 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.LockModeType;
-import jakarta.persistence.LockTimeoutException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -340,19 +337,15 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         QPosting qPosting = QPosting.posting;
         QWorkspace qWorkspace = QWorkspace.workspace;
 
-        try {
-            Posting posting = queryFactory
-                .selectFrom(qPosting)
-                .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
-                .where(qPosting.id.eq(postingId))
-                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
-                .setHint(PESSIMISTIC_LOCK_TIMEOUT_HINT, PESSIMISTIC_LOCK_TIMEOUT_MILLIS)
-                .fetchOne();
+        Posting posting = queryFactory
+            .selectFrom(qPosting)
+            .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
+            .where(qPosting.id.eq(postingId))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .setHint(PESSIMISTIC_LOCK_TIMEOUT_HINT, PESSIMISTIC_LOCK_TIMEOUT_MILLIS)
+            .fetchOne();
 
-            return ObjectUtils.isEmpty(posting) ? Optional.empty() : Optional.of(posting);
-        } catch (LockTimeoutException e) {
-            throw new CustomException(ErrorCode.TOO_MANY_REQUESTS);
-        }
+        return ObjectUtils.isEmpty(posting) ? Optional.empty() : Optional.of(posting);
     }
 
     @Override

@@ -20,6 +20,7 @@ import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationReposi
 import com.dreamteam.alter.domain.posting.port.outbound.PostingScheduleQueryRepository;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
+import jakarta.persistence.LockTimeoutException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -40,8 +41,13 @@ public class CreatePostingApplication implements CreatePostingApplicationUseCase
     // TODO: postingId, postingScheduleId 둘 다 인자로 받아 확인하도록 수정 필요
     @Override
     public void execute(AppActor actor, Long postingId, CreatePostingApplicationRequestDto request) {
-        Posting posting = postingQueryRepository.findByIdWithPessimisticLock(postingId)
-            .orElseThrow(() -> new CustomException(ErrorCode.POSTING_NOT_FOUND));
+        Posting posting;
+        try {
+            posting = postingQueryRepository.findByIdWithPessimisticLock(postingId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POSTING_NOT_FOUND));
+        } catch (LockTimeoutException e) {
+            throw new CustomException(ErrorCode.TOO_MANY_REQUESTS);
+        }
 
         PostingSchedule postingSchedule =
             postingScheduleQueryRepository.findByIdAndPostingId(postingId, request.getPostingScheduleId())
