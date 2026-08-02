@@ -17,6 +17,7 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
+import jakarta.persistence.LockTimeoutException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -117,6 +118,21 @@ class CreatePostingApplicationTest {
         assertThatThrownBy(() -> createPostingApplication.execute(actor, POSTING_ID, givenRequest()))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POSTING_NOT_FOUND);
+
+        verify(postingApplicationRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("공고 잠금 획득이 시간 초과되면 TOO_MANY_REQUESTS 예외가 발생한다")
+    void throwsWhenPostingLockTimesOut() {
+        User user = mock(User.class);
+        AppActor actor = givenActor(user);
+        given(postingQueryRepository.findByIdWithPessimisticLock(POSTING_ID))
+            .willThrow(new LockTimeoutException());
+
+        assertThatThrownBy(() -> createPostingApplication.execute(actor, POSTING_ID, givenRequest()))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TOO_MANY_REQUESTS);
 
         verify(postingApplicationRepository, never()).save(any());
     }
