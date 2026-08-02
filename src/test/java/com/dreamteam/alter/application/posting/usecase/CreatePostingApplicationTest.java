@@ -107,6 +107,21 @@ class CreatePostingApplicationTest {
     }
 
     @Test
+    @DisplayName("공고가 없으면 POSTING_NOT_FOUND 예외가 발생하고 저장하지 않는다")
+    void throwsWhenPostingNotFound() {
+        User user = mock(User.class);
+        AppActor actor = givenActor(user);
+        given(postingQueryRepository.findByIdWithPessimisticLock(POSTING_ID))
+            .willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> createPostingApplication.execute(actor, POSTING_ID, givenRequest()))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POSTING_NOT_FOUND);
+
+        verify(postingApplicationRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("같은 공고에 유효한 지원이 이미 있으면 예외가 발생하고 저장하지 않는다")
     void throwsWhenAlreadyApplied() {
         User user = mock(User.class);

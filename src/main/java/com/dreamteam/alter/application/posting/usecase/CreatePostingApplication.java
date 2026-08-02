@@ -41,7 +41,7 @@ public class CreatePostingApplication implements CreatePostingApplicationUseCase
     @Override
     public void execute(AppActor actor, Long postingId, CreatePostingApplicationRequestDto request) {
         Posting posting = postingQueryRepository.findByIdWithPessimisticLock(postingId)
-            .orElseThrow(() -> new CustomException(ErrorCode.POSTING_SCHEDULE_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ErrorCode.POSTING_NOT_FOUND));
 
         PostingSchedule postingSchedule =
             postingScheduleQueryRepository.findByIdAndPostingId(postingId, request.getPostingScheduleId())
