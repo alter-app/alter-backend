@@ -62,7 +62,7 @@ public class UpdatePostingRequestDto {
             paymentType,
             toCommands(createSchedules, CreatePostingScheduleRequestDto::toCommand),
             toCommands(updateSchedules, UpdatePostingScheduleDto::toCommand),
-            deleteScheduleIds
+            ObjectUtils.isEmpty(deleteScheduleIds) ? List.of() : deleteScheduleIds
         );
     }
 
