@@ -49,7 +49,7 @@ public class CreatePostingRequestDto {
         "]")
     @Valid
     @NotEmpty
-    private List<CreatePostingScheduleRequestDto> schedules;
+    private List<@NotNull @Valid CreatePostingScheduleRequestDto> schedules;
 
     public CreatePostingCommand toCommand() {
         return new CreatePostingCommand(
