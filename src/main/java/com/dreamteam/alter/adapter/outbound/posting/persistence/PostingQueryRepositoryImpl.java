@@ -487,14 +487,10 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     }
 
     private BooleanExpression inPostingStatusOrDefault(QPosting qPosting, Set<PostingStatus> statuses) {
-        BooleanExpression statusCondition = ObjectUtils.isNotEmpty(statuses)
-            ? qPosting.status.in(statuses)
-            : null;
-
         // DELETED 상태는 항상 제외
-        return statusCondition != null
-            ? statusCondition.and(qPosting.status.ne(PostingStatus.DELETED))
-            : qPosting.status.ne(PostingStatus.DELETED);
+        BooleanExpression notDeleted = qPosting.status.ne(PostingStatus.DELETED);
+
+        return ObjectUtils.isNotEmpty(statuses) ? notDeleted.and(qPosting.status.in(statuses)) : notDeleted;
     }
 
     private BooleanExpression eqProvince(QWorkspace qWorkspace, String province) {
