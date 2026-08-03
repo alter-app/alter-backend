@@ -14,6 +14,7 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,14 +32,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("ManagerGetPostingDetail - 매니저 공고 상세 조회")
-class ManagerGetPostingDetailTest {
+class ManagerGetPostingDetailTests {
 
     private static final Long POSTING_ID = 1L;
 
@@ -81,51 +82,63 @@ class ManagerGetPostingDetailTest {
         return ManagerPostingDetailResponse.of(posting);
     }
 
-    @Test
-    @DisplayName("지원자 수 조회 결과가 응답의 applicantCount 로 전달된다")
-    void mapsApplicantCountIntoResponse() {
-        ManagerActor actor = givenActor();
-        ManagerPostingDetailResponse detail = buildPostingDetail();
+    @Nested
+    @DisplayName("execute")
+    class ExecuteTests {
 
-        given(postingQueryRepository.getManagerPostingDetail(eq(POSTING_ID), any(ManagerUser.class)))
-            .willReturn(Optional.of(detail));
-        given(postingApplicationQueryRepository.countActiveApplicationsByPostingId(POSTING_ID))
-            .willReturn(7L);
+        @Test
+        @DisplayName("지원자 수 조회 결과가 응답의 applicantCount 로 전달된다")
+        void mapsApplicantCountIntoResponse() {
+            // given
+            ManagerActor actor = givenActor();
+            ManagerPostingDetailResponse detail = buildPostingDetail();
 
-        ManagerPostingDetailResponseDto result = managerGetPostingDetail.execute(POSTING_ID, actor);
+            given(postingQueryRepository.getManagerPostingDetail(eq(POSTING_ID), any(ManagerUser.class)))
+                .willReturn(Optional.of(detail));
+            given(postingApplicationQueryRepository.countActiveApplicationsByPostingId(POSTING_ID))
+                .willReturn(7L);
 
-        assertThat(result.getApplicantCount()).isEqualTo(7L);
-        assertThat(result.getId()).isEqualTo(POSTING_ID);
-    }
+            // when
+            ManagerPostingDetailResponseDto result = managerGetPostingDetail.execute(POSTING_ID, actor);
 
-    @Test
-    @DisplayName("지원자가 없으면 applicantCount 는 0 이다")
-    void returnsZeroWhenNoApplicant() {
-        ManagerActor actor = givenActor();
-        ManagerPostingDetailResponse detail = buildPostingDetail();
+            // then
+            assertThat(result.getApplicantCount()).isEqualTo(7L);
+            assertThat(result.getId()).isEqualTo(POSTING_ID);
+        }
 
-        given(postingQueryRepository.getManagerPostingDetail(eq(POSTING_ID), any(ManagerUser.class)))
-            .willReturn(Optional.of(detail));
-        given(postingApplicationQueryRepository.countActiveApplicationsByPostingId(POSTING_ID))
-            .willReturn(0L);
+        @Test
+        @DisplayName("지원자가 없으면 applicantCount 는 0 이다")
+        void returnsZeroWhenNoApplicant() {
+            // given
+            ManagerActor actor = givenActor();
+            ManagerPostingDetailResponse detail = buildPostingDetail();
 
-        ManagerPostingDetailResponseDto result = managerGetPostingDetail.execute(POSTING_ID, actor);
+            given(postingQueryRepository.getManagerPostingDetail(eq(POSTING_ID), any(ManagerUser.class)))
+                .willReturn(Optional.of(detail));
+            given(postingApplicationQueryRepository.countActiveApplicationsByPostingId(POSTING_ID))
+                .willReturn(0L);
 
-        assertThat(result.getApplicantCount()).isZero();
-    }
+            // when
+            ManagerPostingDetailResponseDto result = managerGetPostingDetail.execute(POSTING_ID, actor);
 
-    @Test
-    @DisplayName("공고가 없으면 POSTING_NOT_FOUND 예외가 발생하고 지원자 수는 조회하지 않는다")
-    void throwsWhenPostingNotFound() {
-        ManagerActor actor = givenActor();
+            // then
+            assertThat(result.getApplicantCount()).isZero();
+        }
 
-        given(postingQueryRepository.getManagerPostingDetail(eq(POSTING_ID), any(ManagerUser.class)))
-            .willReturn(Optional.empty());
+        @Test
+        @DisplayName("공고가 없으면 POSTING_NOT_FOUND 예외가 발생하고 지원자 수는 조회하지 않는다")
+        void throwsWhenPostingNotFound() {
+            // given
+            ManagerActor actor = givenActor();
 
-        assertThatThrownBy(() -> managerGetPostingDetail.execute(POSTING_ID, actor))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POSTING_NOT_FOUND);
+            given(postingQueryRepository.getManagerPostingDetail(eq(POSTING_ID), any(ManagerUser.class)))
+                .willReturn(Optional.empty());
 
-        verify(postingApplicationQueryRepository, never()).countActiveApplicationsByPostingId(POSTING_ID);
+            // when & then
+            assertThatThrownBy(() -> managerGetPostingDetail.execute(POSTING_ID, actor))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POSTING_NOT_FOUND);
+            then(postingApplicationQueryRepository).should(never()).countActiveApplicationsByPostingId(POSTING_ID);
+        }
     }
 }
