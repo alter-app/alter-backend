@@ -1,15 +1,16 @@
 package com.dreamteam.alter.adapter.inbound.general.posting.dto;
 
+import com.dreamteam.alter.domain.posting.command.CreatePostingCommand;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.util.List;
-
-import javax.validation.constraints.NotNull;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -47,6 +48,18 @@ public class CreatePostingRequestDto {
             "}" +
         "]")
     @Valid
-    private List<CreatePostingScheduleRequestDto> schedules;
+    @NotEmpty
+    private List<@NotNull @Valid CreatePostingScheduleRequestDto> schedules;
+
+    public CreatePostingCommand toCommand() {
+        return new CreatePostingCommand(
+            workspaceId,
+            title,
+            description,
+            payAmount,
+            paymentType,
+            schedules.stream().map(CreatePostingScheduleRequestDto::toCommand).toList()
+        );
+    }
 
 }

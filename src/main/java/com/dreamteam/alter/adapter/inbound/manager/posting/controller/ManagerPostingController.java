@@ -77,7 +77,9 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
     public ResponseEntity<CommonApiResponse<Void>> createPosting(
         @Valid CreatePostingRequestDto request
     ) {
-        createPosting.execute(request);
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+
+        createPosting.execute(request.toCommand(), actor);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 
@@ -155,7 +157,7 @@ public class ManagerPostingController implements ManagerPostingControllerSpec {
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
 
-        managerUpdatePosting.execute(postingId, request, actor);
+        managerUpdatePosting.execute(postingId, request.toCommand(), actor);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

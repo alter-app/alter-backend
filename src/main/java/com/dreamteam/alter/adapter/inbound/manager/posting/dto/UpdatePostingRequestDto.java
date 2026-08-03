@@ -1,8 +1,12 @@
 package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
 
 import java.util.List;
+import java.util.function.Function;
+
+import org.apache.commons.lang3.ObjectUtils;
 
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingScheduleRequestDto;
+import com.dreamteam.alter.domain.posting.command.UpdatePostingCommand;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -27,6 +31,7 @@ public class UpdatePostingRequestDto {
     @Schema(description = "공고 제목", example = "홀서빙 구합니다")
     private String title;
 
+    @NotBlank
     @Schema(description = "공고 설명", example = "홀서빙 구합니다. 주말 근무 가능하신 분 우대합니다.")
     private String description;
 
@@ -48,4 +53,20 @@ public class UpdatePostingRequestDto {
 
     @Schema(description = "삭제할 스케줄 ID", example = "[2, 3]")
     private List<Long> deleteScheduleIds;
+
+    public UpdatePostingCommand toCommand() {
+        return new UpdatePostingCommand(
+            title,
+            description,
+            payAmount,
+            paymentType,
+            toCommands(createSchedules, CreatePostingScheduleRequestDto::toCommand),
+            toCommands(updateSchedules, UpdatePostingScheduleDto::toCommand),
+            ObjectUtils.isEmpty(deleteScheduleIds) ? List.of() : deleteScheduleIds
+        );
+    }
+
+    private static <T, R> List<R> toCommands(List<T> source, Function<T, R> mapper) {
+        return ObjectUtils.isEmpty(source) ? List.of() : source.stream().map(mapper).toList();
+    }
 }

@@ -56,6 +56,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .select(qPosting.countDistinct())
             .from(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule)
+            .on(qPostingSchedule.status.ne(PostingStatus.DELETED))
             .leftJoin(qPosting.workspace, qWorkspace)
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
@@ -103,6 +104,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .select(qPosting.id)
             .from(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule)
+            .on(qPostingSchedule.status.ne(PostingStatus.DELETED))
             .leftJoin(qPosting.workspace, qWorkspace)
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
@@ -603,7 +605,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(
                 qPosting.id.eq(postingId),
-                qWorkspace.managerUser.eq(managerUser)
+                qWorkspace.managerUser.eq(managerUser),
+                qPosting.status.ne(PostingStatus.DELETED)
             )
             .fetchOne();
 

@@ -72,13 +72,35 @@ public interface PostingControllerSpec {
                 schema = @Schema(implementation = ErrorResponse.class),
                 examples = {
                     @ExampleObject(
+                        name = "존재하지 않는 공고",
+                        value = "{\"code\" : \"B007\"}"
+                    ),
+                    @ExampleObject(
                         name = "지원하고자 하는 공고 일정 찾을 수 없음",
                         value = "{\"code\" : \"B010\"}"
                     ),
                     @ExampleObject(
                         name = "이미 근무중인 사용자입니다.",
                         value = "{\"code\" : \"B018\"}"
+                    ),
+                    @ExampleObject(
+                        name = "모집이 종료된 공고 (OPEN 이 아닌 상태)",
+                        value = "{\"code\" : \"B001\", \"message\" : \"모집이 종료된 공고입니다.\"}"
+                    ),
+                    @ExampleObject(
+                        name = "이미 지원한 공고 (같은 공고의 다른 근무일정 포함)",
+                        value = "{\"code\" : \"B001\", \"message\" : \"이미 지원한 공고입니다.\"}"
                     )
+                })),
+        @ApiResponse(responseCode = "429", description = "429 Error 실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "동시 지원 요청이 몰려 잠금 획득에 실패",
+                        value = "{\"code\" : \"E001\"}"
+                    ),
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> applyIntoPosting(

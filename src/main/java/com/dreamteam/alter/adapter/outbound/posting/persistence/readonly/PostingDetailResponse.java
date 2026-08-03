@@ -44,7 +44,7 @@ public class PostingDetailResponse {
             posting.getPayAmount(),
             posting.getPaymentType(),
             posting.getCreatedAt(),
-            posting.getSchedules(),
+            posting.getActiveSchedules(),
             scrapped
         );
     }

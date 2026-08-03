@@ -40,6 +40,10 @@ public interface ManagerPostingControllerSpec {
                 schema = @Schema(implementation = ErrorResponse.class),
                 examples = {
                     @ExampleObject(
+                        name = "존재하지 않거나, 자신이 관리하지 않거나, 활성화되지 않은 업장",
+                        value = "{\"code\" : \"B008\"}"
+                    ),
+                    @ExampleObject(
                         name = "서버 내부 오류",
                         value = "{\"code\" : \"C001\"}"
                     ),
@@ -155,7 +159,10 @@ public interface ManagerPostingControllerSpec {
         @Valid @RequestBody UpdatePostingStatusRequestDto request
     );
 
-    @Operation(summary = "매니저 - 내가 등록한 공고 내용 수정", description = "")
+    @Operation(
+        summary = "매니저 - 내가 등록한 공고 내용 수정",
+        description = "수정을 마친 뒤 남은 근무일정이 하나도 없으면 공고가 모집 완료(CLOSED)로 바뀌며 더 이상 지원을 받지 않습니다."
+    )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "공고 내용 수정 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
@@ -166,14 +173,6 @@ public interface ManagerPostingControllerSpec {
                     @ExampleObject(
                         name = "존재하지 않는 공고",
                         value = "{\"code\" : \"B007\"}"
-                    ),
-                    @ExampleObject(
-                        name = "등록되지 않은 키워드로 요청",
-                        value = "{\"code\" : \"B006\"}"
-                    ),
-                    @ExampleObject(
-                        name = "요청에 키워드가 포함되지 않은 경우",
-                        value = "{\"code\" : \"B001\"}"
                     ),
                 })),
         @ApiResponse(responseCode = "404", description = "404 Error 실패 케이스",
@@ -188,6 +187,16 @@ public interface ManagerPostingControllerSpec {
                     @ExampleObject(
                         name = "수정할 스케줄이 존재하지 않는 경우",
                         value = "{\"code\" : \"B019\"}"
+                    ),
+                })),
+        @ApiResponse(responseCode = "409", description = "409 Error 실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "DELETED 상태의 공고는 내용 수정 불가",
+                        value = "{\"code\" : \"B020\"}"
                     ),
                 })),
     })

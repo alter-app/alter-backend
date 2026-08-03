@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.general.posting.dto;
 
+import com.dreamteam.alter.domain.posting.command.PostingScheduleCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -37,5 +38,9 @@ public class CreatePostingScheduleRequestDto {
     @Schema(description = "아르바이트 포지션", example = "홀서빙")
     @NotBlank
     private String position;
+
+    public PostingScheduleCommand toCommand() {
+        return new PostingScheduleCommand(workingDays, startTime, endTime, positionsNeeded, position);
+    }
 
 }

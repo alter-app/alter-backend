@@ -1,7 +1,8 @@
 package com.dreamteam.alter.domain.posting.port.inbound;
 
-import com.dreamteam.alter.adapter.inbound.general.posting.dto.CreatePostingRequestDto;
+import com.dreamteam.alter.domain.posting.command.CreatePostingCommand;
+import com.dreamteam.alter.domain.user.context.ManagerActor;
 
 public interface CreatePostingUseCase {
-    void execute(CreatePostingRequestDto request);
+    void execute(CreatePostingCommand command, ManagerActor actor);
 }

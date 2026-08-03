@@ -48,7 +48,7 @@ public class ManagerPostingDetailResponse {
             posting.getStatus(),
             posting.getCreatedAt(),
             posting.getUpdatedAt(),
-            posting.getSchedules()
+            posting.getActiveSchedules()
         );
     }
 }

@@ -1,9 +1,11 @@
 package com.dreamteam.alter.adapter.inbound.manager.posting.dto;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.ManagerPostingListWorkspaceResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.posting.dto.PostingScheduleResponseDto;
 import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.ManagerPostingListResponse;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
+import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -36,6 +38,10 @@ public class ManagerPostingListResponseDto {
     private PaymentType paymentType;
 
     @NotNull
+    @Schema(description = "공고 상태")
+    private DescribedEnumDto<PostingStatus> status;
+
+    @NotNull
     @Schema(description = "생성일", example = "2023-10-01T12:00:00")
     private LocalDateTime createdAt;
 
@@ -60,6 +66,7 @@ public class ManagerPostingListResponseDto {
             .title(response.getTitle())
             .payAmount(response.getPayAmount())
             .paymentType(response.getPaymentType())
+            .status(DescribedEnumDto.of(response.getStatus(), PostingStatus.describe()))
             .createdAt(response.getCreatedAt())
             .schedules(response.getSchedules().stream()
                 .map(PostingScheduleResponseDto::from)

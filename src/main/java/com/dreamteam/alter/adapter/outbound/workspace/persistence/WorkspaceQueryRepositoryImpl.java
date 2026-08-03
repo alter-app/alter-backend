@@ -65,6 +65,21 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
     }
 
     @Override
+    public Optional<Workspace> findByIdAndManagerUser(Long id, ManagerUser managerUser) {
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        return Optional.ofNullable(
+            queryFactory
+                .selectFrom(qWorkspace)
+                .where(
+                    qWorkspace.id.eq(id),
+                    qWorkspace.managerUser.eq(managerUser),
+                    qWorkspace.status.eq(WorkspaceStatus.ACTIVATED)
+                )
+                .fetchOne()
+        );
+    }
+
+    @Override
     public List<ManagerWorkspaceListResponse> getManagerWorkspaceList(ManagerUser managerUser) {
         QWorkspace qWorkspace = QWorkspace.workspace;
 

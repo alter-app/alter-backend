@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.outbound.posting.persistence;
 import com.dreamteam.alter.domain.posting.entity.PostingSchedule;
 import com.dreamteam.alter.domain.posting.entity.QPostingSchedule;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingScheduleQueryRepository;
+import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -24,7 +25,8 @@ public class PostingScheduleQueryRepositoryImpl implements PostingScheduleQueryR
             .from(qPostingSchedule)
             .where(
                 qPostingSchedule.posting.id.eq(postingId),
-                qPostingSchedule.id.eq(postingScheduleId)
+                qPostingSchedule.id.eq(postingScheduleId),
+                qPostingSchedule.status.ne(PostingStatus.DELETED)
             )
             .fetchOne();
 
