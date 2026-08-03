@@ -6,7 +6,6 @@ import com.dreamteam.alter.domain.posting.command.UpdatePostingCommand;
 import com.dreamteam.alter.domain.posting.entity.Posting;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
-import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import org.junit.jupiter.api.DisplayName;
@@ -21,11 +20,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ManagerUpdatePosting 테스트")
@@ -53,26 +50,7 @@ class ManagerUpdatePostingTests {
     }
 
     @Test
-    @DisplayName("삭제된 공고는 내용을 수정할 수 없다")
-    void execute_삭제된공고_예외발생() {
-        // given
-        ManagerActor actor = mock(ManagerActor.class);
-        ManagerUser managerUser = mock(ManagerUser.class);
-        Posting posting = mock(Posting.class);
-
-        given(actor.getManagerUser()).willReturn(managerUser);
-        given(postingQueryRepository.findByManagerAndId(1L, managerUser)).willReturn(Optional.of(posting));
-        given(posting.getStatus()).willReturn(PostingStatus.DELETED);
-
-        // when & then
-        assertThatThrownBy(() -> managerUpdatePosting.execute(1L, command(), actor))
-            .isInstanceOf(CustomException.class)
-            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
-        then(posting).should(never()).updateContent(any());
-    }
-
-    @Test
-    @DisplayName("모집 중인 공고는 내용이 수정된다")
+    @DisplayName("조회한 공고에 수정 명령을 그대로 위임한다")
     void execute_정상공고_수정() {
         // given
         ManagerActor actor = mock(ManagerActor.class);
@@ -82,7 +60,6 @@ class ManagerUpdatePostingTests {
 
         given(actor.getManagerUser()).willReturn(managerUser);
         given(postingQueryRepository.findByManagerAndId(1L, managerUser)).willReturn(Optional.of(posting));
-        given(posting.getStatus()).willReturn(PostingStatus.OPEN);
 
         // when
         managerUpdatePosting.execute(1L, command, actor);

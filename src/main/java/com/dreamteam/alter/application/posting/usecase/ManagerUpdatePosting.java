@@ -9,7 +9,6 @@ import com.dreamteam.alter.domain.posting.command.UpdatePostingCommand;
 import com.dreamteam.alter.domain.posting.entity.Posting;
 import com.dreamteam.alter.domain.posting.port.inbound.ManagerUpdatePostingUseCase;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
-import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 
@@ -28,11 +27,6 @@ public class ManagerUpdatePosting implements ManagerUpdatePostingUseCase {
 
         Posting posting = postingQueryRepository.findByManagerAndId(postingId, managerUser)
             .orElseThrow(() -> new CustomException(ErrorCode.POSTING_NOT_FOUND));
-
-        // 삭제된 공고는 내용 수정 불가
-        if (PostingStatus.DELETED.equals(posting.getStatus())) {
-            throw new CustomException(ErrorCode.CONFLICT);
-        }
 
         posting.updateContent(command);
     }

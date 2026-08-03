@@ -6,7 +6,6 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.entity.Posting;
 import com.dreamteam.alter.domain.posting.port.inbound.ManagerUpdatePostingStatusUseCase;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
-import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +25,6 @@ public class ManagerUpdatePostingStatus implements ManagerUpdatePostingStatusUse
 
         Posting posting = postingQueryRepository.findByManagerAndId(postingId, managerUser)
             .orElseThrow(() -> new CustomException(ErrorCode.POSTING_NOT_FOUND));
-
-        // DELETED 상태인 경우 상태 변경 불가
-        if (PostingStatus.DELETED.equals(posting.getStatus())) {
-            throw new CustomException(ErrorCode.CONFLICT);
-        }
 
         posting.updateStatus(request.getStatus());
     }

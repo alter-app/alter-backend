@@ -86,6 +86,8 @@ public class Posting {
     }
 
     public void updateStatus(PostingStatus status) {
+        validateModifiable();
+
         this.status = status;
     }
 
@@ -103,6 +105,8 @@ public class Posting {
     }
 
     public void updateContent(UpdatePostingCommand command) {
+        validateModifiable();
+
         this.title = command.title();
         this.description = command.description();
         this.payAmount = command.payAmount();
@@ -172,6 +176,15 @@ public class Posting {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "삭제할 스케줄을 찾을 수 없습니다."));
 
             existingSchedule.updateStatus(PostingStatus.DELETED);
+        }
+    }
+
+    /**
+     * 삭제된 공고는 더 이상 변경할 수 없다.
+     */
+    private void validateModifiable() {
+        if (PostingStatus.DELETED.equals(this.status)) {
+            throw new CustomException(ErrorCode.CONFLICT);
         }
     }
 }

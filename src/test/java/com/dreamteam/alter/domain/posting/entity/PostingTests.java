@@ -2,7 +2,10 @@ package com.dreamteam.alter.domain.posting.entity;
 
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.posting.command.PostingScheduleCommand;
+import com.dreamteam.alter.domain.posting.command.UpdatePostingCommand;
 import com.dreamteam.alter.domain.posting.command.UpdatePostingScheduleCommand;
+import com.dreamteam.alter.domain.posting.type.PaymentType;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -84,6 +87,51 @@ class PostingTests {
         assertThatThrownBy(() -> posting.deleteSchedules(List.of(1L)))
             .isInstanceOf(CustomException.class)
             .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND));
+    }
+
+    @Test
+    @DisplayName("삭제된 공고는 내용을 수정할 수 없다")
+    void updateContent_삭제공고_예외발생() {
+        // given
+        Posting posting = new Posting();
+        ReflectionTestUtils.setField(posting, "status", PostingStatus.DELETED);
+        ReflectionTestUtils.setField(posting, "title", "원래 제목");
+
+        // when & then
+        assertThatThrownBy(() -> posting.updateContent(updateCommand(null, null, null)))
+            .isInstanceOf(CustomException.class)
+            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+        assertThat(posting.getTitle()).isEqualTo("원래 제목");
+    }
+
+    @Test
+    @DisplayName("삭제된 공고는 상태를 변경할 수 없다")
+    void updateStatus_삭제공고_예외발생() {
+        // given
+        Posting posting = new Posting();
+        ReflectionTestUtils.setField(posting, "status", PostingStatus.DELETED);
+
+        // when & then
+        assertThatThrownBy(() -> posting.updateStatus(PostingStatus.OPEN))
+            .isInstanceOf(CustomException.class)
+            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+        assertThat(posting.getStatus()).isEqualTo(PostingStatus.DELETED);
+    }
+
+    private UpdatePostingCommand updateCommand(
+        List<PostingScheduleCommand> createSchedules,
+        List<UpdatePostingScheduleCommand> updateSchedules,
+        List<Long> deleteScheduleIds
+    ) {
+        return new UpdatePostingCommand(
+            "제목",
+            "설명",
+            12000,
+            PaymentType.HOURLY,
+            createSchedules,
+            updateSchedules,
+            deleteScheduleIds
+        );
     }
 
     private PostingSchedule createSchedule(Posting posting, String position) {
