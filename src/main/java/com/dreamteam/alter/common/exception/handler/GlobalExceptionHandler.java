@@ -10,6 +10,7 @@ import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableExcep
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -81,6 +82,17 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.ILLEGAL_ARGUMENT;
         return ResponseEntity.status(errorCode.getStatus())
             .body(ErrorResponse.of(errorCode));
+    }
+
+    /**
+     * 요청 본문 역직렬화 실패. 잘못된 JSON 이나 enum · 시각 등 타입 변환 실패가 여기로 온다.
+     * 핸들러가 없으면 Spring 기본 응답이 나가 프로젝트 오류 포맷과 어긋난다.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        ErrorCode errorCode = ErrorCode.ILLEGAL_ARGUMENT;
+        return ResponseEntity.status(errorCode.getStatus())
+            .body(ErrorResponse.of(errorCode, "요청 본문을 해석할 수 없습니다."));
     }
 
     @ExceptionHandler(MissingServletRequestPartException.class)
