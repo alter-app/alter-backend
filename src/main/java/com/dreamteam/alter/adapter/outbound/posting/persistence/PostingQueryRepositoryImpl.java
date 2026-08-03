@@ -21,6 +21,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
@@ -35,10 +36,15 @@ import java.util.*;
 public class PostingQueryRepositoryImpl implements PostingQueryRepository {
 
     private static final int MARKER_MAX_COUNT = 50;
-    private static final int PESSIMISTIC_LOCK_TIMEOUT_MILLIS = 5_000;
-    private static final String PESSIMISTIC_LOCK_TIMEOUT_HINT = "jakarta.persistence.lock.timeout";
+
+    /**
+     * PostgreSQL 은 FOR UPDATE 에 대기 시간 문법이 없어 jakarta.persistence.lock.timeout 힌트가 무시된다.
+     * 트랜잭션 로컬 lock_timeout 으로 5초 상한을 강제한다. (H2 에서는 동작하지 않는 구문)
+     */
+    private static final String LOCK_TIMEOUT_STATEMENT = "SET LOCAL lock_timeout = '5s'";
 
     private final JPAQueryFactory queryFactory;
+    private final EntityManager entityManager;
 
     @Override
     public long getCountOfPostings(PostingListFilterDto filter) {
@@ -335,14 +341,16 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     @Override
     public Optional<Posting> findByIdWithPessimisticLock(Long postingId) {
         QPosting qPosting = QPosting.posting;
-        QWorkspace qWorkspace = QWorkspace.workspace;
 
+        // SET LOCAL 은 현재 트랜잭션에만 적용되고 커밋/롤백 시 자동 복원된다
+        entityManager.createNativeQuery(LOCK_TIMEOUT_STATEMENT).executeUpdate();
+
+        // PESSIMISTIC_WRITE 는 outer join 의 nullable side 에 적용할 수 없으므로 fetch join 을 쓰지 않는다.
+        // workspace 체인은 동일 트랜잭션 내 지연 로딩으로 접근한다.
         Posting posting = queryFactory
             .selectFrom(qPosting)
-            .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .where(qPosting.id.eq(postingId))
             .setLockMode(LockModeType.PESSIMISTIC_WRITE)
-            .setHint(PESSIMISTIC_LOCK_TIMEOUT_HINT, PESSIMISTIC_LOCK_TIMEOUT_MILLIS)
             .fetchOne();
 
         return ObjectUtils.isEmpty(posting) ? Optional.empty() : Optional.of(posting);

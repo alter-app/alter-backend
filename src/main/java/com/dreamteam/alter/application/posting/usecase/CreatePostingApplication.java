@@ -20,10 +20,10 @@ import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationReposi
 import com.dreamteam.alter.domain.posting.port.outbound.PostingScheduleQueryRepository;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
-import jakarta.persistence.LockTimeoutException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 @Service("createPostingApplication")
@@ -45,7 +45,8 @@ public class CreatePostingApplication implements CreatePostingApplicationUseCase
         try {
             posting = postingQueryRepository.findByIdWithPessimisticLock(postingId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POSTING_NOT_FOUND));
-        } catch (LockTimeoutException e) {
+        } catch (PessimisticLockingFailureException e) {
+            // PG lock_timeout(55P03) · deadlock(40P01) 이 Repository 예외 변환을 거친 결과
             throw new CustomException(ErrorCode.TOO_MANY_REQUESTS);
         }
 
