@@ -123,6 +123,7 @@ class ManagerGetPostingDetailTests {
 
             // then
             assertThat(result.getApplicantCount()).isZero();
+            then(postingApplicationQueryRepository).should().countActiveApplicationsByPostingId(POSTING_ID);
         }
 
         @Test
