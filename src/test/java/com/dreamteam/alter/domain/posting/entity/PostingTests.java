@@ -13,6 +13,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -90,6 +91,63 @@ class PostingTests {
     }
 
     @Test
+    @DisplayName("마지막 근무일정을 삭제하면 공고가 모집 완료로 바뀐다")
+    void updateContent_마지막일정삭제_자동종료() {
+        // given
+        Posting posting = openPosting();
+        PostingSchedule only = createSchedule(posting, 1L, "홀서빙");
+        ReflectionTestUtils.setField(posting, "schedules", new ArrayList<>(List.of(only)));
+
+        // when
+        posting.updateContent(updateCommand(null, null, List.of(1L)));
+
+        // then
+        assertThat(posting.getActiveSchedules()).isEmpty();
+        assertThat(posting.getStatus()).isEqualTo(PostingStatus.CLOSED);
+    }
+
+    @Test
+    @DisplayName("근무일정을 전부 삭제하고 새로 추가하면 모집 중을 유지한다")
+    void updateContent_전부삭제후추가_모집중유지() {
+        // given
+        Posting posting = openPosting();
+        PostingSchedule only = createSchedule(posting, 1L, "홀서빙");
+        ReflectionTestUtils.setField(posting, "schedules", new ArrayList<>(List.of(only)));
+
+        PostingScheduleCommand created = new PostingScheduleCommand(
+            List.of(DayOfWeek.FRIDAY),
+            LocalTime.of(13, 0),
+            LocalTime.of(21, 0),
+            2,
+            "주방보조"
+        );
+
+        // when
+        posting.updateContent(updateCommand(List.of(created), null, List.of(1L)));
+
+        // then
+        assertThat(posting.getActiveSchedules()).hasSize(1);
+        assertThat(posting.getStatus()).isEqualTo(PostingStatus.OPEN);
+    }
+
+    @Test
+    @DisplayName("근무일정이 남아 있으면 모집 중을 유지한다")
+    void updateContent_일부일정삭제_모집중유지() {
+        // given
+        Posting posting = openPosting();
+        PostingSchedule first = createSchedule(posting, 1L, "홀서빙");
+        PostingSchedule second = createSchedule(posting, 2L, "주방보조");
+        ReflectionTestUtils.setField(posting, "schedules", new ArrayList<>(List.of(first, second)));
+
+        // when
+        posting.updateContent(updateCommand(null, null, List.of(1L)));
+
+        // then
+        assertThat(posting.getActiveSchedules()).containsExactly(second);
+        assertThat(posting.getStatus()).isEqualTo(PostingStatus.OPEN);
+    }
+
+    @Test
     @DisplayName("삭제된 공고는 내용을 수정할 수 없다")
     void updateContent_삭제공고_예외발생() {
         // given
@@ -116,6 +174,12 @@ class PostingTests {
             .isInstanceOf(CustomException.class)
             .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
         assertThat(posting.getStatus()).isEqualTo(PostingStatus.DELETED);
+    }
+
+    private Posting openPosting() {
+        Posting posting = new Posting();
+        ReflectionTestUtils.setField(posting, "status", PostingStatus.OPEN);
+        return posting;
     }
 
     private UpdatePostingCommand updateCommand(

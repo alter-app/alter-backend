@@ -123,6 +123,8 @@ public class Posting {
         // 스케줄 추가 처리
         if (ObjectUtils.isNotEmpty(command.createSchedules()))
             addSchedules(command.createSchedules());
+
+        closeIfNoActiveSchedules();
     }
 
     /**
@@ -185,6 +187,16 @@ public class Posting {
     private void validateModifiable() {
         if (PostingStatus.DELETED.equals(this.status)) {
             throw new CustomException(ErrorCode.CONFLICT);
+        }
+    }
+
+    /**
+     * 모집할 근무일정이 하나도 남지 않으면 마감된 공고로 본다.
+     * 삭제·수정·추가를 모두 마친 뒤에 판정해야 전부 지우고 새로 추가하는 요청을 마감으로 잘못 처리하지 않는다.
+     */
+    private void closeIfNoActiveSchedules() {
+        if (PostingStatus.OPEN.equals(this.status) && getActiveSchedules().isEmpty()) {
+            this.status = PostingStatus.CLOSED;
         }
     }
 }

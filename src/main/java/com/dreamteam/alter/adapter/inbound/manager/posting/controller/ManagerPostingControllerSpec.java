@@ -159,7 +159,10 @@ public interface ManagerPostingControllerSpec {
         @Valid @RequestBody UpdatePostingStatusRequestDto request
     );
 
-    @Operation(summary = "매니저 - 내가 등록한 공고 내용 수정", description = "")
+    @Operation(
+        summary = "매니저 - 내가 등록한 공고 내용 수정",
+        description = "수정을 마친 뒤 남은 근무일정이 하나도 없으면 공고가 모집 완료(CLOSED)로 바뀌며 더 이상 지원을 받지 않습니다."
+    )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "공고 내용 수정 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
