@@ -21,6 +21,8 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -35,7 +37,14 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
 
     private static final int MARKER_MAX_COUNT = 50;
 
+    /**
+     * PostgreSQL 은 FOR UPDATE 에 대기 시간 문법이 없어 jakarta.persistence.lock.timeout 힌트가 무시된다.
+     * 트랜잭션 로컬 lock_timeout 으로 5초 상한을 강제한다. (H2 에서는 동작하지 않는 구문)
+     */
+    private static final String LOCK_TIMEOUT_STATEMENT = "SET LOCAL lock_timeout = '5s'";
+
     private final JPAQueryFactory queryFactory;
+    private final EntityManager entityManager;
 
     @Override
     public long getCountOfPostings(PostingListFilterDto filter) {
@@ -330,6 +339,24 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     }
 
     @Override
+    public Optional<Posting> findByIdWithPessimisticLock(Long postingId) {
+        QPosting qPosting = QPosting.posting;
+
+        // SET LOCAL 은 현재 트랜잭션에만 적용되고 커밋/롤백 시 자동 복원된다
+        entityManager.createNativeQuery(LOCK_TIMEOUT_STATEMENT).executeUpdate();
+
+        // PESSIMISTIC_WRITE 는 outer join 의 nullable side 에 적용할 수 없으므로 fetch join 을 쓰지 않는다.
+        // workspace 체인은 동일 트랜잭션 내 지연 로딩으로 접근한다.
+        Posting posting = queryFactory
+            .selectFrom(qPosting)
+            .where(qPosting.id.eq(postingId))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(posting) ? Optional.empty() : Optional.of(posting);
+    }
+
+    @Override
     public long getManagerPostingCount(ManagerUser managerUser, ManagerPostingListFilterDto filter) {
         QPosting qPosting = QPosting.posting;
         QWorkspace qWorkspace = QWorkspace.workspace;
@@ -341,8 +368,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .where(
                 qWorkspace.managerUser.eq(managerUser),
                 eqWorkspaceId(qWorkspace, filter.getWorkspaceId()),
-                eqPostingStatus(qPosting, filter.getStatus()),
-                qPosting.status.ne(PostingStatus.DELETED)
+                inPostingStatusOrDefault(qPosting, filter.getStatus())
             )
             .fetchOne();
 
@@ -366,9 +392,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .where(
                 qWorkspace.managerUser.eq(managerUser),
                 eqWorkspaceId(qWorkspace, filter.getWorkspaceId()),
-                eqPostingStatus(qPosting, filter.getStatus()),
-                cursorConditions(qPosting, request.cursor(), false),
-                qPosting.status.ne(PostingStatus.DELETED)
+                inPostingStatusOrDefault(qPosting, filter.getStatus()),
+                cursorConditions(qPosting, request.cursor(), false)
             )
             .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
             .limit(request.pageSize())
@@ -461,8 +486,11 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         return workspaceId != null ? qWorkspace.id.eq(workspaceId) : null;
     }
 
-    private BooleanExpression eqPostingStatus(QPosting qPosting, PostingStatus status) {
-        return status != null ? qPosting.status.eq(status) : null;
+    private BooleanExpression inPostingStatusOrDefault(QPosting qPosting, Set<PostingStatus> statuses) {
+        // DELETED 상태는 항상 제외
+        BooleanExpression notDeleted = qPosting.status.ne(PostingStatus.DELETED);
+
+        return ObjectUtils.isNotEmpty(statuses) ? notDeleted.and(qPosting.status.in(statuses)) : notDeleted;
     }
 
     private BooleanExpression eqProvince(QWorkspace qWorkspace, String province) {

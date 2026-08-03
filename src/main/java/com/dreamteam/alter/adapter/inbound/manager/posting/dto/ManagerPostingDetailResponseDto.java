@@ -61,7 +61,10 @@ public class ManagerPostingDetailResponseDto {
     @Schema(description = "공고 스케줄", example = "[{\"id\":1,\"workingDays\":[\"MONDAY\",\"WEDNESDAY\"],\"startTime\":\"09:00\",\"endTime\":\"18:00\",\"positionsNeeded\":3,\"positionsAvailable\":2,\"position\":\"홀서빙\"}]")
     private List<PostingScheduleResponseDto> schedules;
 
-    public static ManagerPostingDetailResponseDto from(ManagerPostingDetailResponse entity) {
+    @Schema(description = "지원자 수 (취소·불합격·만료 제외)", example = "7")
+    private long applicantCount;
+
+    public static ManagerPostingDetailResponseDto of(ManagerPostingDetailResponse entity, long applicantCount) {
         return ManagerPostingDetailResponseDto.builder()
             .id(entity.getId())
             .workspace(PostingDetailWorkspaceResponseDto.from(entity.getWorkspace()))
@@ -75,6 +78,7 @@ public class ManagerPostingDetailResponseDto {
             .schedules(entity.getSchedules().stream()
                 .map(PostingScheduleResponseDto::from)
                 .toList())
+            .applicantCount(applicantCount)
             .build();
     }
 }

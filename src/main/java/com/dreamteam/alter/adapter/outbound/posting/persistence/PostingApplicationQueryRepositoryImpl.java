@@ -136,7 +136,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .join(qPosting.workspace, qWorkspace)
             .join(qWorkspace.managerUser, qManagerUser)
             .where(
-                getManagerPostingApplicationBaseConditions(qManagerUser, managerUser, qWorkspace, filter),
+                getManagerPostingApplicationBaseConditions(qManagerUser, managerUser, qWorkspace, qPosting, filter),
                 eqApplicationStatusOrDefault(qPostingApplication, filter.getStatus())
             )
             .fetchOne();
@@ -185,7 +185,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
                 qReputationSummary.targetId.eq(qUser.id)
             )
             .where(
-                getManagerPostingApplicationBaseConditions(qManagerUser, managerUser, qWorkspace, filter),
+                getManagerPostingApplicationBaseConditions(qManagerUser, managerUser, qWorkspace, qPosting, filter),
                 eqApplicationStatusOrDefault(qPostingApplication, filter.getStatus()),
                 cursorConditions(qPostingApplication, request.cursor())
             )
@@ -266,6 +266,10 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         return workspaceId != null ? qWorkspace.id.eq(workspaceId) : null;
     }
 
+    private BooleanExpression eqPostingId(QPosting qPosting, Long postingId) {
+        return postingId != null ? qPosting.id.eq(postingId) : null;
+    }
+
     private BooleanExpression cursorConditions(QPostingApplication qPostingApplication, CursorDto cursor) {
         if (ObjectUtils.isEmpty(cursor)) {
             return null;
@@ -311,13 +315,18 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         QManagerUser qManagerUser,
         ManagerUser managerUser,
         QWorkspace qWorkspace,
+        QPosting qPosting,
         PostingApplicationListFilterDto filter
     ) {
         BooleanExpression managerCondition = qManagerUser.eq(managerUser);
         BooleanExpression workspaceCondition = eqWorkspaceId(qWorkspace, filter.getWorkspaceId());
+        BooleanExpression postingCondition = eqPostingId(qPosting, filter.getPostingId());
 
         if (ObjectUtils.isNotEmpty(workspaceCondition)) {
-            return managerCondition.and(workspaceCondition);
+            managerCondition = managerCondition.and(workspaceCondition);
+        }
+        if (ObjectUtils.isNotEmpty(postingCondition)) {
+            managerCondition = managerCondition.and(postingCondition);
         }
         return managerCondition;
     }
@@ -329,13 +338,40 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .selectFrom(qPostingApplication)
             .where(
                 qPostingApplication.user.id.eq(userId),
-                qPostingApplication.status.in(
-                    PostingApplicationStatus.SUBMITTED,
-                    PostingApplicationStatus.SHORTLISTED,
-                    PostingApplicationStatus.ACCEPTED
-                )
+                qPostingApplication.status.in(PostingApplicationStatus.ACTIVE_STATUSES)
             )
             .fetch();
+    }
+
+    @Override
+    public long countActiveApplicationsByPostingId(Long postingId) {
+        QPostingApplication qPostingApplication = QPostingApplication.postingApplication;
+
+        Long count = queryFactory
+            .select(qPostingApplication.count())
+            .from(qPostingApplication)
+            .where(
+                qPostingApplication.posting.id.eq(postingId),
+                qPostingApplication.status.in(PostingApplicationStatus.ACTIVE_STATUSES)
+            )
+            .fetchOne();
+
+        return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
+    @Override
+    public boolean existsActiveByPostingIdAndUser(Long postingId, User user) {
+        QPostingApplication qPostingApplication = QPostingApplication.postingApplication;
+
+        return queryFactory
+            .selectOne()
+            .from(qPostingApplication)
+            .where(
+                qPostingApplication.posting.id.eq(postingId),
+                qPostingApplication.user.eq(user),
+                qPostingApplication.status.in(PostingApplicationStatus.ACTIVE_STATUSES)
+            )
+            .fetchFirst() != null;
     }
 
 }

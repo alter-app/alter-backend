@@ -20,6 +20,9 @@ public class PostingApplicationListFilterDto {
     @Parameter(description = "업장 ID (eq)")
     private Long workspaceId;
 
+    @Parameter(description = "공고 ID (eq)")
+    private Long postingId;
+
     @Parameter(description = "지원 상태 (in)")
     private Set<PostingApplicationStatus> status;
 

@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.springdoc.core.annotations.ParameterObject;
 
+import java.util.Set;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,7 +18,7 @@ public class ManagerPostingListFilterDto {
     @Parameter(description = "업장 ID (eq)")
     private Long workspaceId;
 
-    @Parameter(description = "공고 상태 (eq)")
-    private PostingStatus status;
+    @Parameter(description = "공고 상태 (in)")
+    private Set<PostingStatus> status;
 
 }

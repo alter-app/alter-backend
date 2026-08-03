@@ -1,6 +1,7 @@
 package com.dreamteam.alter.domain.posting.type;
 
 import java.util.Map;
+import java.util.Set;
 
 public enum PostingApplicationStatus {
     SUBMITTED,
@@ -11,6 +12,13 @@ public enum PostingApplicationStatus {
     EXPIRED,
     DELETED
     ;
+
+    // 아직 살아있는 지원 (취소/불합격/만료/삭제 제외)
+    public static final Set<PostingApplicationStatus> ACTIVE_STATUSES = Set.of(
+        SUBMITTED,
+        SHORTLISTED,
+        ACCEPTED
+    );
 
     public static Map<PostingApplicationStatus, String> describe() {
         return Map.of(

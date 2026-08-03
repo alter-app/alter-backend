@@ -8,6 +8,7 @@ import com.dreamteam.alter.common.exception.FieldErrorDetail;
 import com.dreamteam.alter.domain.auth.exception.SignupRequiredException;
 import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableException;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -94,6 +95,16 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.ILLEGAL_ARGUMENT;
         return ResponseEntity.status(errorCode.getStatus())
             .body(ErrorResponse.of(errorCode, "파라미터가 누락됐습니다."));
+    }
+
+    /**
+     * 비관적 락 획득 실패. UseCase 에서 잡지 못하고 커밋 시점에 올라오는 경우를 위한 최종 처리.
+     */
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse<Void>> handlePessimisticLockingFailureException(PessimisticLockingFailureException e) {
+        ErrorCode errorCode = ErrorCode.TOO_MANY_REQUESTS;
+        return ResponseEntity.status(errorCode.getStatus())
+            .body(ErrorResponse.of(errorCode));
     }
 
 }

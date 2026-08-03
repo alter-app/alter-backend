@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.Manager
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.port.inbound.ManagerGetPostingDetailUseCase;
+import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationQueryRepository;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ManagerGetPostingDetail implements ManagerGetPostingDetailUseCase {
 
     private final PostingQueryRepository postingQueryRepository;
+    private final PostingApplicationQueryRepository postingApplicationQueryRepository;
 
     @Override
     public ManagerPostingDetailResponseDto execute(Long postingId, ManagerActor actor) {
@@ -27,6 +29,8 @@ public class ManagerGetPostingDetail implements ManagerGetPostingDetailUseCase {
             .getManagerPostingDetail(postingId, managerUser)
             .orElseThrow(() -> new CustomException(ErrorCode.POSTING_NOT_FOUND));
 
-        return ManagerPostingDetailResponseDto.from(postingDetail);
+        long applicantCount = postingApplicationQueryRepository.countActiveApplicationsByPostingId(postingId);
+
+        return ManagerPostingDetailResponseDto.of(postingDetail, applicantCount);
     }
 }
