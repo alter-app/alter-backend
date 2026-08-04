@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +42,26 @@ import static org.mockito.Mockito.never;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CreateUser 테스트")
 class CreateUserTests {
+
+    @Test
+    @DisplayName("DB 쓰기 트랜잭션은 CreateUserTx process 메서드에만 적용")
+    void transactionScope_isLimitedToCreateUserTxProcess() throws NoSuchMethodException {
+        // when
+        Transactional createUserTransaction = CreateUser.class.getAnnotation(Transactional.class);
+        Transactional processTransaction = CreateUserTx.class.getMethod(
+            "process",
+            CreateUserRequestDto.class,
+            String.class,
+            String.class,
+            boolean.class,
+            boolean.class,
+            List.class
+        ).getAnnotation(Transactional.class);
+
+        // then
+        assertThat(createUserTransaction).isNull();
+        assertThat(processTransaction).isNotNull();
+    }
 
     @Mock
     private UserQueryRepository userQueryRepository;
@@ -207,6 +228,49 @@ class CreateUserTests {
             then(cacheRepository).should().deleteAll(argThat(list ->
                 list.containsAll(List.of("SIGNUP:PENDING:signup-session-id", "SIGNUP:CONTACT:01012345678"))));
             then(emailVerificationSessionStoreRepository).should(never()).deleteSession(any());
+        }
+
+        @Test
+        @DisplayName("DB 커밋 후 Redis 세션 정리에 실패해도 회원가입 성공을 반환하고 각 세션 정리를 시도")
+        void execute_cleanupFails_returnsCommittedSignupResponse() {
+            // given
+            CreateUserRequestDto requestWithEmail = new CreateUserRequestDto(
+                "signup-session-id",
+                "email-session-id",
+                "Test1234!",
+                "김철수",
+                "유땡땡",
+                UserGender.GENDER_MALE,
+                "19900101",
+                true,
+                false,
+                Set.of(TermsType.SERVICE, TermsType.PRIVACY)
+            );
+            List<Terms> agreedTerms = List.of(mock(Terms.class));
+            given(cacheRepository.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
+            given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
+            given(termsAgreementValidator.validateAndResolve(any())).willReturn(agreedTerms);
+            given(emailVerificationSessionStoreRepository.getEmailBySession("email-session-id"))
+                .willReturn(Optional.of("user@example.com"));
+            given(userQueryRepository.findByEmail("user@example.com")).willReturn(Optional.empty());
+
+            GenerateTokenResponseDto mockResponse = mock(GenerateTokenResponseDto.class);
+            given(createUserTx.process(any(), any(), any(), anyBoolean(), anyBoolean(), eq(agreedTerms)))
+                .willReturn(mockResponse);
+            willThrow(new RuntimeException("signup session cleanup failed"))
+                .given(cacheRepository).deleteAll(anyList());
+            willThrow(new RuntimeException("email session cleanup failed"))
+                .given(emailVerificationSessionStoreRepository).deleteSession("email-session-id");
+
+            // when
+            GenerateTokenResponseDto result = createUser.execute(requestWithEmail);
+
+            // then
+            assertThat(result).isEqualTo(mockResponse);
+            then(cacheRepository).should().deleteAll(argThat(keys ->
+                keys.containsAll(List.of("SIGNUP:PENDING:signup-session-id", "SIGNUP:CONTACT:01012345678"))));
+            then(emailVerificationSessionStoreRepository).should().deleteSession("email-session-id");
         }
     }
 }

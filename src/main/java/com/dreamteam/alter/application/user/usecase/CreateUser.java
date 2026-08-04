@@ -13,16 +13,16 @@ import com.dreamteam.alter.domain.terms.entity.Terms;
 import com.dreamteam.alter.domain.user.port.inbound.CreateUserUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 @Service("createUser")
 @RequiredArgsConstructor
-@Transactional
 public class CreateUser implements CreateUserUseCase {
 
     private final UserQueryRepository userQueryRepository;
@@ -64,16 +64,34 @@ public class CreateUser implements CreateUserUseCase {
             agreedTerms
         );
 
-        // 회원가입 세션 삭제
-        String contactKey = SignupSessionConstants.Session.CONTACT_INDEX_KEY_PREFIX + contact;
-        cacheRepository.deleteAll(Arrays.asList(sessionIdKey, contactKey));
-
-        // 이메일 인증 세션 삭제
-        if (ObjectUtils.isNotEmpty(verifiedEmail)) {
-            emailVerificationSessionStoreRepository.deleteSession(request.getEmailSessionId());
-        }
+        // DB 트랜잭션 커밋 후 외부 인증 세션 정리
+        cleanupSessions(request, sessionIdKey, contact, verifiedEmail);
 
         return response;
+    }
+
+    private void cleanupSessions(
+        CreateUserRequestDto request,
+        String sessionIdKey,
+        String contact,
+        String verifiedEmail
+    ) {
+        String contactKey = SignupSessionConstants.Session.CONTACT_INDEX_KEY_PREFIX + contact;
+        try {
+            cacheRepository.deleteAll(Arrays.asList(sessionIdKey, contactKey));
+        } catch (Exception e) {
+            log.error("회원가입 완료 후 회원가입 세션 삭제 실패", e);
+        }
+
+        if (ObjectUtils.isEmpty(verifiedEmail)) {
+            return;
+        }
+
+        try {
+            emailVerificationSessionStoreRepository.deleteSession(request.getEmailSessionId());
+        } catch (Exception e) {
+            log.error("회원가입 완료 후 이메일 인증 세션 삭제 실패", e);
+        }
     }
 
     private String resolveVerifiedEmail(CreateUserRequestDto request) {
