@@ -8,11 +8,9 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatMessage;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
-import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
-import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
@@ -57,9 +55,6 @@ class ManagerSendChatMessageTests {
     private ChatMessageRepository chatMessageRepository;
 
     @Mock
-    private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
-
-    @Mock
     private AttachFilesUseCase attachFilesUseCase;
 
     @Mock
@@ -84,10 +79,8 @@ class ManagerSendChatMessageTests {
         given(managerUser.getUser()).willReturn(innerUser);
 
         ChatRoom groupRoom = mock(ChatRoom.class);
-        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
 
-        given(chatRoomQueryRepository.findById(5L)).willReturn(Optional.of(groupRoom));
-        given(chatRoomMemberQueryRepository.existsActive(5L, 2L, TokenScope.MANAGER)).willReturn(true);
+        given(chatRoomQueryRepository.findByIdAndParticipant(5L, 2L, TokenScope.MANAGER)).willReturn(Optional.of(groupRoom));
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
         given(request.getType()).willReturn(ChatMessageType.NOTICE);
@@ -114,11 +107,7 @@ class ManagerSendChatMessageTests {
         ManagerUser managerUser = mock(ManagerUser.class);
         given(managerUser.getUser()).willReturn(innerUser);
 
-        ChatRoom groupRoom = mock(ChatRoom.class);
-        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
-
-        given(chatRoomQueryRepository.findById(5L)).willReturn(Optional.of(groupRoom));
-        given(chatRoomMemberQueryRepository.existsActive(5L, 2L, TokenScope.MANAGER)).willReturn(false);
+        given(chatRoomQueryRepository.findByIdAndParticipant(5L, 2L, TokenScope.MANAGER)).willReturn(Optional.empty());
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
 
@@ -141,10 +130,8 @@ class ManagerSendChatMessageTests {
         given(managerUser.getUser()).willReturn(innerUser);
 
         ChatRoom groupRoom = mock(ChatRoom.class);
-        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
 
-        given(chatRoomQueryRepository.findById(5L)).willReturn(Optional.of(groupRoom));
-        given(chatRoomMemberQueryRepository.existsActive(5L, 2L, TokenScope.MANAGER)).willReturn(true);
+        given(chatRoomQueryRepository.findByIdAndParticipant(5L, 2L, TokenScope.MANAGER)).willReturn(Optional.of(groupRoom));
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
         given(request.getContent()).willReturn(null);
@@ -169,10 +156,8 @@ class ManagerSendChatMessageTests {
         given(managerUser.getUser()).willReturn(innerUser);
 
         ChatRoom groupRoom = mock(ChatRoom.class);
-        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
 
-        given(chatRoomQueryRepository.findById(5L)).willReturn(Optional.of(groupRoom));
-        given(chatRoomMemberQueryRepository.existsActive(5L, 2L, TokenScope.MANAGER)).willReturn(true);
+        given(chatRoomQueryRepository.findByIdAndParticipant(5L, 2L, TokenScope.MANAGER)).willReturn(Optional.of(groupRoom));
 
         List<String> fileIds = java.util.stream.IntStream.range(0, 11)
             .mapToObj(i -> "f" + i)
@@ -201,10 +186,8 @@ class ManagerSendChatMessageTests {
         given(managerUser.getUser()).willReturn(innerUser);
 
         ChatRoom groupRoom = mock(ChatRoom.class);
-        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
 
-        given(chatRoomQueryRepository.findById(5L)).willReturn(Optional.of(groupRoom));
-        given(chatRoomMemberQueryRepository.existsActive(5L, 2L, TokenScope.MANAGER)).willReturn(true);
+        given(chatRoomQueryRepository.findByIdAndParticipant(5L, 2L, TokenScope.MANAGER)).willReturn(Optional.of(groupRoom));
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
         given(request.getContent()).willReturn(null);

@@ -18,7 +18,6 @@ import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
-import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -51,17 +50,9 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
         TokenScope participantScope = getParticipantScope(actor);
         Long participantId = getParticipantId(actor);
 
-        // 1. 채팅방 존재 확인 및 참여자 검증 (DIRECT: participant 컬럼 기반, GROUP: 멤버 테이블 기반)
-        ChatRoom chatRoom = chatRoomQueryRepository.findById(chatRoomId)
+        // 1. 채팅방 존재 확인 및 참여자 검증 (활성 멤버 EXISTS 기준)
+        ChatRoom chatRoom = chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, participantScope)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다."));
-
-        if (chatRoom.getType() == ChatRoomType.GROUP) {
-            if (!chatRoomMemberQueryRepository.existsActive(chatRoomId, participantId, participantScope)) {
-                throw new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다.");
-            }
-        } else if (!chatRoom.isParticipant(participantId, participantScope)) {
-            throw new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다.");
-        }
 
         // 2. 커서 디코딩
         CursorDto cursorDto = null;

@@ -8,11 +8,9 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatMessage;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
-import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
-import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
@@ -56,9 +54,6 @@ class SendChatMessageTests {
     private ChatMessageRepository chatMessageRepository;
 
     @Mock
-    private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
-
-    @Mock
     private AttachFilesUseCase attachFilesUseCase;
 
     @Mock
@@ -79,7 +74,7 @@ class SendChatMessageTests {
         // given
         User user = mock(User.class);
         given(user.getId()).willReturn(1L);
-        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.empty());
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP)).willReturn(Optional.empty());
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
 
@@ -90,6 +85,24 @@ class SendChatMessageTests {
     }
 
     @Test
+    @DisplayName("DIRECT 방에서 멤버 행이 없거나 나간 사용자는 전송할 수 없다 (NOT_FOUND)")
+    void execute_DIRECT_비멤버_또는_나간사용자는_NOT_FOUND() {
+        // given
+        User user = mock(User.class);
+        given(user.getId()).willReturn(1L);
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP)).willReturn(Optional.empty());
+
+        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
+
+        // when & then
+        assertThatThrownBy(() -> sut.execute(user, request, 100L))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FOUND);
+
+        then(chatMessageRepository).should(never()).save(any());
+    }
+
+    @Test
     @DisplayName("유저(APP)가 NOTICE 전송시 공지 권한 예외")
     void execute_유저가_NOTICE_전송시_예외() {
         // given
@@ -97,7 +110,7 @@ class SendChatMessageTests {
         given(user.getId()).willReturn(1L);
 
         ChatRoom directRoom = ChatRoom.create(1L, TokenScope.APP, 2L, TokenScope.APP);
-        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP)).willReturn(Optional.of(directRoom));
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
         given(request.getType()).willReturn(ChatMessageType.NOTICE);
@@ -120,7 +133,7 @@ class SendChatMessageTests {
         given(user.getId()).willReturn(1L);
 
         ChatRoom directRoom = ChatRoom.create(1L, TokenScope.APP, 2L, TokenScope.APP);
-        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP)).willReturn(Optional.of(directRoom));
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
         given(request.getContent()).willReturn("안녕하세요");
@@ -151,11 +164,7 @@ class SendChatMessageTests {
         User user = mock(User.class);
         given(user.getId()).willReturn(1L);
 
-        ChatRoom groupRoom = mock(ChatRoom.class);
-        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
-
-        given(chatRoomQueryRepository.findById(200L)).willReturn(Optional.of(groupRoom));
-        given(chatRoomMemberQueryRepository.existsActive(200L, 1L, TokenScope.APP)).willReturn(false);
+        given(chatRoomQueryRepository.findByIdAndParticipant(200L, 1L, TokenScope.APP)).willReturn(Optional.empty());
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
 
@@ -176,10 +185,8 @@ class SendChatMessageTests {
         given(user.getId()).willReturn(1L);
 
         ChatRoom groupRoom = mock(ChatRoom.class);
-        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
 
-        given(chatRoomQueryRepository.findById(200L)).willReturn(Optional.of(groupRoom));
-        given(chatRoomMemberQueryRepository.existsActive(200L, 1L, TokenScope.APP)).willReturn(true);
+        given(chatRoomQueryRepository.findByIdAndParticipant(200L, 1L, TokenScope.APP)).willReturn(Optional.of(groupRoom));
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
         given(request.getContent()).willReturn("그룹 메시지");
@@ -207,7 +214,7 @@ class SendChatMessageTests {
         given(user.getId()).willReturn(1L);
 
         ChatRoom directRoom = ChatRoom.create(1L, TokenScope.APP, 2L, TokenScope.APP);
-        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP)).willReturn(Optional.of(directRoom));
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
         given(request.getContent()).willReturn(null);
@@ -230,7 +237,7 @@ class SendChatMessageTests {
         given(user.getId()).willReturn(1L);
 
         ChatRoom directRoom = ChatRoom.create(1L, TokenScope.APP, 2L, TokenScope.APP);
-        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP)).willReturn(Optional.of(directRoom));
 
         List<String> fileIds = java.util.stream.IntStream.range(0, 11)
             .mapToObj(i -> "f" + i)
@@ -257,7 +264,7 @@ class SendChatMessageTests {
         given(user.getId()).willReturn(1L);
 
         ChatRoom directRoom = ChatRoom.create(1L, TokenScope.APP, 2L, TokenScope.APP);
-        given(chatRoomQueryRepository.findById(100L)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP)).willReturn(Optional.of(directRoom));
 
         SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
         given(request.getContent()).willReturn(null);

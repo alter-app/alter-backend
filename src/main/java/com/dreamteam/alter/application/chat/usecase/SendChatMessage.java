@@ -3,7 +3,6 @@ package com.dreamteam.alter.application.chat.usecase;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.port.inbound.SendChatMessageUseCase;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
-import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import com.dreamteam.alter.application.file.FileUrlService;
@@ -20,14 +19,13 @@ public class SendChatMessage extends AbstractSendChatMessageUseCase<User> implem
         ChatRoomQueryRepository chatRoomQueryRepository,
         ChatRoomRepository chatRoomRepository,
         ChatMessageRepository chatMessageRepository,
-        ChatRoomMemberQueryRepository chatRoomMemberQueryRepository,
         AttachFilesUseCase attachFilesUseCase,
         FileQueryRepository fileQueryRepository,
         FileUrlService fileUrlService,
         ApplicationEventPublisher eventPublisher
     ) {
         super(
-            chatRoomQueryRepository, chatRoomRepository, chatMessageRepository, chatRoomMemberQueryRepository,
+            chatRoomQueryRepository, chatRoomRepository, chatMessageRepository,
             attachFilesUseCase, fileQueryRepository, fileUrlService, eventPublisher
         );
     }
