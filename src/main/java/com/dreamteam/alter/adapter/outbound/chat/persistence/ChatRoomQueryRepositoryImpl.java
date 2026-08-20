@@ -9,9 +9,14 @@ import com.dreamteam.alter.domain.chat.entity.QChatRoom;
 import com.dreamteam.alter.domain.chat.entity.QChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
+import com.dreamteam.alter.domain.file.entity.QFile;
+import com.dreamteam.alter.domain.file.type.FileStatus;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.QUser;
 import com.dreamteam.alter.domain.user.type.UserStatus;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
@@ -107,8 +112,31 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
             .then(qParticipant2User.name)
             .otherwise(qParticipant1User.name);
 
+        // 상대방 프로필 이미지 조인 (비활성 상대는 user join이 null이 되어 file join도 자동으로 null)
+        QFile qParticipant1File = new QFile("participant1File");
+        QFile qParticipant2File = new QFile("participant2File");
+
+        SimpleExpression<String> opponentProfileImageUrlCase = new CaseBuilder()
+            .when(qChatRoom.participant1Id.eq(userId)
+                .and(qChatRoom.participant1Scope.eq(userScope)))
+            .then(qParticipant2File.fileUrl)
+            .otherwise(qParticipant1File.fileUrl);
+
         // 그룹 방은 상대방이 없으므로 업장명을 방 이름으로 사용한다
         QWorkspace qWorkspace = QWorkspace.workspace;
+
+        // 참여 인원 수(나간 멤버 제외) 스칼라 서브쿼리
+        QChatRoomMember qMemberCount = QChatRoomMember.chatRoomMember;
+        Expression<Long> memberCountExpr = ExpressionUtils.as(
+            JPAExpressions
+                .select(qMemberCount.count())
+                .from(qMemberCount)
+                .where(
+                    qMemberCount.chatRoomId.eq(qChatRoom.id),
+                    qMemberCount.leftAt.isNull()
+                ),
+            "memberCount"
+        );
 
         // 채팅방 정보와 상대방 이름을 함께 조회
         return queryFactory
@@ -121,7 +149,9 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
                 qWorkspace.businessName.as("workspaceName"),
                 opponentIdCase.as("opponentId"),
                 opponentScopeCase.as("opponentScope"),
-                opponentNameCase.as("opponentName")
+                opponentNameCase.as("opponentName"),
+                opponentProfileImageUrlCase.as("opponentProfileImageUrl"),
+                memberCountExpr
             ))
             .from(qChatRoom)
             .leftJoin(qParticipant1User)
@@ -130,6 +160,10 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
             .leftJoin(qParticipant2User)
             .on(qChatRoom.participant2Id.eq(qParticipant2User.id)
                 .and(qParticipant2User.status.eq(UserStatus.ACTIVE)))
+            .leftJoin(qParticipant1File)
+            .on(fileConditions(qParticipant1File, qParticipant1User))
+            .leftJoin(qParticipant2File)
+            .on(fileConditions(qParticipant2File, qParticipant2User))
             .leftJoin(qWorkspace)
             .on(qChatRoom.workspaceId.eq(qWorkspace.id))
             .where(
@@ -252,5 +286,13 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
                 qChatRoom.updatedAt.eq(cursor.getUpdatedAt())
                     .and(qChatRoom.id.lt(cursor.getId()))
             );
+    }
+
+    private BooleanExpression[] fileConditions(QFile file, QUser user) {
+        return new BooleanExpression[] {
+            file.targetType.eq(FileTargetType.USER_PROFILE),
+            file.targetId.eq(user.id.stringValue()),
+            file.status.eq(FileStatus.ATTACHED)
+        };
     }
 }

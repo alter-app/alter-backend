@@ -3,10 +3,18 @@ package com.dreamteam.alter.adapter.outbound.chat.persistence;
 import com.dreamteam.alter.adapter.inbound.common.dto.ChatRoomCursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatRoomListWithOpponentResponse;
+import com.dreamteam.alter.adapter.outbound.file.persistence.FileRepositoryImpl;
+import com.dreamteam.alter.adapter.outbound.user.persistence.UserRepositoryImpl;
 import com.dreamteam.alter.common.config.QueryDslConfig;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
+import com.dreamteam.alter.domain.file.entity.File;
+import com.dreamteam.alter.domain.file.type.BucketType;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
+import com.dreamteam.alter.domain.user.entity.User;
+import com.dreamteam.alter.domain.user.type.UserGender;
+import com.dreamteam.alter.domain.user.type.UserStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -22,7 +30,9 @@ import static org.assertj.core.api.Assertions.assertThat;
     QueryDslConfig.class,
     ChatRoomRepositoryImpl.class,
     ChatRoomQueryRepositoryImpl.class,
-    ChatRoomMemberRepositoryImpl.class
+    ChatRoomMemberRepositoryImpl.class,
+    UserRepositoryImpl.class,
+    FileRepositoryImpl.class
 })
 class ChatRoomQueryRepositoryImplTests {
 
@@ -35,8 +45,34 @@ class ChatRoomQueryRepositoryImplTests {
     @Autowired
     private ChatRoomMemberRepositoryImpl chatRoomMemberRepository;
 
+    @Autowired
+    private UserRepositoryImpl userRepository;
+
+    @Autowired
+    private FileRepositoryImpl fileRepository;
+
     private CursorPageRequest<ChatRoomCursorDto> firstPage() {
         return CursorPageRequest.of(null, 20);
+    }
+
+    private User saveUser(UserStatus status) {
+        User user = User.create(
+            "01000000000", "encoded", "김알바", "nickname" + System.nanoTime(),
+            UserGender.GENDER_MALE, "19990101", "user" + System.nanoTime() + "@example.com"
+        );
+        if (status != UserStatus.ACTIVE) {
+            user.updateStatus(status);
+        }
+        return userRepository.save(user);
+    }
+
+    private File saveAttachedProfileFile(Long targetUserId, String fileUrl) {
+        File file = File.create(
+            FileTargetType.USER_PROFILE, "profile.png", "stored/profile.png",
+            fileUrl, "image/png", 1024L, BucketType.PUBLIC, targetUserId
+        );
+        file.attach(String.valueOf(targetUserId));
+        return fileRepository.save(file);
     }
 
     @Test
@@ -118,5 +154,70 @@ class ChatRoomQueryRepositoryImplTests {
             chatRoomQueryRepository.getChatRoomListWithOpponent(60L, TokenScope.APP, firstPage());
 
         assertThat(count).isEqualTo(list.size());
+    }
+
+    @Test
+    void getChatRoomListWithOpponent_활성상대의_ATTACHED프로필파일이_opponentProfileImageUrl로_조회된다() {
+        User opponent = saveUser(UserStatus.ACTIVE);
+        File profileFile = saveAttachedProfileFile(opponent.getId(), "https://cdn.example.com/profile.png");
+
+        ChatRoom directRoom = chatRoomRepository.save(
+            ChatRoom.create(80L, TokenScope.APP, opponent.getId(), TokenScope.APP));
+        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), 80L, TokenScope.APP));
+        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), opponent.getId(), TokenScope.APP));
+
+        List<ChatRoomListWithOpponentResponse> result =
+            chatRoomQueryRepository.getChatRoomListWithOpponent(80L, TokenScope.APP, firstPage());
+
+        ChatRoomListWithOpponentResponse response = result.stream()
+            .filter(r -> r.getId().equals(directRoom.getId()))
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(response.getOpponentName()).isEqualTo(opponent.getName());
+        assertThat(response.getOpponentProfileImageUrl()).isEqualTo(profileFile.getFileUrl());
+    }
+
+    @Test
+    void getChatRoomListWithOpponent_비활성상대는_이름과_프로필URL_모두_null() {
+        User opponent = saveUser(UserStatus.SUSPENDED);
+        saveAttachedProfileFile(opponent.getId(), "https://cdn.example.com/profile.png");
+
+        ChatRoom directRoom = chatRoomRepository.save(
+            ChatRoom.create(81L, TokenScope.APP, opponent.getId(), TokenScope.APP));
+        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), 81L, TokenScope.APP));
+        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), opponent.getId(), TokenScope.APP));
+
+        List<ChatRoomListWithOpponentResponse> result =
+            chatRoomQueryRepository.getChatRoomListWithOpponent(81L, TokenScope.APP, firstPage());
+
+        ChatRoomListWithOpponentResponse response = result.stream()
+            .filter(r -> r.getId().equals(directRoom.getId()))
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(response.getOpponentName()).isNull();
+        assertThat(response.getOpponentProfileImageUrl()).isNull();
+    }
+
+    @Test
+    void getChatRoomListWithOpponent_memberCount는_활성멤버수와_일치하고_나간멤버는_제외() {
+        ChatRoom groupRoom = chatRoomRepository.save(ChatRoom.createGroup(104L));
+        chatRoomMemberRepository.save(ChatRoomMember.create(groupRoom.getId(), 90L, TokenScope.APP));
+        chatRoomMemberRepository.save(ChatRoomMember.create(groupRoom.getId(), 91L, TokenScope.APP));
+        ChatRoomMember leftMember = chatRoomMemberRepository.save(
+            ChatRoomMember.create(groupRoom.getId(), 92L, TokenScope.APP));
+        leftMember.leave();
+        chatRoomMemberRepository.save(leftMember);
+
+        List<ChatRoomListWithOpponentResponse> result =
+            chatRoomQueryRepository.getChatRoomListWithOpponent(90L, TokenScope.APP, firstPage());
+
+        ChatRoomListWithOpponentResponse response = result.stream()
+            .filter(r -> r.getId().equals(groupRoom.getId()))
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(response.getMemberCount()).isEqualTo(2L);
     }
 }

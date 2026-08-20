@@ -10,7 +10,6 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatRoomListWithOpponentResponse {
@@ -23,6 +22,7 @@ public class ChatRoomListWithOpponentResponse {
     private TokenScope opponentScope;
     private String opponentName;
     private String opponentProfileImageUrl;
+    @Setter
     private String latestMessageContent;
-    private int memberCount;
+    private Long memberCount;
 }
