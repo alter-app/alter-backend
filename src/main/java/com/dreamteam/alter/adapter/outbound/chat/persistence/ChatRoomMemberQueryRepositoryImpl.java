@@ -41,12 +41,7 @@ public class ChatRoomMemberQueryRepositoryImpl implements ChatRoomMemberQueryRep
 
     @Override
     public int countActiveByRoom(Long chatRoomId) {
-        QChatRoomMember m = QChatRoomMember.chatRoomMember;
-        Long count = queryFactory.select(m.count())
-            .from(m)
-            .where(m.chatRoomId.eq(chatRoomId), m.leftAt.isNull())
-            .fetchOne();
-        return count != null ? count.intValue() : 0;
+        return countActiveByRoomIds(List.of(chatRoomId)).getOrDefault(chatRoomId, 0L).intValue();
     }
 
     @Override
