@@ -84,9 +84,10 @@ public abstract class AbstractGetMyChatRoomListUseCase<A> extends AbstractChatUs
                 return;
             }
 
-            chatRoom.setOpponentProfileImageUrl(opponentProfileImageUrls.get(chatRoom.getOpponentId()));
-            // opponentName이 null인 경우 기본값 설정
-            if (chatRoom.getOpponentName() == null) {
+            // opponentName이 null인 경우(상대가 비활성 상태) 프로필 이미지도 노출하지 않는다
+            if (chatRoom.getOpponentName() != null) {
+                chatRoom.setOpponentProfileImageUrl(opponentProfileImageUrls.get(chatRoom.getOpponentId()));
+            } else {
                 chatRoom.setOpponentName("알 수 없음");
             }
         });
@@ -115,6 +116,7 @@ public abstract class AbstractGetMyChatRoomListUseCase<A> extends AbstractChatUs
     private Map<Long, String> getOpponentProfileImageUrls(List<ChatRoomListWithOpponentResponse> chatRooms) {
         List<String> opponentIds = chatRooms.stream()
             .filter(chatRoom -> !ChatRoomType.GROUP.equals(chatRoom.getType()))
+            .filter(chatRoom -> ObjectUtils.isNotEmpty(chatRoom.getOpponentName()))
             .map(ChatRoomListWithOpponentResponse::getOpponentId)
             .filter(ObjectUtils::isNotEmpty)
             .map(String::valueOf)

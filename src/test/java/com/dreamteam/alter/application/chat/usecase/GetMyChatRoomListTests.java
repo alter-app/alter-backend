@@ -111,6 +111,39 @@ class GetMyChatRoomListTests {
     }
 
     @Test
+    @DisplayName("DIRECT 채팅방 상대방 이름이 null이면 '알 수 없음'으로 마스킹되고 프로필 이미지는 조회 대상에서 제외된다")
+    void execute_DIRECT_상대방이름null이면_이름마스킹_프로필조회제외() {
+        // given
+        Long participantId = 10L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        Long chatRoomId = 1L;
+        Long opponentId = 201L;
+        ChatRoomListWithOpponentResponse directRoom = new ChatRoomListWithOpponentResponse(
+            chatRoomId, ChatRoomType.DIRECT, LocalDateTime.now(), LocalDateTime.now(),
+            null, opponentId, TokenScope.APP, null, null, null, 0
+        );
+
+        given(chatRoomQueryRepository.countChatRoomsByParticipant(participantId, TokenScope.APP)).willReturn(1L);
+        given(chatRoomQueryRepository.getChatRoomListWithOpponent(any(), any(), any()))
+            .willReturn(List.of(directRoom));
+        given(chatRoomMemberQueryRepository.countActiveByRoomIds(List.of(chatRoomId)))
+            .willReturn(Map.of(chatRoomId, 3L));
+
+        // when
+        CursorPaginatedApiResponse<ChatRoomListResponseDto> response =
+            sut.execute(actor, CursorPageRequestDto.of(null, 10));
+
+        // then
+        ChatRoomListResponseDto dto = response.data().getFirst();
+        assertThat(dto.getOpponentName()).isEqualTo("알 수 없음");
+        assertThat(dto.getOpponentProfileImageUrl()).isNull();
+
+        // 이름이 비어 있는 상대는 프로필 파일 배치 조회 대상에서 제외된다
+        verify(fileQueryRepository).findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, List.of());
+    }
+
+    @Test
     @DisplayName("GROUP 채팅방은 업장명이 roomName이 되고 상대방 필드는 모두 null이다")
     void execute_GROUP_업장명과_null상대방필드() {
         // given

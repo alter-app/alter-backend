@@ -26,8 +26,11 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GetChatRoomInfo 테스트")
@@ -113,6 +116,31 @@ class GetChatRoomInfoTests {
         assertThat(response.getOpponentScope().value()).isEqualTo(TokenScope.APP);
         assertThat(response.getOpponentName()).isEqualTo("김알바");
         assertThat(response.getOpponentProfileImageUrl()).isEqualTo("https://cdn.example.com/opponent.png");
+    }
+
+    @Test
+    @DisplayName("DIRECT 채팅방 상대방이 조회되지 않으면 이름은 '알 수 없음', 프로필 URL은 null이고 파일 조회는 호출되지 않는다")
+    void execute_DIRECT_상대방없음_이름마스킹_프로필URL_null() {
+        // given
+        Long chatRoomId = 2L;
+        Long participantId = 10L;
+        Long opponentId = 20L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        ChatRoom directRoom = ChatRoom.create(participantId, TokenScope.APP, opponentId, TokenScope.APP);
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
+        given(chatRoomMemberQueryRepository.countActiveByRoom(chatRoomId)).willReturn(2);
+
+        given(userQueryRepository.findById(opponentId)).willReturn(Optional.empty());
+
+        // when
+        ChatRoomResponseDto response = sut.execute(actor, chatRoomId);
+
+        // then
+        assertThat(response.getOpponentName()).isEqualTo("알 수 없음");
+        assertThat(response.getOpponentProfileImageUrl()).isNull();
+        verify(fileUrlService, never()).resolveUrlByTarget(any(), any());
     }
 
     @Test
