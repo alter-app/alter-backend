@@ -25,6 +25,8 @@ public interface ChatRoomQueryRepository {
         CursorPageRequest<ChatRoomCursorDto> pageRequest
     );
 
+    long countChatRoomsByParticipant(Long userId, TokenScope userScope);
+
     Optional<ChatRoom> findByIdAndParticipant(
         Long id,
         Long userId,

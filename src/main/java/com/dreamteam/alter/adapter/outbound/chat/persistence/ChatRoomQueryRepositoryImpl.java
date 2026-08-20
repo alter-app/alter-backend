@@ -6,13 +6,16 @@ import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatRoomLi
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.QChatRoom;
+import com.dreamteam.alter.domain.chat.entity.QChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.user.entity.QUser;
+import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.SimpleExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -103,13 +106,18 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
             .then(qParticipant2User.name)
             .otherwise(qParticipant1User.name);
 
+        // 그룹 방은 상대방이 없으므로 업장명을 방 이름으로 사용한다
+        QWorkspace qWorkspace = QWorkspace.workspace;
+
         // 채팅방 정보와 상대방 이름을 함께 조회
         return queryFactory
             .select(Projections.fields(
                 ChatRoomListWithOpponentResponse.class,
                 qChatRoom.id.as("id"),
+                qChatRoom.type.as("type"),
                 qChatRoom.createdAt.as("createdAt"),
                 qChatRoom.updatedAt.as("updatedAt"),
+                qWorkspace.businessName.as("workspaceName"),
                 opponentIdCase.as("opponentId"),
                 opponentScopeCase.as("opponentScope"),
                 opponentNameCase.as("opponentName")
@@ -119,6 +127,8 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
             .on(qChatRoom.participant1Id.eq(qParticipant1User.id))
             .leftJoin(qParticipant2User)
             .on(qChatRoom.participant2Id.eq(qParticipant2User.id))
+            .leftJoin(qWorkspace)
+            .on(qChatRoom.workspaceId.eq(qWorkspace.id))
             .where(
                 participantCondition,
                 cursorCondition
@@ -126,6 +136,19 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
             .orderBy(qChatRoom.updatedAt.desc(), qChatRoom.id.desc())
             .limit(pageRequest.pageSize())
             .fetch();
+    }
+
+    @Override
+    public long countChatRoomsByParticipant(Long userId, TokenScope userScope) {
+        QChatRoom qChatRoom = QChatRoom.chatRoom;
+
+        Long count = queryFactory
+            .select(qChatRoom.count())
+            .from(qChatRoom)
+            .where(buildParticipantCondition(qChatRoom, userId, userScope))
+            .fetchOne();
+
+        return count != null ? count : 0L;
     }
 
     @Override
@@ -191,15 +214,33 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
         return case1.or(case2);
     }
 
+    // DIRECT 방은 participant 컬럼으로, GROUP 방은 멤버 테이블로 참여 여부를 판단한다.
+    // GROUP 방은 participant 컬럼이 비어 있어 컬럼 조건만으로는 조회되지 않는다.
+    // 멤버 테이블 도입 이전에 생성된 DIRECT 방은 멤버 행이 없을 수 있어 두 조건을 OR로 유지한다.
     private BooleanExpression buildParticipantCondition(
         QChatRoom qChatRoom,
         Long userId,
         TokenScope userScope
     ) {
-        return (qChatRoom.participant1Id.eq(userId)
+        QChatRoomMember qChatRoomMember = QChatRoomMember.chatRoomMember;
+
+        BooleanExpression participantColumnCondition = (qChatRoom.participant1Id.eq(userId)
             .and(qChatRoom.participant1Scope.eq(userScope)))
             .or(qChatRoom.participant2Id.eq(userId)
                 .and(qChatRoom.participant2Scope.eq(userScope)));
+
+        BooleanExpression activeMemberCondition = JPAExpressions
+            .selectOne()
+            .from(qChatRoomMember)
+            .where(
+                qChatRoomMember.chatRoomId.eq(qChatRoom.id),
+                qChatRoomMember.memberId.eq(userId),
+                qChatRoomMember.memberScope.eq(userScope),
+                qChatRoomMember.leftAt.isNull()
+            )
+            .exists();
+
+        return participantColumnCondition.or(activeMemberCondition);
     }
 
     private BooleanExpression buildCursorCondition(
