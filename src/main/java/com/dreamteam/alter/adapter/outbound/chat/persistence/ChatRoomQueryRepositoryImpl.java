@@ -217,9 +217,9 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
         return case1.or(case2);
     }
 
-    // DIRECT 방은 participant 컬럼으로, GROUP 방은 멤버 테이블로 참여 여부를 판단한다.
-    // GROUP 방은 participant 컬럼이 비어 있어 컬럼 조건만으로는 조회되지 않는다.
-    // 멤버 테이블 도입 이전에 생성된 DIRECT 방은 멤버 행이 없을 수 있어 두 조건을 OR로 유지한다.
+    // 참여 판정은 DIRECT/GROUP 공통으로 chat_room_members(활성 멤버) 기준이다.
+    // V11 마이그레이션이 기존 방을 멤버 2행으로 백필했고 신규 DIRECT 방도 멤버 행을 만들므로
+    // participant 컬럼을 함께 보지 않아도 누락이 없다. (OR 를 없애야 멤버 인덱스를 탄다)
     private BooleanExpression buildParticipantCondition(
         QChatRoom qChatRoom,
         Long userId,
@@ -227,12 +227,7 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
     ) {
         QChatRoomMember qChatRoomMember = QChatRoomMember.chatRoomMember;
 
-        BooleanExpression participantColumnCondition = (qChatRoom.participant1Id.eq(userId)
-            .and(qChatRoom.participant1Scope.eq(userScope)))
-            .or(qChatRoom.participant2Id.eq(userId)
-                .and(qChatRoom.participant2Scope.eq(userScope)));
-
-        BooleanExpression activeMemberCondition = JPAExpressions
+        return JPAExpressions
             .selectOne()
             .from(qChatRoomMember)
             .where(
@@ -242,8 +237,6 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
                 qChatRoomMember.leftAt.isNull()
             )
             .exists();
-
-        return participantColumnCondition.or(activeMemberCondition);
     }
 
     private BooleanExpression buildCursorCondition(

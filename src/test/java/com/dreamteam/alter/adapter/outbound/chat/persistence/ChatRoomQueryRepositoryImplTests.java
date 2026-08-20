@@ -81,16 +81,30 @@ class ChatRoomQueryRepositoryImplTests {
     }
 
     @Test
-    void getChatRoomListWithOpponent_DIRECT_멤버행없어도_participant컬럼만으로_목록에_포함() {
+    void getChatRoomListWithOpponent_DIRECT_멤버행_기준으로_목록에_포함() {
         ChatRoom directRoom = chatRoomRepository.save(
             ChatRoom.create(40L, TokenScope.APP, 50L, TokenScope.MANAGER));
-        // 멤버 테이블 도입 이전 레거시 데이터를 재현: ChatRoomMember 행을 생성하지 않음
+        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), 40L, TokenScope.APP));
+        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), 50L, TokenScope.MANAGER));
 
         List<ChatRoomListWithOpponentResponse> result =
             chatRoomQueryRepository.getChatRoomListWithOpponent(40L, TokenScope.APP, firstPage());
 
         assertThat(result).extracting(ChatRoomListWithOpponentResponse::getId)
             .contains(directRoom.getId());
+    }
+
+    @Test
+    void getChatRoomListWithOpponent_멤버행없으면_participant컬럼있어도_목록에서_제외() {
+        ChatRoom directRoom = chatRoomRepository.save(
+            ChatRoom.create(41L, TokenScope.APP, 51L, TokenScope.MANAGER));
+        // ChatRoomMember 행을 생성하지 않음: participant 컬럼만으로는 목록에 포함되지 않아야 한다
+
+        List<ChatRoomListWithOpponentResponse> result =
+            chatRoomQueryRepository.getChatRoomListWithOpponent(41L, TokenScope.APP, firstPage());
+
+        assertThat(result).extracting(ChatRoomListWithOpponentResponse::getId)
+            .doesNotContain(directRoom.getId());
     }
 
     @Test
