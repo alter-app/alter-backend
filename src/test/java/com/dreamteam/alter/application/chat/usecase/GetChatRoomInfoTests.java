@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.chat.usecase;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomResponseDto;
 import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -9,6 +10,8 @@ import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
+import com.dreamteam.alter.domain.file.entity.File;
+import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.entity.User;
@@ -22,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +51,9 @@ class GetChatRoomInfoTests {
 
     @Mock
     private UserQueryRepository userQueryRepository;
+
+    @Mock
+    private FileQueryRepository fileQueryRepository;
 
     @Mock
     private FileUrlService fileUrlService;
@@ -86,6 +93,51 @@ class GetChatRoomInfoTests {
     }
 
     @Test
+    @DisplayName("GROUP 채팅방이지만 업장이 조회되지 않으면 roomName은 '알 수 없음'이다")
+    void execute_GROUP_업장없음_roomName_알수없음() {
+        // given
+        Long chatRoomId = 1L;
+        Long workspaceId = 500L;
+        Long participantId = 10L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        ChatRoom groupRoom = ChatRoom.createGroup(workspaceId);
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP))
+            .willReturn(Optional.of(groupRoom));
+        given(chatRoomMemberQueryRepository.countActiveByRoom(chatRoomId)).willReturn(8);
+        given(workspaceQueryRepository.findById(workspaceId)).willReturn(Optional.empty());
+
+        // when
+        ChatRoomResponseDto response = sut.execute(actor, chatRoomId);
+
+        // then
+        assertThat(response.getRoomName()).isEqualTo("알 수 없음");
+    }
+
+    @Test
+    @DisplayName("GROUP 채팅방인데 workspaceId가 null이면 예외 없이 roomName은 '알 수 없음'이고 업장 조회는 호출되지 않는다")
+    void execute_GROUP_workspaceId_null_roomName_알수없음() {
+        // given
+        Long chatRoomId = 1L;
+        Long participantId = 10L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        ChatRoom groupRoom = mock(ChatRoom.class);
+        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
+        given(groupRoom.getWorkspaceId()).willReturn(null);
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP))
+            .willReturn(Optional.of(groupRoom));
+        given(chatRoomMemberQueryRepository.countActiveByRoom(chatRoomId)).willReturn(8);
+
+        // when
+        ChatRoomResponseDto response = sut.execute(actor, chatRoomId);
+
+        // then
+        assertThat(response.getRoomName()).isEqualTo("알 수 없음");
+        verify(workspaceQueryRepository, never()).findById(any());
+    }
+
+    @Test
     @DisplayName("DIRECT 채팅방 조회 성공 시 상대방 정보와 프로필 URL이 채워진다")
     void execute_DIRECT_조회성공_상대방정보와_프로필URL_채워짐() {
         // given
@@ -102,8 +154,13 @@ class GetChatRoomInfoTests {
         User opponentUser = mock(User.class);
         given(opponentUser.getName()).willReturn("김알바");
         given(userQueryRepository.findById(opponentId)).willReturn(Optional.of(opponentUser));
-        given(fileUrlService.resolveUrlByTarget(FileTargetType.USER_PROFILE, String.valueOf(opponentId)))
-            .willReturn("https://cdn.example.com/opponent.png");
+
+        File profileFile = mock(File.class);
+        FileResponseDto profileFileResponse = FileResponseDto.of(profileFile, "https://cdn.example.com/opponent.png");
+        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, List.of(String.valueOf(opponentId))))
+            .willReturn(List.of(profileFile));
+        given(fileUrlService.resolve(profileFile))
+            .willReturn(profileFileResponse);
 
         // when
         ChatRoomResponseDto response = sut.execute(actor, chatRoomId);
@@ -116,6 +173,40 @@ class GetChatRoomInfoTests {
         assertThat(response.getOpponentScope().value()).isEqualTo(TokenScope.APP);
         assertThat(response.getOpponentName()).isEqualTo("김알바");
         assertThat(response.getOpponentProfileImageUrl()).isEqualTo("https://cdn.example.com/opponent.png");
+    }
+
+    @Test
+    @DisplayName("상대방 프로필 파일이 ATTACHED 상태로 2건이어도 예외 없이 가장 오래된 파일의 URL을 반환한다")
+    void execute_DIRECT_프로필파일_중복2건_오래된파일_URL반환() {
+        // given
+        Long chatRoomId = 2L;
+        Long participantId = 10L;
+        Long opponentId = 20L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        ChatRoom directRoom = ChatRoom.create(participantId, TokenScope.APP, opponentId, TokenScope.APP);
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
+        given(chatRoomMemberQueryRepository.countActiveByRoom(chatRoomId)).willReturn(2);
+
+        User opponentUser = mock(User.class);
+        given(opponentUser.getName()).willReturn("김알바");
+        given(userQueryRepository.findById(opponentId)).willReturn(Optional.of(opponentUser));
+
+        // findAllByTargetTypeAndTargetIdIn은 createdAt 오름차순으로 정렬되어 반환되므로 첫 번째가 가장 오래된 파일이다
+        File oldestFile = mock(File.class);
+        File newestFile = mock(File.class);
+        FileResponseDto oldestFileResponse = FileResponseDto.of(oldestFile, "https://cdn.example.com/oldest.png");
+        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, List.of(String.valueOf(opponentId))))
+            .willReturn(List.of(oldestFile, newestFile));
+        given(fileUrlService.resolve(oldestFile))
+            .willReturn(oldestFileResponse);
+
+        // when
+        ChatRoomResponseDto response = sut.execute(actor, chatRoomId);
+
+        // then
+        assertThat(response.getOpponentProfileImageUrl()).isEqualTo("https://cdn.example.com/oldest.png");
     }
 
     @Test
@@ -140,7 +231,7 @@ class GetChatRoomInfoTests {
         // then
         assertThat(response.getOpponentName()).isEqualTo("알 수 없음");
         assertThat(response.getOpponentProfileImageUrl()).isNull();
-        verify(fileUrlService, never()).resolveUrlByTarget(any(), any());
+        verify(fileQueryRepository, never()).findAllByTargetTypeAndTargetIdIn(any(), any());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.chat.usecase;
 
+import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomResponseDto;
 import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -9,6 +10,7 @@ import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
+import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -16,6 +18,8 @@ import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -25,6 +29,7 @@ public abstract class AbstractGetChatRoomUseCase<A> extends AbstractChatUseCase 
     protected final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
     protected final WorkspaceQueryRepository workspaceQueryRepository;
     protected final UserQueryRepository userQueryRepository;
+    protected final FileQueryRepository fileQueryRepository;
     protected final FileUrlService fileUrlService;
 
     public final ChatRoomResponseDto execute(A actor, Long chatRoomId) {
@@ -48,9 +53,12 @@ public abstract class AbstractGetChatRoomUseCase<A> extends AbstractChatUseCase 
         String opponentProfileImageUrl = null;
 
         if (chatRoom.getType() == ChatRoomType.GROUP) {
-            roomName = workspaceQueryRepository.findById(chatRoom.getWorkspaceId())
-                .map(Workspace::getBusinessName)
-                .orElse(null);
+            Long workspaceId = chatRoom.getWorkspaceId();
+            roomName = workspaceId == null
+                ? "알 수 없음"
+                : workspaceQueryRepository.findById(workspaceId)
+                    .map(Workspace::getBusinessName)
+                    .orElse("알 수 없음");
         } else {
             if (chatRoom.getParticipant1Id()
                 .equals(participantId)
@@ -67,7 +75,13 @@ public abstract class AbstractGetChatRoomUseCase<A> extends AbstractChatUseCase 
                 .orElse(null);
             if (opponentUser != null) {
                 opponentName = opponentUser.getName();
-                opponentProfileImageUrl = fileUrlService.resolveUrlByTarget(FileTargetType.USER_PROFILE, String.valueOf(opponentId));
+                opponentProfileImageUrl = fileQueryRepository
+                    .findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, List.of(String.valueOf(opponentId)))
+                    .stream()
+                    .findFirst()
+                    .map(fileUrlService::resolve)
+                    .map(FileResponseDto::getUrl)
+                    .orElse(null);
             } else {
                 opponentName = "알 수 없음";
             }
