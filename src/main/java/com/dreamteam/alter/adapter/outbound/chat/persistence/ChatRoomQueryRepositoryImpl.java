@@ -10,6 +10,7 @@ import com.dreamteam.alter.domain.chat.entity.QChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.user.entity.QUser;
+import com.dreamteam.alter.domain.user.type.UserStatus;
 import com.dreamteam.alter.domain.workspace.entity.QWorkspace;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -124,9 +125,11 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
             ))
             .from(qChatRoom)
             .leftJoin(qParticipant1User)
-            .on(qChatRoom.participant1Id.eq(qParticipant1User.id))
+            .on(qChatRoom.participant1Id.eq(qParticipant1User.id)
+                .and(qParticipant1User.status.eq(UserStatus.ACTIVE)))
             .leftJoin(qParticipant2User)
-            .on(qChatRoom.participant2Id.eq(qParticipant2User.id))
+            .on(qChatRoom.participant2Id.eq(qParticipant2User.id)
+                .and(qParticipant2User.status.eq(UserStatus.ACTIVE)))
             .leftJoin(qWorkspace)
             .on(qChatRoom.workspaceId.eq(qWorkspace.id))
             .where(

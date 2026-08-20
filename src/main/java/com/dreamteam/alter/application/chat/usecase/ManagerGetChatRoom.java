@@ -70,7 +70,7 @@ public class ManagerGetChatRoom extends AbstractChatUseCase implements ManagerGe
 
             User opponentUser = userQueryRepository.findById(opponentId)
                 .orElse(null);
-            opponentName = opponentUser != null ? opponentUser.getName() : null;
+            opponentName = opponentUser != null ? opponentUser.getName() : "알 수 없음";
             opponentProfileImageUrl = fileUrlService.resolveUrlByTarget(FileTargetType.USER_PROFILE, String.valueOf(opponentId));
             roomName = opponentName;
         }
