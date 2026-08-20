@@ -1,15 +1,21 @@
 package com.dreamteam.alter.application.chat.usecase;
 
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomResponseDto;
+import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.port.inbound.GetChatRoomInfoUseCase;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.type.ChatRoomType;
+import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
+import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class GetChatRoomInfo extends AbstractChatUseCase implements GetChatRoomInfoUseCase {
 
     private final ChatRoomQueryRepository chatRoomQueryRepository;
+    private final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
+    private final WorkspaceQueryRepository workspaceQueryRepository;
     private final UserQueryRepository userQueryRepository;
+    private final FileUrlService fileUrlService;
 
     @Override
     public ChatRoomResponseDto execute(AppActor actor, Long chatRoomId) {
@@ -35,21 +44,45 @@ public class GetChatRoomInfo extends AbstractChatUseCase implements GetChatRoomI
             )
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다."));
 
-        // 2. 상대방 정보 확인 및 조회
-        Long opponentId;
-        if (chatRoom.getParticipant1Id()
-            .equals(participantId)
-            && chatRoom.getParticipant1Scope()
-            .equals(participantScope)) {
-            opponentId = chatRoom.getParticipant2Id();
+        int memberCount = chatRoomMemberQueryRepository.countActiveByRoom(chatRoomId);
+
+        String roomName;
+        Long opponentId = null;
+        TokenScope opponentScope = null;
+        String opponentName = null;
+        String opponentProfileImageUrl = null;
+
+        if (chatRoom.getType() == ChatRoomType.GROUP) {
+            roomName = workspaceQueryRepository.findById(chatRoom.getWorkspaceId())
+                .map(Workspace::getBusinessName)
+                .orElse(null);
         } else {
-            opponentId = chatRoom.getParticipant1Id();
+            if (chatRoom.getParticipant1Id()
+                .equals(participantId)
+                && chatRoom.getParticipant1Scope()
+                .equals(participantScope)) {
+                opponentId = chatRoom.getParticipant2Id();
+                opponentScope = chatRoom.getParticipant2Scope();
+            } else {
+                opponentId = chatRoom.getParticipant1Id();
+                opponentScope = chatRoom.getParticipant1Scope();
+            }
+
+            User opponentUser = userQueryRepository.findById(opponentId)
+                .orElse(null);
+            opponentName = opponentUser != null ? opponentUser.getName() : null;
+            opponentProfileImageUrl = fileUrlService.resolveUrlByTarget(FileTargetType.USER_PROFILE, String.valueOf(opponentId));
+            roomName = opponentName;
         }
 
-        User opponentUser = userQueryRepository.findById(opponentId)
-            .orElse(null);
-
-        // 3. DTO 변환 (상대방 정보만 포함)
-        return ChatRoomResponseDto.from(chatRoom, participantId, participantScope, opponentUser);
+        return ChatRoomResponseDto.of(
+            chatRoom,
+            memberCount,
+            roomName,
+            opponentId,
+            opponentScope,
+            opponentName,
+            opponentProfileImageUrl
+        );
     }
 }
