@@ -220,4 +220,63 @@ class ChatRoomQueryRepositoryImplTests {
 
         assertThat(response.getMemberCount()).isEqualTo(2L);
     }
+
+    // 매니저를 조회 주체로 한 케이스: chat_room_members.member_id는 manager_users.user_id
+    // (= ManagerActor.getUserId(), User.id)여야 하고 ManagerUser.id가 아니다.
+
+    @Test
+    void findByIdAndParticipant_매니저user_id로_조회되고_scope다르면_조회안됨() {
+        User managerUnderlyingUser = saveUser(UserStatus.ACTIVE);
+        ChatRoom groupRoom = chatRoomRepository.save(ChatRoom.createGroup(105L));
+        chatRoomMemberRepository.save(
+            ChatRoomMember.create(groupRoom.getId(), managerUnderlyingUser.getId(), TokenScope.MANAGER));
+
+        Optional<ChatRoom> found = chatRoomQueryRepository.findByIdAndParticipant(
+            groupRoom.getId(), managerUnderlyingUser.getId(), TokenScope.MANAGER);
+        Optional<ChatRoom> notFoundWrongScope = chatRoomQueryRepository.findByIdAndParticipant(
+            groupRoom.getId(), managerUnderlyingUser.getId(), TokenScope.APP);
+
+        assertThat(found).isPresent();
+        assertThat(notFoundWrongScope).isEmpty();
+    }
+
+    @Test
+    void getChatRoomListWithOpponent_매니저participant_기준_목록에_포함() {
+        User managerUnderlyingUser = saveUser(UserStatus.ACTIVE);
+        User opponent = saveUser(UserStatus.ACTIVE);
+        ChatRoom directRoom = chatRoomRepository.save(
+            ChatRoom.create(managerUnderlyingUser.getId(), TokenScope.MANAGER, opponent.getId(), TokenScope.APP));
+        chatRoomMemberRepository.save(
+            ChatRoomMember.create(directRoom.getId(), managerUnderlyingUser.getId(), TokenScope.MANAGER));
+        chatRoomMemberRepository.save(
+            ChatRoomMember.create(directRoom.getId(), opponent.getId(), TokenScope.APP));
+
+        List<ChatRoomListWithOpponentResponse> result = chatRoomQueryRepository.getChatRoomListWithOpponent(
+            managerUnderlyingUser.getId(), TokenScope.MANAGER, firstPage());
+
+        ChatRoomListWithOpponentResponse response = result.stream()
+            .filter(r -> r.getId().equals(directRoom.getId()))
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(response.getOpponentId()).isEqualTo(opponent.getId());
+        assertThat(response.getOpponentScope()).isEqualTo(TokenScope.APP);
+        assertThat(response.getOpponentName()).isEqualTo(opponent.getName());
+    }
+
+    @Test
+    void countChatRoomsByParticipant_매니저기준_건수일치() {
+        User managerUnderlyingUser = saveUser(UserStatus.ACTIVE);
+        ChatRoom groupRoom = chatRoomRepository.save(ChatRoom.createGroup(106L));
+        chatRoomMemberRepository.save(
+            ChatRoomMember.create(groupRoom.getId(), managerUnderlyingUser.getId(), TokenScope.MANAGER));
+
+        long count = chatRoomQueryRepository.countChatRoomsByParticipant(
+            managerUnderlyingUser.getId(), TokenScope.MANAGER);
+        List<ChatRoomListWithOpponentResponse> list = chatRoomQueryRepository.getChatRoomListWithOpponent(
+            managerUnderlyingUser.getId(), TokenScope.MANAGER, firstPage());
+
+        assertThat(count).isEqualTo(1);
+        assertThat(count).isEqualTo(list.size());
+    }
 }
