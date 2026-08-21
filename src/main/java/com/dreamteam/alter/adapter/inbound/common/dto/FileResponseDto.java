@@ -17,4 +17,8 @@ public class FileResponseDto {
     public static FileResponseDto of(File file, String url) {
         return new FileResponseDto(file.getId(), url);
     }
+
+    public static FileResponseDto of(String fileId, String url) {
+        return new FileResponseDto(fileId, url);
+    }
 }

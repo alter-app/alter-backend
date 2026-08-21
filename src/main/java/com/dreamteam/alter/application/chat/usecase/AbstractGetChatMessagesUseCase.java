@@ -5,7 +5,6 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatMessageResponseDto;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -18,6 +17,7 @@ import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.result.ChatMessageResult;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -42,7 +42,7 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
     protected final FileQueryRepository fileQueryRepository;
     protected final FileUrlService fileUrlService;
 
-    protected CursorPaginatedApiResponse<ChatMessageResponseDto> execute(
+    protected CursorPaginatedApiResponse<ChatMessageResult> execute(
         A actor,
         Long chatRoomId,
         CursorPageRequestDto pageRequest
@@ -80,9 +80,9 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
         // 5-1. 페이지 내 메시지들의 첨부 파일을 한 번에 조회하여 매핑 (N+1 방지)
         attachAttachments(sortedMessages);
 
-        // 6. DTO 변환 (본인 메시지 여부 + 안 읽은 사람 수 포함)
-        List<ChatMessageResponseDto> messageList = sortedMessages.stream()
-            .map(message -> ChatMessageResponseDto.from(
+        // 6. Result 변환 (본인 메시지 여부 + 안 읽은 사람 수 포함)
+        List<ChatMessageResult> messageList = sortedMessages.stream()
+            .map(message -> ChatMessageResult.from(
                 message,
                 participantId,
                 participantScope,

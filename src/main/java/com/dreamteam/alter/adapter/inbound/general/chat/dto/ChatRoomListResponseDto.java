@@ -1,12 +1,11 @@
 package com.dreamteam.alter.adapter.inbound.general.chat.dto;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
-import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatRoomListWithOpponentResponse;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.result.ChatRoomListResult;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
-import org.apache.commons.lang3.ObjectUtils;
 
 import java.time.LocalDateTime;
 
@@ -50,36 +49,19 @@ public class ChatRoomListResponseDto {
     @Schema(description = "수정일")
     private LocalDateTime updatedAt;
 
-    public static ChatRoomListResponseDto from(ChatRoomListWithOpponentResponse chatRoom) {
-        boolean isGroup = ChatRoomType.GROUP.equals(chatRoom.getType());
-
-        String opponentName = chatRoom.getOpponentName();
-        String opponentProfileImageUrl = chatRoom.getOpponentProfileImageUrl();
-        String roomName;
-
-        if (isGroup) {
-            roomName = ObjectUtils.isNotEmpty(chatRoom.getWorkspaceName()) ? chatRoom.getWorkspaceName() : "알 수 없음";
-        } else {
-            if (ObjectUtils.isEmpty(opponentName)) {
-                // opponentName이 없으면(상대가 비활성 상태) 프로필 이미지도 노출하지 않는다
-                opponentName = "알 수 없음";
-                opponentProfileImageUrl = null;
-            }
-            roomName = opponentName;
-        }
-
+    public static ChatRoomListResponseDto from(ChatRoomListResult result) {
         return ChatRoomListResponseDto.builder()
-            .id(chatRoom.getId())
-            .type(DescribedEnumDto.of(chatRoom.getType(), ChatRoomType.describe()))
-            .roomName(roomName)
-            .memberCount(chatRoom.getMemberCount().intValue())
-            .opponentId(chatRoom.getOpponentId())
-            .opponentScope(DescribedEnumDto.of(chatRoom.getOpponentScope(), TokenScope.describe()))
-            .opponentName(opponentName)
-            .opponentProfileImageUrl(opponentProfileImageUrl)
-            .latestMessageContent(chatRoom.getLatestMessageContent())
-            .createdAt(chatRoom.getCreatedAt())
-            .updatedAt(chatRoom.getUpdatedAt())
+            .id(result.id())
+            .type(DescribedEnumDto.of(result.type(), ChatRoomType.describe()))
+            .roomName(result.roomName())
+            .memberCount(result.memberCount())
+            .opponentId(result.opponentId())
+            .opponentScope(DescribedEnumDto.of(result.opponentScope(), TokenScope.describe()))
+            .opponentName(result.opponentName())
+            .opponentProfileImageUrl(result.opponentProfileImageUrl())
+            .latestMessageContent(result.latestMessageContent())
+            .createdAt(result.createdAt())
+            .updatedAt(result.updatedAt())
             .build();
     }
 }

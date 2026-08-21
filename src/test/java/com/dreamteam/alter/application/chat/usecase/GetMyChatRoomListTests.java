@@ -2,11 +2,11 @@ package com.dreamteam.alter.application.chat.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomListResponseDto;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatRoomListWithOpponentResponse;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.result.ChatRoomListResult;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -70,15 +70,15 @@ class GetMyChatRoomListTests {
             .willReturn(Map.of());
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResponseDto> response =
+        CursorPaginatedApiResponse<ChatRoomListResult> response =
             sut.execute(actor, CursorPageRequestDto.of(null, 10));
 
         // then
-        ChatRoomListResponseDto dto = response.data().getFirst();
-        assertThat(dto.getType().value()).isEqualTo(ChatRoomType.DIRECT);
-        assertThat(dto.getRoomName()).isEqualTo("김알바");
-        assertThat(dto.getMemberCount()).isEqualTo(3);
-        assertThat(dto.getOpponentProfileImageUrl()).isEqualTo("https://cdn.example.com/profile.png");
+        ChatRoomListResult result = response.data().getFirst();
+        assertThat(result.type()).isEqualTo(ChatRoomType.DIRECT);
+        assertThat(result.roomName()).isEqualTo("김알바");
+        assertThat(result.memberCount()).isEqualTo(3);
+        assertThat(result.opponentProfileImageUrl()).isEqualTo("https://cdn.example.com/profile.png");
     }
 
     @Test
@@ -102,14 +102,14 @@ class GetMyChatRoomListTests {
             .willReturn(Map.of());
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResponseDto> response =
+        CursorPaginatedApiResponse<ChatRoomListResult> response =
             sut.execute(actor, CursorPageRequestDto.of(null, 10));
 
         // then
-        ChatRoomListResponseDto dto = response.data().getFirst();
-        assertThat(dto.getOpponentName()).isEqualTo("알 수 없음");
-        assertThat(dto.getRoomName()).isEqualTo("알 수 없음");
-        assertThat(dto.getOpponentProfileImageUrl()).isNull();
+        ChatRoomListResult result = response.data().getFirst();
+        assertThat(result.opponentName()).isEqualTo("알 수 없음");
+        assertThat(result.roomName()).isEqualTo("알 수 없음");
+        assertThat(result.opponentProfileImageUrl()).isNull();
     }
 
     @Test
@@ -132,16 +132,16 @@ class GetMyChatRoomListTests {
             .willReturn(Map.of());
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResponseDto> response =
+        CursorPaginatedApiResponse<ChatRoomListResult> response =
             sut.execute(actor, CursorPageRequestDto.of(null, 10));
 
         // then
-        ChatRoomListResponseDto dto = response.data().getFirst();
-        assertThat(dto.getRoomName()).isEqualTo("알터 카페 강남점");
-        assertThat(dto.getOpponentId()).isNull();
-        assertThat(dto.getOpponentName()).isNull();
-        assertThat(dto.getOpponentProfileImageUrl()).isNull();
-        assertThat(dto.getMemberCount()).isEqualTo(8);
+        ChatRoomListResult result = response.data().getFirst();
+        assertThat(result.roomName()).isEqualTo("알터 카페 강남점");
+        assertThat(result.opponentId()).isNull();
+        assertThat(result.opponentName()).isNull();
+        assertThat(result.opponentProfileImageUrl()).isNull();
+        assertThat(result.memberCount()).isEqualTo(8);
     }
 
     @Test
@@ -164,12 +164,12 @@ class GetMyChatRoomListTests {
             .willReturn(Map.of());
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResponseDto> response =
+        CursorPaginatedApiResponse<ChatRoomListResult> response =
             sut.execute(actor, CursorPageRequestDto.of(null, 10));
 
         // then
-        ChatRoomListResponseDto dto = response.data().getFirst();
-        assertThat(dto.getRoomName()).isEqualTo("알 수 없음");
+        ChatRoomListResult result = response.data().getFirst();
+        assertThat(result.roomName()).isEqualTo("알 수 없음");
     }
 
     @Test
@@ -193,7 +193,7 @@ class GetMyChatRoomListTests {
             .willReturn(Map.of());
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResponseDto> response =
+        CursorPaginatedApiResponse<ChatRoomListResult> response =
             sut.execute(actor, CursorPageRequestDto.of(null, 10));
 
         // then
@@ -211,7 +211,7 @@ class GetMyChatRoomListTests {
         given(chatRoomQueryRepository.countChatRoomsByParticipant(participantId, TokenScope.APP)).willReturn(0L);
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResponseDto> response =
+        CursorPaginatedApiResponse<ChatRoomListResult> response =
             sut.execute(actor, CursorPageRequestDto.of(null, 10));
 
         // then

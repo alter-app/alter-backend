@@ -2,8 +2,8 @@ package com.dreamteam.alter.adapter.inbound.general.chat.dto;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
-import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.result.ChatMessageResult;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -45,25 +45,19 @@ public class ChatMessageResponseDto {
     @Schema(description = "첨부 파일 목록")
     private List<FileResponseDto> attachments;
 
-    public static ChatMessageResponseDto from(
-        ChatMessageResponse response,
-        Long currentUserId,
-        TokenScope currentUserScope,
-        Integer unreadCount
-    ) {
-        boolean isMine = response.getSenderId().equals(currentUserId)
-            && response.getSenderScope().equals(currentUserScope);
-
+    public static ChatMessageResponseDto from(ChatMessageResult result) {
         return ChatMessageResponseDto.builder()
-            .id(response.getId())
-            .senderId(response.getSenderId())
-            .senderScope(DescribedEnumDto.of(response.getSenderScope(), TokenScope.describe()))
-            .type(response.getType())
-            .content(response.getContent())
-            .createdAt(response.getCreatedAt())
-            .isMine(isMine)
-            .unreadCount(unreadCount)
-            .attachments(response.getAttachments())
+            .id(result.id())
+            .senderId(result.senderId())
+            .senderScope(DescribedEnumDto.of(result.senderScope(), TokenScope.describe()))
+            .type(result.type())
+            .content(result.content())
+            .createdAt(result.createdAt())
+            .isMine(result.isMine())
+            .unreadCount(result.unreadCount())
+            .attachments(result.attachments().stream()
+                .map(attachment -> FileResponseDto.of(attachment.fileId(), attachment.url()))
+                .toList())
             .build();
     }
 

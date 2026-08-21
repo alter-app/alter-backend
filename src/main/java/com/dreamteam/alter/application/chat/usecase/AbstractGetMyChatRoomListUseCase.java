@@ -5,12 +5,12 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
-import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomListResponseDto;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatRoomListWithOpponentResponse;
 import com.dreamteam.alter.common.util.CursorUtil;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.result.ChatRoomListResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -27,7 +27,7 @@ public abstract class AbstractGetMyChatRoomListUseCase<A> extends AbstractChatUs
     protected final ChatMessageQueryRepository chatMessageQueryRepository;
     protected final ObjectMapper objectMapper;
 
-    public final CursorPaginatedApiResponse<ChatRoomListResponseDto> execute(
+    public final CursorPaginatedApiResponse<ChatRoomListResult> execute(
         A actor,
         CursorPageRequestDto pageRequest
     ) {
@@ -68,9 +68,9 @@ public abstract class AbstractGetMyChatRoomListUseCase<A> extends AbstractChatUs
             chatRoom.setLatestMessageContent(latestMessageContents.getOrDefault(chatRoom.getId(), null))
         );
 
-        // DTO 변환
-        List<ChatRoomListResponseDto> chatRoomList = chatRooms.stream()
-            .map(ChatRoomListResponseDto::from)
+        // Result 변환
+        List<ChatRoomListResult> chatRoomList = chatRooms.stream()
+            .map(ChatRoomListResult::from)
             .toList();
 
         // 커서 생성 (updatedAt 기준)
