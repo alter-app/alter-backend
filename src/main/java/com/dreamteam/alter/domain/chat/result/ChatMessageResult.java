@@ -24,7 +24,8 @@ public record ChatMessageResult(
         ChatMessageResponse response,
         Long currentUserId,
         TokenScope currentUserScope,
-        Integer unreadCount
+        Integer unreadCount,
+        List<ChatAttachmentResult> attachments
     ) {
         boolean isMine = response.getSenderId().equals(currentUserId)
             && response.getSenderScope().equals(currentUserScope);
@@ -38,9 +39,7 @@ public record ChatMessageResult(
             .createdAt(response.getCreatedAt())
             .isMine(isMine)
             .unreadCount(unreadCount)
-            .attachments(response.getAttachments().stream()
-                .map(ChatAttachmentResult::from)
-                .toList())
+            .attachments(attachments)
             .build();
     }
 }

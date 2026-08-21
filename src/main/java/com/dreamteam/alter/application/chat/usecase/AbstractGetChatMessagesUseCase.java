@@ -17,6 +17,7 @@ import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.result.ChatAttachmentResult;
 import com.dreamteam.alter.domain.chat.result.ChatMessageResult;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
@@ -86,7 +87,8 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
                 message,
                 participantId,
                 participantScope,
-                calculateUnreadCount(message, activeMembers)
+                calculateUnreadCount(message, activeMembers),
+                toAttachmentResults(message.getAttachments())
             ))
             .toList();
 
@@ -124,6 +126,13 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
                 attachmentsByMessageId.getOrDefault(String.valueOf(message.getId()), Collections.emptyList())
             );
         }
+    }
+
+    // FileResponseDto(adapter DTO) → ChatAttachmentResult(도메인 결과) 변환은 application 계층 책임
+    private List<ChatAttachmentResult> toAttachmentResults(List<FileResponseDto> attachments) {
+        return attachments.stream()
+            .map(file -> new ChatAttachmentResult(file.getFileId(), file.getUrl()))
+            .toList();
     }
 
     // 메시지별 안 읽은 사람 수 = 활성 멤버 중 (아직 읽지 않았고) AND (발신자 본인이 아닌) 인원 수
