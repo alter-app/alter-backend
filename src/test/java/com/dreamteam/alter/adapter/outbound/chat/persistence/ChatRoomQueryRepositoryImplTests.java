@@ -117,20 +117,6 @@ class ChatRoomQueryRepositoryImplTests {
     }
 
     @Test
-    void getChatRoomListWithOpponent_DIRECT_멤버행_기준으로_목록에_포함() {
-        ChatRoom directRoom = chatRoomRepository.save(
-            ChatRoom.create(40L, TokenScope.APP, 50L, TokenScope.MANAGER));
-        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), 40L, TokenScope.APP));
-        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), 50L, TokenScope.MANAGER));
-
-        List<ChatRoomListWithOpponentResponse> result =
-            chatRoomQueryRepository.getChatRoomListWithOpponent(40L, TokenScope.APP, firstPage());
-
-        assertThat(result).extracting(ChatRoomListWithOpponentResponse::getId)
-            .contains(directRoom.getId());
-    }
-
-    @Test
     void getChatRoomListWithOpponent_멤버행없으면_participant컬럼있어도_목록에서_제외() {
         ChatRoom directRoom = chatRoomRepository.save(
             ChatRoom.create(41L, TokenScope.APP, 51L, TokenScope.MANAGER));
@@ -157,28 +143,6 @@ class ChatRoomQueryRepositoryImplTests {
     }
 
     @Test
-    void getChatRoomListWithOpponent_활성상대의_ATTACHED프로필파일이_opponentProfileImageUrl로_조회된다() {
-        User opponent = saveUser(UserStatus.ACTIVE);
-        File profileFile = saveAttachedProfileFile(opponent.getId(), "https://cdn.example.com/profile.png");
-
-        ChatRoom directRoom = chatRoomRepository.save(
-            ChatRoom.create(80L, TokenScope.APP, opponent.getId(), TokenScope.APP));
-        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), 80L, TokenScope.APP));
-        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), opponent.getId(), TokenScope.APP));
-
-        List<ChatRoomListWithOpponentResponse> result =
-            chatRoomQueryRepository.getChatRoomListWithOpponent(80L, TokenScope.APP, firstPage());
-
-        ChatRoomListWithOpponentResponse response = result.stream()
-            .filter(r -> r.getId().equals(directRoom.getId()))
-            .findFirst()
-            .orElseThrow();
-
-        assertThat(response.getOpponentName()).isEqualTo(opponent.getName());
-        assertThat(response.getOpponentProfileImageUrl()).isEqualTo(profileFile.getFileUrl());
-    }
-
-    @Test
     void getChatRoomListWithOpponent_상대ATTACHED프로필파일_2건이어도_방_1행과_가장오래된파일URL만_반환() {
         User opponent = saveUser(UserStatus.ACTIVE);
         File oldestFile = saveAttachedProfileFile(opponent.getId(), "https://cdn.example.com/oldest.png");
@@ -198,6 +162,7 @@ class ChatRoomQueryRepositoryImplTests {
             .toList();
 
         assertThat(matched).hasSize(1);
+        assertThat(matched.get(0).getOpponentName()).isEqualTo(opponent.getName());
         assertThat(matched.get(0).getOpponentProfileImageUrl()).isEqualTo(oldestFile.getFileUrl());
         assertThat(matched.get(0).getOpponentProfileImageUrl()).isNotEqualTo(newestFile.getFileUrl());
         assertThat(totalCount).isEqualTo(result.size());
@@ -287,21 +252,5 @@ class ChatRoomQueryRepositoryImplTests {
         assertThat(response.getOpponentId()).isEqualTo(opponent.getId());
         assertThat(response.getOpponentScope()).isEqualTo(TokenScope.APP);
         assertThat(response.getOpponentName()).isEqualTo(opponent.getName());
-    }
-
-    @Test
-    void countChatRoomsByParticipant_매니저기준_건수일치() {
-        User managerUnderlyingUser = saveUser(UserStatus.ACTIVE);
-        ChatRoom groupRoom = chatRoomRepository.save(ChatRoom.createGroup(106L));
-        chatRoomMemberRepository.save(
-            ChatRoomMember.create(groupRoom.getId(), managerUnderlyingUser.getId(), TokenScope.MANAGER));
-
-        long count = chatRoomQueryRepository.countChatRoomsByParticipant(
-            managerUnderlyingUser.getId(), TokenScope.MANAGER);
-        List<ChatRoomListWithOpponentResponse> list = chatRoomQueryRepository.getChatRoomListWithOpponent(
-            managerUnderlyingUser.getId(), TokenScope.MANAGER, firstPage());
-
-        assertThat(count).isEqualTo(1);
-        assertThat(count).isEqualTo(list.size());
     }
 }

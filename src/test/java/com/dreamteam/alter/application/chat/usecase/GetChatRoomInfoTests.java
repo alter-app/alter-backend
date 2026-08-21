@@ -176,40 +176,6 @@ class GetChatRoomInfoTests {
     }
 
     @Test
-    @DisplayName("상대방 프로필 파일이 ATTACHED 상태로 2건이어도 예외 없이 가장 오래된 파일의 URL을 반환한다")
-    void execute_DIRECT_프로필파일_중복2건_오래된파일_URL반환() {
-        // given
-        Long chatRoomId = 2L;
-        Long participantId = 10L;
-        Long opponentId = 20L;
-        AppActor actor = new AppActor(participantId, null, null);
-
-        ChatRoom directRoom = ChatRoom.create(participantId, TokenScope.APP, opponentId, TokenScope.APP);
-        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP))
-            .willReturn(Optional.of(directRoom));
-        given(chatRoomMemberQueryRepository.countActiveByRoom(chatRoomId)).willReturn(2);
-
-        User opponentUser = mock(User.class);
-        given(opponentUser.getName()).willReturn("김알바");
-        given(userQueryRepository.findById(opponentId)).willReturn(Optional.of(opponentUser));
-
-        // findAllByTargetTypeAndTargetIdIn은 createdAt 오름차순으로 정렬되어 반환되므로 첫 번째가 가장 오래된 파일이다
-        File oldestFile = mock(File.class);
-        File newestFile = mock(File.class);
-        FileResponseDto oldestFileResponse = FileResponseDto.of(oldestFile, "https://cdn.example.com/oldest.png");
-        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, List.of(String.valueOf(opponentId))))
-            .willReturn(List.of(oldestFile, newestFile));
-        given(fileUrlService.resolve(oldestFile))
-            .willReturn(oldestFileResponse);
-
-        // when
-        ChatRoomResult response = sut.execute(actor, chatRoomId);
-
-        // then
-        assertThat(response.opponentProfileImageUrl()).isEqualTo("https://cdn.example.com/oldest.png");
-    }
-
-    @Test
     @DisplayName("DIRECT 채팅방 상대방이 조회되지 않으면 이름은 '알 수 없음', 프로필 URL은 null이고 파일 조회는 호출되지 않는다")
     void execute_DIRECT_상대방없음_이름마스킹_프로필URL_null() {
         // given

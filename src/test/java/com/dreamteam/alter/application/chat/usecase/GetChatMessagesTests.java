@@ -229,23 +229,4 @@ class GetChatMessagesTests {
 
         verify(chatMessageQueryRepository, never()).getChatMessagesWithCursor(any(), any());
     }
-
-    @Test
-    @DisplayName("DIRECT 채팅방에서 멤버 행이 없거나 나간 사용자는 메시지 목록을 조회할 수 없다 (NOT_FOUND)")
-    void execute_DIRECT_비멤버_또는_나간사용자는_NOT_FOUND() {
-        // given
-        Long chatRoomId = 4L;
-        Long participantId = 999L;
-        AppActor actor = new AppActor(participantId, null, null);
-
-        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP))
-            .willReturn(Optional.empty());
-
-        // when & then
-        assertThatThrownBy(() -> sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10)))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FOUND);
-
-        verify(chatMessageQueryRepository, never()).getChatMessagesWithCursor(any(), any());
-    }
 }

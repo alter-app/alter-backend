@@ -82,24 +82,8 @@ class SendChatMessageTests {
         assertThatThrownBy(() -> sut.execute(user, request, 100L))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FOUND);
-    }
-
-    @Test
-    @DisplayName("DIRECT 방에서 멤버 행이 없거나 나간 사용자는 전송할 수 없다 (NOT_FOUND)")
-    void execute_DIRECT_비멤버_또는_나간사용자는_NOT_FOUND() {
-        // given
-        User user = mock(User.class);
-        given(user.getId()).willReturn(1L);
-        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP)).willReturn(Optional.empty());
-
-        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
-
-        // when & then
-        assertThatThrownBy(() -> sut.execute(user, request, 100L))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FOUND);
-
         then(chatMessageRepository).should(never()).save(any());
+        then(eventPublisher).should(never()).publishEvent(any(ChatMessageSentEvent.class));
     }
 
     @Test
@@ -155,26 +139,6 @@ class SendChatMessageTests {
         assertThat(event.getSenderScope()).isEqualTo(TokenScope.APP);
         assertThat(event.getContent()).isEqualTo("안녕하세요");
         assertThat(event.getMessageResponse().getType()).isEqualTo(ChatMessageType.NORMAL);
-    }
-
-    @Test
-    @DisplayName("GROUP 방에서 비멤버가 전송하면 NOT_FOUND")
-    void execute_GROUP_비멤버면_NOT_FOUND() {
-        // given
-        User user = mock(User.class);
-        given(user.getId()).willReturn(1L);
-
-        given(chatRoomQueryRepository.findByIdAndParticipant(200L, 1L, TokenScope.APP)).willReturn(Optional.empty());
-
-        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
-
-        // when & then
-        assertThatThrownBy(() -> sut.execute(user, request, 200L))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FOUND);
-
-        then(chatMessageRepository).should(never()).save(any());
-        then(eventPublisher).should(never()).publishEvent(any(ChatMessageSentEvent.class));
     }
 
     @Test
