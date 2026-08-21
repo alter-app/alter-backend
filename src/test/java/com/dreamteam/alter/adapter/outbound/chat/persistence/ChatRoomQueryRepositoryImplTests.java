@@ -68,7 +68,7 @@ class ChatRoomQueryRepositoryImplTests {
 
     private File saveAttachedProfileFile(Long targetUserId, String fileUrl) {
         File file = File.create(
-            FileTargetType.USER_PROFILE, "profile.png", "stored/profile.png",
+            FileTargetType.USER_PROFILE, "profile.png", "stored/profile" + System.nanoTime() + ".png",
             fileUrl, "image/png", 1024L, BucketType.PUBLIC, targetUserId
         );
         file.attach(String.valueOf(targetUserId));
@@ -176,6 +176,31 @@ class ChatRoomQueryRepositoryImplTests {
 
         assertThat(response.getOpponentName()).isEqualTo(opponent.getName());
         assertThat(response.getOpponentProfileImageUrl()).isEqualTo(profileFile.getFileUrl());
+    }
+
+    @Test
+    void getChatRoomListWithOpponent_상대ATTACHED프로필파일_2건이어도_방_1행과_가장오래된파일URL만_반환() {
+        User opponent = saveUser(UserStatus.ACTIVE);
+        File oldestFile = saveAttachedProfileFile(opponent.getId(), "https://cdn.example.com/oldest.png");
+        File newestFile = saveAttachedProfileFile(opponent.getId(), "https://cdn.example.com/newest.png");
+
+        ChatRoom directRoom = chatRoomRepository.save(
+            ChatRoom.create(82L, TokenScope.APP, opponent.getId(), TokenScope.APP));
+        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), 82L, TokenScope.APP));
+        chatRoomMemberRepository.save(ChatRoomMember.create(directRoom.getId(), opponent.getId(), TokenScope.APP));
+
+        List<ChatRoomListWithOpponentResponse> result =
+            chatRoomQueryRepository.getChatRoomListWithOpponent(82L, TokenScope.APP, firstPage());
+        long totalCount = chatRoomQueryRepository.countChatRoomsByParticipant(82L, TokenScope.APP);
+
+        List<ChatRoomListWithOpponentResponse> matched = result.stream()
+            .filter(r -> r.getId().equals(directRoom.getId()))
+            .toList();
+
+        assertThat(matched).hasSize(1);
+        assertThat(matched.get(0).getOpponentProfileImageUrl()).isEqualTo(oldestFile.getFileUrl());
+        assertThat(matched.get(0).getOpponentProfileImageUrl()).isNotEqualTo(newestFile.getFileUrl());
+        assertThat(totalCount).isEqualTo(result.size());
     }
 
     @Test

@@ -20,6 +20,7 @@ import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.dsl.SimpleExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -89,7 +90,7 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
         );
 
         // 상대방 ID와 scope 결정
-        SimpleExpression<Long> opponentIdCase = new CaseBuilder()
+        NumberExpression<Long> opponentIdCase = new CaseBuilder()
             .when(qChatRoom.participant1Id.eq(userId)
                 .and(qChatRoom.participant1Scope.eq(userScope)))
             .then(qChatRoom.participant2Id)
@@ -112,15 +113,42 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
             .then(qParticipant2User.name)
             .otherwise(qParticipant1User.name);
 
-        // 상대방 프로필 이미지 조인 (비활성 상대는 user join이 null이 되어 file join도 자동으로 null)
-        QFile qParticipant1File = new QFile("participant1File");
-        QFile qParticipant2File = new QFile("participant2File");
-
-        SimpleExpression<String> opponentProfileImageUrlCase = new CaseBuilder()
+        // 상대방(활성 상태만) User id: 비활성 상대는 join 조건(ACTIVE)에 걸려 null이 된다
+        NumberExpression<Long> opponentActiveUserIdCase = new CaseBuilder()
             .when(qChatRoom.participant1Id.eq(userId)
                 .and(qChatRoom.participant1Scope.eq(userScope)))
-            .then(qParticipant2File.fileUrl)
-            .otherwise(qParticipant1File.fileUrl);
+            .then(qParticipant2User.id)
+            .otherwise(qParticipant1User.id);
+
+        // 상대방 프로필 이미지 (가장 오래된 ATTACHED 파일 1건) 스칼라 서브쿼리
+        // - leftJoin 방식은 동일 대상에 ATTACHED 파일이 2건 이상이면 방 행이 복제되므로 사용하지 않는다
+        // - 비활성 상대는 opponentActiveUserIdCase가 null이 되어 url도 null로 유지된다
+        // - JPQL 서브쿼리는 LIMIT을 지원하지 않으므로 "더 오래된 행이 없다(NOT EXISTS)"로 1건만 선택한다
+        QFile qFile = QFile.file;
+        QFile qOlderFile = new QFile("olderFile");
+        Expression<String> opponentProfileImageUrlExpr = ExpressionUtils.as(
+            JPAExpressions
+                .select(qFile.fileUrl)
+                .from(qFile)
+                .where(
+                    qFile.targetType.eq(FileTargetType.USER_PROFILE),
+                    qFile.status.eq(FileStatus.ATTACHED),
+                    qFile.targetId.eq(opponentActiveUserIdCase.stringValue()),
+                    JPAExpressions
+                        .selectOne()
+                        .from(qOlderFile)
+                        .where(
+                            qOlderFile.targetType.eq(FileTargetType.USER_PROFILE),
+                            qOlderFile.status.eq(FileStatus.ATTACHED),
+                            qOlderFile.targetId.eq(qFile.targetId),
+                            qOlderFile.createdAt.lt(qFile.createdAt)
+                                .or(qOlderFile.createdAt.eq(qFile.createdAt)
+                                    .and(qOlderFile.id.lt(qFile.id)))
+                        )
+                        .notExists()
+                ),
+            "opponentProfileImageUrl"
+        );
 
         // 그룹 방은 상대방이 없으므로 업장명을 방 이름으로 사용한다
         QWorkspace qWorkspace = QWorkspace.workspace;
@@ -150,7 +178,7 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
                 opponentIdCase.as("opponentId"),
                 opponentScopeCase.as("opponentScope"),
                 opponentNameCase.as("opponentName"),
-                opponentProfileImageUrlCase.as("opponentProfileImageUrl"),
+                opponentProfileImageUrlExpr,
                 memberCountExpr
             ))
             .from(qChatRoom)
@@ -160,10 +188,6 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
             .leftJoin(qParticipant2User)
             .on(qChatRoom.participant2Id.eq(qParticipant2User.id)
                 .and(qParticipant2User.status.eq(UserStatus.ACTIVE)))
-            .leftJoin(qParticipant1File)
-            .on(fileConditions(qParticipant1File, qParticipant1User))
-            .leftJoin(qParticipant2File)
-            .on(fileConditions(qParticipant2File, qParticipant2User))
             .leftJoin(qWorkspace)
             .on(qChatRoom.workspaceId.eq(qWorkspace.id))
             .where(
@@ -286,13 +310,5 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
                 qChatRoom.updatedAt.eq(cursor.getUpdatedAt())
                     .and(qChatRoom.id.lt(cursor.getId()))
             );
-    }
-
-    private BooleanExpression[] fileConditions(QFile file, QUser user) {
-        return new BooleanExpression[] {
-            file.targetType.eq(FileTargetType.USER_PROFILE),
-            file.targetId.eq(user.id.stringValue()),
-            file.status.eq(FileStatus.ATTACHED)
-        };
     }
 }
