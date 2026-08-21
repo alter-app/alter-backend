@@ -57,8 +57,9 @@ public class UserChatController implements UserChatControllerSpec {
         @RequestBody CreateChatRoomRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        CreateChatRoomResponseDto response =
-            createOrGetChatRoom.execute(actor, request.getOpponentUserId(), request.getOpponentScope());
+        CreateChatRoomResponseDto response = CreateChatRoomResponseDto.from(
+            createOrGetChatRoom.execute(actor, request.getOpponentUserId(), request.getOpponentScope())
+        );
         return ResponseEntity.ok(CommonApiResponse.of(response));
     }
 
@@ -77,7 +78,7 @@ public class UserChatController implements UserChatControllerSpec {
         @PathVariable Long chatRoomId
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(getChatRoomInfo.execute(actor, chatRoomId)));
+        return ResponseEntity.ok(CommonApiResponse.of(ChatRoomResponseDto.from(getChatRoomInfo.execute(actor, chatRoomId))));
     }
 
     @Override

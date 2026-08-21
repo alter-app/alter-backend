@@ -1,12 +1,12 @@
 package com.dreamteam.alter.application.chat.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.chat.dto.CreateChatRoomResponseDto;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
+import com.dreamteam.alter.domain.chat.result.CreateChatRoomResult;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
@@ -59,10 +59,10 @@ class CreateOrGetChatRoomTests {
         given(chatRoomRepository.save(any(ChatRoom.class))).willReturn(savedRoom);
 
         // when
-        CreateChatRoomResponseDto response = sut.execute(actor, 2L, TokenScope.APP);
+        CreateChatRoomResult response = sut.execute(actor, 2L, TokenScope.APP);
 
         // then
-        assertThat(response.getChatRoomId()).isEqualTo(99L);
+        assertThat(response.chatRoomId()).isEqualTo(99L);
 
         ArgumentCaptor<List<ChatRoomMember>> captor = ArgumentCaptor.forClass(List.class);
         then(chatRoomMemberRepository).should().saveAll(captor.capture());
@@ -91,10 +91,10 @@ class CreateOrGetChatRoomTests {
             .willReturn(Optional.of(existingRoom));
 
         // when
-        CreateChatRoomResponseDto response = sut.execute(actor, 2L, TokenScope.APP);
+        CreateChatRoomResult response = sut.execute(actor, 2L, TokenScope.APP);
 
         // then
-        assertThat(response.getChatRoomId()).isEqualTo(42L);
+        assertThat(response.chatRoomId()).isEqualTo(42L);
         then(chatRoomRepository).should(never()).save(any());
         then(chatRoomMemberRepository).should(never()).saveAll(any());
     }

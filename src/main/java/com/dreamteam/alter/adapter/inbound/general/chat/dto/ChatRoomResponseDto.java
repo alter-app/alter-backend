@@ -2,7 +2,7 @@ package com.dreamteam.alter.adapter.inbound.general.chat.dto;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
-import com.dreamteam.alter.domain.chat.entity.ChatRoom;
+import com.dreamteam.alter.domain.chat.result.ChatRoomResult;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -46,26 +46,18 @@ public class ChatRoomResponseDto {
     @Schema(description = "수정일")
     private LocalDateTime updatedAt;
 
-    public static ChatRoomResponseDto of(
-        ChatRoom chatRoom,
-        int memberCount,
-        String roomName,
-        Long opponentId,
-        TokenScope opponentScope,
-        String opponentName,
-        String opponentProfileImageUrl
-    ) {
+    public static ChatRoomResponseDto from(ChatRoomResult result) {
         return ChatRoomResponseDto.builder()
-            .id(chatRoom.getId())
-            .type(DescribedEnumDto.of(chatRoom.getType(), ChatRoomType.describe()))
-            .roomName(roomName)
-            .memberCount(memberCount)
-            .opponentId(opponentId)
-            .opponentScope(opponentScope != null ? DescribedEnumDto.of(opponentScope, TokenScope.describe()) : null)
-            .opponentName(opponentName)
-            .opponentProfileImageUrl(opponentProfileImageUrl)
-            .createdAt(chatRoom.getCreatedAt())
-            .updatedAt(chatRoom.getUpdatedAt())
+            .id(result.id())
+            .type(DescribedEnumDto.of(result.type(), ChatRoomType.describe()))
+            .roomName(result.roomName())
+            .memberCount(result.memberCount())
+            .opponentId(result.opponentId())
+            .opponentScope(DescribedEnumDto.of(result.opponentScope(), TokenScope.describe()))
+            .opponentName(result.opponentName())
+            .opponentProfileImageUrl(result.opponentProfileImageUrl())
+            .createdAt(result.createdAt())
+            .updatedAt(result.updatedAt())
             .build();
     }
 }

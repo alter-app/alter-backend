@@ -57,7 +57,9 @@ public class ManagerChatController implements ManagerChatControllerSpec {
         @RequestBody CreateChatRoomRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        CreateChatRoomResponseDto response = managerCreateOrGetChatRoomUseCase.execute(actor, request.getOpponentUserId(), request.getOpponentScope());
+        CreateChatRoomResponseDto response = CreateChatRoomResponseDto.from(
+            managerCreateOrGetChatRoomUseCase.execute(actor, request.getOpponentUserId(), request.getOpponentScope())
+        );
         return ResponseEntity.ok(CommonApiResponse.of(response));
     }
 
@@ -76,7 +78,7 @@ public class ManagerChatController implements ManagerChatControllerSpec {
         @PathVariable Long chatRoomId
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(managerGetChatRoomUseCase.execute(actor, chatRoomId)));
+        return ResponseEntity.ok(CommonApiResponse.of(ChatRoomResponseDto.from(managerGetChatRoomUseCase.execute(actor, chatRoomId))));
     }
 
     @Override

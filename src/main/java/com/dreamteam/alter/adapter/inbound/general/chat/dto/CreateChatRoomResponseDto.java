@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.general.chat.dto;
 
+import com.dreamteam.alter.domain.chat.result.CreateChatRoomResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -16,6 +17,12 @@ public class CreateChatRoomResponseDto {
     public static CreateChatRoomResponseDto of(Long chatRoomId) {
         return CreateChatRoomResponseDto.builder()
             .chatRoomId(chatRoomId)
+            .build();
+    }
+
+    public static CreateChatRoomResponseDto from(CreateChatRoomResult result) {
+        return CreateChatRoomResponseDto.builder()
+            .chatRoomId(result.chatRoomId())
             .build();
     }
 

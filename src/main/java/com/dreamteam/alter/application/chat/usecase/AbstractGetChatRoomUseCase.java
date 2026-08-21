@@ -1,7 +1,6 @@
 package com.dreamteam.alter.application.chat.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomResponseDto;
 import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -9,6 +8,7 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.result.ChatRoomResult;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -32,7 +32,7 @@ public abstract class AbstractGetChatRoomUseCase<A> extends AbstractChatUseCase 
     protected final FileQueryRepository fileQueryRepository;
     protected final FileUrlService fileUrlService;
 
-    public final ChatRoomResponseDto execute(A actor, Long chatRoomId) {
+    public final ChatRoomResult execute(A actor, Long chatRoomId) {
         TokenScope participantScope = getParticipantScope(actor);
         Long participantId = getParticipantId(actor);
 
@@ -88,15 +88,18 @@ public abstract class AbstractGetChatRoomUseCase<A> extends AbstractChatUseCase 
             roomName = opponentName;
         }
 
-        return ChatRoomResponseDto.of(
-            chatRoom,
-            memberCount,
-            roomName,
-            opponentId,
-            opponentScope,
-            opponentName,
-            opponentProfileImageUrl
-        );
+        return ChatRoomResult.builder()
+            .id(chatRoom.getId())
+            .type(chatRoom.getType())
+            .roomName(roomName)
+            .memberCount(memberCount)
+            .opponentId(opponentId)
+            .opponentScope(opponentScope)
+            .opponentName(opponentName)
+            .opponentProfileImageUrl(opponentProfileImageUrl)
+            .createdAt(chatRoom.getCreatedAt())
+            .updatedAt(chatRoom.getUpdatedAt())
+            .build();
     }
 
     protected abstract TokenScope getParticipantScope(A actor);

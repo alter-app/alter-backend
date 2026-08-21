@@ -1,7 +1,6 @@
 package com.dreamteam.alter.application.chat.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomResponseDto;
 import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -9,6 +8,7 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.result.ChatRoomResult;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
@@ -80,16 +80,16 @@ class GetChatRoomInfoTests {
         given(workspaceQueryRepository.findById(workspaceId)).willReturn(Optional.of(workspace));
 
         // when
-        ChatRoomResponseDto response = sut.execute(actor, chatRoomId);
+        ChatRoomResult response = sut.execute(actor, chatRoomId);
 
         // then
-        assertThat(response.getType().value()).isEqualTo(ChatRoomType.GROUP);
-        assertThat(response.getRoomName()).isEqualTo("알터 카페 강남점");
-        assertThat(response.getMemberCount()).isEqualTo(8);
-        assertThat(response.getOpponentId()).isNull();
-        assertThat(response.getOpponentScope()).isNull();
-        assertThat(response.getOpponentName()).isNull();
-        assertThat(response.getOpponentProfileImageUrl()).isNull();
+        assertThat(response.type()).isEqualTo(ChatRoomType.GROUP);
+        assertThat(response.roomName()).isEqualTo("알터 카페 강남점");
+        assertThat(response.memberCount()).isEqualTo(8);
+        assertThat(response.opponentId()).isNull();
+        assertThat(response.opponentScope()).isNull();
+        assertThat(response.opponentName()).isNull();
+        assertThat(response.opponentProfileImageUrl()).isNull();
     }
 
     @Test
@@ -108,10 +108,10 @@ class GetChatRoomInfoTests {
         given(workspaceQueryRepository.findById(workspaceId)).willReturn(Optional.empty());
 
         // when
-        ChatRoomResponseDto response = sut.execute(actor, chatRoomId);
+        ChatRoomResult response = sut.execute(actor, chatRoomId);
 
         // then
-        assertThat(response.getRoomName()).isEqualTo("알 수 없음");
+        assertThat(response.roomName()).isEqualTo("알 수 없음");
     }
 
     @Test
@@ -130,10 +130,10 @@ class GetChatRoomInfoTests {
         given(chatRoomMemberQueryRepository.countActiveByRoom(chatRoomId)).willReturn(8);
 
         // when
-        ChatRoomResponseDto response = sut.execute(actor, chatRoomId);
+        ChatRoomResult response = sut.execute(actor, chatRoomId);
 
         // then
-        assertThat(response.getRoomName()).isEqualTo("알 수 없음");
+        assertThat(response.roomName()).isEqualTo("알 수 없음");
         verify(workspaceQueryRepository, never()).findById(any());
     }
 
@@ -163,16 +163,16 @@ class GetChatRoomInfoTests {
             .willReturn(profileFileResponse);
 
         // when
-        ChatRoomResponseDto response = sut.execute(actor, chatRoomId);
+        ChatRoomResult response = sut.execute(actor, chatRoomId);
 
         // then
-        assertThat(response.getType().value()).isEqualTo(ChatRoomType.DIRECT);
-        assertThat(response.getRoomName()).isEqualTo("김알바");
-        assertThat(response.getMemberCount()).isEqualTo(2);
-        assertThat(response.getOpponentId()).isEqualTo(opponentId);
-        assertThat(response.getOpponentScope().value()).isEqualTo(TokenScope.APP);
-        assertThat(response.getOpponentName()).isEqualTo("김알바");
-        assertThat(response.getOpponentProfileImageUrl()).isEqualTo("https://cdn.example.com/opponent.png");
+        assertThat(response.type()).isEqualTo(ChatRoomType.DIRECT);
+        assertThat(response.roomName()).isEqualTo("김알바");
+        assertThat(response.memberCount()).isEqualTo(2);
+        assertThat(response.opponentId()).isEqualTo(opponentId);
+        assertThat(response.opponentScope()).isEqualTo(TokenScope.APP);
+        assertThat(response.opponentName()).isEqualTo("김알바");
+        assertThat(response.opponentProfileImageUrl()).isEqualTo("https://cdn.example.com/opponent.png");
     }
 
     @Test
@@ -203,10 +203,10 @@ class GetChatRoomInfoTests {
             .willReturn(oldestFileResponse);
 
         // when
-        ChatRoomResponseDto response = sut.execute(actor, chatRoomId);
+        ChatRoomResult response = sut.execute(actor, chatRoomId);
 
         // then
-        assertThat(response.getOpponentProfileImageUrl()).isEqualTo("https://cdn.example.com/oldest.png");
+        assertThat(response.opponentProfileImageUrl()).isEqualTo("https://cdn.example.com/oldest.png");
     }
 
     @Test
@@ -226,11 +226,11 @@ class GetChatRoomInfoTests {
         given(userQueryRepository.findById(opponentId)).willReturn(Optional.empty());
 
         // when
-        ChatRoomResponseDto response = sut.execute(actor, chatRoomId);
+        ChatRoomResult response = sut.execute(actor, chatRoomId);
 
         // then
-        assertThat(response.getOpponentName()).isEqualTo("알 수 없음");
-        assertThat(response.getOpponentProfileImageUrl()).isNull();
+        assertThat(response.opponentName()).isEqualTo("알 수 없음");
+        assertThat(response.opponentProfileImageUrl()).isNull();
         verify(fileQueryRepository, never()).findAllByTargetTypeAndTargetIdIn(any(), any());
     }
 
