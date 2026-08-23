@@ -17,8 +17,6 @@ import com.dreamteam.alter.domain.chat.port.inbound.ManagerGetChatMessagesUseCas
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerGetChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerGetMyChatRoomListUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.MarkChatRoomReadUseCase;
-import com.dreamteam.alter.domain.chat.result.ChatMessageResult;
-import com.dreamteam.alter.domain.chat.result.ChatRoomListResult;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -27,8 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/manager/chat")
@@ -73,11 +69,7 @@ public class ManagerChatController implements ManagerChatControllerSpec {
         CursorPageRequestDto pageRequest
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        CursorPaginatedApiResponse<ChatRoomListResult> result = managerGetMyChatRoomListUseCase.execute(actor, pageRequest);
-        List<ChatRoomListResponseDto> data = result.data().stream()
-            .map(ChatRoomListResponseDto::from)
-            .toList();
-        return ResponseEntity.ok(CursorPaginatedApiResponse.of(result.page(), data));
+        return ResponseEntity.ok(managerGetMyChatRoomListUseCase.execute(actor, pageRequest).map(ChatRoomListResponseDto::from));
     }
 
     @Override
@@ -96,12 +88,7 @@ public class ManagerChatController implements ManagerChatControllerSpec {
         CursorPageRequestDto pageRequest
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        CursorPaginatedApiResponse<ChatMessageResult> result =
-            managerGetChatMessagesUseCase.execute(actor, chatRoomId, pageRequest);
-        List<ChatMessageResponseDto> data = result.data().stream()
-            .map(ChatMessageResponseDto::from)
-            .toList();
-        return ResponseEntity.ok(CursorPaginatedApiResponse.of(result.page(), data));
+        return ResponseEntity.ok(managerGetChatMessagesUseCase.execute(actor, chatRoomId, pageRequest).map(ChatMessageResponseDto::from));
     }
 
     @Override
