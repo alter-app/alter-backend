@@ -17,6 +17,7 @@ import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -73,12 +74,12 @@ public abstract class AbstractGetChatRoomUseCase<A> extends AbstractChatUseCase 
 
             User opponentUser = userQueryRepository.findById(opponentId)
                 .orElse(null);
-            if (opponentUser != null) {
+            if (opponentUser != null && ObjectUtils.isNotEmpty(opponentUser.getName())) {
                 opponentName = opponentUser.getName();
                 opponentProfileImageUrl = fileQueryRepository
                     .findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, List.of(String.valueOf(opponentId)))
                     .stream()
-                    .findFirst()
+                    .reduce((first, second) -> second)
                     .map(fileUrlService::resolve)
                     .map(FileResponseDto::getUrl)
                     .orElse(null);

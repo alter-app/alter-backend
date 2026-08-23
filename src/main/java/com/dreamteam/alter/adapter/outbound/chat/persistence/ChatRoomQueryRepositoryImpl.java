@@ -120,12 +120,12 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
             .then(qParticipant2User.id)
             .otherwise(qParticipant1User.id);
 
-        // 상대방 프로필 이미지 (가장 오래된 ATTACHED 파일 1건) 스칼라 서브쿼리
+        // 상대방 프로필 이미지 (가장 최신 ATTACHED 파일 1건) 스칼라 서브쿼리
         // - leftJoin 방식은 동일 대상에 ATTACHED 파일이 2건 이상이면 방 행이 복제되므로 사용하지 않는다
         // - 비활성 상대는 opponentActiveUserIdCase가 null이 되어 url도 null로 유지된다
-        // - JPQL 서브쿼리는 LIMIT을 지원하지 않으므로 "더 오래된 행이 없다(NOT EXISTS)"로 1건만 선택한다
+        // - JPQL 서브쿼리는 LIMIT을 지원하지 않으므로 "더 새로운 행이 없다(NOT EXISTS)"로 1건만 선택한다
         QFile qFile = QFile.file;
-        QFile qOlderFile = new QFile("olderFile");
+        QFile qNewerFile = new QFile("newerFile");
         Expression<String> opponentProfileImageUrlExpr = ExpressionUtils.as(
             JPAExpressions
                 .select(qFile.fileUrl)
@@ -136,14 +136,14 @@ public class ChatRoomQueryRepositoryImpl implements ChatRoomQueryRepository {
                     qFile.targetId.eq(opponentActiveUserIdCase.stringValue()),
                     JPAExpressions
                         .selectOne()
-                        .from(qOlderFile)
+                        .from(qNewerFile)
                         .where(
-                            qOlderFile.targetType.eq(FileTargetType.USER_PROFILE),
-                            qOlderFile.status.eq(FileStatus.ATTACHED),
-                            qOlderFile.targetId.eq(qFile.targetId),
-                            qOlderFile.createdAt.lt(qFile.createdAt)
-                                .or(qOlderFile.createdAt.eq(qFile.createdAt)
-                                    .and(qOlderFile.id.lt(qFile.id)))
+                            qNewerFile.targetType.eq(FileTargetType.USER_PROFILE),
+                            qNewerFile.status.eq(FileStatus.ATTACHED),
+                            qNewerFile.targetId.eq(qFile.targetId),
+                            qNewerFile.createdAt.gt(qFile.createdAt)
+                                .or(qNewerFile.createdAt.eq(qFile.createdAt)
+                                    .and(qNewerFile.id.gt(qFile.id)))
                         )
                         .notExists()
                 ),

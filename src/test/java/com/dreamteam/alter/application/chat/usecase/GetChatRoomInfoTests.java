@@ -35,6 +35,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GetChatRoomInfo 테스트")
@@ -176,6 +177,39 @@ class GetChatRoomInfoTests {
     }
 
     @Test
+    @DisplayName("DIRECT 채팅방 상대방 ATTACHED 프로필 파일이 2건이면 최신 파일 URL을 반환한다")
+    void execute_DIRECT_ATTACHED프로필파일_2건이면_최신파일URL() {
+        // given
+        Long chatRoomId = 2L;
+        Long participantId = 10L;
+        Long opponentId = 20L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        ChatRoom directRoom = ChatRoom.create(participantId, TokenScope.APP, opponentId, TokenScope.APP);
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
+        given(chatRoomMemberQueryRepository.countActiveByRoom(chatRoomId)).willReturn(2);
+
+        User opponentUser = mock(User.class);
+        given(opponentUser.getName()).willReturn("김알바");
+        given(userQueryRepository.findById(opponentId)).willReturn(Optional.of(opponentUser));
+
+        File oldFile = mock(File.class);
+        File newFile = mock(File.class);
+        FileResponseDto newFileResponse = FileResponseDto.of(newFile, "https://cdn.example.com/new.png");
+        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, List.of(String.valueOf(opponentId))))
+            .willReturn(List.of(oldFile, newFile));
+        given(fileUrlService.resolve(newFile))
+            .willReturn(newFileResponse);
+
+        // when
+        ChatRoomResult response = sut.execute(actor, chatRoomId);
+
+        // then
+        assertThat(response.opponentProfileImageUrl()).isEqualTo("https://cdn.example.com/new.png");
+    }
+
+    @Test
     @DisplayName("DIRECT 채팅방 상대방이 조회되지 않으면 이름은 '알 수 없음', 프로필 URL은 null이고 파일 조회는 호출되지 않는다")
     void execute_DIRECT_상대방없음_이름마스킹_프로필URL_null() {
         // given
@@ -198,6 +232,34 @@ class GetChatRoomInfoTests {
         assertThat(response.opponentName()).isEqualTo("알 수 없음");
         assertThat(response.opponentProfileImageUrl()).isNull();
         verify(fileQueryRepository, never()).findAllByTargetTypeAndTargetIdIn(any(), any());
+    }
+
+    @Test
+    @DisplayName("DIRECT 채팅방 상대방 이름이 빈 문자열이면 이름은 '알 수 없음', 프로필 URL은 null이고 파일 조회는 호출되지 않는다")
+    void execute_DIRECT_상대방이름_빈문자열이면_이름마스킹_프로필URL_null() {
+        // given
+        Long chatRoomId = 2L;
+        Long participantId = 10L;
+        Long opponentId = 20L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        ChatRoom directRoom = ChatRoom.create(participantId, TokenScope.APP, opponentId, TokenScope.APP);
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
+        given(chatRoomMemberQueryRepository.countActiveByRoom(chatRoomId)).willReturn(2);
+
+        User opponentUser = mock(User.class);
+        given(opponentUser.getName()).willReturn("");
+        given(userQueryRepository.findById(opponentId)).willReturn(Optional.of(opponentUser));
+
+        // when
+        ChatRoomResult response = sut.execute(actor, chatRoomId);
+
+        // then
+        assertThat(response.opponentName()).isEqualTo("알 수 없음");
+        assertThat(response.roomName()).isEqualTo("알 수 없음");
+        assertThat(response.opponentProfileImageUrl()).isNull();
+        verifyNoInteractions(fileQueryRepository, fileUrlService);
     }
 
     @Test

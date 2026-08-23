@@ -143,7 +143,7 @@ class ChatRoomQueryRepositoryImplTests {
     }
 
     @Test
-    void getChatRoomListWithOpponent_상대ATTACHED프로필파일_2건이어도_방_1행과_가장오래된파일URL만_반환() {
+    void getChatRoomListWithOpponent_상대ATTACHED프로필파일_2건이어도_방_1행과_가장최신파일URL만_반환() {
         User opponent = saveUser(UserStatus.ACTIVE);
         File oldestFile = saveAttachedProfileFile(opponent.getId(), "https://cdn.example.com/oldest.png");
         File newestFile = saveAttachedProfileFile(opponent.getId(), "https://cdn.example.com/newest.png");
@@ -163,8 +163,8 @@ class ChatRoomQueryRepositoryImplTests {
 
         assertThat(matched).hasSize(1);
         assertThat(matched.get(0).getOpponentName()).isEqualTo(opponent.getName());
-        assertThat(matched.get(0).getOpponentProfileImageUrl()).isEqualTo(oldestFile.getFileUrl());
-        assertThat(matched.get(0).getOpponentProfileImageUrl()).isNotEqualTo(newestFile.getFileUrl());
+        assertThat(matched.get(0).getOpponentProfileImageUrl()).isEqualTo(newestFile.getFileUrl());
+        assertThat(matched.get(0).getOpponentProfileImageUrl()).isNotEqualTo(oldestFile.getFileUrl());
         assertThat(totalCount).isEqualTo(result.size());
     }
 
