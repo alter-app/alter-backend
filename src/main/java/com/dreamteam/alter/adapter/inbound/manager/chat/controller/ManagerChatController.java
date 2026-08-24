@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.inbound.manager.chat.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatMessageResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomListResponseDto;
@@ -29,6 +30,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.function.Function;
 
 @RestController
 @RequestMapping("/manager/chat")
@@ -75,7 +78,7 @@ public class ManagerChatController implements ManagerChatControllerSpec {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
         CursorPageResult<ChatRoomListResult> result = managerGetMyChatRoomListUseCase.execute(
             actor, CursorPageQuery.of(pageRequest.cursor(), pageRequest.pageSize()));
-        return ResponseEntity.ok(CursorPaginatedApiResponse.from(result, ChatRoomListResponseDto::from));
+        return ResponseEntity.ok(toPaginatedResponse(result, ChatRoomListResponseDto::from));
     }
 
     @Override
@@ -96,7 +99,7 @@ public class ManagerChatController implements ManagerChatControllerSpec {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
         CursorPageResult<ChatMessageResult> result = managerGetChatMessagesUseCase.execute(
             actor, chatRoomId, CursorPageQuery.of(pageRequest.cursor(), pageRequest.pageSize()));
-        return ResponseEntity.ok(CursorPaginatedApiResponse.from(result, ChatMessageResponseDto::from));
+        return ResponseEntity.ok(toPaginatedResponse(result, ChatMessageResponseDto::from));
     }
 
     @Override
@@ -118,5 +121,15 @@ public class ManagerChatController implements ManagerChatControllerSpec {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
         Long roomId = getWorkspaceGroupChatRoom.execute(actor.getUserId(), TokenScope.MANAGER, workspaceId);
         return ResponseEntity.ok(CommonApiResponse.of(CreateChatRoomResponseDto.of(roomId)));
+    }
+    // CursorPageResult(domain) → CursorPaginatedApiResponse(응답 포맷) 정규화는 컨트롤러 책임
+    private static <T, R> CursorPaginatedApiResponse<R> toPaginatedResponse(
+        CursorPageResult<T> result,
+        Function<T, R> mapper
+    ) {
+        return CursorPaginatedApiResponse.of(
+            CursorPageResponseDto.of(result.nextCursor(), result.pageSize(), result.totalCount()),
+            result.data().stream().map(mapper).toList()
+        );
     }
 }
