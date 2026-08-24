@@ -11,7 +11,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Entity
 @Getter
@@ -85,11 +84,5 @@ public class ChatRoom {
 
     public void updateUpdatedAt() {
         this.updatedAt = LocalDateTime.now();
-    }
-
-    // DIRECT 방의 참여자 여부(participant 컬럼 기반). 이미 로드된 방으로 검증해 재조회를 피한다.
-    public boolean isParticipant(Long memberId, TokenScope scope) {
-        return (Objects.equals(participant1Id, memberId) && participant1Scope == scope)
-            || (Objects.equals(participant2Id, memberId) && participant2Scope == scope);
     }
 }

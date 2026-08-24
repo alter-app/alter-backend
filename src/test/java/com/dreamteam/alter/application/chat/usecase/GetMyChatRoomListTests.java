@@ -1,0 +1,222 @@
+package com.dreamteam.alter.application.chat.usecase;
+
+import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatRoomListWithOpponentResponse;
+import com.dreamteam.alter.domain.auth.type.TokenScope;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.result.ChatRoomListResult;
+import com.dreamteam.alter.domain.chat.type.ChatRoomType;
+import com.dreamteam.alter.domain.common.pagination.CursorPageQuery;
+import com.dreamteam.alter.domain.common.pagination.CursorPageResult;
+import com.dreamteam.alter.domain.user.context.AppActor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
+@ExtendWith(MockitoExtension.class)
+@DisplayName("GetMyChatRoomList 테스트")
+class GetMyChatRoomListTests {
+
+    @Mock
+    private ChatRoomQueryRepository chatRoomQueryRepository;
+
+    @Mock
+    private ChatMessageQueryRepository chatMessageQueryRepository;
+
+    private GetMyChatRoomList sut;
+
+    @BeforeEach
+    void setUp() {
+        sut = new GetMyChatRoomList(
+            chatRoomQueryRepository,
+            chatMessageQueryRepository,
+            new ObjectMapper().registerModule(new JavaTimeModule())
+        );
+    }
+
+    @Test
+    @DisplayName("DIRECT 채팅방은 상대방 이름이 roomName이 되고 쿼리에서 채워진 프로필 URL·memberCount가 그대로 매핑된다")
+    void execute_DIRECT_상대방정보와_프로필URL_매핑() {
+        // given
+        Long participantId = 10L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        Long chatRoomId = 1L;
+        Long opponentId = 201L;
+        ChatRoomListWithOpponentResponse directRoom = new ChatRoomListWithOpponentResponse(
+            chatRoomId, ChatRoomType.DIRECT, LocalDateTime.now(), LocalDateTime.now(),
+            null, opponentId, TokenScope.APP, "김알바", "https://cdn.example.com/profile.png", null, 3L
+        );
+
+        given(chatRoomQueryRepository.countChatRoomsByParticipant(participantId, TokenScope.APP)).willReturn(1L);
+        given(chatRoomQueryRepository.getChatRoomListWithOpponent(any(), any(), any()))
+            .willReturn(List.of(directRoom));
+        given(chatMessageQueryRepository.getLatestMessageContentsByChatRoomIds(List.of(chatRoomId)))
+            .willReturn(Map.of());
+
+        // when
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
+
+        // then
+        ChatRoomListResult result = response.data().getFirst();
+        assertThat(result.type()).isEqualTo(ChatRoomType.DIRECT);
+        assertThat(result.roomName()).isEqualTo("김알바");
+        assertThat(result.memberCount()).isEqualTo(3);
+        assertThat(result.opponentProfileImageUrl()).isEqualTo("https://cdn.example.com/profile.png");
+    }
+
+    @Test
+    @DisplayName("DIRECT 채팅방 상대방 이름이 비어 있으면 '알 수 없음'으로 마스킹되고 프로필 이미지는 null이 된다")
+    void execute_DIRECT_상대방이름비면_이름마스킹_프로필null() {
+        // given
+        Long participantId = 10L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        Long chatRoomId = 1L;
+        Long opponentId = 201L;
+        ChatRoomListWithOpponentResponse directRoom = new ChatRoomListWithOpponentResponse(
+            chatRoomId, ChatRoomType.DIRECT, LocalDateTime.now(), LocalDateTime.now(),
+            null, opponentId, TokenScope.APP, null, null, null, 1L
+        );
+
+        given(chatRoomQueryRepository.countChatRoomsByParticipant(participantId, TokenScope.APP)).willReturn(1L);
+        given(chatRoomQueryRepository.getChatRoomListWithOpponent(any(), any(), any()))
+            .willReturn(List.of(directRoom));
+        given(chatMessageQueryRepository.getLatestMessageContentsByChatRoomIds(List.of(chatRoomId)))
+            .willReturn(Map.of());
+
+        // when
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
+
+        // then
+        ChatRoomListResult result = response.data().getFirst();
+        assertThat(result.opponentName()).isEqualTo("알 수 없음");
+        assertThat(result.roomName()).isEqualTo("알 수 없음");
+        assertThat(result.opponentProfileImageUrl()).isNull();
+    }
+
+    @Test
+    @DisplayName("GROUP 채팅방은 업장명이 roomName이 되고 상대방 필드는 모두 null이다")
+    void execute_GROUP_업장명과_null상대방필드() {
+        // given
+        Long participantId = 10L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        Long chatRoomId = 2L;
+        ChatRoomListWithOpponentResponse groupRoom = new ChatRoomListWithOpponentResponse(
+            chatRoomId, ChatRoomType.GROUP, LocalDateTime.now(), LocalDateTime.now(),
+            "알터 카페 강남점", null, null, null, null, null, 8L
+        );
+
+        given(chatRoomQueryRepository.countChatRoomsByParticipant(participantId, TokenScope.APP)).willReturn(1L);
+        given(chatRoomQueryRepository.getChatRoomListWithOpponent(any(), any(), any()))
+            .willReturn(List.of(groupRoom));
+        given(chatMessageQueryRepository.getLatestMessageContentsByChatRoomIds(List.of(chatRoomId)))
+            .willReturn(Map.of());
+
+        // when
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
+
+        // then
+        ChatRoomListResult result = response.data().getFirst();
+        assertThat(result.roomName()).isEqualTo("알터 카페 강남점");
+        assertThat(result.opponentId()).isNull();
+        assertThat(result.opponentName()).isNull();
+        assertThat(result.opponentProfileImageUrl()).isNull();
+        assertThat(result.memberCount()).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("GROUP 채팅방 workspaceName이 비어 있으면 roomName이 '알 수 없음'으로 폴백된다")
+    void execute_GROUP_workspaceName비면_roomName_알수없음_폴백() {
+        // given
+        Long participantId = 10L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        Long chatRoomId = 2L;
+        ChatRoomListWithOpponentResponse groupRoom = new ChatRoomListWithOpponentResponse(
+            chatRoomId, ChatRoomType.GROUP, LocalDateTime.now(), LocalDateTime.now(),
+            null, null, null, null, null, null, 8L
+        );
+
+        given(chatRoomQueryRepository.countChatRoomsByParticipant(participantId, TokenScope.APP)).willReturn(1L);
+        given(chatRoomQueryRepository.getChatRoomListWithOpponent(any(), any(), any()))
+            .willReturn(List.of(groupRoom));
+        given(chatMessageQueryRepository.getLatestMessageContentsByChatRoomIds(List.of(chatRoomId)))
+            .willReturn(Map.of());
+
+        // when
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
+
+        // then
+        ChatRoomListResult result = response.data().getFirst();
+        assertThat(result.roomName()).isEqualTo("알 수 없음");
+    }
+
+    @Test
+    @DisplayName("totalCount는 count 쿼리 결과로 채워진다 (현재 페이지 건수와 다르다)")
+    void execute_totalCount_count쿼리결과로_채워짐() {
+        // given
+        Long participantId = 10L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        Long chatRoomId = 3L;
+        ChatRoomListWithOpponentResponse room = new ChatRoomListWithOpponentResponse(
+            chatRoomId, ChatRoomType.GROUP, LocalDateTime.now(), LocalDateTime.now(),
+            "알터 카페 홍대점", null, null, null, null, null, 1L
+        );
+
+        // count 쿼리 결과(50)와 실제 조회된 페이지 건수(1)를 의도적으로 다르게 세팅
+        given(chatRoomQueryRepository.countChatRoomsByParticipant(participantId, TokenScope.APP)).willReturn(50L);
+        given(chatRoomQueryRepository.getChatRoomListWithOpponent(any(), any(), any()))
+            .willReturn(List.of(room));
+        given(chatMessageQueryRepository.getLatestMessageContentsByChatRoomIds(List.of(chatRoomId)))
+            .willReturn(Map.of());
+
+        // when
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
+
+        // then
+        assertThat(response.data()).hasSize(1);
+        assertThat(response.totalCount()).isEqualTo(50);
+    }
+
+    @Test
+    @DisplayName("count가 0이면 목록 조회를 호출하지 않고 빈 응답을 반환한다")
+    void execute_count가0이면_목록조회_생략하고_빈응답() {
+        // given
+        Long participantId = 10L;
+        AppActor actor = new AppActor(participantId, null, null);
+
+        given(chatRoomQueryRepository.countChatRoomsByParticipant(participantId, TokenScope.APP)).willReturn(0L);
+
+        // when
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
+
+        // then
+        assertThat(response.data()).isEmpty();
+        assertThat(response.totalCount()).isEqualTo(0);
+        verify(chatRoomQueryRepository, never()).getChatRoomListWithOpponent(any(), any(), any());
+    }
+}

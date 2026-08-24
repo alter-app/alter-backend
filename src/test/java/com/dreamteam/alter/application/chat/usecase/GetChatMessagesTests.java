@@ -1,9 +1,6 @@
 package com.dreamteam.alter.application.chat.usecase;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
-import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatMessageResponseDto;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.common.exception.CustomException;
@@ -14,8 +11,10 @@ import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
+import com.dreamteam.alter.domain.chat.result.ChatMessageResult;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
-import com.dreamteam.alter.domain.chat.type.ChatRoomType;
+import com.dreamteam.alter.domain.common.pagination.CursorPageQuery;
+import com.dreamteam.alter.domain.common.pagination.CursorPageResult;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -86,7 +85,8 @@ class GetChatMessagesTests {
         AppActor actor = new AppActor(senderId, null, null);
 
         ChatRoom directRoom = ChatRoom.create(senderId, TokenScope.APP, 999L, TokenScope.APP);
-        given(chatRoomQueryRepository.findById(chatRoomId)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, senderId, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
 
         ChatMessageResponse message = new ChatMessageResponse(
             8L, chatRoomId, senderId, TokenScope.APP, ChatMessageType.NORMAL, "hello", LocalDateTime.now()
@@ -106,12 +106,12 @@ class GetChatMessagesTests {
             .willReturn(List.of(memberA, memberB, memberC, sender));
 
         // when
-        CursorPaginatedApiResponse<ChatMessageResponseDto> response =
-            sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatMessageResult> response =
+            sut.execute(actor, chatRoomId, CursorPageQuery.of(null, 10));
 
         // then
         assertThat(response.data()).hasSize(1);
-        assertThat(response.data().getFirst().getUnreadCount()).isEqualTo(2);
+        assertThat(response.data().getFirst().unreadCount()).isEqualTo(2);
     }
 
     @Test
@@ -123,7 +123,8 @@ class GetChatMessagesTests {
         AppActor actor = new AppActor(senderId, null, null);
 
         ChatRoom directRoom = ChatRoom.create(senderId, TokenScope.APP, 999L, TokenScope.APP);
-        given(chatRoomQueryRepository.findById(chatRoomId)).willReturn(Optional.of(directRoom));
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, senderId, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
 
         ChatMessageResponse messageWithFile = new ChatMessageResponse(
             1L, chatRoomId, senderId, TokenScope.APP, ChatMessageType.NORMAL, "첨부 있음", LocalDateTime.now()
@@ -158,24 +159,24 @@ class GetChatMessagesTests {
         given(fileUrlService.resolve(file)).willReturn(fileResponseDto);
 
         // when
-        CursorPaginatedApiResponse<ChatMessageResponseDto> response =
-            sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatMessageResult> response =
+            sut.execute(actor, chatRoomId, CursorPageQuery.of(null, 10));
 
         // then
         assertThat(response.data()).hasSize(2);
 
-        ChatMessageResponseDto dtoWithFile = response.data().stream()
-            .filter(dto -> dto.getId().equals(messageWithFile.getId()))
+        ChatMessageResult resultWithFile = response.data().stream()
+            .filter(result -> result.id().equals(messageWithFile.getId()))
             .findFirst()
             .orElseThrow();
-        ChatMessageResponseDto dtoWithoutFile = response.data().stream()
-            .filter(dto -> dto.getId().equals(messageWithoutFile.getId()))
+        ChatMessageResult resultWithoutFile = response.data().stream()
+            .filter(result -> result.id().equals(messageWithoutFile.getId()))
             .findFirst()
             .orElseThrow();
 
-        assertThat(dtoWithFile.getAttachments()).hasSize(1);
-        assertThat(dtoWithFile.getAttachments().getFirst().getUrl()).isEqualTo("https://cdn.example.com/photo.png");
-        assertThat(dtoWithoutFile.getAttachments()).isEmpty();
+        assertThat(resultWithFile.attachments()).hasSize(1);
+        assertThat(resultWithFile.attachments().getFirst().url()).isEqualTo("https://cdn.example.com/photo.png");
+        assertThat(resultWithoutFile.attachments()).isEmpty();
 
         verify(fileQueryRepository, times(1))
             .findAllByTargetTypeAndTargetIdIn(eq(FileTargetType.CHAT_MESSAGE), any());
@@ -190,10 +191,8 @@ class GetChatMessagesTests {
         AppActor actor = new AppActor(participantId, null, null);
 
         ChatRoom groupRoom = mock(ChatRoom.class);
-        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
-        given(chatRoomQueryRepository.findById(chatRoomId)).willReturn(Optional.of(groupRoom));
-        given(chatRoomMemberQueryRepository.existsActive(chatRoomId, participantId, TokenScope.APP))
-            .willReturn(true);
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP))
+            .willReturn(Optional.of(groupRoom));
 
         ChatMessageResponse message = new ChatMessageResponse(
             10L, chatRoomId, participantId, TokenScope.APP, ChatMessageType.NORMAL, "안녕하세요", LocalDateTime.now()
@@ -204,13 +203,12 @@ class GetChatMessagesTests {
             .willReturn(Collections.emptyList());
 
         // when
-        CursorPaginatedApiResponse<ChatMessageResponseDto> response =
-            sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatMessageResult> response =
+            sut.execute(actor, chatRoomId, CursorPageQuery.of(null, 10));
 
         // then
         assertThat(response.data()).hasSize(1);
-        verify(chatRoomMemberQueryRepository).existsActive(chatRoomId, participantId, TokenScope.APP);
-        verify(chatRoomQueryRepository, never()).findByIdAndParticipant(any(), any(), any());
+        verify(chatRoomQueryRepository).findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP);
     }
 
     @Test
@@ -221,14 +219,11 @@ class GetChatMessagesTests {
         Long participantId = 999L;
         AppActor actor = new AppActor(participantId, null, null);
 
-        ChatRoom groupRoom = mock(ChatRoom.class);
-        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
-        given(chatRoomQueryRepository.findById(chatRoomId)).willReturn(Optional.of(groupRoom));
-        given(chatRoomMemberQueryRepository.existsActive(chatRoomId, participantId, TokenScope.APP))
-            .willReturn(false);
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP))
+            .willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10)))
+        assertThatThrownBy(() -> sut.execute(actor, chatRoomId, CursorPageQuery.of(null, 10)))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FOUND);
 

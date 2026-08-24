@@ -1,11 +1,11 @@
 package com.dreamteam.alter.application.chat.usecase;
 
-import com.dreamteam.alter.adapter.inbound.general.chat.dto.CreateChatRoomResponseDto;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerCreateOrGetChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
+import com.dreamteam.alter.domain.chat.result.CreateChatRoomResult;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +22,7 @@ public class ManagerCreateOrGetChatRoom extends AbstractCreateOrGetChatRoomUseCa
     }
 
     @Override
-    public CreateChatRoomResponseDto execute(ManagerActor actor, Long opponentUserId, TokenScope opponentScope) {
+    public CreateChatRoomResult execute(ManagerActor actor, Long opponentUserId, TokenScope opponentScope) {
         return super.execute(actor, opponentUserId, opponentScope);
     }
 

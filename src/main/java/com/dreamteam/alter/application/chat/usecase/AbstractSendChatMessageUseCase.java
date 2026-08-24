@@ -9,9 +9,7 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatMessage;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
-import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageRepository;
-import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
 import com.dreamteam.alter.domain.file.port.inbound.AttachFilesUseCase;
@@ -35,7 +33,6 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
     protected final ChatRoomQueryRepository chatRoomQueryRepository;
     protected final ChatRoomRepository chatRoomRepository;
     protected final ChatMessageRepository chatMessageRepository;
-    protected final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
     protected final AttachFilesUseCase attachFilesUseCase;
     protected final FileQueryRepository fileQueryRepository;
     protected final FileUrlService fileUrlService;
@@ -45,26 +42,17 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
         TokenScope senderScope = getParticipantScope(user);
         Long senderId = getParticipantId(user);
 
-        // 1. 채팅방 존재 확인
-        ChatRoom chatRoom = chatRoomQueryRepository.findById(chatRoomId)
+        // 1. 채팅방 존재 확인 및 참여자 검증 (활성 멤버 EXISTS 기준)
+        ChatRoom chatRoom = chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, senderId, senderScope)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다."));
 
-        // 2. 참여자 검증 (DIRECT: participant 컬럼 기반, GROUP: 멤버 테이블 기반)
-        if (chatRoom.getType() == ChatRoomType.GROUP) {
-            if (!chatRoomMemberQueryRepository.existsActive(chatRoomId, senderId, senderScope)) {
-                throw new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다.");
-            }
-        } else if (!chatRoom.isParticipant(senderId, senderScope)) {
-            throw new CustomException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다.");
-        }
-
-        // 3. NOTICE 권한 검증 (매니저만 공지 작성 가능)
+        // 2. NOTICE 권한 검증 (매니저만 공지 작성 가능)
         ChatMessageType type = request.getType() == null ? ChatMessageType.NORMAL : request.getType();
         if (type == ChatMessageType.NOTICE && senderScope != TokenScope.MANAGER) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "공지는 매니저만 작성할 수 있습니다.");
         }
 
-        // 3-1. 내용/첨부 검증
+        // 2-1. 내용/첨부 검증
         //   - fileIds: blank 원소 제거 후 중복 제거
         //   - content: 공백-only는 미입력으로 간주(isBlank), 길이 상한 검사로 DB 제약 위반(500) 대신 400 반환
         List<String> fileIds = request.getFileIds() == null
@@ -84,7 +72,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "이미지는 최대 10개까지 첨부할 수 있습니다.");
         }
 
-        // 4. 메시지 저장
+        // 3. 메시지 저장
         ChatMessage chatMessage = ChatMessage.create(
             chatRoom.getId(),
             senderId,
@@ -94,7 +82,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
         );
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
 
-        // 4-1. 첨부 파일 연결
+        // 3-1. 첨부 파일 연결
         List<FileResponseDto> attachments = List.of();
         if (!fileIds.isEmpty()) {
             attachFilesUseCase.execute(
@@ -110,10 +98,10 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
                 .toList();
         }
 
-        // 5. ChatRoom의 updatedAt 갱신
+        // 4. ChatRoom의 updatedAt 갱신
         chatRoom.updateUpdatedAt();
 
-        // 6. 실시간 전송/FCM은 커밋 이후(AFTER_COMMIT) 리스너에서 처리한다.
+        // 5. 실시간 전송/FCM은 커밋 이후(AFTER_COMMIT) 리스너에서 처리한다.
         ChatMessageResponse messageResponse = new ChatMessageResponse(
             savedMessage.getId(),
             savedMessage.getChatRoomId(),

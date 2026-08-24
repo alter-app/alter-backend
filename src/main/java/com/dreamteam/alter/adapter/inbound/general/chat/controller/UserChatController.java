@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.inbound.general.chat.controller;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CommonApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatMessageResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.chat.dto.ChatRoomListResponseDto;
@@ -17,6 +18,10 @@ import com.dreamteam.alter.domain.chat.port.inbound.GetChatRoomInfoUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetMyChatRoomListUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetWorkspaceGroupChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.MarkChatRoomReadUseCase;
+import com.dreamteam.alter.domain.chat.result.ChatMessageResult;
+import com.dreamteam.alter.domain.chat.result.ChatRoomListResult;
+import com.dreamteam.alter.domain.common.pagination.CursorPageQuery;
+import com.dreamteam.alter.domain.common.pagination.CursorPageResult;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -25,6 +30,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.function.Function;
 
 @RestController
 @RequestMapping("/app/chat")
@@ -57,8 +64,9 @@ public class UserChatController implements UserChatControllerSpec {
         @RequestBody CreateChatRoomRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        CreateChatRoomResponseDto response =
-            createOrGetChatRoom.execute(actor, request.getOpponentUserId(), request.getOpponentScope());
+        CreateChatRoomResponseDto response = CreateChatRoomResponseDto.from(
+            createOrGetChatRoom.execute(actor, request.getOpponentUserId(), request.getOpponentScope())
+        );
         return ResponseEntity.ok(CommonApiResponse.of(response));
     }
 
@@ -68,7 +76,9 @@ public class UserChatController implements UserChatControllerSpec {
         CursorPageRequestDto pageRequest
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(getMyChatRoomList.execute(actor, pageRequest));
+        CursorPageResult<ChatRoomListResult> result = getMyChatRoomList.execute(
+            actor, CursorPageQuery.of(pageRequest.cursor(), pageRequest.pageSize()));
+        return ResponseEntity.ok(toPaginatedResponse(result, ChatRoomListResponseDto::from));
     }
 
     @Override
@@ -77,7 +87,7 @@ public class UserChatController implements UserChatControllerSpec {
         @PathVariable Long chatRoomId
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(CommonApiResponse.of(getChatRoomInfo.execute(actor, chatRoomId)));
+        return ResponseEntity.ok(CommonApiResponse.of(ChatRoomResponseDto.from(getChatRoomInfo.execute(actor, chatRoomId))));
     }
 
     @Override
@@ -87,7 +97,9 @@ public class UserChatController implements UserChatControllerSpec {
         CursorPageRequestDto pageRequest
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(getChatMessages.execute(actor, chatRoomId, pageRequest));
+        CursorPageResult<ChatMessageResult> result = getChatMessages.execute(
+            actor, chatRoomId, CursorPageQuery.of(pageRequest.cursor(), pageRequest.pageSize()));
+        return ResponseEntity.ok(toPaginatedResponse(result, ChatMessageResponseDto::from));
     }
 
     @Override
@@ -109,5 +121,15 @@ public class UserChatController implements UserChatControllerSpec {
         AppActor actor = AppActionContext.getInstance().getActor();
         Long roomId = getWorkspaceGroupChatRoom.execute(actor.getUserId(), TokenScope.APP, workspaceId);
         return ResponseEntity.ok(CommonApiResponse.of(CreateChatRoomResponseDto.of(roomId)));
+    }
+    // CursorPageResult(domain) → CursorPaginatedApiResponse(응답 포맷) 정규화는 컨트롤러 책임
+    private static <T, R> CursorPaginatedApiResponse<R> toPaginatedResponse(
+        CursorPageResult<T> result,
+        Function<T, R> mapper
+    ) {
+        return CursorPaginatedApiResponse.of(
+            CursorPageResponseDto.of(result.nextCursor(), result.pageSize(), result.totalCount()),
+            result.data().stream().map(mapper).toList()
+        );
     }
 }

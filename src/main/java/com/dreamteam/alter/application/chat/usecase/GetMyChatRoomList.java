@@ -16,7 +16,11 @@ public class GetMyChatRoomList extends AbstractGetMyChatRoomListUseCase<AppActor
         ChatMessageQueryRepository chatMessageQueryRepository,
         ObjectMapper objectMapper
     ) {
-        super(chatRoomQueryRepository, chatMessageQueryRepository, objectMapper);
+        super(
+            chatRoomQueryRepository,
+            chatMessageQueryRepository,
+            objectMapper
+        );
     }
 
     @Override

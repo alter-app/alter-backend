@@ -29,7 +29,7 @@ public interface ManagerChatControllerSpec {
         @Valid @RequestBody CreateChatRoomRequestDto request
     );
 
-    @Operation(summary = "내 채팅방 목록 조회 (커서 페이징)", description = "내가 참여한 채팅방 목록을 최신순으로 조회합니다.")
+    @Operation(summary = "내 채팅방 목록 조회 (커서 페이징)", description = "내가 참여한 채팅방(1:1, 업장 그룹 채팅 포함) 목록을 최신순으로 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "채팅방 목록 조회 성공")
     })
@@ -37,7 +37,7 @@ public interface ManagerChatControllerSpec {
         CursorPageRequestDto pageRequest
     );
 
-    @Operation(summary = "채팅방 정보 조회", description = "특정 채팅방의 상세 정보를 조회합니다.")
+    @Operation(summary = "채팅방 정보 조회", description = "특정 채팅방(1:1, 업장 그룹 채팅 포함)의 상세 정보를 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "채팅방 정보 조회 성공")
     })
