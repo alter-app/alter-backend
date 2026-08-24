@@ -1,13 +1,13 @@
 package com.dreamteam.alter.application.chat.usecase;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatRoomListWithOpponentResponse;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.result.ChatRoomListResult;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
+import com.dreamteam.alter.domain.common.pagination.CursorPageQuery;
+import com.dreamteam.alter.domain.common.pagination.CursorPageResult;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -70,8 +70,8 @@ class GetMyChatRoomListTests {
             .willReturn(Map.of());
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResult> response =
-            sut.execute(actor, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
 
         // then
         ChatRoomListResult result = response.data().getFirst();
@@ -102,8 +102,8 @@ class GetMyChatRoomListTests {
             .willReturn(Map.of());
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResult> response =
-            sut.execute(actor, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
 
         // then
         ChatRoomListResult result = response.data().getFirst();
@@ -132,8 +132,8 @@ class GetMyChatRoomListTests {
             .willReturn(Map.of());
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResult> response =
-            sut.execute(actor, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
 
         // then
         ChatRoomListResult result = response.data().getFirst();
@@ -164,8 +164,8 @@ class GetMyChatRoomListTests {
             .willReturn(Map.of());
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResult> response =
-            sut.execute(actor, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
 
         // then
         ChatRoomListResult result = response.data().getFirst();
@@ -193,12 +193,12 @@ class GetMyChatRoomListTests {
             .willReturn(Map.of());
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResult> response =
-            sut.execute(actor, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
 
         // then
         assertThat(response.data()).hasSize(1);
-        assertThat(response.page().totalCount()).isEqualTo(50);
+        assertThat(response.totalCount()).isEqualTo(50);
     }
 
     @Test
@@ -211,12 +211,12 @@ class GetMyChatRoomListTests {
         given(chatRoomQueryRepository.countChatRoomsByParticipant(participantId, TokenScope.APP)).willReturn(0L);
 
         // when
-        CursorPaginatedApiResponse<ChatRoomListResult> response =
-            sut.execute(actor, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatRoomListResult> response =
+            sut.execute(actor, CursorPageQuery.of(null, 10));
 
         // then
         assertThat(response.data()).isEmpty();
-        assertThat(response.page().totalCount()).isEqualTo(0);
+        assertThat(response.totalCount()).isEqualTo(0);
         verify(chatRoomQueryRepository, never()).getChatRoomListWithOpponent(any(), any(), any());
     }
 }

@@ -17,6 +17,10 @@ import com.dreamteam.alter.domain.chat.port.inbound.ManagerGetChatMessagesUseCas
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerGetChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerGetMyChatRoomListUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.MarkChatRoomReadUseCase;
+import com.dreamteam.alter.domain.chat.result.ChatMessageResult;
+import com.dreamteam.alter.domain.chat.result.ChatRoomListResult;
+import com.dreamteam.alter.domain.common.pagination.CursorPageQuery;
+import com.dreamteam.alter.domain.common.pagination.CursorPageResult;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -69,7 +73,9 @@ public class ManagerChatController implements ManagerChatControllerSpec {
         CursorPageRequestDto pageRequest
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        return ResponseEntity.ok(managerGetMyChatRoomListUseCase.execute(actor, pageRequest).map(ChatRoomListResponseDto::from));
+        CursorPageResult<ChatRoomListResult> result = managerGetMyChatRoomListUseCase.execute(
+            actor, CursorPageQuery.of(pageRequest.cursor(), pageRequest.pageSize()));
+        return ResponseEntity.ok(CursorPaginatedApiResponse.from(result, ChatRoomListResponseDto::from));
     }
 
     @Override
@@ -88,7 +94,9 @@ public class ManagerChatController implements ManagerChatControllerSpec {
         CursorPageRequestDto pageRequest
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        return ResponseEntity.ok(managerGetChatMessagesUseCase.execute(actor, chatRoomId, pageRequest).map(ChatMessageResponseDto::from));
+        CursorPageResult<ChatMessageResult> result = managerGetChatMessagesUseCase.execute(
+            actor, chatRoomId, CursorPageQuery.of(pageRequest.cursor(), pageRequest.pageSize()));
+        return ResponseEntity.ok(CursorPaginatedApiResponse.from(result, ChatMessageResponseDto::from));
     }
 
     @Override

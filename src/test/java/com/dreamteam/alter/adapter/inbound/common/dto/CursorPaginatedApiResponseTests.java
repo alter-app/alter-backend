@@ -1,5 +1,6 @@
 package com.dreamteam.alter.adapter.inbound.common.dto;
 
+import com.dreamteam.alter.domain.common.pagination.CursorPageResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,29 +12,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CursorPaginatedApiResponseTests {
 
     @Test
-    @DisplayName("map_데이터만_변환하고_page는_유지")
-    void map_데이터만_변환하고_page는_유지() {
+    @DisplayName("from_데이터변환과_page매핑")
+    void from_데이터변환과_page매핑() {
         // given
-        CursorPageResponseDto page = CursorPageResponseDto.of("cursor", 10, 3);
-        CursorPaginatedApiResponse<Integer> response = CursorPaginatedApiResponse.of(page, List.of(1, 2, 3));
+        CursorPageResult<Integer> result = CursorPageResult.of("cursor", 10, 3, List.of(1, 2, 3));
 
         // when
-        CursorPaginatedApiResponse<String> mapped = response.map(String::valueOf);
+        CursorPaginatedApiResponse<String> mapped = CursorPaginatedApiResponse.from(result, String::valueOf);
 
         // then
         assertThat(mapped.data()).containsExactly("1", "2", "3");
-        assertThat(mapped.page()).isSameAs(page);
+        assertThat(mapped.page().cursor()).isEqualTo("cursor");
+        assertThat(mapped.page().pageSize()).isEqualTo(10);
+        assertThat(mapped.page().totalCount()).isEqualTo(3);
     }
 
     @Test
-    @DisplayName("map_빈데이터면_빈리스트")
-    void map_빈데이터면_빈리스트() {
+    @DisplayName("from_빈결과면_빈리스트")
+    void from_빈결과면_빈리스트() {
         // given
-        CursorPageResponseDto page = CursorPageResponseDto.empty(10, 0);
-        CursorPaginatedApiResponse<Integer> response = CursorPaginatedApiResponse.empty(page);
+        CursorPageResult<Integer> result = CursorPageResult.empty(10, 0);
 
         // when
-        CursorPaginatedApiResponse<String> mapped = response.map(String::valueOf);
+        CursorPaginatedApiResponse<String> mapped = CursorPaginatedApiResponse.from(result, String::valueOf);
 
         // then
         assertThat(mapped.data()).isEmpty();

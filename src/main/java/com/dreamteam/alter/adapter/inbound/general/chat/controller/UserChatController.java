@@ -17,6 +17,10 @@ import com.dreamteam.alter.domain.chat.port.inbound.GetChatRoomInfoUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetMyChatRoomListUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.GetWorkspaceGroupChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.MarkChatRoomReadUseCase;
+import com.dreamteam.alter.domain.chat.result.ChatMessageResult;
+import com.dreamteam.alter.domain.chat.result.ChatRoomListResult;
+import com.dreamteam.alter.domain.common.pagination.CursorPageQuery;
+import com.dreamteam.alter.domain.common.pagination.CursorPageResult;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -69,7 +73,9 @@ public class UserChatController implements UserChatControllerSpec {
         CursorPageRequestDto pageRequest
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(getMyChatRoomList.execute(actor, pageRequest).map(ChatRoomListResponseDto::from));
+        CursorPageResult<ChatRoomListResult> result = getMyChatRoomList.execute(
+            actor, CursorPageQuery.of(pageRequest.cursor(), pageRequest.pageSize()));
+        return ResponseEntity.ok(CursorPaginatedApiResponse.from(result, ChatRoomListResponseDto::from));
     }
 
     @Override
@@ -88,7 +94,9 @@ public class UserChatController implements UserChatControllerSpec {
         CursorPageRequestDto pageRequest
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        return ResponseEntity.ok(getChatMessages.execute(actor, chatRoomId, pageRequest).map(ChatMessageResponseDto::from));
+        CursorPageResult<ChatMessageResult> result = getChatMessages.execute(
+            actor, chatRoomId, CursorPageQuery.of(pageRequest.cursor(), pageRequest.pageSize()));
+        return ResponseEntity.ok(CursorPaginatedApiResponse.from(result, ChatMessageResponseDto::from));
     }
 
     @Override

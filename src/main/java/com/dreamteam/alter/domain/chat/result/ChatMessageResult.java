@@ -1,6 +1,5 @@
 package com.dreamteam.alter.domain.chat.result;
 
-import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import lombok.Builder;
@@ -20,26 +19,4 @@ public record ChatMessageResult(
         Integer unreadCount,
         List<ChatAttachmentResult> attachments
 ) {
-    public static ChatMessageResult from(
-        ChatMessageResponse response,
-        Long currentUserId,
-        TokenScope currentUserScope,
-        Integer unreadCount,
-        List<ChatAttachmentResult> attachments
-    ) {
-        boolean isMine = response.getSenderId().equals(currentUserId)
-            && response.getSenderScope().equals(currentUserScope);
-
-        return ChatMessageResult.builder()
-            .id(response.getId())
-            .senderId(response.getSenderId())
-            .senderScope(response.getSenderScope())
-            .type(response.getType())
-            .content(response.getContent())
-            .createdAt(response.getCreatedAt())
-            .isMine(isMine)
-            .unreadCount(unreadCount)
-            .attachments(attachments)
-            .build();
-    }
 }

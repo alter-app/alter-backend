@@ -1,7 +1,5 @@
 package com.dreamteam.alter.application.chat.usecase;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.application.file.FileUrlService;
@@ -15,6 +13,8 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryReposito
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.result.ChatMessageResult;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
+import com.dreamteam.alter.domain.common.pagination.CursorPageQuery;
+import com.dreamteam.alter.domain.common.pagination.CursorPageResult;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -106,8 +106,8 @@ class GetChatMessagesTests {
             .willReturn(List.of(memberA, memberB, memberC, sender));
 
         // when
-        CursorPaginatedApiResponse<ChatMessageResult> response =
-            sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatMessageResult> response =
+            sut.execute(actor, chatRoomId, CursorPageQuery.of(null, 10));
 
         // then
         assertThat(response.data()).hasSize(1);
@@ -159,8 +159,8 @@ class GetChatMessagesTests {
         given(fileUrlService.resolve(file)).willReturn(fileResponseDto);
 
         // when
-        CursorPaginatedApiResponse<ChatMessageResult> response =
-            sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatMessageResult> response =
+            sut.execute(actor, chatRoomId, CursorPageQuery.of(null, 10));
 
         // then
         assertThat(response.data()).hasSize(2);
@@ -203,8 +203,8 @@ class GetChatMessagesTests {
             .willReturn(Collections.emptyList());
 
         // when
-        CursorPaginatedApiResponse<ChatMessageResult> response =
-            sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10));
+        CursorPageResult<ChatMessageResult> response =
+            sut.execute(actor, chatRoomId, CursorPageQuery.of(null, 10));
 
         // then
         assertThat(response.data()).hasSize(1);
@@ -223,7 +223,7 @@ class GetChatMessagesTests {
             .willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> sut.execute(actor, chatRoomId, CursorPageRequestDto.of(null, 10)))
+        assertThatThrownBy(() -> sut.execute(actor, chatRoomId, CursorPageQuery.of(null, 10)))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FOUND);
 

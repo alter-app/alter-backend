@@ -2,9 +2,6 @@ package com.dreamteam.alter.application.chat.usecase;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorDto;
 import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequestDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageResponseDto;
-import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -19,6 +16,8 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryReposito
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.result.ChatAttachmentResult;
 import com.dreamteam.alter.domain.chat.result.ChatMessageResult;
+import com.dreamteam.alter.domain.common.pagination.CursorPageQuery;
+import com.dreamteam.alter.domain.common.pagination.CursorPageResult;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
@@ -43,10 +42,10 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
     protected final FileQueryRepository fileQueryRepository;
     protected final FileUrlService fileUrlService;
 
-    protected CursorPaginatedApiResponse<ChatMessageResult> execute(
+    protected CursorPageResult<ChatMessageResult> execute(
         A actor,
         Long chatRoomId,
-        CursorPageRequestDto pageRequest
+        CursorPageQuery query
     ) {
         TokenScope participantScope = getParticipantScope(actor);
         Long participantId = getParticipantId(actor);
@@ -57,10 +56,10 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
 
         // 2. 커서 디코딩
         CursorDto cursorDto = null;
-        if (ObjectUtils.isNotEmpty(pageRequest.cursor())) {
-            cursorDto = CursorUtil.decodeCursor(pageRequest.cursor(), CursorDto.class, objectMapper);
+        if (ObjectUtils.isNotEmpty(query.cursor())) {
+            cursorDto = CursorUtil.decodeCursor(query.cursor(), CursorDto.class, objectMapper);
         }
-        CursorPageRequest<CursorDto> cursorPageRequest = CursorPageRequest.of(cursorDto, pageRequest.pageSize());
+        CursorPageRequest<CursorDto> cursorPageRequest = CursorPageRequest.of(cursorDto, query.pageSize());
 
         // 3. 메시지 목록 조회 (내림차순으로 조회)
         List<ChatMessageResponse> messages = chatMessageQueryRepository.getChatMessagesWithCursor(
@@ -69,7 +68,7 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
         );
 
         if (ObjectUtils.isEmpty(messages)) {
-            return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(pageRequest.pageSize(), 0));
+            return CursorPageResult.empty(query.pageSize(), 0);
         }
 
         // 4. 클라이언트 표시 순서에 맞게 오름차순으로 변환 (가장 오래된 메시지가 첫 번째)
@@ -83,24 +82,14 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
 
         // 6. Result 변환 (본인 메시지 여부 + 안 읽은 사람 수 포함)
         List<ChatMessageResult> messageList = sortedMessages.stream()
-            .map(message -> ChatMessageResult.from(
-                message,
-                participantId,
-                participantScope,
-                calculateUnreadCount(message, activeMembers),
-                toAttachmentResults(message.getAttachments())
-            ))
+            .map(message -> toResult(message, participantId, participantScope, activeMembers))
             .toList();
 
         // 7. 커서 생성 (가장 오래된 메시지 기준으로 설정하여 다음 페이지 조회 시 이전 메시지 조회)
         ChatMessageResponse oldestMessage = sortedMessages.getFirst();
-        CursorPageResponseDto pageResponseDto = CursorPageResponseDto.of(
-            CursorUtil.encodeCursor(new CursorDto(oldestMessage.getId(), oldestMessage.getCreatedAt()), objectMapper),
-            pageRequest.pageSize(),
-            messages.size()
-        );
+        String nextCursor = CursorUtil.encodeCursor(new CursorDto(oldestMessage.getId(), oldestMessage.getCreatedAt()), objectMapper);
 
-        return CursorPaginatedApiResponse.of(pageResponseDto, messageList);
+        return CursorPageResult.of(nextCursor, query.pageSize(), messages.size(), messageList);
     }
 
     protected abstract TokenScope getParticipantScope(A actor);
@@ -126,6 +115,28 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
                 attachmentsByMessageId.getOrDefault(String.valueOf(message.getId()), Collections.emptyList())
             );
         }
+    }
+
+    private ChatMessageResult toResult(
+        ChatMessageResponse message,
+        Long participantId,
+        TokenScope participantScope,
+        List<ChatRoomMember> activeMembers
+    ) {
+        boolean isMine = message.getSenderId().equals(participantId)
+            && message.getSenderScope().equals(participantScope);
+
+        return ChatMessageResult.builder()
+            .id(message.getId())
+            .senderId(message.getSenderId())
+            .senderScope(message.getSenderScope())
+            .type(message.getType())
+            .content(message.getContent())
+            .createdAt(message.getCreatedAt())
+            .isMine(isMine)
+            .unreadCount(calculateUnreadCount(message, activeMembers))
+            .attachments(toAttachmentResults(message.getAttachments()))
+            .build();
     }
 
     // FileResponseDto(adapter DTO) → ChatAttachmentResult(도메인 결과) 변환은 application 계층 책임
