@@ -10,7 +10,18 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
+    services:
+      redis:
+        image: redis:7.4.2
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4.2.2
 
@@ -35,3 +46,6 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew clean build
+        env:
+          ALTER_TEST_REDIS_HOST: localhost
+          ALTER_TEST_REDIS_PORT: 6379

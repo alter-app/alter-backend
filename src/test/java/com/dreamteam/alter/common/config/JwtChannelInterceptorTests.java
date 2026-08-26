@@ -91,4 +91,26 @@ class JwtChannelInterceptorTests {
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("Authorization");
     }
+
+    @Test
+    @DisplayName("CONNECT에서 provider가 미인증 Authentication을 반환하면 거부하고 user를 세팅하지 않는다")
+    void preSend_CONNECT_미인증결과_거부() {
+        // given: 토큰 타입 불일치·만료 처리 분기에서 provider가 details 없는 미인증 원본 토큰을 그대로 반환하는 상황
+        StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.CONNECT);
+        accessor.setSessionId("sess1");
+        accessor.setLeaveMutable(true);
+        accessor.setNativeHeader("Authorization", "Bearer expired-token");
+        Message<byte[]> message = MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
+
+        AccessTokenAuthentication unauthenticated = new AccessTokenAuthentication("expired-token");
+        given(accessTokenAuthenticationProvider.authenticate(any())).willReturn(unauthenticated);
+
+        // when & then: 예외 메시지가 "WebSocket 인증 실패: WebSocket 인증 실패: ..."로 이중 래핑되면 안 된다
+        // (미인증 거부 예외가 바로 아래 catch(Exception)에 다시 잡히면 발생하는 회귀).
+        assertThatThrownBy(() -> interceptor.preSend(message, null))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("WebSocket 인증 실패: 유효하지 않은 토큰입니다.");
+        StompHeaderAccessor result = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        assertThat(result.getUser()).isNull();
+    }
 }

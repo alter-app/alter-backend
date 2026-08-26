@@ -19,7 +19,6 @@ import java.util.Optional;
 public class WebSocketEventListener {
 
     private final ChatPresenceStore chatPresenceStore;
-    private final ChatWebSocketSessionRegistry chatWebSocketSessionRegistry;
 
     @EventListener
     public void onConnected(SessionConnectedEvent event) {
@@ -27,10 +26,8 @@ public class WebSocketEventListener {
         if (sessionId == null) {
             return;
         }
-        resolve(event.getUser()).ifPresent(principal -> {
-            chatPresenceStore.markOnline(principal.scope(), principal.memberId(), sessionId);
-            chatWebSocketSessionRegistry.linkMember(principal.scope(), principal.memberId(), sessionId);
-        });
+        resolve(event.getUser()).ifPresent(principal ->
+            chatPresenceStore.markOnline(principal.scope(), principal.memberId(), sessionId));
     }
 
     @EventListener
@@ -39,10 +36,8 @@ public class WebSocketEventListener {
         if (sessionId == null) {
             return;
         }
-        resolve(event.getUser()).ifPresent(principal -> {
-            chatPresenceStore.markOffline(principal.scope(), principal.memberId(), sessionId);
-            chatWebSocketSessionRegistry.unlinkMember(principal.scope(), principal.memberId(), sessionId);
-        });
+        resolve(event.getUser()).ifPresent(principal ->
+            chatPresenceStore.markOffline(principal.scope(), principal.memberId(), sessionId));
     }
 
     private Optional<PresencePrincipal> resolve(Principal principal) {

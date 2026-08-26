@@ -25,8 +25,11 @@ public class ChatMessageRedisSubscriber implements MessageListener {
         try {
             String body = new String(message.getBody(), StandardCharsets.UTF_8);
             ChatBroadcastEnvelope envelope = objectMapper.readValue(body, ChatBroadcastEnvelope.class);
-            messagingTemplate.convertAndSend(
-                ChatConstants.CHAT_SUBSCRIBE_DESTINATION_PREFIX + envelope.getRoomId(), envelope.getMessage());
+            // 수신자별 유저 큐로 배달한다. 로컬에 연결된 세션이 없는 유저는 Spring이 자연히 무시한다.
+            for (String recipientName : envelope.getRecipientNames()) {
+                messagingTemplate.convertAndSendToUser(
+                    recipientName, ChatConstants.CHAT_MESSAGE_USER_QUEUE_DESTINATION, envelope.getMessage());
+            }
         } catch (Exception e) {
             log.error("채팅 메시지 Redis 수신 처리 실패. Error: {}", e.getMessage(), e);
         }

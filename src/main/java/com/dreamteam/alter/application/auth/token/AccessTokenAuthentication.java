@@ -40,4 +40,12 @@ public class AccessTokenAuthentication extends AbstractAuthenticationToken {
         return token;
     }
 
+    @Override
+    public String getName() {
+        if (getDetails() instanceof LoginUserDto loginUser) {
+            return loginUser.getScope().principalName(loginUser.getId());
+        }
+        return "";
+    }
+
 }

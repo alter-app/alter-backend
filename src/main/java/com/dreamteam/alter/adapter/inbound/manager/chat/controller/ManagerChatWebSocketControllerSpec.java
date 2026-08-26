@@ -19,12 +19,12 @@ public interface ManagerChatWebSocketControllerSpec {
         summary = "채팅 메시지 전송 (WebSocket)",
         description = "WebSocket을 통해 채팅 메시지를 전송합니다. " +
             "STOMP 메시지 브로커를 사용하며, 클라이언트는 /pub/manager/send.{chatRoomId}로 메시지를 보내야 합니다. " +
-            "구독 경로는 /sub/chat.{chatRoomId} 입니다. " +
+            "구독 경로는 /user/queue/chat.messages 입니다 (유저별 개인 큐이며, 채팅방 활성 멤버에게만 전달됩니다). " +
             "CONNECT 프레임 헤더에 Authorization: Bearer {accessToken}이 필수입니다. " +
             "이 API는 REST가 아니므로 Swagger 문서의 Try it out으로는 호출할 수 없습니다."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "메시지 전송 성공 (WebSocket은 응답이 없으며, 구독자에게 브로드캐스트됩니다)")
+        @ApiResponse(responseCode = "200", description = "메시지 전송 성공 (WebSocket은 응답이 없으며, 채팅방 활성 멤버의 유저 큐로 전달됩니다)")
     })
     void sendMessage(@Payload SendChatMessageRequestDto request, @DestinationVariable Long chatRoomId, Principal principal);
 }

@@ -3,12 +3,17 @@ package com.dreamteam.alter.common.constants;
 public final class ChatConstants {
 
     /**
-     * 채팅방 메시지 STOMP 구독 destination prefix. {@code prefix + roomId} 형태로 쓰인다.
-     * 발행측({@code ChatMessageRedisSubscriber})과 구독 인가측
-     * ({@code ChatSubscribeAuthorizationChannelInterceptor})이 반드시 같은 값을 참조해야 한다 —
-     * 어긋나면 인가 검사가 fail-open으로 조용히 뚫린다.
+     * 채팅 메시지 유저 큐 브로커 prefix. {@code WebSocketConfig}의 {@code enableSimpleBroker}와
+     * {@code CHAT_MESSAGE_USER_QUEUE_DESTINATION}이 반드시 같은 prefix를 공유해야 한다 —
+     * 어긋나면 {@code convertAndSendToUser} 배달이 조용히 끊긴다.
      */
-    public static final String CHAT_SUBSCRIBE_DESTINATION_PREFIX = "/sub/chat.";
+    public static final String CHAT_USER_QUEUE_PREFIX = "/queue";
+
+    /**
+     * 채팅 메시지 유저 큐 목적지. {@code ChatMessageRedisSubscriber}가
+     * {@code convertAndSendToUser} 호출 시 사용한다.
+     */
+    public static final String CHAT_MESSAGE_USER_QUEUE_DESTINATION = CHAT_USER_QUEUE_PREFIX + "/chat.messages";
 
     private ChatConstants() {
     }

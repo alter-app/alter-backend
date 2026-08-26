@@ -91,7 +91,7 @@ class ChatMessageSentEventListenerTests {
         listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요"));
 
         // then
-        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class));
+        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class), any());
         then(notificationService).should(never()).sendNotificationOnlyToMany(any(), any(), anyString(), anyString());
     }
 
@@ -112,7 +112,7 @@ class ChatMessageSentEventListenerTests {
         listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요"));
 
         // then
-        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class));
+        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class), any());
         then(notificationService).should()
             .sendNotificationOnlyToMany(eq(List.of(2L)), any(), anyString(), anyString());
     }
@@ -135,7 +135,7 @@ class ChatMessageSentEventListenerTests {
         listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요"));
 
         // then
-        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class));
+        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class), any());
         then(notificationService).should(never()).sendNotificationOnlyToMany(any(), any(), anyString(), anyString());
     }
 
@@ -160,7 +160,7 @@ class ChatMessageSentEventListenerTests {
         listener.onSent(event(groupRoom, 1L, TokenScope.APP, "그룹 메시지"));
 
         // then
-        then(chatMessageBroadcaster).should().broadcast(eq(200L), any(ChatMessageResponse.class));
+        then(chatMessageBroadcaster).should().broadcast(eq(200L), any(ChatMessageResponse.class), any());
         then(notificationService).should()
             .sendNotificationOnlyToMany(eq(List.of(3L)), any(), anyString(), anyString());
     }
@@ -178,7 +178,7 @@ class ChatMessageSentEventListenerTests {
         listener.onSent(event(groupRoom, 1L, TokenScope.APP, "그룹 메시지"));
 
         // then
-        then(chatMessageBroadcaster).should().broadcast(eq(200L), any(ChatMessageResponse.class));
+        then(chatMessageBroadcaster).should().broadcast(eq(200L), any(ChatMessageResponse.class), any());
         then(notificationService).should(never()).sendNotificationOnlyToMany(any(), any(), anyString(), anyString());
     }
 
@@ -226,5 +226,52 @@ class ChatMessageSentEventListenerTests {
         then(notificationService).should()
             .sendNotificationOnlyToMany(eq(List.of(2L)), any(), anyString(), bodyCaptor.capture());
         assertThat(bodyCaptor.getValue()).isEqualTo("홍길동: 안녕하세요");
+    }
+
+    @Test
+    @DisplayName("GROUP 활성 멤버 N명(발신자 포함, 나간 멤버 제외) 각각의 principal 이름으로 recipientNames를 만든다")
+    void onSent_recipientNames는_활성멤버_전원_발신자포함() {
+        // given
+        ChatRoom groupRoom = mock(ChatRoom.class);
+        given(groupRoom.getId()).willReturn(200L);
+
+        ChatRoomMember senderMember = member(1L, TokenScope.APP);
+        ChatRoomMember memberTwo = member(2L, TokenScope.APP);
+        ChatRoomMember memberThree = member(3L, TokenScope.MANAGER);
+        // 나간 멤버는 findActiveByRoom 결과에 애초에 포함되지 않는다
+        given(chatRoomMemberQueryRepository.findActiveByRoom(200L))
+            .willReturn(List.of(senderMember, memberTwo, memberThree));
+        given(chatPresenceStore.filterOnline(any())).willReturn(Set.of());
+
+        // when
+        listener.onSent(event(groupRoom, 1L, TokenScope.APP, "그룹 메시지"));
+
+        // then
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<String>> recipientNamesCaptor = ArgumentCaptor.forClass(List.class);
+        then(chatMessageBroadcaster).should()
+            .broadcast(eq(200L), any(ChatMessageResponse.class), recipientNamesCaptor.capture());
+        assertThat(recipientNamesCaptor.getValue())
+            .containsExactlyInAnyOrder("APP:1", "APP:2", "MANAGER:3");
+    }
+
+    @Test
+    @DisplayName("수신자 산정(findActiveByRoom)은 발송당 정확히 1회만 호출된다")
+    void onSent_수신자산정은_발송당_1회() {
+        // given
+        ChatRoom directRoom = mock(ChatRoom.class);
+        given(directRoom.getId()).willReturn(100L);
+
+        ChatRoomMember senderMember = member(1L, TokenScope.APP);
+        ChatRoomMember opponentMember = member(2L, TokenScope.APP);
+        given(chatRoomMemberQueryRepository.findActiveByRoom(100L))
+            .willReturn(List.of(senderMember, opponentMember));
+        given(chatPresenceStore.filterOnline(any())).willReturn(Set.of());
+
+        // when
+        listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요"));
+
+        // then
+        then(chatRoomMemberQueryRepository).should(org.mockito.Mockito.times(1)).findActiveByRoom(100L);
     }
 }

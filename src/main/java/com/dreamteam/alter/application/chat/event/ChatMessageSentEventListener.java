@@ -37,22 +37,39 @@ public class ChatMessageSentEventListener {
     public void onSent(ChatMessageSentEvent event) {
         ChatRoom chatRoom = event.getChatRoom();
 
-        // 1. WebSocket으로 실시간 전송
+        // 수신자 산정(findActiveByRoom)도 try 안에서 처리한다. AFTER_COMMIT 리스너의 예외는 커밋
+        // 호출자에게 그대로 전파되므로(ALT-284에서 고정한 예외 누수 방지 보장), 이 조회가 실패하면
+        // WS 전파와 FCM 폴백 둘 다 수신자 목록이 없어 어차피 못 하니 여기서 조용히 끝낸다.
+        List<ChatRoomMember> activeMembers;
         try {
-            chatMessageBroadcaster.broadcast(chatRoom.getId(), event.getMessageResponse());
+            // 수신자 산정은 발송 인스턴스에서 이 한 번만 한다 (WebSocket 배달 + FCM 폴백이 공유).
+            activeMembers = chatRoomMemberQueryRepository.findActiveByRoom(chatRoom.getId());
+        } catch (Exception e) {
+            log.error("채팅 수신자 조회 실패. ChatRoomId: {}, Error: {}", chatRoom.getId(), e.getMessage(), e);
+            return;
+        }
+
+        // 1. WebSocket으로 실시간 전송 (발신자 본인 포함, 활성 멤버 전원)
+        try {
+            List<String> recipientNames = activeMembers.stream()
+                .map(member -> member.getMemberScope().principalName(member.getMemberId()))
+                .toList();
+            chatMessageBroadcaster.broadcast(chatRoom.getId(), event.getMessageResponse(), recipientNames);
         } catch (Exception e) {
             log.error("WebSocket 메시지 전송 실패. ChatRoomId: {}, Error: {}", chatRoom.getId(), e.getMessage(), e);
         }
 
         // 2. FCM 알림 전송 (활성 멤버 기준, 온라인 멤버는 제외한 presence 기반 폴백)
+        // WebSocket 배달 성패와 무관하게 시도한다 (FCM은 실시간 배달 실패에 대한 폴백 경로이기도 하다).
         sendFcmNotification(
-            chatRoom, event.getSenderId(), event.getSenderScope(),
+            chatRoom, activeMembers, event.getSenderId(), event.getSenderScope(),
             event.getContent(), event.getMessageResponse().getSenderName()
         );
     }
 
     private void sendFcmNotification(
         ChatRoom chatRoom,
+        List<ChatRoomMember> activeMembers,
         Long senderId,
         TokenScope senderScope,
         String content,
@@ -60,8 +77,7 @@ public class ChatMessageSentEventListener {
     ) {
         try {
             // 발신자를 제외한 활성 멤버 추출
-            List<ChatRoomMember> recipients = chatRoomMemberQueryRepository.findActiveByRoom(chatRoom.getId())
-                .stream()
+            List<ChatRoomMember> recipients = activeMembers.stream()
                 .filter(member -> !(member.getMemberId().equals(senderId) && member.getMemberScope() == senderScope))
                 .toList();
             if (recipients.isEmpty()) {

@@ -1,6 +1,5 @@
 package com.dreamteam.alter.application.chat.usecase;
 
-import com.dreamteam.alter.application.chat.event.ChatSessionRevokeEvent;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
@@ -13,12 +12,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
@@ -49,12 +45,6 @@ class SyncWorkspaceChatMembershipTests {
 
     @Mock
     private GroupChatRoomProvider groupChatRoomProvider;
-
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
-
-    @Captor
-    private ArgumentCaptor<ChatSessionRevokeEvent> eventCaptor;
 
     @InjectMocks
     private SyncWorkspaceChatMembership sut;
@@ -189,12 +179,11 @@ class SyncWorkspaceChatMembershipTests {
 
             then(chatRoomMemberQueryRepository).should(never()).findByRoomAndMember(any(), any(), any());
             then(chatRoomMemberRepository).should(never()).save(any());
-            then(eventPublisher).should(never()).publishEvent(any());
         }
 
         @Test
-        @DisplayName("업장에서 강제로 빠지면 세션 강제종료 이벤트를 발행한다")
-        void leave_활성멤버면_세션강제종료_이벤트발행() {
+        @DisplayName("업장에서 강제로 빠지면 멤버십을 비활성화하고 저장한다")
+        void leave_활성멤버면_비활성화하고_저장한다() {
             // given
             ChatRoom groupRoom = mock(ChatRoom.class);
             given(groupRoom.getId()).willReturn(5L);
@@ -211,15 +200,11 @@ class SyncWorkspaceChatMembershipTests {
             // then
             assertThat(activeMember.isActive()).isFalse();
             then(chatRoomMemberRepository).should().save(activeMember);
-            then(eventPublisher).should().publishEvent(eventCaptor.capture());
-            assertThat(eventCaptor.getValue().getScope()).isEqualTo(TokenScope.APP);
-            assertThat(eventCaptor.getValue().getMemberId()).isEqualTo(10L);
-            assertThat(eventCaptor.getValue().getRoomId()).isEqualTo(5L);
         }
 
         @Test
-        @DisplayName("이미 나간 멤버면 이벤트를 발행하지 않는다")
-        void leave_이미나간멤버면_이벤트미발행() {
+        @DisplayName("이미 나간 멤버면 저장하지 않는다")
+        void leave_이미나간멤버면_저장하지_않는다() {
             // given
             ChatRoom groupRoom = mock(ChatRoom.class);
             given(groupRoom.getId()).willReturn(5L);
@@ -236,7 +221,6 @@ class SyncWorkspaceChatMembershipTests {
 
             // then
             then(chatRoomMemberRepository).should(never()).save(any());
-            then(eventPublisher).should(never()).publishEvent(any());
         }
     }
 }

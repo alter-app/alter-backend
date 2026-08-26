@@ -1,6 +1,5 @@
 package com.dreamteam.alter.application.chat.usecase;
 
-import com.dreamteam.alter.application.chat.event.ChatSessionRevokeEvent;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
@@ -8,7 +7,6 @@ import com.dreamteam.alter.domain.chat.port.inbound.SyncWorkspaceChatMembershipU
 import com.dreamteam.alter.domain.chat.port.outbound.*;
 import com.dreamteam.alter.application.chat.support.GroupChatRoomProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -26,7 +24,6 @@ public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipU
     private final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
     private final ChatMessageQueryRepository chatMessageQueryRepository;
     private final GroupChatRoomProvider groupChatRoomProvider;
-    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Long createGroupRoom(Long workspaceId) {
@@ -70,9 +67,7 @@ public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipU
         chatRoomMemberRepository.save(ChatRoomMember.create(roomId, memberId, scope));
     }
 
-    // 위 join과 동일한 이유로 REQUIRES_NEW. 추가로 여기서 발행하는 ChatSessionRevokeEvent도
-    // 이 메서드가 REQUIRES_NEW로 진짜 새 트랜잭션일 때만 그 트랜잭션의 커밋 시점에 정상적으로
-    // AFTER_COMMIT 리스너가 호출된다.
+    // 위 join과 동일한 이유로 REQUIRES_NEW.
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void leave(Long workspaceId, Long memberId, TokenScope scope) {
@@ -83,9 +78,6 @@ public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipU
                 .ifPresent(member -> {
                     member.leave();
                     chatRoomMemberRepository.save(member);
-                    // 업장에서 강제로 빠진 유저의 세션이 살아있으면 그룹방 메시지를 계속 받을 수 있으므로
-                    // 세션 자체를 강제종료한다.
-                    eventPublisher.publishEvent(new ChatSessionRevokeEvent(scope, memberId, room.getId()));
                 }));
     }
 }

@@ -1,9 +1,7 @@
 package com.dreamteam.alter.common.config;
 
 import com.dreamteam.alter.adapter.outbound.chat.redis.ChatMessageRedisSubscriber;
-import com.dreamteam.alter.adapter.outbound.chat.redis.ChatSessionRevokeRedisSubscriber;
 import com.dreamteam.alter.adapter.outbound.chat.redis.RedisChatMessageBroadcaster;
-import com.dreamteam.alter.adapter.outbound.chat.redis.RedisChatSessionRevocationBroadcaster;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -17,7 +15,6 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 public class ChatRedisPubSubConfig {
 
     private final ChatMessageRedisSubscriber chatMessageRedisSubscriber;
-    private final ChatSessionRevokeRedisSubscriber chatSessionRevokeRedisSubscriber;
 
     // Redis pub/sub 팬아웃의 필수 소비자. 현재 실시간 전파는 이 subscriber가 유일한 경로이므로
     // 기본 활성(matchIfMissing=true)이며 끄면 실시간 수신 자체가 동작하지 않는다.
@@ -31,8 +28,6 @@ public class ChatRedisPubSubConfig {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.addMessageListener(chatMessageRedisSubscriber, new ChannelTopic(RedisChatMessageBroadcaster.CHANNEL));
-        container.addMessageListener(
-            chatSessionRevokeRedisSubscriber, new ChannelTopic(RedisChatSessionRevocationBroadcaster.CHANNEL));
         return container;
     }
 }

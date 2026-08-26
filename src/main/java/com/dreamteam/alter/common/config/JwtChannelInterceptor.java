@@ -33,15 +33,24 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
 
         String token = extractToken(accessor);
         if (StringUtils.isNotBlank(token)) {
+            // authenticate() 호출만 try로 감싼다 - CONNECT 미인증 거부(RuntimeException)를 try 안에 두면
+            // 바로 아래 catch(Exception)에 다시 잡혀 "WebSocket 인증 실패: WebSocket 인증 실패: ..."로
+            // 메시지가 이중 래핑된다.
+            Authentication authentication;
             try {
                 AccessTokenAuthentication authRequest = new AccessTokenAuthentication(token);
-                Authentication authentication = accessTokenAuthenticationProvider.authenticate(authRequest);
-                accessor.setUser(authentication);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                authentication = accessTokenAuthenticationProvider.authenticate(authRequest);
             } catch (Exception e) {
                 log.error("WebSocket 인증 실패: {}", e.getMessage(), e);
                 throw new RuntimeException("WebSocket 인증 실패: " + e.getMessage(), e);
             }
+
+            if (StompCommand.CONNECT.equals(accessor.getCommand()) && !authentication.isAuthenticated()) {
+                log.error("WebSocket 인증 실패: 유효하지 않은 토큰입니다.");
+                throw new RuntimeException("WebSocket 인증 실패: 유효하지 않은 토큰입니다.");
+            }
+            accessor.setUser(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         return message;

@@ -35,9 +35,6 @@ class WebSocketEventListenerTests {
     @Mock
     private ChatPresenceStore chatPresenceStore;
 
-    @Mock
-    private ChatWebSocketSessionRegistry chatWebSocketSessionRegistry;
-
     @InjectMocks
     private WebSocketEventListener webSocketEventListener;
 
@@ -67,11 +64,10 @@ class WebSocketEventListenerTests {
 
         // then
         then(chatPresenceStore).should().markOnline(TokenScope.APP, 1L, "sess1");
-        then(chatWebSocketSessionRegistry).should().linkMember(TokenScope.APP, 1L, "sess1");
     }
 
     @Test
-    @DisplayName("연결 시 principal이 없으면 markOnline/linkMember 호출 안함")
+    @DisplayName("연결 시 principal이 없으면 markOnline 호출 안함")
     void onConnected_principal없음_markOnline호출안함() {
         // given
         Message<byte[]> message = messageWithSessionId("sess1");
@@ -82,11 +78,10 @@ class WebSocketEventListenerTests {
 
         // then
         then(chatPresenceStore).should(never()).markOnline(any(), any(), any());
-        then(chatWebSocketSessionRegistry).should(never()).linkMember(any(), any(), any());
     }
 
     @Test
-    @DisplayName("연결 시 LoginUserDto가 아닌 principal이면 markOnline/linkMember 호출 안함")
+    @DisplayName("연결 시 LoginUserDto가 아닌 principal이면 markOnline 호출 안함")
     void onConnected_알수없는principal_markOnline호출안함() {
         // given
         Principal principal = new TestingAuthenticationToken("foo", "bar");
@@ -98,11 +93,10 @@ class WebSocketEventListenerTests {
 
         // then
         then(chatPresenceStore).should(never()).markOnline(any(), any(), any());
-        then(chatWebSocketSessionRegistry).should(never()).linkMember(any(), any(), any());
     }
 
     @Test
-    @DisplayName("연결 시 세션 id가 없으면 markOnline/linkMember 호출 안함")
+    @DisplayName("연결 시 세션 id가 없으면 markOnline 호출 안함")
     void onConnected_세션id없음_markOnline호출안함() {
         // given
         Principal principal = accessTokenPrincipal(TokenScope.APP, 1L);
@@ -114,11 +108,10 @@ class WebSocketEventListenerTests {
 
         // then
         then(chatPresenceStore).should(never()).markOnline(any(), any(), any());
-        then(chatWebSocketSessionRegistry).should(never()).linkMember(any(), any(), any());
     }
 
     @Test
-    @DisplayName("연결 해제 시 인증된 사용자면 세션 id와 함께 markOffline + unlinkMember 호출")
+    @DisplayName("연결 해제 시 인증된 사용자면 세션 id와 함께 markOffline 호출")
     void onDisconnect_인증된사용자_markOffline() {
         // given
         Principal principal = accessTokenPrincipal(TokenScope.MANAGER, 2L);
@@ -130,11 +123,10 @@ class WebSocketEventListenerTests {
 
         // then
         then(chatPresenceStore).should().markOffline(TokenScope.MANAGER, 2L, "session-1");
-        then(chatWebSocketSessionRegistry).should().unlinkMember(TokenScope.MANAGER, 2L, "session-1");
     }
 
     @Test
-    @DisplayName("연결 해제 시 principal이 없으면 markOffline/unlinkMember 호출 안함")
+    @DisplayName("연결 해제 시 principal이 없으면 markOffline 호출 안함")
     void onDisconnect_principal없음_markOffline호출안함() {
         // given
         Message<byte[]> message = messageWithSessionId("session-1");
@@ -145,7 +137,6 @@ class WebSocketEventListenerTests {
 
         // then
         then(chatPresenceStore).should(never()).markOffline(any(), any(), any());
-        then(chatWebSocketSessionRegistry).should(never()).unlinkMember(any(), any(), any());
     }
 
     @Test
@@ -160,21 +151,17 @@ class WebSocketEventListenerTests {
         webSocketEventListener.onConnected(connectedSess1);
         webSocketEventListener.onConnected(connectedSess2);
 
-        // then: 각 세션 id로 markOnline + linkMember가 호출된다
+        // then: 각 세션 id로 markOnline이 호출된다
         then(chatPresenceStore).should().markOnline(TokenScope.APP, 1L, "sess1");
         then(chatPresenceStore).should().markOnline(TokenScope.APP, 1L, "sess2");
-        then(chatWebSocketSessionRegistry).should().linkMember(TokenScope.APP, 1L, "sess1");
-        then(chatWebSocketSessionRegistry).should().linkMember(TokenScope.APP, 1L, "sess2");
 
         // when: sess1만 연결 해제
         SessionDisconnectEvent disconnectSess1 =
             new SessionDisconnectEvent(this, messageWithSessionId("sess1"), "sess1", CloseStatus.NORMAL, principal);
         webSocketEventListener.onDisconnect(disconnectSess1);
 
-        // then: sess1만 markOffline/unlinkMember가 호출되고, sess2는 여전히 온라인(참조가 남아 있음)
+        // then: sess1만 markOffline이 호출되고, sess2는 여전히 온라인(참조가 남아 있음)
         then(chatPresenceStore).should().markOffline(TokenScope.APP, 1L, "sess1");
         then(chatPresenceStore).should(never()).markOffline(TokenScope.APP, 1L, "sess2");
-        then(chatWebSocketSessionRegistry).should().unlinkMember(TokenScope.APP, 1L, "sess1");
-        then(chatWebSocketSessionRegistry).should(never()).unlinkMember(TokenScope.APP, 1L, "sess2");
     }
 }

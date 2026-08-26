@@ -6,13 +6,11 @@ import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
-import com.dreamteam.alter.domain.chat.port.outbound.ChatSessionRevocationBroadcaster;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -20,19 +18,17 @@ import org.springframework.transaction.support.TransactionTemplate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 
 /**
  * ALT-284 최종 리뷰 Blocking 결함 재현/회귀 테스트.
  *
  * ChatMembershipSyncEventListener.onLeft 는 @TransactionalEventListener(AFTER_COMMIT) 이고,
- * 그 콜백 안에서 SyncWorkspaceChatMembership.leave(...) 를 호출한다. leave 는
- * (a) DB에 leftAt 을 반영하고, (b) 세션 강제종료를 위해 ChatSessionRevokeEvent 를 추가로 발행한다.
+ * 그 콜백 안에서 SyncWorkspaceChatMembership.leave(...) 를 호출해 DB에 leftAt 을 반영한다.
  *
  * Mockito mock 기반 유닛 테스트는 실제 트랜잭션 경계를 갖지 않으므로 이 문제를 구조적으로 잡지 못한다.
  * 이 테스트는 실제 PlatformTransactionManager + H2 DB로 워커 퇴사 흐름을 커밋시켜,
- * DB 반영 여부와 세션 강제종료 브로드캐스트 호출 여부를 직접 검증한다.
+ * DB 반영 여부를 직접 검증한다.
  */
 @SpringBootTest
 @DisplayName("워커 퇴사(leave) 채팅 멤버십 동기화 - 실제 트랜잭션 커밋 검증")
@@ -49,12 +45,9 @@ class ChatMembershipSyncAfterCommitIntegrationTest {
     @Autowired
     private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
 
-    @MockitoBean
-    private ChatSessionRevocationBroadcaster chatSessionRevocationBroadcaster;
-
     @Test
-    @DisplayName("leave 이벤트 커밋 후 chat_room_members.left_at 이 DB에 반영되고, 세션 강제종료 브로드캐스트가 실제로 호출된다")
-    void leave_커밋후_DB반영과_세션강제종료가_실제로_일어난다() {
+    @DisplayName("leave 이벤트 커밋 후 chat_room_members.left_at 이 DB에 반영된다")
+    void leave_커밋후_DB에_left_at이_반영된다() {
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         Long workspaceId = 9001L;
         Long memberId = 9002L;
@@ -79,10 +72,6 @@ class ChatMembershipSyncAfterCommitIntegrationTest {
         assertThat(stillActive)
             .as("워커 퇴사 후 chat_room_members.left_at 이 DB에 반영되어야 한다")
             .isFalse();
-
-        // then (b): leave() 안에서 발행한 ChatSessionRevokeEvent 의 AFTER_COMMIT 리스너가 호출되어
-        // ChatSessionRevocationBroadcaster.revoke 가 실제로 실행됐는지
-        then(chatSessionRevocationBroadcaster).should().revoke(scope, memberId, roomId);
     }
 
     @Test
@@ -94,10 +83,9 @@ class ChatMembershipSyncAfterCommitIntegrationTest {
         TokenScope scope = TokenScope.APP;
 
         // given: 그룹방 + 활성 멤버를 미리 커밋해둔다 (아직 spy 스텁 전이라 실제 저장이 성공한다)
-        Long roomId = tx.execute(status -> {
+        tx.executeWithoutResult(status -> {
             ChatRoom room = chatRoomRepository.save(ChatRoom.createGroup(workspaceId));
             chatRoomMemberRepository.save(ChatRoomMember.create(room.getId(), memberId, scope));
-            return room.getId();
         });
 
         // sync.leave() 가 member.leave() 이후 DB 저장 시 런타임 예외를 던지도록 강제한다.
@@ -109,8 +97,5 @@ class ChatMembershipSyncAfterCommitIntegrationTest {
             tx.executeWithoutResult(status -> eventPublisher.publishEvent(new ChatMembershipLeftEvent(workspaceId, memberId, scope)))
         ).as("leave() 내부 예외가 onLeft 의 try/catch 를 벗어나 바깥 커밋까지 새면 안 된다")
             .doesNotThrowAnyException();
-
-        // then: leave() 의 REQUIRES_NEW 트랜잭션은 롤백됐으므로 세션 강제종료도 발생하지 않는다
-        then(chatSessionRevocationBroadcaster).shouldHaveNoInteractions();
     }
 }

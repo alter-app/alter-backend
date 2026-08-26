@@ -1,6 +1,5 @@
 package com.dreamteam.alter.application.chat.usecase;
 
-import com.dreamteam.alter.application.chat.event.ChatSessionRevokeEvent;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
@@ -12,7 +11,6 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +22,6 @@ public class LeaveChatRoom implements LeaveChatRoomUseCase {
     private final ChatRoomQueryRepository chatRoomQueryRepository;
     private final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void execute(Long memberId, TokenScope scope, Long chatRoomId) {
@@ -44,7 +41,5 @@ public class LeaveChatRoom implements LeaveChatRoomUseCase {
 
         member.leave();
         chatRoomMemberRepository.save(member);
-        // 세션은 살아있는 동안 이 방 구독을 계속 받을 수 있으므로 세션 자체를 강제종료한다.
-        eventPublisher.publishEvent(new ChatSessionRevokeEvent(scope, memberId, chatRoomId));
     }
 }

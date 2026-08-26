@@ -33,7 +33,7 @@ class RedisChatMessageBroadcasterTests {
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Test
-    @DisplayName("broadcast 시 chat:broadcast 채널로 roomId·message를 담은 엔벌로프 JSON을 publish한다")
+    @DisplayName("broadcast 시 chat:broadcast 채널로 roomId·message·recipientNames를 담은 엔벌로프 JSON을 publish한다")
     void broadcast_엔벌로프_publish() throws Exception {
         // given
         RedisChatMessageBroadcaster sut = new RedisChatMessageBroadcaster(redisTemplate, objectMapper);
@@ -43,7 +43,7 @@ class RedisChatMessageBroadcasterTests {
         ).withFiles(List.of(), "https://cdn.example.com/profile.png");
 
         // when
-        sut.broadcast(100L, message);
+        sut.broadcast(100L, message, List.of("APP:1", "APP:2"));
 
         // then
         ArgumentCaptor<String> channelCaptor = ArgumentCaptor.forClass(String.class);
@@ -57,6 +57,7 @@ class RedisChatMessageBroadcasterTests {
         assertThat(decoded.getMessage().getContent()).isEqualTo("안녕하세요");
         assertThat(decoded.getMessage().getSenderName()).isEqualTo("홍길동");
         assertThat(decoded.getMessage().getSenderProfileImageUrl()).isEqualTo("https://cdn.example.com/profile.png");
+        assertThat(decoded.getRecipientNames()).containsExactly("APP:1", "APP:2");
     }
 
     @Test
@@ -71,6 +72,6 @@ class RedisChatMessageBroadcasterTests {
         willThrow(new RuntimeException("redis connection failed")).given(redisTemplate).convertAndSend(any(), any());
 
         // when & then
-        assertThatCode(() -> sut.broadcast(100L, message)).doesNotThrowAnyException();
+        assertThatCode(() -> sut.broadcast(100L, message, List.of("APP:1"))).doesNotThrowAnyException();
     }
 }

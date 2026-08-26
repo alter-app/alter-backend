@@ -1,16 +1,13 @@
 package com.dreamteam.alter.common.config;
 
+import com.dreamteam.alter.common.constants.ChatConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
-import org.springframework.web.socket.handler.WebSocketHandlerDecorator;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -18,13 +15,14 @@ import org.springframework.web.socket.handler.WebSocketHandlerDecorator;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtChannelInterceptor jwtChannelInterceptor;
-    private final ChatSubscribeAuthorizationChannelInterceptor chatSubscribeAuthorizationChannelInterceptor;
+    private final ChatQueueSubscriptionGuardChannelInterceptor chatQueueSubscriptionGuardChannelInterceptor;
     private final PresenceHeartbeatChannelInterceptor presenceHeartbeatChannelInterceptor;
-    private final ChatWebSocketSessionRegistry chatWebSocketSessionRegistry;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/sub");
+        // 실시간 전파는 convertAndSendToUser가 쓰는 유저 큐(prefix: "/queue")만 사용한다.
+        // 과거 토픽 팬아웃("/sub")은 더 이상 아무도 publish하지 않아 제거했다.
+        config.enableSimpleBroker(ChatConstants.CHAT_USER_QUEUE_PREFIX);
         config.setApplicationDestinationPrefixes("/pub");
     }
 
@@ -36,29 +34,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        // jwtChannelInterceptor가 먼저 user를 세팅하고, chatSubscribeAuthorizationChannelInterceptor가
-        // 채팅방 구독을 인가한 뒤, presence TTL을 갱신한다.
+        // jwt가 먼저 user를 세팅 -> 유저 큐 SUBSCRIBE destination 화이트리스트 검사 -> presence TTL 갱신.
         registration.interceptors(
-            jwtChannelInterceptor, chatSubscribeAuthorizationChannelInterceptor, presenceHeartbeatChannelInterceptor);
-    }
-
-    // sessionId -> WebSocketSession 매핑의 유일한 진입점. 이 시점(raw WS 핸드셰이크)은
-    // 아직 STOMP CONNECT 인증 전이라 principal을 모른다 — session.getId()만 안다.
-    // (scope, memberId) -> sessionId 매핑은 인증 정보가 있는 WebSocketEventListener가 채운다.
-    @Override
-    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
-        registration.addDecoratorFactory(handler -> new WebSocketHandlerDecorator(handler) {
-            @Override
-            public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-                chatWebSocketSessionRegistry.registerSession(session);
-                super.afterConnectionEstablished(session);
-            }
-
-            @Override
-            public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
-                chatWebSocketSessionRegistry.unregisterSession(session);
-                super.afterConnectionClosed(session, closeStatus);
-            }
-        });
+            jwtChannelInterceptor, chatQueueSubscriptionGuardChannelInterceptor, presenceHeartbeatChannelInterceptor);
     }
 }
