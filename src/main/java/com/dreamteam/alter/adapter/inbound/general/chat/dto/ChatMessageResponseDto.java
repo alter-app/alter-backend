@@ -27,6 +27,12 @@ public class ChatMessageResponseDto {
     @Schema(description = "발신자 스코프")
     private DescribedEnumDto<TokenScope> senderScope;
 
+    @Schema(description = "발신자 이름")
+    private String senderName;
+
+    @Schema(description = "발신자 프로필 이미지 URL")
+    private String senderProfileImageUrl;
+
     @Schema(description = "메시지 타입 (NORMAL: 일반, NOTICE: 공지)")
     private ChatMessageType type;
 
@@ -50,6 +56,8 @@ public class ChatMessageResponseDto {
             .id(result.id())
             .senderId(result.senderId())
             .senderScope(DescribedEnumDto.of(result.senderScope(), TokenScope.describe()))
+            .senderName(result.senderName())
+            .senderProfileImageUrl(result.senderProfileImageUrl())
             .type(result.type())
             .content(result.content())
             .createdAt(result.createdAt())

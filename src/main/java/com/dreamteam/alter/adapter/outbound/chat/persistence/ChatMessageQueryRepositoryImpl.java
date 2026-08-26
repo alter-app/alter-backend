@@ -5,6 +5,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPageRequest;
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.domain.chat.entity.QChatMessage;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
+import com.dreamteam.alter.domain.user.entity.QUser;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -30,12 +31,15 @@ public class ChatMessageQueryRepositoryImpl implements ChatMessageQueryRepositor
         CursorPageRequest<CursorDto> pageRequest
     ) {
         QChatMessage qChatMessage = QChatMessage.chatMessage;
+        QUser qSender = QUser.user;
 
         BooleanExpression cursorCondition = buildCursorCondition(
             qChatMessage,
             pageRequest.cursor()
         );
 
+        // 발신자 id는 스코프(APP/MANAGER)와 무관하게 User.id 이므로 User 조인 하나로 이름을 채운다.
+        // 탈퇴 회원도 익명화된 이름이 그대로 조회되도록 상태 조건은 걸지 않는다.
         return queryFactory
             .select(Projections.constructor(
                 ChatMessageResponse.class,
@@ -43,11 +47,13 @@ public class ChatMessageQueryRepositoryImpl implements ChatMessageQueryRepositor
                 qChatMessage.chatRoomId,
                 qChatMessage.senderId,
                 qChatMessage.senderScope,
+                qSender.name,
                 qChatMessage.type,
                 qChatMessage.content,
                 qChatMessage.createdAt
             ))
             .from(qChatMessage)
+            .leftJoin(qSender).on(qSender.id.eq(qChatMessage.senderId))
             .where(
                 qChatMessage.chatRoomId.eq(chatRoomId),
                 cursorCondition

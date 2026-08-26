@@ -107,11 +107,14 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
             savedMessage.getChatRoomId(),
             savedMessage.getSenderId(),
             savedMessage.getSenderScope(),
+            getParticipantName(user),
             savedMessage.getType(),
             savedMessage.getContent(),
             savedMessage.getCreatedAt()
+        ).withFiles(
+            attachments,
+            fileUrlService.resolveUrlByTarget(FileTargetType.USER_PROFILE, String.valueOf(senderId))
         );
-        messageResponse.setAttachments(attachments);
         eventPublisher.publishEvent(
             new ChatMessageSentEvent(chatRoom, senderId, senderScope, request.getContent(), messageResponse)
         );
@@ -120,5 +123,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
     protected abstract TokenScope getParticipantScope(U user);
 
     protected abstract Long getParticipantId(U user);
+
+    protected abstract String getParticipantName(U user);
 
 }

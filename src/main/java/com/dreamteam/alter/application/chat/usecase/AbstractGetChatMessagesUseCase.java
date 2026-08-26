@@ -77,16 +77,16 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
         // 5. 방의 활성 멤버 목록을 한 번만 로드 (메시지별 안 읽은 사람 수 계산용, N+1 방지)
         List<ChatRoomMember> activeMembers = chatRoomMemberQueryRepository.findActiveByRoom(chatRoomId);
 
-        // 5-1. 페이지 내 메시지들의 첨부 파일을 한 번에 조회하여 매핑 (N+1 방지)
-        attachAttachments(sortedMessages);
+        // 5-1. 페이지 내 메시지들의 첨부 파일과 발신자 프로필 이미지를 한 번에 조회하여 매핑 (N+1 방지)
+        List<ChatMessageResponse> resolvedMessages = resolveFiles(sortedMessages);
 
         // 6. Result 변환 (본인 메시지 여부 + 안 읽은 사람 수 포함)
-        List<ChatMessageResult> messageList = sortedMessages.stream()
+        List<ChatMessageResult> messageList = resolvedMessages.stream()
             .map(message -> toResult(message, participantId, participantScope, activeMembers))
             .toList();
 
         // 7. 커서 생성 (가장 오래된 메시지 기준으로 설정하여 다음 페이지 조회 시 이전 메시지 조회)
-        ChatMessageResponse oldestMessage = sortedMessages.getFirst();
+        ChatMessageResponse oldestMessage = resolvedMessages.getFirst();
         String nextCursor = CursorUtil.encodeCursor(new CursorDto(oldestMessage.getId(), oldestMessage.getCreatedAt()), objectMapper);
 
         return CursorPageResult.of(nextCursor, query.pageSize(), messages.size(), messageList);
@@ -96,25 +96,49 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
 
     protected abstract Long getParticipantId(A actor);
 
-    // 메시지 목록의 첨부 파일을 한 번에 조회하여 targetId(=메시지 id) 기준으로 그룹핑 후 매핑 (N+1 방지)
-    private void attachAttachments(List<ChatMessageResponse> messages) {
+    // 메시지의 첨부 파일과 발신자 프로필 이미지를 각각 한 번씩만 조회해 매핑한 새 목록을 반환한다 (N+1 방지)
+    private List<ChatMessageResponse> resolveFiles(List<ChatMessageResponse> messages) {
+        Map<String, List<FileResponseDto>> attachmentsByMessageId = findAttachments(messages);
+        Map<String, String> profileImageUrlBySenderId = findSenderProfileImageUrls(messages);
+
+        return messages.stream()
+            .map(message -> message.withFiles(
+                attachmentsByMessageId.getOrDefault(String.valueOf(message.getId()), Collections.emptyList()),
+                profileImageUrlBySenderId.get(String.valueOf(message.getSenderId()))
+            ))
+            .toList();
+    }
+
+    // targetId(=메시지 id) 기준으로 첨부 파일 그룹핑
+    private Map<String, List<FileResponseDto>> findAttachments(List<ChatMessageResponse> messages) {
         List<String> messageIds = messages.stream()
             .map(message -> String.valueOf(message.getId()))
             .toList();
 
         List<File> files = fileQueryRepository.findAllByTargetTypeAndTargetIdIn(FileTargetType.CHAT_MESSAGE, messageIds);
 
-        Map<String, List<FileResponseDto>> attachmentsByMessageId = files.stream()
+        return files.stream()
             .collect(Collectors.groupingBy(
                 File::getTargetId,
                 Collectors.mapping(fileUrlService::resolve, Collectors.toList())
             ));
+    }
 
-        for (ChatMessageResponse message : messages) {
-            message.setAttachments(
-                attachmentsByMessageId.getOrDefault(String.valueOf(message.getId()), Collections.emptyList())
-            );
-        }
+    // targetId(=발신자 User id) 기준으로 프로필 이미지 URL 매핑
+    private Map<String, String> findSenderProfileImageUrls(List<ChatMessageResponse> messages) {
+        List<String> senderIds = messages.stream()
+            .map(message -> String.valueOf(message.getSenderId()))
+            .distinct()
+            .toList();
+
+        List<File> files = fileQueryRepository.findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, senderIds);
+
+        return files.stream()
+            .collect(Collectors.toMap(
+                File::getTargetId,
+                file -> fileUrlService.resolve(file).getUrl(),
+                (first, second) -> first
+            ));
     }
 
     private ChatMessageResult toResult(
@@ -130,6 +154,8 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
             .id(message.getId())
             .senderId(message.getSenderId())
             .senderScope(message.getSenderScope())
+            .senderName(message.getSenderName())
+            .senderProfileImageUrl(message.getSenderProfileImageUrl())
             .type(message.getType())
             .content(message.getContent())
             .createdAt(message.getCreatedAt())

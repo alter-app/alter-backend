@@ -58,7 +58,7 @@ class ChatMessageSentEventListenerTests {
 
     private ChatMessageResponse messageResponse(Long chatRoomId, Long senderId, String content) {
         return new ChatMessageResponse(
-            1L, chatRoomId, senderId, TokenScope.APP, ChatMessageType.NORMAL, content, LocalDateTime.now()
+            1L, chatRoomId, senderId, TokenScope.APP, "홍길동", ChatMessageType.NORMAL, content, LocalDateTime.now()
         );
     }
 

@@ -40,4 +40,9 @@ public class SendChatMessage extends AbstractSendChatMessageUseCase<User> implem
         return super.getParticipantId(user);
     }
 
+    @Override
+    protected String getParticipantName(User user) {
+        return super.getParticipantName(user);
+    }
+
 }

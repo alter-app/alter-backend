@@ -89,7 +89,7 @@ class GetChatMessagesTests {
             .willReturn(Optional.of(directRoom));
 
         ChatMessageResponse message = new ChatMessageResponse(
-            8L, chatRoomId, senderId, TokenScope.APP, ChatMessageType.NORMAL, "hello", LocalDateTime.now()
+            8L, chatRoomId, senderId, TokenScope.APP, "홍길동", ChatMessageType.NORMAL, "hello", LocalDateTime.now()
         );
         given(chatMessageQueryRepository.getChatMessagesWithCursor(any(), any()))
             .willReturn(List.of(message));
@@ -127,10 +127,10 @@ class GetChatMessagesTests {
             .willReturn(Optional.of(directRoom));
 
         ChatMessageResponse messageWithFile = new ChatMessageResponse(
-            1L, chatRoomId, senderId, TokenScope.APP, ChatMessageType.NORMAL, "첨부 있음", LocalDateTime.now()
+            1L, chatRoomId, senderId, TokenScope.APP, "홍길동", ChatMessageType.NORMAL, "첨부 있음", LocalDateTime.now()
         );
         ChatMessageResponse messageWithoutFile = new ChatMessageResponse(
-            2L, chatRoomId, senderId, TokenScope.APP, ChatMessageType.NORMAL, "첨부 없음", LocalDateTime.now()
+            2L, chatRoomId, senderId, TokenScope.APP, "홍길동", ChatMessageType.NORMAL, "첨부 없음", LocalDateTime.now()
         );
         given(chatMessageQueryRepository.getChatMessagesWithCursor(any(), any()))
             .willReturn(List.of(messageWithoutFile, messageWithFile));
@@ -183,6 +183,79 @@ class GetChatMessagesTests {
     }
 
     @Test
+    @DisplayName("발신자 이름과 프로필 이미지를 응답에 담는다 (프로필 이미지는 일괄 조회)")
+    void execute_발신자_이름과_프로필이미지_매핑() {
+        // given
+        Long chatRoomId = 1L;
+        Long senderWithProfile = 100L;
+        Long senderWithoutProfile = 200L;
+        AppActor actor = new AppActor(senderWithProfile, null, null);
+
+        ChatRoom directRoom = ChatRoom.create(senderWithProfile, TokenScope.APP, senderWithoutProfile, TokenScope.APP);
+        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, senderWithProfile, TokenScope.APP))
+            .willReturn(Optional.of(directRoom));
+
+        ChatMessageResponse messageOfSenderWithProfile = new ChatMessageResponse(
+            1L, chatRoomId, senderWithProfile, TokenScope.APP, "홍길동", ChatMessageType.NORMAL, "안녕하세요",
+            LocalDateTime.now()
+        );
+        ChatMessageResponse messageOfSenderWithoutProfile = new ChatMessageResponse(
+            2L, chatRoomId, senderWithoutProfile, TokenScope.APP, "김철수", ChatMessageType.NORMAL, "반갑습니다",
+            LocalDateTime.now()
+        );
+        given(chatMessageQueryRepository.getChatMessagesWithCursor(any(), any()))
+            .willReturn(List.of(messageOfSenderWithoutProfile, messageOfSenderWithProfile));
+
+        given(chatRoomMemberQueryRepository.findActiveByRoom(chatRoomId))
+            .willReturn(Collections.emptyList());
+
+        File profileImage = File.create(
+            FileTargetType.USER_PROFILE,
+            "profile.png",
+            "stored/profile.png",
+            "https://cdn.example.com/profile.png",
+            "image/png",
+            2048L,
+            com.dreamteam.alter.domain.file.type.BucketType.PUBLIC,
+            senderWithProfile
+        );
+        profileImage.attach(String.valueOf(senderWithProfile));
+
+        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(
+            eq(FileTargetType.CHAT_MESSAGE),
+            any()
+        )).willReturn(Collections.emptyList());
+        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(
+            eq(FileTargetType.USER_PROFILE),
+            any()
+        )).willReturn(List.of(profileImage));
+        given(fileUrlService.resolve(profileImage))
+            .willReturn(FileResponseDto.of(profileImage, "https://cdn.example.com/profile.png"));
+
+        // when
+        CursorPageResult<ChatMessageResult> response =
+            sut.execute(actor, chatRoomId, CursorPageQuery.of(null, 10));
+
+        // then
+        ChatMessageResult resultWithProfile = response.data().stream()
+            .filter(result -> result.id().equals(messageOfSenderWithProfile.getId()))
+            .findFirst()
+            .orElseThrow();
+        ChatMessageResult resultWithoutProfile = response.data().stream()
+            .filter(result -> result.id().equals(messageOfSenderWithoutProfile.getId()))
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(resultWithProfile.senderName()).isEqualTo("홍길동");
+        assertThat(resultWithProfile.senderProfileImageUrl()).isEqualTo("https://cdn.example.com/profile.png");
+        assertThat(resultWithoutProfile.senderName()).isEqualTo("김철수");
+        assertThat(resultWithoutProfile.senderProfileImageUrl()).isNull();
+
+        verify(fileQueryRepository, times(1))
+            .findAllByTargetTypeAndTargetIdIn(eq(FileTargetType.USER_PROFILE), any());
+    }
+
+    @Test
     @DisplayName("GROUP 채팅방의 활성 멤버는 메시지 목록을 조회할 수 있다")
     void execute_GROUP_활성멤버는_메시지목록_조회_성공() {
         // given
@@ -195,7 +268,8 @@ class GetChatMessagesTests {
             .willReturn(Optional.of(groupRoom));
 
         ChatMessageResponse message = new ChatMessageResponse(
-            10L, chatRoomId, participantId, TokenScope.APP, ChatMessageType.NORMAL, "안녕하세요", LocalDateTime.now()
+            10L, chatRoomId, participantId, TokenScope.APP, "홍길동", ChatMessageType.NORMAL, "안녕하세요",
+            LocalDateTime.now()
         );
         given(chatMessageQueryRepository.getChatMessagesWithCursor(any(), any()))
             .willReturn(List.of(message));

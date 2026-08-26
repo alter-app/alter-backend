@@ -40,4 +40,12 @@ public abstract class AbstractChatUseCase {
         return managerUser.getUser().getId();
     }
 
+    protected String getParticipantName(User user) {
+        return user.getName();
+    }
+
+    protected String getParticipantName(ManagerUser managerUser) {
+        return managerUser.getUser().getName();
+    }
+
 }

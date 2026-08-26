@@ -41,4 +41,9 @@ public class ManagerSendChatMessage extends AbstractSendChatMessageUseCase<Manag
         return super.getParticipantId(managerUser);
     }
 
+    @Override
+    protected String getParticipantName(ManagerUser managerUser) {
+        return super.getParticipantName(managerUser);
+    }
+
 }

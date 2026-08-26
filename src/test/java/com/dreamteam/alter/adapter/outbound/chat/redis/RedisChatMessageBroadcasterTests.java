@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -37,8 +38,9 @@ class RedisChatMessageBroadcasterTests {
         // given
         RedisChatMessageBroadcaster sut = new RedisChatMessageBroadcaster(redisTemplate, objectMapper);
         ChatMessageResponse message = new ChatMessageResponse(
-            10L, 100L, 1L, TokenScope.APP, ChatMessageType.NORMAL, "안녕하세요", LocalDateTime.of(2026, 7, 14, 12, 0, 0)
-        );
+            10L, 100L, 1L, TokenScope.APP, "홍길동", ChatMessageType.NORMAL, "안녕하세요",
+            LocalDateTime.of(2026, 7, 14, 12, 0, 0)
+        ).withFiles(List.of(), "https://cdn.example.com/profile.png");
 
         // when
         sut.broadcast(100L, message);
@@ -53,6 +55,8 @@ class RedisChatMessageBroadcasterTests {
         assertThat(decoded.getRoomId()).isEqualTo(100L);
         assertThat(decoded.getMessage().getId()).isEqualTo(10L);
         assertThat(decoded.getMessage().getContent()).isEqualTo("안녕하세요");
+        assertThat(decoded.getMessage().getSenderName()).isEqualTo("홍길동");
+        assertThat(decoded.getMessage().getSenderProfileImageUrl()).isEqualTo("https://cdn.example.com/profile.png");
     }
 
     @Test
@@ -61,7 +65,8 @@ class RedisChatMessageBroadcasterTests {
         // given
         RedisChatMessageBroadcaster sut = new RedisChatMessageBroadcaster(redisTemplate, objectMapper);
         ChatMessageResponse message = new ChatMessageResponse(
-            10L, 100L, 1L, TokenScope.APP, ChatMessageType.NORMAL, "안녕하세요", LocalDateTime.of(2026, 7, 14, 12, 0, 0)
+            10L, 100L, 1L, TokenScope.APP, "홍길동", ChatMessageType.NORMAL, "안녕하세요",
+            LocalDateTime.of(2026, 7, 14, 12, 0, 0)
         );
         willThrow(new RuntimeException("redis connection failed")).given(redisTemplate).convertAndSend(any(), any());
 

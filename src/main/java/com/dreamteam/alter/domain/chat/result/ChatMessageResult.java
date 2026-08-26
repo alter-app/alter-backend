@@ -12,6 +12,8 @@ public record ChatMessageResult(
         Long id,
         Long senderId,
         TokenScope senderScope,
+        String senderName,
+        String senderProfileImageUrl,
         ChatMessageType type,
         String content,
         LocalDateTime createdAt,
