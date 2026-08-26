@@ -9,8 +9,6 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageBroadcaster;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.notification.type.NotificationType;
-import com.dreamteam.alter.domain.user.entity.User;
-import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -33,7 +31,6 @@ public class ChatMessageSentEventListener {
     private final ChatMessageBroadcaster chatMessageBroadcaster;
     private final ChatPresenceStore chatPresenceStore;
     private final NotificationService notificationService;
-    private final UserQueryRepository userQueryRepository;
     private final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -48,14 +45,18 @@ public class ChatMessageSentEventListener {
         }
 
         // 2. FCM 알림 전송 (활성 멤버 기준, 온라인 멤버는 제외한 presence 기반 폴백)
-        sendFcmNotification(chatRoom, event.getSenderId(), event.getSenderScope(), event.getContent());
+        sendFcmNotification(
+            chatRoom, event.getSenderId(), event.getSenderScope(),
+            event.getContent(), event.getMessageResponse().getSenderName()
+        );
     }
 
     private void sendFcmNotification(
         ChatRoom chatRoom,
         Long senderId,
         TokenScope senderScope,
-        String content
+        String content,
+        String senderName
     ) {
         try {
             // 발신자를 제외한 활성 멤버 추출
@@ -83,7 +84,6 @@ public class ChatMessageSentEventListener {
             }
 
             // 알림 메시지 생성 후 배치 발송(토큰 조회·FCM 발송을 한 번에)
-            String senderName = getSenderName(senderId);
             String title = NotificationMessageConstants.Chat.NEW_MESSAGE_TITLE;
             String body = buildNotificationBody(senderName, content);
             notificationService.sendNotificationOnlyToMany(offlineUserIds, NotificationType.CHAT, title, body);
@@ -92,12 +92,6 @@ public class ChatMessageSentEventListener {
             // 알림 실패는 로그만 남기고 메시지 전송은 성공 처리
             log.error("채팅 메시지 FCM 알림 발송 실패. ChatRoomId: {}, Error: {}", chatRoom.getId(), e.getMessage(), e);
         }
-    }
-
-    private String getSenderName(Long senderId) {
-        return userQueryRepository.findById(senderId)
-            .map(User::getName)
-            .orElse("알 수 없음");
     }
 
     private String buildNotificationBody(String senderName, String content) {

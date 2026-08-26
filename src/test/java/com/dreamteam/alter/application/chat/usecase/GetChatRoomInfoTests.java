@@ -1,6 +1,5 @@
 package com.dreamteam.alter.application.chat.usecase;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -10,8 +9,6 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryReposito
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.result.ChatRoomResult;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
-import com.dreamteam.alter.domain.file.entity.File;
-import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.context.AppActor;
 import com.dreamteam.alter.domain.user.entity.User;
@@ -25,7 +22,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,9 +48,6 @@ class GetChatRoomInfoTests {
 
     @Mock
     private UserQueryRepository userQueryRepository;
-
-    @Mock
-    private FileQueryRepository fileQueryRepository;
 
     @Mock
     private FileUrlService fileUrlService;
@@ -156,12 +149,8 @@ class GetChatRoomInfoTests {
         given(opponentUser.getName()).willReturn("김알바");
         given(userQueryRepository.findById(opponentId)).willReturn(Optional.of(opponentUser));
 
-        File profileFile = mock(File.class);
-        FileResponseDto profileFileResponse = FileResponseDto.of(profileFile, "https://cdn.example.com/opponent.png");
-        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, List.of(String.valueOf(opponentId))))
-            .willReturn(List.of(profileFile));
-        given(fileUrlService.resolve(profileFile))
-            .willReturn(profileFileResponse);
+        given(fileUrlService.resolveLatestUrlByTarget(FileTargetType.USER_PROFILE, String.valueOf(opponentId)))
+            .willReturn("https://cdn.example.com/opponent.png");
 
         // when
         ChatRoomResult response = sut.execute(actor, chatRoomId);
@@ -174,39 +163,6 @@ class GetChatRoomInfoTests {
         assertThat(response.opponentScope()).isEqualTo(TokenScope.APP);
         assertThat(response.opponentName()).isEqualTo("김알바");
         assertThat(response.opponentProfileImageUrl()).isEqualTo("https://cdn.example.com/opponent.png");
-    }
-
-    @Test
-    @DisplayName("DIRECT 채팅방 상대방 ATTACHED 프로필 파일이 2건이면 최신 파일 URL을 반환한다")
-    void execute_DIRECT_ATTACHED프로필파일_2건이면_최신파일URL() {
-        // given
-        Long chatRoomId = 2L;
-        Long participantId = 10L;
-        Long opponentId = 20L;
-        AppActor actor = new AppActor(participantId, null, null);
-
-        ChatRoom directRoom = ChatRoom.create(participantId, TokenScope.APP, opponentId, TokenScope.APP);
-        given(chatRoomQueryRepository.findByIdAndParticipant(chatRoomId, participantId, TokenScope.APP))
-            .willReturn(Optional.of(directRoom));
-        given(chatRoomMemberQueryRepository.countActiveByRoom(chatRoomId)).willReturn(2);
-
-        User opponentUser = mock(User.class);
-        given(opponentUser.getName()).willReturn("김알바");
-        given(userQueryRepository.findById(opponentId)).willReturn(Optional.of(opponentUser));
-
-        File oldFile = mock(File.class);
-        File newFile = mock(File.class);
-        FileResponseDto newFileResponse = FileResponseDto.of(newFile, "https://cdn.example.com/new.png");
-        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, List.of(String.valueOf(opponentId))))
-            .willReturn(List.of(oldFile, newFile));
-        given(fileUrlService.resolve(newFile))
-            .willReturn(newFileResponse);
-
-        // when
-        ChatRoomResult response = sut.execute(actor, chatRoomId);
-
-        // then
-        assertThat(response.opponentProfileImageUrl()).isEqualTo("https://cdn.example.com/new.png");
     }
 
     @Test
@@ -231,7 +187,7 @@ class GetChatRoomInfoTests {
         // then
         assertThat(response.opponentName()).isEqualTo("알 수 없음");
         assertThat(response.opponentProfileImageUrl()).isNull();
-        verify(fileQueryRepository, never()).findAllByTargetTypeAndTargetIdIn(any(), any());
+        verify(fileUrlService, never()).resolveLatestUrlByTarget(any(), any());
     }
 
     @Test
@@ -259,7 +215,7 @@ class GetChatRoomInfoTests {
         assertThat(response.opponentName()).isEqualTo("알 수 없음");
         assertThat(response.roomName()).isEqualTo("알 수 없음");
         assertThat(response.opponentProfileImageUrl()).isNull();
-        verifyNoInteractions(fileQueryRepository, fileUrlService);
+        verifyNoInteractions(fileUrlService);
     }
 
     @Test

@@ -9,8 +9,6 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageBroadcaster;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
-import com.dreamteam.alter.domain.user.entity.User;
-import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,24 +44,27 @@ class ChatMessageSentEventListenerTests {
     private NotificationService notificationService;
 
     @Mock
-    private UserQueryRepository userQueryRepository;
-
-    @Mock
     private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
 
     @InjectMocks
     private ChatMessageSentEventListener listener;
 
-    private ChatMessageResponse messageResponse(Long chatRoomId, Long senderId, String content) {
+    private ChatMessageResponse messageResponse(Long chatRoomId, Long senderId, String content, String senderName) {
         return new ChatMessageResponse(
-            1L, chatRoomId, senderId, TokenScope.APP, "홍길동", ChatMessageType.NORMAL, content, LocalDateTime.now()
+            1L, chatRoomId, senderId, TokenScope.APP, senderName, ChatMessageType.NORMAL, content, LocalDateTime.now()
         );
     }
 
     private ChatMessageSentEvent event(ChatRoom chatRoom, Long senderId, TokenScope senderScope, String content) {
+        return event(chatRoom, senderId, senderScope, content, "발신자");
+    }
+
+    private ChatMessageSentEvent event(
+        ChatRoom chatRoom, Long senderId, TokenScope senderScope, String content, String senderName
+    ) {
         return new ChatMessageSentEvent(
             chatRoom, senderId, senderScope, content,
-            messageResponse(chatRoom.getId(), senderId, content)
+            messageResponse(chatRoom.getId(), senderId, content, senderName)
         );
     }
 
@@ -107,7 +107,6 @@ class ChatMessageSentEventListenerTests {
         given(chatRoomMemberQueryRepository.findActiveByRoom(100L))
             .willReturn(List.of(senderMember, opponentMember));
         given(chatPresenceStore.filterOnline(any())).willReturn(Set.of());
-        given(userQueryRepository.findById(1L)).willReturn(Optional.empty());
 
         // when
         listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요"));
@@ -156,7 +155,6 @@ class ChatMessageSentEventListenerTests {
         // 온라인 멤버(2)만 online으로 반환 → 오프라인(3)에게만 발송
         given(chatPresenceStore.filterOnline(any()))
             .willReturn(Set.of(new ChatPresenceStore.PresenceTarget(TokenScope.APP, 2L)));
-        given(userQueryRepository.findById(1L)).willReturn(Optional.empty());
 
         // when
         listener.onSent(event(groupRoom, 1L, TokenScope.APP, "그룹 메시지"));
@@ -197,12 +195,8 @@ class ChatMessageSentEventListenerTests {
             .willReturn(List.of(senderMember, opponentMember));
         given(chatPresenceStore.filterOnline(any())).willReturn(Set.of());
 
-        User sender = mock(User.class);
-        given(sender.getName()).willReturn("홍길동");
-        given(userQueryRepository.findById(1L)).willReturn(Optional.of(sender));
-
         // when
-        listener.onSent(event(directRoom, 1L, TokenScope.APP, null));
+        listener.onSent(event(directRoom, 1L, TokenScope.APP, null, "홍길동"));
 
         // then
         ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
@@ -224,12 +218,8 @@ class ChatMessageSentEventListenerTests {
             .willReturn(List.of(senderMember, opponentMember));
         given(chatPresenceStore.filterOnline(any())).willReturn(Set.of());
 
-        User sender = mock(User.class);
-        given(sender.getName()).willReturn("홍길동");
-        given(userQueryRepository.findById(1L)).willReturn(Optional.of(sender));
-
         // when
-        listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요"));
+        listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요", "홍길동"));
 
         // then
         ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);

@@ -1,5 +1,6 @@
 package com.dreamteam.alter.application.chat.usecase;
 
+import com.dreamteam.alter.application.chat.event.ChatSessionRevokeEvent;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
@@ -11,9 +12,12 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
@@ -37,6 +41,12 @@ class LeaveChatRoomTests {
     @Mock
     private ChatRoomMemberRepository chatRoomMemberRepository;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Captor
+    private ArgumentCaptor<ChatSessionRevokeEvent> eventCaptor;
+
     @InjectMocks
     private LeaveChatRoom sut;
 
@@ -56,6 +66,10 @@ class LeaveChatRoomTests {
         // then
         assertThat(member.getLeftAt()).isNotNull();
         then(chatRoomMemberRepository).should().save(member);
+        then(eventPublisher).should().publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getScope()).isEqualTo(TokenScope.APP);
+        assertThat(eventCaptor.getValue().getMemberId()).isEqualTo(10L);
+        assertThat(eventCaptor.getValue().getRoomId()).isEqualTo(1L);
     }
 
     @Test
@@ -137,6 +151,10 @@ class LeaveChatRoomTests {
         // then
         assertThat(member.getLeftAt()).isNotNull();
         then(chatRoomMemberRepository).should().save(member);
+        then(eventPublisher).should().publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getScope()).isEqualTo(TokenScope.MANAGER);
+        assertThat(eventCaptor.getValue().getMemberId()).isEqualTo(30L);
+        assertThat(eventCaptor.getValue().getRoomId()).isEqualTo(1L);
     }
 
     @Test
@@ -155,6 +173,7 @@ class LeaveChatRoomTests {
 
         // then
         then(chatRoomMemberRepository).should(never()).save(any());
+        then(eventPublisher).should(never()).publishEvent(any());
     }
 
     private ChatRoom directRoom() {

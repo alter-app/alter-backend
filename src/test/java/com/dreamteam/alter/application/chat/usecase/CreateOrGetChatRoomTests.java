@@ -195,6 +195,39 @@ class CreateOrGetChatRoomTests {
     }
 
     @Test
+    @DisplayName("기존 방에 멤버십 행이 아예 없으면 호출자 본인 멤버십을 생성하고 같은 roomId를 반환한다")
+    void execute_멤버십행없음_본인멤버십자가치유() {
+        // given
+        User user = mock(User.class);
+        given(user.getId()).willReturn(1L);
+        AppActor actor = AppActor.from(user, List.of());
+
+        ChatRoom existingRoom = mock(ChatRoom.class);
+        given(existingRoom.getId()).willReturn(42L);
+        given(chatRoomQueryRepository.findExistingChatRoom(1L, TokenScope.APP, 2L, TokenScope.APP))
+            .willReturn(Optional.of(existingRoom));
+
+        given(chatRoomMemberQueryRepository.findByRoomAndMember(42L, 1L, TokenScope.APP))
+            .willReturn(Optional.empty());
+
+        // when
+        CreateChatRoomResult response = sut.execute(actor, 2L, TokenScope.APP);
+
+        // then
+        assertThat(response.chatRoomId()).isEqualTo(42L);
+
+        ArgumentCaptor<ChatRoomMember> captor = ArgumentCaptor.forClass(ChatRoomMember.class);
+        then(chatRoomMemberRepository).should().save(captor.capture());
+        ChatRoomMember savedMember = captor.getValue();
+        assertThat(savedMember.getChatRoomId()).isEqualTo(42L);
+        assertThat(savedMember.getMemberId()).isEqualTo(1L);
+        assertThat(savedMember.getMemberScope()).isEqualTo(TokenScope.APP);
+
+        then(chatRoomMemberQueryRepository).should(never()).findByRoomAndMember(42L, 2L, TokenScope.APP);
+        then(chatMessageQueryRepository).should(never()).findLatestMessageIdByRoom(any());
+    }
+
+    @Test
     @DisplayName("기존 방 재사용 시 상대방 멤버십은 조회하지 않는다")
     void execute_기존방재사용_상대방멤버십미조회() {
         // given

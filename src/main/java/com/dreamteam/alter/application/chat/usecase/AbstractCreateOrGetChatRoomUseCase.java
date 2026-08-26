@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Transactional
@@ -44,9 +45,11 @@ public abstract class AbstractCreateOrGetChatRoomUseCase<A> extends AbstractChat
             )
             .map(room -> {
                 Long roomId = room.getId();
-                chatRoomMemberQueryRepository.findByRoomAndMember(roomId, currentUserId, currentScope)
-                    .filter(member -> !member.isActive())
-                    .ifPresent(member -> {
+                Optional<ChatRoomMember> existing =
+                    chatRoomMemberQueryRepository.findByRoomAndMember(roomId, currentUserId, currentScope);
+                if (existing.isPresent()) {
+                    ChatRoomMember member = existing.get();
+                    if (!member.isActive()) {
                         member.rejoin();
                         // 재진입 = 그 전 이력은 읽은 것으로 간주 (읽음 포인터가 stale하게 남아 unreadCount가 역행하는 것 방지)
                         Long latestMessageId = chatMessageQueryRepository.findLatestMessageIdByRoom(roomId);
@@ -54,7 +57,11 @@ public abstract class AbstractCreateOrGetChatRoomUseCase<A> extends AbstractChat
                             member.updateLastRead(latestMessageId);
                         }
                         chatRoomMemberRepository.save(member);
-                    });
+                    }
+                } else {
+                    // 멤버십 행 자체가 없으면(자가치유) 호출자 본인 것만 생성 — 상대 멤버십은 건드리지 않는다 (ALT-282 불변식)
+                    chatRoomMemberRepository.save(ChatRoomMember.create(roomId, currentUserId, currentScope));
+                }
                 return roomId;
             })
             .orElseGet(() -> {

@@ -131,14 +131,7 @@ public abstract class AbstractGetChatMessagesUseCase<A> extends AbstractChatUseC
             .distinct()
             .toList();
 
-        List<File> files = fileQueryRepository.findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, senderIds);
-
-        return files.stream()
-            .collect(Collectors.toMap(
-                File::getTargetId,
-                file -> fileUrlService.resolve(file).getUrl(),
-                (first, second) -> first
-            ));
+        return fileUrlService.resolveLatestUrlsByTarget(FileTargetType.USER_PROFILE, senderIds);
     }
 
     private ChatMessageResult toResult(

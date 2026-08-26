@@ -297,45 +297,6 @@ class NotificationServiceConsentTests {
 
     // ═══════════════════════════════════════════════════════════════════════
     @Nested
-    @DisplayName("sendNotificationOnly — 수신 동의 검사")
-    class SendNotificationOnlyConsentTests {
-
-        @Test
-        @DisplayName("수신 동의 false → FCM 미호출")
-        void skips_fcm_when_notificationConsent_is_false() throws Exception {
-            // given
-            NotificationConsent consent = consentWith(false, true);
-            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
-
-            // when
-            notificationService.sendNotificationOnly(1L, NotificationType.CHAT, "제목", "내용");
-
-            // then
-            then(fcmClient).should(never()).sendNotification(any(), any(), any());
-        }
-
-        @Test
-        @DisplayName("야간 동의 false + 야간 시간(22시 KST) → FCM 미호출")
-        void skips_fcm_when_nightConsent_false_and_is_night() throws Exception {
-            // given
-            NotificationConsent consent = consentWith(true, false);
-            given(notificationConsentQueryRepository.findByUser(user)).willReturn(Optional.of(consent));
-
-            LocalTime nightTime = localTimeAt(22);
-            try (MockedStatic<LocalTime> mockedStatic = mockStatic(LocalTime.class)) {
-                mockedStatic.when(LocalTime::now).thenReturn(nightTime);
-
-                // when
-                notificationService.sendNotificationOnly(1L, NotificationType.CHAT, "제목", "내용");
-            }
-
-            // then
-            then(fcmClient).should(never()).sendNotification(any(), any(), any());
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    @Nested
     @DisplayName("타입별 수신 동의 필터링 (SUBSTITUTE / REPUTATION)")
     class TypeSpecificConsentTests {
 

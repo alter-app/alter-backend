@@ -38,6 +38,10 @@ public class ChatSubscribeAuthorizationChannelInterceptor implements ChannelInte
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        // JwtChannelInterceptor와 달리 isMutable() 가드를 두지 않는다: 이 인터셉터는 accessor를 읽기만 하고
+        // 쓰지 않으므로 불변 여부와 무관하게 안전하게 평가할 수 있고, 가드를 넣으면 미인가 상태를 return null(드롭)이
+        // 아닌 return message(통과)로 바꿔 fail-open 우회로가 된다. 커맨드 필터(SUBSCRIBE)로 이미 non-SUBSCRIBE
+        // 합성 메시지는 걸러진다.
         if (ObjectUtils.isEmpty(accessor) || !StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
             return message;
         }
