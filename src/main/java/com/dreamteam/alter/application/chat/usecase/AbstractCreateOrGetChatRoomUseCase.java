@@ -5,6 +5,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
@@ -23,6 +24,7 @@ public abstract class AbstractCreateOrGetChatRoomUseCase<A> extends AbstractChat
     protected final ChatRoomRepository chatRoomRepository;
     protected final ChatRoomMemberRepository chatRoomMemberRepository;
     protected final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
+    protected final ChatMessageQueryRepository chatMessageQueryRepository;
 
     protected CreateChatRoomResult execute(A actor, Long opponentUserId, TokenScope opponentScope) {
         Long currentUserId = getParticipantId(actor);
@@ -46,6 +48,11 @@ public abstract class AbstractCreateOrGetChatRoomUseCase<A> extends AbstractChat
                     .filter(member -> !member.isActive())
                     .ifPresent(member -> {
                         member.rejoin();
+                        // 재진입 = 그 전 이력은 읽은 것으로 간주 (읽음 포인터가 stale하게 남아 unreadCount가 역행하는 것 방지)
+                        Long latestMessageId = chatMessageQueryRepository.findLatestMessageIdByRoom(roomId);
+                        if (latestMessageId != null) {
+                            member.updateLastRead(latestMessageId);
+                        }
                         chatRoomMemberRepository.save(member);
                     });
                 return roomId;

@@ -3,6 +3,7 @@ package com.dreamteam.alter.application.chat.usecase;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
@@ -38,6 +39,9 @@ class SyncWorkspaceChatMembershipTests {
 
     @Mock
     private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
+
+    @Mock
+    private ChatMessageQueryRepository chatMessageQueryRepository;
 
     @Mock
     private GroupChatRoomProvider groupChatRoomProvider;
@@ -82,6 +86,46 @@ class SyncWorkspaceChatMembershipTests {
 
             // then
             assertThat(left.isActive()).isTrue();
+            then(chatRoomMemberRepository).should().save(left);
+        }
+
+        @Test
+        @DisplayName("재가입 시 읽음 포인터가 방의 최신 메시지로 갱신된다")
+        void join_재가입시_읽음포인터_최신으로_갱신() {
+            // given
+            given(groupChatRoomProvider.getOrCreate(1L)).willReturn(5L);
+
+            ChatRoomMember left = ChatRoomMember.create(5L, 10L, TokenScope.APP);
+            left.leave();
+            given(chatRoomMemberQueryRepository.findByRoomAndMember(5L, 10L, TokenScope.APP))
+                .willReturn(Optional.of(left));
+            given(chatMessageQueryRepository.findLatestMessageIdByRoom(5L)).willReturn(99L);
+
+            // when
+            sut.join(1L, 10L, TokenScope.APP);
+
+            // then
+            assertThat(left.getLastReadMessageId()).isEqualTo(99L);
+            then(chatRoomMemberRepository).should().save(left);
+        }
+
+        @Test
+        @DisplayName("재가입해도 방에 메시지가 없으면 읽음 포인터를 갱신하지 않는다")
+        void join_재가입시_메시지없으면_읽음포인터_미갱신() {
+            // given
+            given(groupChatRoomProvider.getOrCreate(1L)).willReturn(5L);
+
+            ChatRoomMember left = ChatRoomMember.create(5L, 10L, TokenScope.APP);
+            left.leave();
+            given(chatRoomMemberQueryRepository.findByRoomAndMember(5L, 10L, TokenScope.APP))
+                .willReturn(Optional.of(left));
+            given(chatMessageQueryRepository.findLatestMessageIdByRoom(5L)).willReturn(null);
+
+            // when
+            sut.join(1L, 10L, TokenScope.APP);
+
+            // then
+            assertThat(left.getLastReadMessageId()).isNull();
             then(chatRoomMemberRepository).should().save(left);
         }
 

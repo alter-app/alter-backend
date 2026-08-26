@@ -3,6 +3,7 @@ package com.dreamteam.alter.application.chat.usecase;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
@@ -43,6 +44,9 @@ class CreateOrGetChatRoomTests {
 
     @Mock
     private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
+
+    @Mock
+    private ChatMessageQueryRepository chatMessageQueryRepository;
 
     @InjectMocks
     private CreateOrGetChatRoom sut;
@@ -104,7 +108,7 @@ class CreateOrGetChatRoomTests {
     }
 
     @Test
-    @DisplayName("나간 뒤 재호출하면 같은 방으로 rejoin하고 새 방을 생성하지 않는다")
+    @DisplayName("나간 뒤 재호출하면 같은 방으로 rejoin하고 읽음 포인터를 최신 메시지로 갱신한다")
     void execute_나간뒤재호출_rejoin() {
         // given
         User user = mock(User.class);
@@ -120,6 +124,7 @@ class CreateOrGetChatRoomTests {
         given(leftMember.isActive()).willReturn(false);
         given(chatRoomMemberQueryRepository.findByRoomAndMember(42L, 1L, TokenScope.APP))
             .willReturn(Optional.of(leftMember));
+        given(chatMessageQueryRepository.findLatestMessageIdByRoom(42L)).willReturn(999L);
 
         // when
         CreateChatRoomResult response = sut.execute(actor, 2L, TokenScope.APP);
@@ -127,12 +132,42 @@ class CreateOrGetChatRoomTests {
         // then
         assertThat(response.chatRoomId()).isEqualTo(42L);
         then(leftMember).should().rejoin();
+        then(leftMember).should().updateLastRead(999L);
         then(chatRoomMemberRepository).should().save(leftMember);
         then(chatRoomRepository).should(never()).save(any());
     }
 
     @Test
-    @DisplayName("활성 멤버 상태에서 재호출하면 save를 호출하지 않는다")
+    @DisplayName("나간 뒤 재호출했는데 방에 메시지가 0건이면 읽음 포인터는 갱신하지 않는다")
+    void execute_나간뒤재호출_메시지없음_읽음포인터미갱신() {
+        // given
+        User user = mock(User.class);
+        given(user.getId()).willReturn(1L);
+        AppActor actor = AppActor.from(user, List.of());
+
+        ChatRoom existingRoom = mock(ChatRoom.class);
+        given(existingRoom.getId()).willReturn(42L);
+        given(chatRoomQueryRepository.findExistingChatRoom(1L, TokenScope.APP, 2L, TokenScope.APP))
+            .willReturn(Optional.of(existingRoom));
+
+        ChatRoomMember leftMember = mock(ChatRoomMember.class);
+        given(leftMember.isActive()).willReturn(false);
+        given(chatRoomMemberQueryRepository.findByRoomAndMember(42L, 1L, TokenScope.APP))
+            .willReturn(Optional.of(leftMember));
+        given(chatMessageQueryRepository.findLatestMessageIdByRoom(42L)).willReturn(null);
+
+        // when
+        CreateChatRoomResult response = sut.execute(actor, 2L, TokenScope.APP);
+
+        // then
+        assertThat(response.chatRoomId()).isEqualTo(42L);
+        then(leftMember).should().rejoin();
+        then(leftMember).should(never()).updateLastRead(any());
+        then(chatRoomMemberRepository).should().save(leftMember);
+    }
+
+    @Test
+    @DisplayName("활성 멤버 상태에서 재호출하면 save를 호출하지 않고 최신 메시지 조회도 하지 않는다")
     void execute_활성멤버재호출_save미호출() {
         // given
         User user = mock(User.class);
@@ -156,6 +191,7 @@ class CreateOrGetChatRoomTests {
         assertThat(response.chatRoomId()).isEqualTo(42L);
         then(activeMember).should(never()).rejoin();
         then(chatRoomMemberRepository).should(never()).save(any());
+        then(chatMessageQueryRepository).should(never()).findLatestMessageIdByRoom(any());
     }
 
     @Test

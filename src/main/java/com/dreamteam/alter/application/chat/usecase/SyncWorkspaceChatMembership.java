@@ -21,6 +21,7 @@ public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipU
     private final ChatRoomQueryRepository chatRoomQueryRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
+    private final ChatMessageQueryRepository chatMessageQueryRepository;
     private final GroupChatRoomProvider groupChatRoomProvider;
 
     @Override
@@ -46,6 +47,11 @@ public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipU
             ChatRoomMember member = existing.get();
             if (!member.isActive()) {
                 member.rejoin();
+                // 재진입 = 그 전 이력은 읽은 것으로 간주 (읽음 포인터가 stale하게 남아 unreadCount가 역행하는 것 방지)
+                Long latestMessageId = chatMessageQueryRepository.findLatestMessageIdByRoom(roomId);
+                if (latestMessageId != null) {
+                    member.updateLastRead(latestMessageId);
+                }
                 chatRoomMemberRepository.save(member);
             }
             return;

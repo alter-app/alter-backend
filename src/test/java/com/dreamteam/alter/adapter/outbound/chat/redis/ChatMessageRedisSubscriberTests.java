@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.outbound.chat.redis;
 
 import com.dreamteam.alter.adapter.outbound.chat.persistence.readonly.ChatMessageResponse;
 import com.dreamteam.alter.adapter.outbound.chat.redis.dto.ChatBroadcastEnvelope;
+import com.dreamteam.alter.common.constants.ChatConstants;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.connection.DefaultMessage;
@@ -17,6 +19,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.then;
@@ -49,6 +52,27 @@ class ChatMessageRedisSubscriberTests {
 
         // then
         then(messagingTemplate).should().convertAndSend(eq("/sub/chat.100"), any(ChatMessageResponse.class));
+    }
+
+    @Test
+    @DisplayName("발행 destination이 구독 인가 인터셉터가 검사하는 prefix로 시작한다(공유 상수 fail-open 방지)")
+    void onMessage_발행destination이_공유prefix로_시작한다() throws Exception {
+        // given
+        ChatMessageRedisSubscriber sut = new ChatMessageRedisSubscriber(messagingTemplate, objectMapper);
+        ChatMessageResponse message = new ChatMessageResponse(
+            10L, 100L, 1L, TokenScope.APP, "홍길동", ChatMessageType.NORMAL, "안녕하세요", LocalDateTime.of(2026, 7, 14, 12, 0, 0)
+        );
+        String payload = objectMapper.writeValueAsString(new ChatBroadcastEnvelope(100L, message));
+        DefaultMessage redisMessage = new DefaultMessage("chat:broadcast".getBytes(StandardCharsets.UTF_8),
+            payload.getBytes(StandardCharsets.UTF_8));
+
+        // when
+        sut.onMessage(redisMessage, null);
+
+        // then
+        ArgumentCaptor<String> destinationCaptor = ArgumentCaptor.forClass(String.class);
+        then(messagingTemplate).should().convertAndSend(destinationCaptor.capture(), any(ChatMessageResponse.class));
+        assertThat(destinationCaptor.getValue()).startsWith(ChatConstants.CHAT_SUBSCRIBE_DESTINATION_PREFIX);
     }
 
     @Test

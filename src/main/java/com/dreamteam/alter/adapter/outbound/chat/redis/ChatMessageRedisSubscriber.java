@@ -1,6 +1,7 @@
 package com.dreamteam.alter.adapter.outbound.chat.redis;
 
 import com.dreamteam.alter.adapter.outbound.chat.redis.dto.ChatBroadcastEnvelope;
+import com.dreamteam.alter.common.constants.ChatConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +25,8 @@ public class ChatMessageRedisSubscriber implements MessageListener {
         try {
             String body = new String(message.getBody(), StandardCharsets.UTF_8);
             ChatBroadcastEnvelope envelope = objectMapper.readValue(body, ChatBroadcastEnvelope.class);
-            messagingTemplate.convertAndSend("/sub/chat." + envelope.getRoomId(), envelope.getMessage());
+            messagingTemplate.convertAndSend(
+                ChatConstants.CHAT_SUBSCRIBE_DESTINATION_PREFIX + envelope.getRoomId(), envelope.getMessage());
         } catch (Exception e) {
             log.error("채팅 메시지 Redis 수신 처리 실패. Error: {}", e.getMessage(), e);
         }
