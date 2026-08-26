@@ -87,6 +87,25 @@ class SendChatMessageTests {
     }
 
     @Test
+    @DisplayName("채팅방을 나간 멤버는 전송 시 NOT_FOUND (findByIdAndParticipant가 비활성 멤버를 조회하지 않는 것에 의존)")
+    void execute_나간_멤버는_전송시_NOT_FOUND() {
+        // given: 나간 멤버는 findByIdAndParticipant의 활성 멤버 EXISTS 조건에 걸려 조회되지 않는다
+        User user = mock(User.class);
+        given(user.getId()).willReturn(1L);
+        given(chatRoomQueryRepository.findByIdAndParticipant(100L, 1L, TokenScope.APP)).willReturn(Optional.empty());
+
+        SendChatMessageRequestDto request = mock(SendChatMessageRequestDto.class);
+
+        // when & then
+        assertThatThrownBy(() -> sut.execute(user, request, 100L))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_FOUND)
+            .hasMessage("채팅방을 찾을 수 없습니다.");
+        then(chatMessageRepository).should(never()).save(any());
+        then(eventPublisher).should(never()).publishEvent(any(ChatMessageSentEvent.class));
+    }
+
+    @Test
     @DisplayName("유저(APP)가 NOTICE 전송시 공지 권한 예외")
     void execute_유저가_NOTICE_전송시_예외() {
         // given

@@ -63,6 +63,16 @@ public interface ManagerChatControllerSpec {
         @Valid @RequestBody MarkChatRoomReadRequestDto request
     );
 
+    @Operation(summary = "채팅방 나가기", description = "1:1 채팅방을 나갑니다. 업장 그룹 채팅방은 나갈 수 없습니다(400). 존재하지 않는 채팅방이거나 채팅방 멤버가 아니면 404가 발생합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "채팅방 나가기 성공"),
+        @ApiResponse(responseCode = "400", description = "업장 그룹 채팅방은 나갈 수 없음"),
+        @ApiResponse(responseCode = "404", description = "채팅방을 찾을 수 없거나 채팅방 멤버가 아님")
+    })
+    ResponseEntity<CommonApiResponse<Void>> leaveChatRoom(
+        @PathVariable Long chatRoomId
+    );
+
     @Operation(summary = "업장 그룹 채팅방 조회", description = "업장의 그룹 채팅방 ID를 조회합니다. 해당 채팅방의 활성 멤버인 경우에만 조회됩니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "업장 그룹 채팅방 조회 성공")

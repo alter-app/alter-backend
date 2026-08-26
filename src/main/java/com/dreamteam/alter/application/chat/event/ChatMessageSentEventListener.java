@@ -8,7 +8,6 @@ import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageBroadcaster;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
-import com.dreamteam.alter.domain.chat.type.ChatRoomType;
 import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -48,56 +47,11 @@ public class ChatMessageSentEventListener {
             log.error("WebSocket 메시지 전송 실패. ChatRoomId: {}, Error: {}", chatRoom.getId(), e.getMessage(), e);
         }
 
-        // 2. FCM 알림 전송 (온라인 멤버는 제외한 presence 기반 폴백)
-        if (chatRoom.getType() == ChatRoomType.DIRECT) {
-            sendDirectFcmNotification(chatRoom, event.getSenderId(), event.getSenderScope(), event.getContent());
-        } else {
-            sendGroupFcmNotification(chatRoom, event.getSenderId(), event.getSenderScope(), event.getContent());
-        }
+        // 2. FCM 알림 전송 (활성 멤버 기준, 온라인 멤버는 제외한 presence 기반 폴백)
+        sendFcmNotification(chatRoom, event.getSenderId(), event.getSenderScope(), event.getContent());
     }
 
-    private void sendDirectFcmNotification(
-        ChatRoom chatRoom,
-        Long senderId,
-        TokenScope senderScope,
-        String content
-    ) {
-        try {
-            // 상대방 정보 확인
-            Long opponentId;
-            TokenScope opponentScope;
-            if (chatRoom.getParticipant1Id()
-                .equals(senderId) && chatRoom.getParticipant1Scope()
-                .equals(senderScope)) {
-                opponentId = chatRoom.getParticipant2Id();
-                opponentScope = chatRoom.getParticipant2Scope();
-            } else {
-                opponentId = chatRoom.getParticipant1Id();
-                opponentScope = chatRoom.getParticipant1Scope();
-            }
-
-            // 상대방이 온라인이면 FCM 생략 (WebSocket으로 이미 수신)
-            if (chatPresenceStore.isOnline(opponentScope, opponentId)) {
-                return;
-            }
-
-            // 발신자 이름 조회
-            String senderName = getSenderName(senderId);
-
-            // 알림 메시지 생성
-            String title = NotificationMessageConstants.Chat.NEW_MESSAGE_TITLE;
-            String body = buildNotificationBody(senderName, content);
-
-            // FCM 알림 전송
-            notificationService.sendNotificationOnly(opponentId, NotificationType.CHAT, title, body);
-
-        } catch (Exception e) {
-            // 알림 실패는 로그만 남기고 메시지 전송은 성공 처리
-            log.error("채팅 메시지 FCM 알림 발송 실패. ChatRoomId: {}, Error: {}", chatRoom.getId(), e.getMessage(), e);
-        }
-    }
-
-    private void sendGroupFcmNotification(
+    private void sendFcmNotification(
         ChatRoom chatRoom,
         Long senderId,
         TokenScope senderScope,

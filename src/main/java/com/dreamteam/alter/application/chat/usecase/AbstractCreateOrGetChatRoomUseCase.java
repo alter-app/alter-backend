@@ -5,6 +5,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.entity.ChatRoom;
 import com.dreamteam.alter.domain.chat.entity.ChatRoomMember;
+import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomRepository;
@@ -21,6 +22,7 @@ public abstract class AbstractCreateOrGetChatRoomUseCase<A> extends AbstractChat
     protected final ChatRoomQueryRepository chatRoomQueryRepository;
     protected final ChatRoomRepository chatRoomRepository;
     protected final ChatRoomMemberRepository chatRoomMemberRepository;
+    protected final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
 
     protected CreateChatRoomResult execute(A actor, Long opponentUserId, TokenScope opponentScope) {
         Long currentUserId = getParticipantId(actor);
@@ -38,7 +40,16 @@ public abstract class AbstractCreateOrGetChatRoomUseCase<A> extends AbstractChat
                 opponentUserId,
                 opponentScope
             )
-            .map(ChatRoom::getId)
+            .map(room -> {
+                Long roomId = room.getId();
+                chatRoomMemberQueryRepository.findByRoomAndMember(roomId, currentUserId, currentScope)
+                    .filter(member -> !member.isActive())
+                    .ifPresent(member -> {
+                        member.rejoin();
+                        chatRoomMemberRepository.save(member);
+                    });
+                return roomId;
+            })
             .orElseGet(() -> {
                 // 없으면 새로 생성
                 ChatRoom newChatRoom = ChatRoom.create(
