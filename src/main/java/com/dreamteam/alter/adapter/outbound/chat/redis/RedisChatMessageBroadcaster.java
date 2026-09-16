@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -20,9 +22,10 @@ public class RedisChatMessageBroadcaster implements ChatMessageBroadcaster {
     private final ObjectMapper objectMapper;
 
     @Override
-    public void broadcast(Long roomId, ChatMessageResponse message) {
+    public void broadcast(Long roomId, ChatMessageResponse message, List<String> recipientNames) {
         try {
-            String payload = objectMapper.writeValueAsString(new ChatBroadcastEnvelope(roomId, message));
+            String payload =
+                objectMapper.writeValueAsString(new ChatBroadcastEnvelope(roomId, message, recipientNames));
             redisTemplate.convertAndSend(CHANNEL, payload);
         } catch (Exception e) {
             log.error("채팅 메시지 Redis 발행 실패. RoomId: {}, Error: {}", roomId, e.getMessage(), e);

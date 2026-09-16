@@ -117,6 +117,29 @@ class ChatRoomQueryRepositoryImplTests {
     }
 
     @Test
+    void findByIdAndParticipant_활성멤버가_나가면_조회안되고_countChatRoomsByParticipant에서도_제외() {
+        ChatRoom groupRoom = chatRoomRepository.save(ChatRoom.createGroup(106L));
+        ChatRoomMember member = chatRoomMemberRepository.save(
+            ChatRoomMember.create(groupRoom.getId(), 40L, TokenScope.APP));
+
+        Optional<ChatRoom> foundBeforeLeave = chatRoomQueryRepository.findByIdAndParticipant(
+            groupRoom.getId(), 40L, TokenScope.APP);
+        long countBeforeLeave = chatRoomQueryRepository.countChatRoomsByParticipant(40L, TokenScope.APP);
+
+        member.leave();
+        chatRoomMemberRepository.save(member);
+
+        Optional<ChatRoom> foundAfterLeave = chatRoomQueryRepository.findByIdAndParticipant(
+            groupRoom.getId(), 40L, TokenScope.APP);
+        long countAfterLeave = chatRoomQueryRepository.countChatRoomsByParticipant(40L, TokenScope.APP);
+
+        assertThat(foundBeforeLeave).isPresent();
+        assertThat(countBeforeLeave).isEqualTo(1L);
+        assertThat(foundAfterLeave).isEmpty();
+        assertThat(countAfterLeave).isEqualTo(0L);
+    }
+
+    @Test
     void getChatRoomListWithOpponent_멤버행없으면_participant컬럼있어도_목록에서_제외() {
         ChatRoom directRoom = chatRoomRepository.save(
             ChatRoom.create(41L, TokenScope.APP, 51L, TokenScope.MANAGER));

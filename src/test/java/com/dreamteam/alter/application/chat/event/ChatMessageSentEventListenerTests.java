@@ -9,9 +9,6 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatMessageBroadcaster;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatPresenceStore;
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryRepository;
 import com.dreamteam.alter.domain.chat.type.ChatMessageType;
-import com.dreamteam.alter.domain.chat.type.ChatRoomType;
-import com.dreamteam.alter.domain.user.entity.User;
-import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,48 +44,77 @@ class ChatMessageSentEventListenerTests {
     private NotificationService notificationService;
 
     @Mock
-    private UserQueryRepository userQueryRepository;
-
-    @Mock
     private ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
 
     @InjectMocks
     private ChatMessageSentEventListener listener;
 
-    private ChatMessageResponse messageResponse(Long chatRoomId, Long senderId, String content) {
+    private ChatMessageResponse messageResponse(Long chatRoomId, Long senderId, String content, String senderName) {
         return new ChatMessageResponse(
-            1L, chatRoomId, senderId, TokenScope.APP, "홍길동", ChatMessageType.NORMAL, content, LocalDateTime.now()
+            1L, chatRoomId, senderId, TokenScope.APP, senderName, ChatMessageType.NORMAL, content, LocalDateTime.now()
         );
     }
 
     private ChatMessageSentEvent event(ChatRoom chatRoom, Long senderId, TokenScope senderScope, String content) {
+        return event(chatRoom, senderId, senderScope, content, "발신자");
+    }
+
+    private ChatMessageSentEvent event(
+        ChatRoom chatRoom, Long senderId, TokenScope senderScope, String content, String senderName
+    ) {
         return new ChatMessageSentEvent(
             chatRoom, senderId, senderScope, content,
-            messageResponse(chatRoom.getId(), senderId, content)
+            messageResponse(chatRoom.getId(), senderId, content, senderName)
         );
     }
 
+    private ChatRoomMember member(Long memberId, TokenScope scope) {
+        ChatRoomMember member = mock(ChatRoomMember.class);
+        given(member.getMemberId()).willReturn(memberId);
+        given(member.getMemberScope()).willReturn(scope);
+        return member;
+    }
+
     @Test
-    @DisplayName("DIRECT 상대가 오프라인이면 브로드캐스트 + 상대에게 FCM 발송")
-    void onSent_DIRECT_상대_오프라인이면_FCM_발송() {
+    @DisplayName("DIRECT 상대가 나갔으면(비활성 멤버) FCM 미발송")
+    void onSent_DIRECT_상대가_나갔으면_FCM_미발송() {
         // given
         ChatRoom directRoom = mock(ChatRoom.class);
         given(directRoom.getId()).willReturn(100L);
-        given(directRoom.getType()).willReturn(ChatRoomType.DIRECT);
-        given(directRoom.getParticipant1Id()).willReturn(1L);
-        given(directRoom.getParticipant1Scope()).willReturn(TokenScope.APP);
-        given(directRoom.getParticipant2Id()).willReturn(2L);
-        given(directRoom.getParticipant2Scope()).willReturn(TokenScope.APP);
 
-        given(userQueryRepository.findById(1L)).willReturn(Optional.empty());
-        given(chatPresenceStore.isOnline(TokenScope.APP, 2L)).willReturn(false);
+        // 나간 상대는 findActiveByRoom 결과에 포함되지 않는다
+        ChatRoomMember senderMember = member(1L, TokenScope.APP);
+        given(chatRoomMemberQueryRepository.findActiveByRoom(100L))
+            .willReturn(List.of(senderMember));
 
         // when
         listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요"));
 
         // then
-        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class));
-        then(notificationService).should().sendNotificationOnly(eq(2L), any(), anyString(), anyString());
+        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class), any());
+        then(notificationService).should(never()).sendNotificationOnlyToMany(any(), any(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("DIRECT 상대가 활성 + 오프라인이면 FCM 발송, 발신자 본인에게는 안 감")
+    void onSent_DIRECT_상대_활성_오프라인이면_FCM_발송() {
+        // given
+        ChatRoom directRoom = mock(ChatRoom.class);
+        given(directRoom.getId()).willReturn(100L);
+
+        ChatRoomMember senderMember = member(1L, TokenScope.APP);
+        ChatRoomMember opponentMember = member(2L, TokenScope.APP);
+        given(chatRoomMemberQueryRepository.findActiveByRoom(100L))
+            .willReturn(List.of(senderMember, opponentMember));
+        given(chatPresenceStore.filterOnline(any())).willReturn(Set.of());
+
+        // when
+        listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요"));
+
+        // then
+        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class), any());
+        then(notificationService).should()
+            .sendNotificationOnlyToMany(eq(List.of(2L)), any(), anyString(), anyString());
     }
 
     @Test
@@ -98,20 +123,20 @@ class ChatMessageSentEventListenerTests {
         // given
         ChatRoom directRoom = mock(ChatRoom.class);
         given(directRoom.getId()).willReturn(100L);
-        given(directRoom.getType()).willReturn(ChatRoomType.DIRECT);
-        given(directRoom.getParticipant1Id()).willReturn(1L);
-        given(directRoom.getParticipant1Scope()).willReturn(TokenScope.APP);
-        given(directRoom.getParticipant2Id()).willReturn(2L);
-        given(directRoom.getParticipant2Scope()).willReturn(TokenScope.APP);
 
-        given(chatPresenceStore.isOnline(TokenScope.APP, 2L)).willReturn(true);
+        ChatRoomMember senderMember = member(1L, TokenScope.APP);
+        ChatRoomMember opponentMember = member(2L, TokenScope.APP);
+        given(chatRoomMemberQueryRepository.findActiveByRoom(100L))
+            .willReturn(List.of(senderMember, opponentMember));
+        given(chatPresenceStore.filterOnline(any()))
+            .willReturn(Set.of(new ChatPresenceStore.PresenceTarget(TokenScope.APP, 2L)));
 
         // when
         listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요"));
 
         // then
-        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class));
-        then(notificationService).should(never()).sendNotificationOnly(any(), any(), anyString(), anyString());
+        then(chatMessageBroadcaster).should().broadcast(eq(100L), any(ChatMessageResponse.class), any());
+        then(notificationService).should(never()).sendNotificationOnlyToMany(any(), any(), anyString(), anyString());
     }
 
     @Test
@@ -120,32 +145,22 @@ class ChatMessageSentEventListenerTests {
         // given
         ChatRoom groupRoom = mock(ChatRoom.class);
         given(groupRoom.getId()).willReturn(200L);
-        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
 
-        ChatRoomMember senderMember = mock(ChatRoomMember.class);
-        given(senderMember.getMemberId()).willReturn(1L);
-        given(senderMember.getMemberScope()).willReturn(TokenScope.APP);
-
-        ChatRoomMember onlineMember = mock(ChatRoomMember.class);
-        given(onlineMember.getMemberId()).willReturn(2L);
-        given(onlineMember.getMemberScope()).willReturn(TokenScope.APP);
-
-        ChatRoomMember offlineMember = mock(ChatRoomMember.class);
-        given(offlineMember.getMemberId()).willReturn(3L);
-        given(offlineMember.getMemberScope()).willReturn(TokenScope.APP);
+        ChatRoomMember senderMember = member(1L, TokenScope.APP);
+        ChatRoomMember onlineMember = member(2L, TokenScope.APP);
+        ChatRoomMember offlineMember = member(3L, TokenScope.APP);
 
         given(chatRoomMemberQueryRepository.findActiveByRoom(200L))
             .willReturn(List.of(senderMember, onlineMember, offlineMember));
         // 온라인 멤버(2)만 online으로 반환 → 오프라인(3)에게만 발송
         given(chatPresenceStore.filterOnline(any()))
             .willReturn(Set.of(new ChatPresenceStore.PresenceTarget(TokenScope.APP, 2L)));
-        given(userQueryRepository.findById(1L)).willReturn(Optional.empty());
 
         // when
         listener.onSent(event(groupRoom, 1L, TokenScope.APP, "그룹 메시지"));
 
         // then
-        then(chatMessageBroadcaster).should().broadcast(eq(200L), any(ChatMessageResponse.class));
+        then(chatMessageBroadcaster).should().broadcast(eq(200L), any(ChatMessageResponse.class), any());
         then(notificationService).should()
             .sendNotificationOnlyToMany(eq(List.of(3L)), any(), anyString(), anyString());
     }
@@ -156,7 +171,6 @@ class ChatMessageSentEventListenerTests {
         // given
         ChatRoom groupRoom = mock(ChatRoom.class);
         given(groupRoom.getId()).willReturn(200L);
-        given(groupRoom.getType()).willReturn(ChatRoomType.GROUP);
 
         given(chatRoomMemberQueryRepository.findActiveByRoom(200L)).willReturn(List.of());
 
@@ -164,7 +178,7 @@ class ChatMessageSentEventListenerTests {
         listener.onSent(event(groupRoom, 1L, TokenScope.APP, "그룹 메시지"));
 
         // then
-        then(chatMessageBroadcaster).should().broadcast(eq(200L), any(ChatMessageResponse.class));
+        then(chatMessageBroadcaster).should().broadcast(eq(200L), any(ChatMessageResponse.class), any());
         then(notificationService).should(never()).sendNotificationOnlyToMany(any(), any(), anyString(), anyString());
     }
 
@@ -174,23 +188,20 @@ class ChatMessageSentEventListenerTests {
         // given
         ChatRoom directRoom = mock(ChatRoom.class);
         given(directRoom.getId()).willReturn(100L);
-        given(directRoom.getType()).willReturn(ChatRoomType.DIRECT);
-        given(directRoom.getParticipant1Id()).willReturn(1L);
-        given(directRoom.getParticipant1Scope()).willReturn(TokenScope.APP);
-        given(directRoom.getParticipant2Id()).willReturn(2L);
-        given(directRoom.getParticipant2Scope()).willReturn(TokenScope.APP);
 
-        User sender = mock(User.class);
-        given(sender.getName()).willReturn("홍길동");
-        given(userQueryRepository.findById(1L)).willReturn(Optional.of(sender));
-        given(chatPresenceStore.isOnline(TokenScope.APP, 2L)).willReturn(false);
+        ChatRoomMember senderMember = member(1L, TokenScope.APP);
+        ChatRoomMember opponentMember = member(2L, TokenScope.APP);
+        given(chatRoomMemberQueryRepository.findActiveByRoom(100L))
+            .willReturn(List.of(senderMember, opponentMember));
+        given(chatPresenceStore.filterOnline(any())).willReturn(Set.of());
 
         // when
-        listener.onSent(event(directRoom, 1L, TokenScope.APP, null));
+        listener.onSent(event(directRoom, 1L, TokenScope.APP, null, "홍길동"));
 
         // then
         ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
-        then(notificationService).should().sendNotificationOnly(eq(2L), any(), anyString(), bodyCaptor.capture());
+        then(notificationService).should()
+            .sendNotificationOnlyToMany(eq(List.of(2L)), any(), anyString(), bodyCaptor.capture());
         assertThat(bodyCaptor.getValue()).isEqualTo("홍길동: 사진을 보냈습니다");
     }
 
@@ -200,23 +211,67 @@ class ChatMessageSentEventListenerTests {
         // given
         ChatRoom directRoom = mock(ChatRoom.class);
         given(directRoom.getId()).willReturn(100L);
-        given(directRoom.getType()).willReturn(ChatRoomType.DIRECT);
-        given(directRoom.getParticipant1Id()).willReturn(1L);
-        given(directRoom.getParticipant1Scope()).willReturn(TokenScope.APP);
-        given(directRoom.getParticipant2Id()).willReturn(2L);
-        given(directRoom.getParticipant2Scope()).willReturn(TokenScope.APP);
 
-        User sender = mock(User.class);
-        given(sender.getName()).willReturn("홍길동");
-        given(userQueryRepository.findById(1L)).willReturn(Optional.of(sender));
-        given(chatPresenceStore.isOnline(TokenScope.APP, 2L)).willReturn(false);
+        ChatRoomMember senderMember = member(1L, TokenScope.APP);
+        ChatRoomMember opponentMember = member(2L, TokenScope.APP);
+        given(chatRoomMemberQueryRepository.findActiveByRoom(100L))
+            .willReturn(List.of(senderMember, opponentMember));
+        given(chatPresenceStore.filterOnline(any())).willReturn(Set.of());
+
+        // when
+        listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요", "홍길동"));
+
+        // then
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        then(notificationService).should()
+            .sendNotificationOnlyToMany(eq(List.of(2L)), any(), anyString(), bodyCaptor.capture());
+        assertThat(bodyCaptor.getValue()).isEqualTo("홍길동: 안녕하세요");
+    }
+
+    @Test
+    @DisplayName("GROUP 활성 멤버 N명(발신자 포함, 나간 멤버 제외) 각각의 principal 이름으로 recipientNames를 만든다")
+    void onSent_recipientNames는_활성멤버_전원_발신자포함() {
+        // given
+        ChatRoom groupRoom = mock(ChatRoom.class);
+        given(groupRoom.getId()).willReturn(200L);
+
+        ChatRoomMember senderMember = member(1L, TokenScope.APP);
+        ChatRoomMember memberTwo = member(2L, TokenScope.APP);
+        ChatRoomMember memberThree = member(3L, TokenScope.MANAGER);
+        // 나간 멤버는 findActiveByRoom 결과에 애초에 포함되지 않는다
+        given(chatRoomMemberQueryRepository.findActiveByRoom(200L))
+            .willReturn(List.of(senderMember, memberTwo, memberThree));
+        given(chatPresenceStore.filterOnline(any())).willReturn(Set.of());
+
+        // when
+        listener.onSent(event(groupRoom, 1L, TokenScope.APP, "그룹 메시지"));
+
+        // then
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<String>> recipientNamesCaptor = ArgumentCaptor.forClass(List.class);
+        then(chatMessageBroadcaster).should()
+            .broadcast(eq(200L), any(ChatMessageResponse.class), recipientNamesCaptor.capture());
+        assertThat(recipientNamesCaptor.getValue())
+            .containsExactlyInAnyOrder("APP:1", "APP:2", "MANAGER:3");
+    }
+
+    @Test
+    @DisplayName("수신자 산정(findActiveByRoom)은 발송당 정확히 1회만 호출된다")
+    void onSent_수신자산정은_발송당_1회() {
+        // given
+        ChatRoom directRoom = mock(ChatRoom.class);
+        given(directRoom.getId()).willReturn(100L);
+
+        ChatRoomMember senderMember = member(1L, TokenScope.APP);
+        ChatRoomMember opponentMember = member(2L, TokenScope.APP);
+        given(chatRoomMemberQueryRepository.findActiveByRoom(100L))
+            .willReturn(List.of(senderMember, opponentMember));
+        given(chatPresenceStore.filterOnline(any())).willReturn(Set.of());
 
         // when
         listener.onSent(event(directRoom, 1L, TokenScope.APP, "안녕하세요"));
 
         // then
-        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
-        then(notificationService).should().sendNotificationOnly(eq(2L), any(), anyString(), bodyCaptor.capture());
-        assertThat(bodyCaptor.getValue()).isEqualTo("홍길동: 안녕하세요");
+        then(chatRoomMemberQueryRepository).should(org.mockito.Mockito.times(1)).findActiveByRoom(100L);
     }
 }

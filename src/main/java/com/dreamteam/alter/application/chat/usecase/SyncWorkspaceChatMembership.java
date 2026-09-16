@@ -9,6 +9,7 @@ import com.dreamteam.alter.application.chat.support.GroupChatRoomProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
@@ -21,6 +22,7 @@ public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipU
     private final ChatRoomQueryRepository chatRoomQueryRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
+    private final ChatMessageQueryRepository chatMessageQueryRepository;
     private final GroupChatRoomProvider groupChatRoomProvider;
 
     @Override
@@ -36,7 +38,14 @@ public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipU
         }
     }
 
+    // ChatMembershipSyncEventListener.onJoined(AFTER_COMMIT) 콜백 안에서 호출된다. 그 시점엔
+    // 바깥 트랜잭션 자원이 아직 정리되지 않아 클래스 레벨 REQUIRED로는 "참여"만 하고 실제로는
+    // 커밋되지 않는다 (메서드 레벨 어노테이션이 클래스 레벨보다 우선). REQUIRES_NEW로 진짜 새
+    // 트랜잭션을 열어야 한다 (GroupChatRoomProvider와 동일 이유). 이 메서드 호출부(리스너의
+    // try/catch)가 곧 이 트랜잭션의 경계이므로, 커밋 실패(UnexpectedRollbackException)도
+    // 그 try/catch 안에서 잡힌다.
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void join(Long workspaceId, Long memberId, TokenScope scope) {
         // 레거시 업장 등 단톡방이 아직 없으면 여기서 생성 (self-healing, 절대 throw하지 않음)
         Long roomId = createGroupRoom(workspaceId);
@@ -46,6 +55,11 @@ public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipU
             ChatRoomMember member = existing.get();
             if (!member.isActive()) {
                 member.rejoin();
+                // 재진입 = 그 전 이력은 읽은 것으로 간주 (읽음 포인터가 stale하게 남아 unreadCount가 역행하는 것 방지)
+                Long latestMessageId = chatMessageQueryRepository.findLatestMessageIdByRoom(roomId);
+                if (latestMessageId != null) {
+                    member.updateLastRead(latestMessageId);
+                }
                 chatRoomMemberRepository.save(member);
             }
             return;
@@ -53,7 +67,9 @@ public class SyncWorkspaceChatMembership implements SyncWorkspaceChatMembershipU
         chatRoomMemberRepository.save(ChatRoomMember.create(roomId, memberId, scope));
     }
 
+    // 위 join과 동일한 이유로 REQUIRES_NEW.
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void leave(Long workspaceId, Long memberId, TokenScope scope) {
         // 단톡방이 없으면(레거시 업장 등) 정리할 멤버십도 없으므로 조용히 무시 (throw하지 않음)
         chatRoomQueryRepository.findGroupRoomByWorkspaceId(workspaceId)

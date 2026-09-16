@@ -1,6 +1,5 @@
 package com.dreamteam.alter.application.chat.usecase;
 
-import com.dreamteam.alter.adapter.inbound.common.dto.FileResponseDto;
 import com.dreamteam.alter.application.file.FileUrlService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -10,7 +9,6 @@ import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomMemberQueryReposito
 import com.dreamteam.alter.domain.chat.port.outbound.ChatRoomQueryRepository;
 import com.dreamteam.alter.domain.chat.result.ChatRoomResult;
 import com.dreamteam.alter.domain.chat.type.ChatRoomType;
-import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
@@ -20,8 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public abstract class AbstractGetChatRoomUseCase<A> extends AbstractChatUseCase {
@@ -30,7 +26,6 @@ public abstract class AbstractGetChatRoomUseCase<A> extends AbstractChatUseCase 
     protected final ChatRoomMemberQueryRepository chatRoomMemberQueryRepository;
     protected final WorkspaceQueryRepository workspaceQueryRepository;
     protected final UserQueryRepository userQueryRepository;
-    protected final FileQueryRepository fileQueryRepository;
     protected final FileUrlService fileUrlService;
 
     public final ChatRoomResult execute(A actor, Long chatRoomId) {
@@ -76,13 +71,8 @@ public abstract class AbstractGetChatRoomUseCase<A> extends AbstractChatUseCase 
                 .orElse(null);
             if (opponentUser != null && ObjectUtils.isNotEmpty(opponentUser.getName())) {
                 opponentName = opponentUser.getName();
-                opponentProfileImageUrl = fileQueryRepository
-                    .findAllByTargetTypeAndTargetIdIn(FileTargetType.USER_PROFILE, List.of(String.valueOf(opponentId)))
-                    .stream()
-                    .reduce((first, second) -> second)
-                    .map(fileUrlService::resolve)
-                    .map(FileResponseDto::getUrl)
-                    .orElse(null);
+                opponentProfileImageUrl = fileUrlService
+                    .resolveLatestUrlByTarget(FileTargetType.USER_PROFILE, String.valueOf(opponentId));
             } else {
                 opponentName = "알 수 없음";
             }

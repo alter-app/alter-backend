@@ -13,6 +13,7 @@ import com.dreamteam.alter.adapter.inbound.general.chat.dto.MarkChatRoomReadRequ
 import com.dreamteam.alter.application.aop.ManagerActionContext;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.chat.port.inbound.GetWorkspaceGroupChatRoomUseCase;
+import com.dreamteam.alter.domain.chat.port.inbound.LeaveChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerCreateOrGetChatRoomUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerGetChatMessagesUseCase;
 import com.dreamteam.alter.domain.chat.port.inbound.ManagerGetChatRoomUseCase;
@@ -54,6 +55,9 @@ public class ManagerChatController implements ManagerChatControllerSpec {
 
     @Resource(name = "markChatRoomRead")
     private final MarkChatRoomReadUseCase markChatRoomRead;
+
+    @Resource(name = "leaveChatRoom")
+    private final LeaveChatRoomUseCase leaveChatRoom;
 
     @Resource(name = "getWorkspaceGroupChatRoom")
     private final GetWorkspaceGroupChatRoomUseCase getWorkspaceGroupChatRoom;
@@ -110,6 +114,14 @@ public class ManagerChatController implements ManagerChatControllerSpec {
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
         markChatRoomRead.execute(actor.getUserId(), TokenScope.MANAGER, chatRoomId, request.getLastReadMessageId());
+        return ResponseEntity.ok(CommonApiResponse.empty());
+    }
+
+    @Override
+    @PostMapping("/rooms/{chatRoomId}/leave")
+    public ResponseEntity<CommonApiResponse<Void>> leaveChatRoom(@PathVariable Long chatRoomId) {
+        ManagerActor actor = ManagerActionContext.getInstance().getActor();
+        leaveChatRoom.execute(actor.getUserId(), TokenScope.MANAGER, chatRoomId);
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

@@ -174,22 +174,6 @@ public class NotificationService {
     }
 
     /**
-     * FCM 알림만 발송 (Notification 엔티티 저장 없음)
-     * 채팅 메시지 등 별도 저장 로직이 있는 경우 사용
-     */
-    public void sendNotificationOnly(Long userId, NotificationType type, String title, String body) {
-        User user = userQueryRepository.findById(userId)
-            .orElse(null);
-
-        if (ObjectUtils.isEmpty(user)) {
-            log.warn("사용자를 찾을 수 없습니다. UserId: {}", userId);
-            return;
-        }
-
-        sendFcmNotification(user, type, title, body, false);
-    }
-
-    /**
      * 여러 사용자에게 FCM 알림만 배치 발송 (Notification 엔티티 저장 없음)
      * 채팅 그룹 메시지처럼 멤버별 발송을 한 번의 토큰 조회 + FCM 배치로 처리할 때 사용.
      */

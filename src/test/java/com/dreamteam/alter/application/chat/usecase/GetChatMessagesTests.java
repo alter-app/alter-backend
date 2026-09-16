@@ -31,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -209,28 +210,10 @@ class GetChatMessagesTests {
         given(chatRoomMemberQueryRepository.findActiveByRoom(chatRoomId))
             .willReturn(Collections.emptyList());
 
-        File profileImage = File.create(
-            FileTargetType.USER_PROFILE,
-            "profile.png",
-            "stored/profile.png",
-            "https://cdn.example.com/profile.png",
-            "image/png",
-            2048L,
-            com.dreamteam.alter.domain.file.type.BucketType.PUBLIC,
-            senderWithProfile
-        );
-        profileImage.attach(String.valueOf(senderWithProfile));
-
-        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(
-            eq(FileTargetType.CHAT_MESSAGE),
-            any()
-        )).willReturn(Collections.emptyList());
-        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(
-            eq(FileTargetType.USER_PROFILE),
-            any()
-        )).willReturn(List.of(profileImage));
-        given(fileUrlService.resolve(profileImage))
-            .willReturn(FileResponseDto.of(profileImage, "https://cdn.example.com/profile.png"));
+        given(fileQueryRepository.findAllByTargetTypeAndTargetIdIn(eq(FileTargetType.CHAT_MESSAGE), any()))
+            .willReturn(Collections.emptyList());
+        given(fileUrlService.resolveLatestUrlsByTarget(eq(FileTargetType.USER_PROFILE), any()))
+            .willReturn(Map.of(String.valueOf(senderWithProfile), "https://cdn.example.com/profile.png"));
 
         // when
         CursorPageResult<ChatMessageResult> response =
@@ -251,8 +234,8 @@ class GetChatMessagesTests {
         assertThat(resultWithoutProfile.senderName()).isEqualTo("김철수");
         assertThat(resultWithoutProfile.senderProfileImageUrl()).isNull();
 
-        verify(fileQueryRepository, times(1))
-            .findAllByTargetTypeAndTargetIdIn(eq(FileTargetType.USER_PROFILE), any());
+        // 메시지는 2건이지만 발신자는 2명 → 프로필 URL 배치 조회는 발신자 목록 기준 1회만 호출되어야 한다 (메시지 수만큼 호출되면 회귀)
+        verify(fileUrlService, times(1)).resolveLatestUrlsByTarget(eq(FileTargetType.USER_PROFILE), any());
     }
 
     @Test

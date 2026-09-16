@@ -113,7 +113,7 @@ public abstract class AbstractSendChatMessageUseCase<U> extends AbstractChatUseC
             savedMessage.getCreatedAt()
         ).withFiles(
             attachments,
-            fileUrlService.resolveUrlByTarget(FileTargetType.USER_PROFILE, String.valueOf(senderId))
+            fileUrlService.resolveLatestUrlByTarget(FileTargetType.USER_PROFILE, String.valueOf(senderId))
         );
         eventPublisher.publishEvent(
             new ChatMessageSentEvent(chatRoom, senderId, senderScope, request.getContent(), messageResponse)

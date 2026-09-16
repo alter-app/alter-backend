@@ -12,6 +12,10 @@ import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Service("fileUrlService")
 @RequiredArgsConstructor
 public class FileUrlService {
@@ -47,5 +51,23 @@ public class FileUrlService {
         return fileQueryRepository.findByTargetTypeAndTargetId(targetType, targetId)
             .map(file -> resolve(file).getUrl())
             .orElse(null);
+    }
+
+    // 대상 id별로 ATTACHED 파일 중 최신 1건(그룹의 마지막 원소, ADR-014)을 골라 URL로 변환한다.
+    // resolve 호출은 대상 수만큼만 발생한다(대상별 파일 개수와 무관).
+    public Map<String, String> resolveLatestUrlsByTarget(FileTargetType targetType, List<String> targetIds) {
+        return fileQueryRepository.findAllByTargetTypeAndTargetIdIn(targetType, targetIds)
+            .stream()
+            .collect(Collectors.groupingBy(File::getTargetId))
+            .entrySet()
+            .stream()
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> resolve(entry.getValue().stream().reduce((first, second) -> second).orElseThrow()).getUrl()
+            ));
+    }
+
+    public String resolveLatestUrlByTarget(FileTargetType targetType, String targetId) {
+        return resolveLatestUrlsByTarget(targetType, List.of(targetId)).get(targetId);
     }
 }

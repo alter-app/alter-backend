@@ -160,7 +160,7 @@ class WebSocketEventListenerTests {
             new SessionDisconnectEvent(this, messageWithSessionId("sess1"), "sess1", CloseStatus.NORMAL, principal);
         webSocketEventListener.onDisconnect(disconnectSess1);
 
-        // then: sess1만 markOffline이 호출되고, sess2는 여전히 온라인(참조 카운트가 남아 있음)
+        // then: sess1만 markOffline이 호출되고, sess2는 여전히 온라인(참조가 남아 있음)
         then(chatPresenceStore).should().markOffline(TokenScope.APP, 1L, "sess1");
         then(chatPresenceStore).should(never()).markOffline(TokenScope.APP, 1L, "sess2");
     }
