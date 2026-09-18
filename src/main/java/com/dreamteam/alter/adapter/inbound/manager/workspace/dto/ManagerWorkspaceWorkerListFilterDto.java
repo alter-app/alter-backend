@@ -16,7 +16,7 @@ import java.time.LocalDate;
 @Schema(description = "업장 관리자 근무자 목록 필터 DTO")
 public class ManagerWorkspaceWorkerListFilterDto {
 
-    @Schema(description = "근무자 상태 (eq)")
+    @Schema(description = "근무자 상태 (eq), 미입력 시 ACTIVATED")
     private WorkspaceWorkerStatus status;
 
     @Schema(description = "근무자 이름 (like)")

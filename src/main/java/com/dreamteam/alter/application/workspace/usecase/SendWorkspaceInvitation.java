@@ -12,11 +12,13 @@ import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableDetail;
 import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableException;
 import com.dreamteam.alter.domain.workspace.port.inbound.SendWorkspaceInvitationUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessInvitationQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessInvitationRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
+import com.dreamteam.alter.domain.workspace.type.InvitationUnavailableReason;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,24 +65,30 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
         Set<Long> activeWorkerUserIds = workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(workspaceId, registeredUserIds);
         Set<Long> pendingInvitedUserIds = businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(workspaceId, registeredUserIds);
 
-        List<String> unavailablePhoneNumbers = new ArrayList<>();
+        List<InvitationUnavailableDetail> details = new ArrayList<>();
         List<BusinessInvitation> invitationsToSave = new ArrayList<>();
 
         for (String phoneNumber : phoneNumbers) {
             User invitedUser = contactToUser.get(phoneNumber);
 
-            if (invitedUser == null
-                || activeWorkerUserIds.contains(invitedUser.getId())
-                || pendingInvitedUserIds.contains(invitedUser.getId())) {
-                unavailablePhoneNumbers.add(phoneNumber);
+            if (invitedUser == null) {
+                details.add(new InvitationUnavailableDetail(phoneNumber, InvitationUnavailableReason.NOT_REGISTERED));
+                continue;
+            }
+            if (activeWorkerUserIds.contains(invitedUser.getId())) {
+                details.add(new InvitationUnavailableDetail(phoneNumber, InvitationUnavailableReason.ALREADY_WORKING));
+                continue;
+            }
+            if (pendingInvitedUserIds.contains(invitedUser.getId())) {
+                details.add(new InvitationUnavailableDetail(phoneNumber, InvitationUnavailableReason.ALREADY_INVITED));
                 continue;
             }
 
             invitationsToSave.add(BusinessInvitation.create(workspace, invitedUser, actor.getManagerUser()));
         }
 
-        if (!unavailablePhoneNumbers.isEmpty()) {
-            throw new InvitationUnavailableException(unavailablePhoneNumbers);
+        if (!details.isEmpty()) {
+            throw new InvitationUnavailableException(details);
         }
 
         businessInvitationRepository.saveAll(invitationsToSave);

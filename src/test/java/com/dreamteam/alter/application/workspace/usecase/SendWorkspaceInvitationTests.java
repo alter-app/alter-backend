@@ -9,10 +9,12 @@ import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableDetail;
 import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableException;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessInvitationQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessInvitationRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
+import com.dreamteam.alter.domain.workspace.type.InvitationUnavailableReason;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -126,7 +128,9 @@ class SendWorkspaceInvitationTests {
                 .isInstanceOf(InvitationUnavailableException.class)
                 .satisfies(ex -> {
                     InvitationUnavailableException invEx = (InvitationUnavailableException) ex;
-                    assertThat(invEx.getUnavailablePhoneNumbers()).containsExactly("01099999999");
+                    assertThat(invEx.getDetails()).containsExactly(
+                        new InvitationUnavailableDetail("01099999999", InvitationUnavailableReason.NOT_REGISTERED)
+                    );
                 });
 
             then(businessInvitationRepository).should(never()).saveAll(any());
@@ -152,7 +156,9 @@ class SendWorkspaceInvitationTests {
                 .isInstanceOf(InvitationUnavailableException.class)
                 .satisfies(ex -> {
                     InvitationUnavailableException invEx = (InvitationUnavailableException) ex;
-                    assertThat(invEx.getUnavailablePhoneNumbers()).containsExactly("01011111111");
+                    assertThat(invEx.getDetails()).containsExactly(
+                        new InvitationUnavailableDetail("01011111111", InvitationUnavailableReason.ALREADY_WORKING)
+                    );
                 });
 
             then(businessInvitationRepository).should(never()).saveAll(any());
@@ -178,7 +184,9 @@ class SendWorkspaceInvitationTests {
                 .isInstanceOf(InvitationUnavailableException.class)
                 .satisfies(ex -> {
                     InvitationUnavailableException invEx = (InvitationUnavailableException) ex;
-                    assertThat(invEx.getUnavailablePhoneNumbers()).containsExactly("01022222222");
+                    assertThat(invEx.getDetails()).containsExactly(
+                        new InvitationUnavailableDetail("01022222222", InvitationUnavailableReason.ALREADY_INVITED)
+                    );
                 });
         }
 
@@ -229,7 +237,67 @@ class SendWorkspaceInvitationTests {
                 .isInstanceOf(InvitationUnavailableException.class)
                 .satisfies(ex -> {
                     InvitationUnavailableException invEx = (InvitationUnavailableException) ex;
-                    assertThat(invEx.getUnavailablePhoneNumbers()).containsExactly("01099999999");
+                    assertThat(invEx.getDetails()).containsExactly(
+                        new InvitationUnavailableDetail("01099999999", InvitationUnavailableReason.NOT_REGISTERED)
+                    );
+                });
+
+            then(businessInvitationRepository).should(never()).saveAll(any());
+        }
+
+        @Test
+        @DisplayName("미가입 번호와 초대 대기 중인 번호가 함께 있으면 각각의 사유로 InvitationUnavailableException 발생")
+        void fails_withMixedReasons_whenNotRegisteredAndPendingInvitationCoexist() {
+            // given
+            User pendingUser = mock(User.class);
+            given(pendingUser.getId()).willReturn(20L);
+            given(pendingUser.getContact()).willReturn("01022222222");
+
+            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
+            // 01099999999는 미가입 → contactToUser에서 조회 안 됨
+            given(userQueryRepository.findByContactIn(any())).willReturn(List.of(pendingUser));
+            given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(any(), any())).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(any(), any())).willReturn(Set.of(20L));
+            SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01022222222", "01099999999"));
+
+            // when & then
+            assertThatThrownBy(() -> sendWorkspaceInvitation.execute(actor, 1L, request))
+                .isInstanceOf(InvitationUnavailableException.class)
+                .satisfies(ex -> {
+                    InvitationUnavailableException invEx = (InvitationUnavailableException) ex;
+                    assertThat(invEx.getDetails()).containsExactlyInAnyOrder(
+                        new InvitationUnavailableDetail("01099999999", InvitationUnavailableReason.NOT_REGISTERED),
+                        new InvitationUnavailableDetail("01022222222", InvitationUnavailableReason.ALREADY_INVITED)
+                    );
+                });
+
+            then(businessInvitationRepository).should(never()).saveAll(any());
+        }
+
+        @Test
+        @DisplayName("이미 근무 중이면서 초대 대기 중인 번호는 ALREADY_WORKING으로 판정")
+        void fails_whenUserIsAlreadyWorkingAndPendingInvited() {
+            // given
+            User user = mock(User.class);
+            given(user.getId()).willReturn(40L);
+            given(user.getContact()).willReturn("01044444444");
+
+            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
+            given(userQueryRepository.findByContactIn(Set.of("01044444444"))).willReturn(List.of(user));
+            given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(40L))).willReturn(Set.of(40L));
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(1L, Set.of(40L))).willReturn(Set.of(40L));
+            SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01044444444"));
+
+            // when & then
+            assertThatThrownBy(() -> sendWorkspaceInvitation.execute(actor, 1L, request))
+                .isInstanceOf(InvitationUnavailableException.class)
+                .satisfies(ex -> {
+                    InvitationUnavailableException invEx = (InvitationUnavailableException) ex;
+                    assertThat(invEx.getDetails()).containsExactly(
+                        new InvitationUnavailableDetail("01044444444", InvitationUnavailableReason.ALREADY_WORKING)
+                    );
                 });
 
             then(businessInvitationRepository).should(never()).saveAll(any());

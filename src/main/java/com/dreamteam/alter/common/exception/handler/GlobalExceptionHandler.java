@@ -6,6 +6,7 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.exception.FieldErrorDetail;
 import com.dreamteam.alter.domain.auth.exception.SignupRequiredException;
+import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableDetail;
 import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
@@ -37,9 +38,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvitationUnavailableException.class)
-    public ResponseEntity<ErrorResponse<List<String>>> handleInvitationUnavailableException(InvitationUnavailableException e) {
+    public ResponseEntity<ErrorResponse<List<InvitationUnavailableDetail>>> handleInvitationUnavailableException(InvitationUnavailableException e) {
         return ResponseEntity.status(e.getErrorCode().getStatus())
-            .body(ErrorResponse.of(e.getErrorCode(), e.getMessage(), e.getUnavailablePhoneNumbers()));
+            .body(ErrorResponse.of(e.getErrorCode(), e.getMessage(), e.getDetails()));
     }
 
     @ExceptionHandler(CustomException.class)

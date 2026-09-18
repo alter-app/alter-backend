@@ -25,12 +25,12 @@ public interface ManagerWorkspaceInvitationControllerSpec {
 
             **All-or-Nothing 처리:**
             - 모든 번호가 발송 가능한 경우에만 초대가 일괄 발송됩니다.
-            - 발송 불가 번호(미가입, 이미 근무중, 이미 초대중)가 1개라도 있으면 에러를 반환하며, 에러 응답의 data에 발송 불가 번호 목록이 포함됩니다.
+            - 발송 불가 번호(미가입, 이미 근무중, 이미 초대중)가 1개라도 있으면 에러를 반환하며, 에러 응답의 data에 번호별 발송 불가 사유(phoneNumber, reason) 목록이 포함됩니다.
             """
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "초대 발송 완료"),
-        @ApiResponse(responseCode = "400", description = "존재하지 않는 업장 (B008) | phoneNumbers가 비어 있음 | 발송 불가 번호 포함 (B001, data: 발송 불가 번호 목록)"),
+        @ApiResponse(responseCode = "400", description = "존재하지 않는 업장 (B008) | phoneNumbers가 비어 있음 | 발송 불가 번호 포함 (B001, data: 번호별 발송 불가 사유 목록)"),
         @ApiResponse(responseCode = "403", description = "해당 업장의 관리자가 아님 (A002)")
     })
     ResponseEntity<CommonApiResponse<Void>> sendInvitation(
