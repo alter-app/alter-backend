@@ -674,7 +674,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
     }
 
     private BooleanExpression eqWorkerStatus(QWorkspaceWorker qWorkspaceWorker, WorkspaceWorkerStatus status) {
-        return status != null ? qWorkspaceWorker.status.eq(status) : null;
+        return qWorkspaceWorker.status.eq(status != null ? status : WorkspaceWorkerStatus.ACTIVATED);
     }
 
     private BooleanExpression likeWorkerName(QUser qUser, String name) {

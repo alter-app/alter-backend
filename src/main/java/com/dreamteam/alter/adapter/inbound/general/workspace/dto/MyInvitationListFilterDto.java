@@ -18,7 +18,7 @@ import java.time.LocalDate;
 @Schema(description = "내 초대 목록 필터 DTO")
 public class MyInvitationListFilterDto {
 
-    @Parameter(description = "상태 필터 (PENDING | ACCEPTED | DECLINED | EXPIRED), 미입력 시 전체 조회")
+    @Parameter(description = "상태 필터 (PENDING | ACCEPTED | DECLINED | EXPIRED — EXPIRED는 현재 미사용), 미입력 시 전체 조회, 만료된 PENDING 초대는 항상 제외")
     private BusinessInvitationStatus status;
 
     @Parameter(description = "조회 시작일 (ISO: 2026-03-01), 미입력 시 제한 없음")

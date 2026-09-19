@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -46,7 +47,8 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
             .where(
                 qBusinessInvitation.workspace.id.eq(workspaceId),
                 qBusinessInvitation.status.eq(BusinessInvitationStatus.PENDING),
-                qBusinessInvitation.invitedUser.id.in(userIds)
+                qBusinessInvitation.invitedUser.id.in(userIds),
+                qBusinessInvitation.expiresAt.gt(LocalDateTime.now())
             )
             .fetch());
     }
@@ -62,7 +64,8 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
                 q.invitedUser.eq(user),
                 statusCondition(q, filter),
                 dateFromCondition(q, filter),
-                dateToCondition(q, filter)
+                dateToCondition(q, filter),
+                notExpiredPendingCondition(q)
             )
             .fetchOne();
 
@@ -80,6 +83,7 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
                 statusCondition(q, filter),
                 dateFromCondition(q, filter),
                 dateToCondition(q, filter),
+                notExpiredPendingCondition(q),
                 cursorCondition(q, pageRequest.cursor())
             )
             .orderBy(q.createdAt.desc(), q.id.desc())
@@ -106,6 +110,11 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
             return null;
         }
         return q.createdAt.lt(filter.getTo().plusDays(1).atStartOfDay());
+    }
+
+    private BooleanExpression notExpiredPendingCondition(QBusinessInvitation q) {
+        return q.status.ne(BusinessInvitationStatus.PENDING)
+            .or(q.expiresAt.gt(LocalDateTime.now()));
     }
 
     private BooleanExpression cursorCondition(QBusinessInvitation q, CursorDto cursor) {

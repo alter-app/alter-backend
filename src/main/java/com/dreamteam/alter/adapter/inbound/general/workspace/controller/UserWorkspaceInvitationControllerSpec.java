@@ -43,9 +43,10 @@ public interface UserWorkspaceInvitationControllerSpec {
     @Operation(summary = "알바생 - 내가 받은 초대 목록 조회", description = """
         나에게 온 업장 초대 목록을 커서 기반 페이지네이션으로 조회합니다.
 
-        - `status` 필터 미입력 시 전체 상태 조회 (PENDING, ACCEPTED, DECLINED, EXPIRED)
+        - `status` 필터 미입력 시 전체 상태 조회하되, 만료된 PENDING 초대(expiresAt 경과)는 항상 제외 (EXPIRED는 현재 미사용)
         - `cursor` 미입력 시 첫 페이지 조회
         - 응답의 `page.cursor`를 다음 요청의 `cursor`로 사용
+        - 응답에 `status` 포함
         """)
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "초대 목록 조회 성공")
