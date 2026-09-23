@@ -8,6 +8,7 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
+import com.dreamteam.alter.domain.workspace.type.BusinessInvitationStatus;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableDetail;
 import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableException;
@@ -28,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import com.dreamteam.alter.application.notification.FcmNotificationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -301,6 +303,61 @@ class SendWorkspaceInvitationTests {
                 });
 
             then(businessInvitationRepository).should(never()).saveAll(any());
+        }
+
+        @Test
+        @DisplayName("만료된 PENDING 초대가 있으면 EXPIRED로 바꿔 저장한 뒤 새 초대를 저장")
+        void succeeds_expiresStalePendingInvitationBeforeSaving() {
+            // given
+            User invitedUser = mock(User.class);
+            given(invitedUser.getId()).willReturn(50L);
+            given(invitedUser.getContact()).willReturn("01055555555");
+            BusinessInvitation stale = BusinessInvitation.create(workspace, invitedUser, managerUser);
+            ReflectionTestUtils.setField(stale, "expiresAt", java.time.LocalDateTime.now().minusDays(1));
+
+            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
+            given(userQueryRepository.findByContactIn(Set.of("01055555555"))).willReturn(List.of(invitedUser));
+            given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(50L))).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(1L, Set.of(50L))).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findExpiredPendingByWorkspaceAndUserIds(1L, Set.of(50L))).willReturn(List.of(stale));
+            SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01055555555"));
+
+            // when
+            sendWorkspaceInvitation.execute(actor, 1L, request);
+
+            // then
+            assertThat(stale.getStatus()).isEqualTo(BusinessInvitationStatus.EXPIRED);
+            org.mockito.InOrder inOrder = org.mockito.Mockito.inOrder(businessInvitationRepository);
+            inOrder.verify(businessInvitationRepository).saveAll(List.of(stale));
+            inOrder.verify(businessInvitationRepository).saveAll(org.mockito.ArgumentMatchers.argThat(list -> list.size() == 1 && list.get(0) != stale));
+            then(eventPublisher).should().publishEvent(any(FcmNotificationEvent.class));
+        }
+
+        @Test
+        @DisplayName("저장 시 PENDING 유니크 충돌이 나면 ALREADY_INVITED 사유로 InvitationUnavailableException 발생")
+        void fails_withAlreadyInvited_whenPendingUniqueConstraintViolated() {
+            // given
+            User invitedUser = mock(User.class);
+            given(invitedUser.getId()).willReturn(60L);
+            given(invitedUser.getContact()).willReturn("01066666666");
+
+            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
+            given(userQueryRepository.findByContactIn(Set.of("01066666666"))).willReturn(List.of(invitedUser));
+            given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(60L))).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(1L, Set.of(60L))).willReturn(Set.of());
+            org.mockito.BDDMockito.willThrow(new DataIntegrityViolationException("duplicate"))
+                .given(businessInvitationRepository).saveAll(any());
+            SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01066666666"));
+
+            // when & then
+            assertThatThrownBy(() -> sendWorkspaceInvitation.execute(actor, 1L, request))
+                .isInstanceOf(InvitationUnavailableException.class)
+                .satisfies(ex -> assertThat(((InvitationUnavailableException) ex).getDetails())
+                    .containsExactly(new InvitationUnavailableDetail("01066666666", InvitationUnavailableReason.ALREADY_INVITED)));
+
+            then(eventPublisher).should(never()).publishEvent(any(FcmNotificationEvent.class));
         }
     }
 }

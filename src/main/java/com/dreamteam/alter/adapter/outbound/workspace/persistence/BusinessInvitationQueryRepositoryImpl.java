@@ -54,6 +54,20 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
     }
 
     @Override
+    public List<BusinessInvitation> findExpiredPendingByWorkspaceAndUserIds(Long workspaceId, Set<Long> userIds) {
+        QBusinessInvitation qBusinessInvitation = QBusinessInvitation.businessInvitation;
+
+        return queryFactory.selectFrom(qBusinessInvitation)
+            .where(
+                qBusinessInvitation.workspace.id.eq(workspaceId),
+                qBusinessInvitation.status.eq(BusinessInvitationStatus.PENDING),
+                qBusinessInvitation.expiresAt.loe(LocalDateTime.now()),
+                qBusinessInvitation.invitedUser.id.in(userIds)
+            )
+            .fetch();
+    }
+
+    @Override
     public long countByUser(User user, MyInvitationListFilterDto filter) {
         QBusinessInvitation q = QBusinessInvitation.businessInvitation;
 

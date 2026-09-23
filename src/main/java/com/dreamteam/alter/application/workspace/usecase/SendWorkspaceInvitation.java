@@ -23,6 +23,7 @@ import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,8 +92,32 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
             throw new InvitationUnavailableException(details);
         }
 
-        businessInvitationRepository.saveAll(invitationsToSave);
+        expireStalePendingInvitations(workspaceId, invitationsToSave);
+
+        try {
+            businessInvitationRepository.saveAll(invitationsToSave);
+        } catch (DataIntegrityViolationException e) {
+            // ponytail: 부분 유니크 인덱스 충돌은 같은 요청의 동시 제출이 대부분이라 저장 대상 전부를 ALREADY_INVITED 로 본다.
+            // 번호별 정확한 판정이 필요하면 저장을 REQUIRES_NEW 로 분리하고 충돌 후 PENDING 을 재조회한다.
+            throw new InvitationUnavailableException(invitationsToSave.stream()
+                .map(inv -> new InvitationUnavailableDetail(inv.getInvitedUser().getContact(), InvitationUnavailableReason.ALREADY_INVITED))
+                .toList());
+        }
         invitationsToSave.forEach(inv -> sendInvitationNotification(workspace, inv.getInvitedUser()));
+    }
+
+    // 만료된 PENDING 은 부분 유니크 인덱스(status = PENDING)에 걸리므로 새 초대를 insert 하기 전에 EXPIRED 로 바꿔 flush 한다.
+    private void expireStalePendingInvitations(Long workspaceId, List<BusinessInvitation> invitationsToSave) {
+        Set<Long> userIds = invitationsToSave.stream()
+            .map(inv -> inv.getInvitedUser().getId())
+            .collect(Collectors.toSet());
+        List<BusinessInvitation> staleInvitations =
+            businessInvitationQueryRepository.findExpiredPendingByWorkspaceAndUserIds(workspaceId, userIds);
+        if (staleInvitations.isEmpty()) {
+            return;
+        }
+        staleInvitations.forEach(BusinessInvitation::expire);
+        businessInvitationRepository.saveAll(staleInvitations);
     }
 
     private void sendInvitationNotification(Workspace workspace, User invitedUser) {

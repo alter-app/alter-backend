@@ -13,6 +13,7 @@ import java.util.Set;
 public interface BusinessInvitationQueryRepository {
     Optional<BusinessInvitation> findById(Long id);
     Set<Long> findPendingInvitedUserIdsByUserIds(Long workspaceId, Set<Long> userIds);
+    List<BusinessInvitation> findExpiredPendingByWorkspaceAndUserIds(Long workspaceId, Set<Long> userIds);
     long countByUser(User user, MyInvitationListFilterDto filter);
     List<BusinessInvitation> findByUserWithCursor(CursorPageRequest<CursorDto> pageRequest, User user, MyInvitationListFilterDto filter);
 }

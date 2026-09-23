@@ -111,6 +111,26 @@ class BusinessInvitationQueryRepositoryImplTests {
     }
 
     @Test
+    void findExpiredPendingByWorkspaceAndUserIds_만료된_PENDING_초대만_조회() {
+        ManagerUser managerUser = saveManagerUser();
+        Workspace workspace = saveWorkspace(managerUser);
+        User expiredUser = saveUser();
+        User validUser = saveUser();
+        User otherUser = saveUser();
+
+        BusinessInvitation expiredInvitation = saveInvitation(workspace, expiredUser, managerUser);
+        expire(expiredInvitation);
+        saveInvitation(workspace, validUser, managerUser);
+        BusinessInvitation expiredButNotTargeted = saveInvitation(workspace, otherUser, managerUser);
+        expire(expiredButNotTargeted);
+
+        List<BusinessInvitation> result = businessInvitationQueryRepository.findExpiredPendingByWorkspaceAndUserIds(
+            workspace.getId(), Set.of(expiredUser.getId(), validUser.getId()));
+
+        assertThat(result).extracting(BusinessInvitation::getId).containsExactly(expiredInvitation.getId());
+    }
+
+    @Test
     void findByUserWithCursor_만료된_PENDING_초대는_목록에서_제외() {
         ManagerUser managerUser = saveManagerUser();
         Workspace workspace = saveWorkspace(managerUser);
