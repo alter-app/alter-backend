@@ -351,22 +351,12 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUser qUser = QUser.user;
-        QWorkspaceShift qWorkspaceShift = QWorkspaceShift.workspaceShift;
 
         BooleanExpression excludeCondition = ObjectUtils.isNotEmpty(self)
             ? qUser.id.ne(self.getId())
             : null;
 
-        // 해당 시간대에 다른 근무 스케줄이 있는 근무자 제외
-        BooleanExpression hasConflictingSchedule = JPAExpressions
-            .selectFrom(qWorkspaceShift)
-            .where(
-                qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
-                qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED),
-                qWorkspaceShift.startDateTime.lt(endDateTime),
-                qWorkspaceShift.endDateTime.gt(startDateTime)
-            )
-            .exists();
+        BooleanExpression hasConflictingSchedule = hasConflictingShiftForUser(qUser, startDateTime, endDateTime);
 
         Long count = queryFactory
             .select(qWorkspaceWorker.id.count())
@@ -402,16 +392,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             ? qUser.id.ne(self.getId())
             : null;
 
-        // 해당 시간대에 다른 근무 스케줄이 있는 근무자 제외
-        BooleanExpression hasConflictingSchedule = JPAExpressions
-            .selectFrom(qWorkspaceShift)
-            .where(
-                qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
-                qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED),
-                qWorkspaceShift.startDateTime.lt(endDateTime),
-                qWorkspaceShift.endDateTime.gt(startDateTime)
-            )
-            .exists();
+        BooleanExpression hasConflictingSchedule = hasConflictingShiftForUser(qUser, startDateTime, endDateTime);
 
         return queryFactory
             .select(Projections.constructor(
@@ -464,22 +445,12 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QWorkspaceWorker qWorkspaceWorker = QWorkspaceWorker.workspaceWorker;
         QWorkspace qWorkspace = QWorkspace.workspace;
         QUser qUser = QUser.user;
-        QWorkspaceShift qWorkspaceShift = QWorkspaceShift.workspaceShift;
 
         BooleanExpression excludeCondition = ObjectUtils.isNotEmpty(self)
             ? qUser.id.ne(self.getId())
             : null;
 
-        // 해당 시간대에 다른 근무 스케줄이 있는 근무자 제외
-        BooleanExpression hasConflictingSchedule = JPAExpressions
-            .selectFrom(qWorkspaceShift)
-            .where(
-                qWorkspaceShift.assignedWorkspaceWorker.eq(qWorkspaceWorker),
-                qWorkspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED),
-                qWorkspaceShift.startDateTime.lt(endDateTime),
-                qWorkspaceShift.endDateTime.gt(startDateTime)
-            )
-            .exists();
+        BooleanExpression hasConflictingSchedule = hasConflictingShiftForUser(qUser, startDateTime, endDateTime);
 
         return queryFactory
             .select(qWorkspaceWorker.id)
@@ -730,6 +701,22 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         return qManagerUser.createdAt.lt(cursor.getCreatedAt())
             .or(qManagerUser.createdAt.eq(cursor.getCreatedAt())
                 .and(qManagerUser.id.lt(cursor.getId())));
+    }
+
+    /**
+     * 해당 시간대에 CONFIRMED 근무가 있는 사용자를 제외한다. 다른 업장에 배정된 근무도 포함해 사용자 단위로 본다.
+     */
+    private BooleanExpression hasConflictingShiftForUser(QUser qUser, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        QWorkspaceShift qConflictingShift = new QWorkspaceShift("conflictingShift");
+        return JPAExpressions
+            .selectFrom(qConflictingShift)
+            .where(
+                qConflictingShift.assignedWorkspaceWorker.user.id.eq(qUser.id),
+                qConflictingShift.status.eq(WorkspaceShiftStatus.CONFIRMED),
+                qConflictingShift.startDateTime.lt(endDateTime),
+                qConflictingShift.endDateTime.gt(startDateTime)
+            )
+            .exists();
     }
 
     private BooleanExpression[] fileConditions(QFile file, QUser user) {

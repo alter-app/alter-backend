@@ -10,9 +10,11 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
+import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerApproveSubstituteRequestUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.SubstituteRequestQueryRepository;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class ManagerApproveSubstituteRequest implements ManagerApproveSubstitute
 
     private final SubstituteRequestQueryRepository substituteRequestQueryRepository;
     private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
+    private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
     private final NotificationService notificationService;
 
     @Override
@@ -53,6 +56,14 @@ public class ManagerApproveSubstituteRequest implements ManagerApproveSubstitute
         // 수락한 근무자 조회
         WorkspaceWorker acceptedWorker = workspaceWorkerQueryRepository.findById(substituteRequest.getAcceptedWorkerId())
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "수락한 근무자 정보를 찾을 수 없습니다."));
+
+        // 수락 이후 승인 전에 다른 근무가 배정됐을 수 있으므로 실제 배정 시점에 겹침을 재검증한다 (교환 대상 근무 자신은 제외)
+        WorkspaceShift shift = substituteRequest.getWorkspaceShift();
+        if (workspaceShiftQueryRepository.hasConflictingSchedule(
+            acceptedWorker, shift.getStartDateTime(), shift.getEndDateTime(), shift.getId()
+        )) {
+            throw new CustomException(ErrorCode.CONFLICT, "수락한 근무자가 이미 해당 시간대에 근무 스케줄이 있습니다.");
+        }
 
         // 승인 처리
         substituteRequest.approve(actor.getManagerUser().getId(), request.getApprovalComment());
