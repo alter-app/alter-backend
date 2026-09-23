@@ -12,6 +12,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
@@ -49,7 +52,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
             workspace,
             List.of(),
             YearMonth.of(2025, 2),
-            Map.of()
+            new HashMap<>()
         );
 
         verify(workspaceShiftRepository, never()).saveAll(anyList());
@@ -70,7 +73,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
             workspace,
             List.of(schedule),
             YearMonth.of(2025, 2),
-            Map.of()
+            new HashMap<>()
         );
 
         @SuppressWarnings("unchecked")
@@ -104,7 +107,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
             workspace,
             List.of(schedule),
             YearMonth.of(2025, 2),
-            Map.of(worker.getId(), List.of(conflictingShift))
+            new HashMap<>(Map.of(worker.getUser().getId(), new ArrayList<>(List.of(conflictingShift))))
         );
 
         @SuppressWarnings("unchecked")
@@ -129,7 +132,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
             workspace,
             List.of(schedule),
             YearMonth.of(2025, 2),
-            Map.of()
+            new HashMap<>()
         );
 
         @SuppressWarnings("unchecked")
@@ -146,13 +149,44 @@ class GenerateNextMonthWorkspaceShiftTxTest {
         assertThat(firstShift.getEndDateTime()).isEqualTo(LocalDateTime.of(2025, 2, 8, 6, 0));
     }
 
+    @Test
+    @DisplayName("같은 배치에서 앞 업장에 생성한 근무와 겹치는 다른 업장의 고정 근무는 건너뛴다")
+    void execute_skipsCrossWorkspaceConflict_withinSameBatch() {
+        Workspace workspaceA = createMockWorkspace(1L);
+        Workspace workspaceB = createMockWorkspace(2L);
+        User sameUser = mock(User.class);
+        when(sameUser.getId()).thenReturn(99L);
+        WorkspaceWorker workerA = mock(WorkspaceWorker.class);
+        WorkspaceWorker workerB = mock(WorkspaceWorker.class);
+        when(workerA.getUser()).thenReturn(sameUser);
+        when(workerB.getUser()).thenReturn(sameUser);
+        WorkspaceWorkerSchedule scheduleA = createMockSchedule(
+            workerA, DayOfWeek.MONDAY, LocalTime.of(9, 0), DayOfWeek.MONDAY, LocalTime.of(18, 0)
+        );
+        WorkspaceWorkerSchedule scheduleB = createMockSchedule(
+            workerB, DayOfWeek.MONDAY, LocalTime.of(13, 0), DayOfWeek.MONDAY, LocalTime.of(22, 0)
+        );
+        Map<Long, List<WorkspaceShift>> existing = new HashMap<>();
+
+        GenerateNextMonthWorkspaceShiftTx.GenerationResult resultA =
+            generateNextMonthWorkspaceShiftTx.execute(workspaceA, List.of(scheduleA), YearMonth.of(2025, 2), existing);
+        GenerateNextMonthWorkspaceShiftTx.GenerationResult resultB =
+            generateNextMonthWorkspaceShiftTx.execute(workspaceB, List.of(scheduleB), YearMonth.of(2025, 2), existing);
+
+        assertThat(resultA.created()).isEqualTo(4);
+        assertThat(resultB.created()).isEqualTo(0);
+        assertThat(resultB.skipped()).isEqualTo(4);
+    }
+
     private Workspace createMockWorkspace(Long id) {
         return mock(Workspace.class);
     }
 
     private WorkspaceWorker createMockWorker(Workspace workspace, Long id) {
         WorkspaceWorker worker = mock(WorkspaceWorker.class);
-        when(worker.getId()).thenReturn(id);
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(id);
+        when(worker.getUser()).thenReturn(user);
         return worker;
     }
 

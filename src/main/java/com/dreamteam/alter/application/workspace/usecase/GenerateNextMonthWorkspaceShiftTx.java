@@ -30,12 +30,15 @@ public class GenerateNextMonthWorkspaceShiftTx {
 
     private final WorkspaceShiftRepository workspaceShiftRepository;
 
+    /**
+     * existingShiftsByUserId 는 가변 맵이어야 한다 — 이번 실행에서 생성한 근무를 사용자별 목록에 추가해 뒤 업장 처리에 반영한다.
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public GenerationResult execute(
         Workspace workspace,
         List<WorkspaceWorkerSchedule> schedules,
         YearMonth targetMonth,
-        Map<Long, List<WorkspaceShift>> existingShiftsByWorkerId
+        Map<Long, List<WorkspaceShift>> existingShiftsByUserId
     ) {
         if (schedules.isEmpty()) {
             return new GenerationResult(0, 0);
@@ -54,7 +57,8 @@ public class GenerateNextMonthWorkspaceShiftTx {
             }
 
             WorkspaceWorker workspaceWorker = schedule.getWorkspaceWorker();
-            List<WorkspaceShift> existingShifts = existingShiftsByWorkerId.getOrDefault(workspaceWorker.getId(), List.of());
+            List<WorkspaceShift> existingShifts =
+                existingShiftsByUserId.computeIfAbsent(workspaceWorker.getUser().getId(), k -> new ArrayList<>());
 
             for (LocalDate currentStartDate = firstStartDate;
                  !currentStartDate.isAfter(endDate);
@@ -79,6 +83,8 @@ public class GenerateNextMonthWorkspaceShiftTx {
                 );
                 shift.assignWorker(workspaceWorker);
                 shiftsToCreate.add(shift);
+                // 같은 배치에서 뒤에 처리되는 다른 업장의 고정 근무가 이 근무와 겹치지 않도록 즉시 반영한다
+                existingShifts.add(shift);
             }
         }
 
