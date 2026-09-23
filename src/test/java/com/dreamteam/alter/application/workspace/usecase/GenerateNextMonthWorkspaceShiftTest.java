@@ -26,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
@@ -104,7 +105,7 @@ class GenerateNextMonthWorkspaceShiftTest {
             .thenReturn(List.of(workspace));
         when(workspaceWorkerScheduleQueryRepository.findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List.of(1L)))
             .thenReturn(List.of(schedule));
-        when(workspaceShiftQueryRepository.findConfirmedByWorkerIdsAndDateRange(anyList(), any(), any()))
+        when(workspaceShiftQueryRepository.findConfirmedByUserIdsAndDateRange(anyList(), any(), any()))
             .thenReturn(List.of());
         when(generateNextMonthWorkspaceShiftTx.execute(eq(workspace), eq(List.of(schedule)), eq(YearMonth.of(2025, 2)), anyMap()))
             .thenReturn(new GenerateNextMonthWorkspaceShiftTx.GenerationResult(4, 0));
@@ -129,7 +130,7 @@ class GenerateNextMonthWorkspaceShiftTest {
             .thenReturn(List.of(workspace1, workspace2));
         when(workspaceWorkerScheduleQueryRepository.findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List.of(1L, 2L)))
             .thenReturn(List.of(schedule1, schedule2));
-        when(workspaceShiftQueryRepository.findConfirmedByWorkerIdsAndDateRange(anyList(), any(), any()))
+        when(workspaceShiftQueryRepository.findConfirmedByUserIdsAndDateRange(anyList(), any(), any()))
             .thenReturn(List.of());
         when(generateNextMonthWorkspaceShiftTx.execute(eq(workspace1), eq(List.of(schedule1)), eq(YearMonth.of(2025, 2)), anyMap()))
             .thenThrow(new RuntimeException("워크스페이스1 실패"));
@@ -167,8 +168,10 @@ class GenerateNextMonthWorkspaceShiftTest {
 
     private WorkspaceWorker createMockWorker(Workspace workspace, Long id) {
         WorkspaceWorker worker = mock(WorkspaceWorker.class);
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(id);
         when(worker.getWorkspace()).thenReturn(workspace);
-        when(worker.getId()).thenReturn(id);
+        when(worker.getUser()).thenReturn(user);
         return worker;
     }
 

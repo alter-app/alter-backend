@@ -8,6 +8,7 @@ import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateScheduleUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,18 @@ public class ManagerUpdateWorkSchedule implements ManagerUpdateScheduleUseCase {
         }
 
         WorkspaceShift workspaceShift = shift.get();
+
+        // 배정된 근무자가 있으면 바뀐 시간대가 그 근무자의 다른 근무와 겹치는지 재검증한다 (자기 자신은 제외)
+        if (ObjectUtils.isNotEmpty(workspaceShift.getAssignedWorkspaceWorker())
+            && workspaceShiftQueryRepository.hasConflictingSchedule(
+                workspaceShift.getAssignedWorkspaceWorker(),
+                request.getStartDateTime(),
+                request.getEndDateTime(),
+                shiftId
+        )) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "해당 근무자가 이미 같은 시간대에 배정된 스케줄이 있습니다.");
+        }
+
         workspaceShift.update(
             request.getStartDateTime(),
             request.getEndDateTime(),

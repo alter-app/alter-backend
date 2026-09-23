@@ -144,26 +144,33 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
 
     @Override
     public boolean hasConflictingSchedule(WorkspaceWorker workspaceWorker, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        return hasConflictingSchedule(workspaceWorker, startDateTime, endDateTime, null);
+    }
+
+    @Override
+    public boolean hasConflictingSchedule(WorkspaceWorker workspaceWorker, LocalDateTime startDateTime, LocalDateTime endDateTime, Long excludeShiftId) {
+        // 사용자 단위로 검사한다. 같은 사람이 다른 업장(퇴사한 업장 포함)에 배정된 CONFIRMED 근무도 겹침으로 본다.
         Long count = queryFactory
             .select(workspaceShift.count())
             .from(workspaceShift)
-            .where(workspaceShift.assignedWorkspaceWorker.eq(workspaceWorker)
-                .and(workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED))
-                .and(
-                    // 시간 겹침 확인: 새로운 스케줄이 기존 스케줄과 겹치는지 확인
-                    workspaceShift.startDateTime.lt(endDateTime)
-                        .and(workspaceShift.endDateTime.gt(startDateTime))
-                ))
+            .where(
+                workspaceShift.assignedWorkspaceWorker.user.id.eq(workspaceWorker.getUser().getId()),
+                workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED),
+                // 시간 겹침 확인: 새로운 스케줄이 기존 스케줄과 겹치는지 확인
+                workspaceShift.startDateTime.lt(endDateTime),
+                workspaceShift.endDateTime.gt(startDateTime),
+                excludeShiftId != null ? workspaceShift.id.ne(excludeShiftId) : null
+            )
             .fetchOne();
 
         return count != null && count > 0;
     }
 
     @Override
-    public List<WorkspaceShift> findConfirmedByWorkerIdsAndDateRange(List<Long> workerIds, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    public List<WorkspaceShift> findConfirmedByUserIdsAndDateRange(List<Long> userIds, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         return queryFactory
             .selectFrom(workspaceShift)
-            .where(workspaceShift.assignedWorkspaceWorker.id.in(workerIds)
+            .where(workspaceShift.assignedWorkspaceWorker.user.id.in(userIds)
                 .and(workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED))
                 .and(workspaceShift.startDateTime.lt(endDateTime))
                 .and(workspaceShift.endDateTime.gt(startDateTime)))
