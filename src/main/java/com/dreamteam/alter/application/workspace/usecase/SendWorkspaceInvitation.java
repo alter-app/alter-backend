@@ -20,6 +20,7 @@ import com.dreamteam.alter.domain.workspace.port.outbound.BusinessInvitationRepo
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.InvitationUnavailableReason;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
+import com.dreamteam.alter.domain.user.type.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -27,6 +28,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +50,7 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
 
     @Override
     public void execute(ManagerActor actor, Long workspaceId, SendWorkspaceInvitationRequestDto request) {
+        LocalDateTime now = LocalDateTime.now();
         Workspace workspace = workspaceQueryRepository.findById(workspaceId)
             .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -60,11 +63,12 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
             .stream().collect(Collectors.toMap(User::getContact, Function.identity()));
 
         Set<Long> registeredUserIds = contactToUser.values().stream()
+            .filter(user -> user.getStatus() == UserStatus.ACTIVE)
             .map(User::getId)
             .collect(Collectors.toSet());
 
         Set<Long> activeWorkerUserIds = workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(workspaceId, registeredUserIds);
-        Set<Long> pendingInvitedUserIds = businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(workspaceId, registeredUserIds);
+        Set<Long> pendingInvitedUserIds = businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(workspaceId, registeredUserIds, now);
 
         List<InvitationUnavailableDetail> details = new ArrayList<>();
         List<BusinessInvitation> invitationsToSave = new ArrayList<>();
@@ -74,6 +78,10 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
 
             if (invitedUser == null) {
                 details.add(new InvitationUnavailableDetail(phoneNumber, InvitationUnavailableReason.NOT_REGISTERED));
+                continue;
+            }
+            if (invitedUser.getStatus() != UserStatus.ACTIVE) {
+                details.add(new InvitationUnavailableDetail(phoneNumber, InvitationUnavailableReason.ACCOUNT_UNAVAILABLE));
                 continue;
             }
             if (activeWorkerUserIds.contains(invitedUser.getId())) {
@@ -92,7 +100,7 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
             throw new InvitationUnavailableException(details);
         }
 
-        expireStalePendingInvitations(workspaceId, invitationsToSave);
+        expireStalePendingInvitations(workspaceId, invitationsToSave, now);
 
         try {
             businessInvitationRepository.saveAll(invitationsToSave);
@@ -107,12 +115,12 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
     }
 
     // 만료된 PENDING 은 부분 유니크 인덱스(status = PENDING)에 걸리므로 새 초대를 insert 하기 전에 EXPIRED 로 바꿔 flush 한다.
-    private void expireStalePendingInvitations(Long workspaceId, List<BusinessInvitation> invitationsToSave) {
+    private void expireStalePendingInvitations(Long workspaceId, List<BusinessInvitation> invitationsToSave, LocalDateTime now) {
         Set<Long> userIds = invitationsToSave.stream()
             .map(inv -> inv.getInvitedUser().getId())
             .collect(Collectors.toSet());
         List<BusinessInvitation> staleInvitations =
-            businessInvitationQueryRepository.findExpiredPendingByWorkspaceAndUserIds(workspaceId, userIds);
+            businessInvitationQueryRepository.findExpiredPendingByWorkspaceAndUserIds(workspaceId, userIds, now);
         if (staleInvitations.isEmpty()) {
             return;
         }

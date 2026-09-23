@@ -22,7 +22,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,9 +58,11 @@ class WorkspaceQueryRepositoryImplWorkerListTests {
     @Autowired
     private BusinessTypeRepositoryImpl businessTypeRepository;
 
+    private static final AtomicInteger SEQ = new AtomicInteger();
+
     private User saveUser() {
         User user = User.create(
-            "010" + String.valueOf(System.nanoTime()).substring(0, 8), "encoded", "김알바",
+            String.format("010%08d", SEQ.incrementAndGet()), "encoded", "김알바",
             "nickname" + System.nanoTime(), UserGender.GENDER_MALE, "19990101",
             "user" + System.nanoTime() + "@example.com"
         );
@@ -131,11 +135,37 @@ class WorkspaceQueryRepositoryImplWorkerListTests {
 
         List<ManagerWorkspaceWorkerListResponse> result = workspaceQueryRepository
             .getWorkspaceWorkerListWithCursor(managerUser, workspace.getId(), filter, firstPage());
+        long count = workspaceQueryRepository.getWorkspaceWorkerCount(managerUser, workspace.getId(), filter);
 
         assertThat(result).extracting(ManagerWorkspaceWorkerListResponse::getId)
             .containsExactly(resigned.getId());
         assertThat(result).extracting(r -> r.getStatus())
             .containsExactly(WorkspaceWorkerStatus.RESIGNED);
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void getWorkspaceWorkerListWithCursor_status_미지정_퇴사일필터만_있으면_퇴사자_조회() {
+        ManagerUser managerUser = saveManagerUser();
+        Workspace workspace = saveWorkspace(managerUser);
+        saveWorker(workspace, saveUser());
+        WorkspaceWorker resigned = saveWorker(workspace, saveUser());
+        resigned.resign();
+        workspaceWorkerRepository.save(resigned);
+
+        ManagerWorkspaceWorkerListFilterDto filter = new ManagerWorkspaceWorkerListFilterDto(
+            null, null, null, null, LocalDate.now().minusDays(1), null
+        );
+
+        List<ManagerWorkspaceWorkerListResponse> result = workspaceQueryRepository
+            .getWorkspaceWorkerListWithCursor(managerUser, workspace.getId(), filter, firstPage());
+        long count = workspaceQueryRepository.getWorkspaceWorkerCount(managerUser, workspace.getId(), filter);
+
+        assertThat(result).extracting(ManagerWorkspaceWorkerListResponse::getId)
+            .containsExactly(resigned.getId());
+        assertThat(result).extracting(r -> r.getStatus())
+            .containsExactly(WorkspaceWorkerStatus.RESIGNED);
+        assertThat(count).isEqualTo(1);
     }
 
 }

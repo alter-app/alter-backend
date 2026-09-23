@@ -7,6 +7,7 @@ import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
+import com.dreamteam.alter.domain.user.type.UserStatus;
 import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
 import com.dreamteam.alter.domain.workspace.type.BusinessInvitationStatus;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
@@ -32,6 +33,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -39,6 +41,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -122,7 +125,7 @@ class SendWorkspaceInvitationTests {
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01099999999"))).willReturn(List.of());
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(any(), any())).willReturn(Set.of());
-            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(any(), any())).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(any(), any(), any(LocalDateTime.class))).willReturn(Set.of());
             SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01099999999"));
 
             // when & then
@@ -145,12 +148,13 @@ class SendWorkspaceInvitationTests {
             User activeWorker = mock(User.class);
             given(activeWorker.getId()).willReturn(10L);
             given(activeWorker.getContact()).willReturn("01011111111");
+            given(activeWorker.getStatus()).willReturn(UserStatus.ACTIVE);
 
             given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01011111111"))).willReturn(List.of(activeWorker));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(10L))).willReturn(Set.of(10L));
-            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(1L, Set.of(10L))).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(eq(1L), eq(Set.of(10L)), any(LocalDateTime.class))).willReturn(Set.of());
             SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01011111111"));
 
             // when & then
@@ -173,12 +177,13 @@ class SendWorkspaceInvitationTests {
             User pendingUser = mock(User.class);
             given(pendingUser.getId()).willReturn(20L);
             given(pendingUser.getContact()).willReturn("01022222222");
+            given(pendingUser.getStatus()).willReturn(UserStatus.ACTIVE);
 
             given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01022222222"))).willReturn(List.of(pendingUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(20L))).willReturn(Set.of());
-            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(1L, Set.of(20L))).willReturn(Set.of(20L));
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(eq(1L), eq(Set.of(20L)), any(LocalDateTime.class))).willReturn(Set.of(20L));
             SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01022222222"));
 
             // when & then
@@ -199,12 +204,13 @@ class SendWorkspaceInvitationTests {
             User invitedUser = mock(User.class);
             given(invitedUser.getId()).willReturn(30L);
             given(invitedUser.getContact()).willReturn("01033333333");
+            given(invitedUser.getStatus()).willReturn(UserStatus.ACTIVE);
 
             given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01033333333"))).willReturn(List.of(invitedUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(30L))).willReturn(Set.of());
-            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(1L, Set.of(30L))).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(eq(1L), eq(Set.of(30L)), any(LocalDateTime.class))).willReturn(Set.of());
             SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01033333333"));
 
             // when
@@ -225,13 +231,14 @@ class SendWorkspaceInvitationTests {
             User validUser = mock(User.class);
             given(validUser.getId()).willReturn(40L);
             given(validUser.getContact()).willReturn("01044444444");
+            given(validUser.getStatus()).willReturn(UserStatus.ACTIVE);
 
             given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             // 01099999999는 미가입 → contactToUser에서 조회 안 됨
             given(userQueryRepository.findByContactIn(any())).willReturn(List.of(validUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(any(), any())).willReturn(Set.of());
-            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(any(), any())).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(any(), any(), any(LocalDateTime.class))).willReturn(Set.of());
             SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01044444444", "01099999999"));
 
             // when & then
@@ -254,13 +261,14 @@ class SendWorkspaceInvitationTests {
             User pendingUser = mock(User.class);
             given(pendingUser.getId()).willReturn(20L);
             given(pendingUser.getContact()).willReturn("01022222222");
+            given(pendingUser.getStatus()).willReturn(UserStatus.ACTIVE);
 
             given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             // 01099999999는 미가입 → contactToUser에서 조회 안 됨
             given(userQueryRepository.findByContactIn(any())).willReturn(List.of(pendingUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(any(), any())).willReturn(Set.of());
-            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(any(), any())).willReturn(Set.of(20L));
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(any(), any(), any(LocalDateTime.class))).willReturn(Set.of(20L));
             SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01022222222", "01099999999"));
 
             // when & then
@@ -284,12 +292,13 @@ class SendWorkspaceInvitationTests {
             User user = mock(User.class);
             given(user.getId()).willReturn(40L);
             given(user.getContact()).willReturn("01044444444");
+            given(user.getStatus()).willReturn(UserStatus.ACTIVE);
 
             given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01044444444"))).willReturn(List.of(user));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(40L))).willReturn(Set.of(40L));
-            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(1L, Set.of(40L))).willReturn(Set.of(40L));
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(eq(1L), eq(Set.of(40L)), any(LocalDateTime.class))).willReturn(Set.of(40L));
             SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01044444444"));
 
             // when & then
@@ -312,6 +321,7 @@ class SendWorkspaceInvitationTests {
             User invitedUser = mock(User.class);
             given(invitedUser.getId()).willReturn(50L);
             given(invitedUser.getContact()).willReturn("01055555555");
+            given(invitedUser.getStatus()).willReturn(UserStatus.ACTIVE);
             BusinessInvitation stale = BusinessInvitation.create(workspace, invitedUser, managerUser);
             ReflectionTestUtils.setField(stale, "expiresAt", java.time.LocalDateTime.now().minusDays(1));
 
@@ -319,8 +329,8 @@ class SendWorkspaceInvitationTests {
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01055555555"))).willReturn(List.of(invitedUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(50L))).willReturn(Set.of());
-            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(1L, Set.of(50L))).willReturn(Set.of());
-            given(businessInvitationQueryRepository.findExpiredPendingByWorkspaceAndUserIds(1L, Set.of(50L))).willReturn(List.of(stale));
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(eq(1L), eq(Set.of(50L)), any(LocalDateTime.class))).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findExpiredPendingByWorkspaceAndUserIds(eq(1L), eq(Set.of(50L)), any(LocalDateTime.class))).willReturn(List.of(stale));
             SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01055555555"));
 
             // when
@@ -341,12 +351,13 @@ class SendWorkspaceInvitationTests {
             User invitedUser = mock(User.class);
             given(invitedUser.getId()).willReturn(60L);
             given(invitedUser.getContact()).willReturn("01066666666");
+            given(invitedUser.getStatus()).willReturn(UserStatus.ACTIVE);
 
             given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01066666666"))).willReturn(List.of(invitedUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(60L))).willReturn(Set.of());
-            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(1L, Set.of(60L))).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(eq(1L), eq(Set.of(60L)), any(LocalDateTime.class))).willReturn(Set.of());
             org.mockito.BDDMockito.willThrow(new DataIntegrityViolationException("duplicate"))
                 .given(businessInvitationRepository).saveAll(any());
             SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01066666666"));
@@ -358,6 +369,37 @@ class SendWorkspaceInvitationTests {
                     .containsExactly(new InvitationUnavailableDetail("01066666666", InvitationUnavailableReason.ALREADY_INVITED)));
 
             then(eventPublisher).should(never()).publishEvent(any(FcmNotificationEvent.class));
+        }
+
+        @Test
+        @DisplayName("정지된 계정의 번호가 포함되면 ACCOUNT_UNAVAILABLE 사유로 InvitationUnavailableException 발생")
+        void fails_withAccountUnavailable_whenUserSuspended() {
+            // given
+            User suspendedUser = mock(User.class);
+            given(suspendedUser.getId()).willReturn(70L);
+            given(suspendedUser.getContact()).willReturn("01077777777");
+            given(suspendedUser.getStatus()).willReturn(UserStatus.SUSPENDED);
+
+            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
+            given(userQueryRepository.findByContactIn(Set.of("01077777777"))).willReturn(List.of(suspendedUser));
+            given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(any(), any())).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(any(), any(), any(LocalDateTime.class))).willReturn(Set.of());
+            SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01077777777"));
+
+            // when & then
+            assertThatThrownBy(() -> sendWorkspaceInvitation.execute(actor, 1L, request))
+                .isInstanceOf(InvitationUnavailableException.class)
+                .satisfies(ex -> {
+                    InvitationUnavailableException invEx = (InvitationUnavailableException) ex;
+                    assertThat(invEx.getDetails()).containsExactly(
+                        new InvitationUnavailableDetail("01077777777", InvitationUnavailableReason.ACCOUNT_UNAVAILABLE)
+                    );
+                });
+
+            then(workspaceQueryRepository).should().findActiveWorkerUserIdsByUserIds(1L, Set.of());
+            then(businessInvitationQueryRepository).should().findPendingInvitedUserIdsByUserIds(eq(1L), eq(Set.of()), any(LocalDateTime.class));
+            then(businessInvitationRepository).should(never()).saveAll(any());
         }
     }
 }

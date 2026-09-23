@@ -2,11 +2,11 @@ package com.dreamteam.alter.common.exception.handler;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SignupSessionResponseDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.InvitationUnavailableResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.exception.FieldErrorDetail;
 import com.dreamteam.alter.domain.auth.exception.SignupRequiredException;
-import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableDetail;
 import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
@@ -38,9 +38,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvitationUnavailableException.class)
-    public ResponseEntity<ErrorResponse<List<InvitationUnavailableDetail>>> handleInvitationUnavailableException(InvitationUnavailableException e) {
+    public ResponseEntity<ErrorResponse<List<InvitationUnavailableResponseDto>>> handleInvitationUnavailableException(InvitationUnavailableException e) {
         return ResponseEntity.status(e.getErrorCode().getStatus())
-            .body(ErrorResponse.of(e.getErrorCode(), e.getMessage(), e.getDetails()));
+            .body(ErrorResponse.of(e.getErrorCode(), e.getMessage(), e.getDetails().stream().map(InvitationUnavailableResponseDto::from).toList()));
     }
 
     @ExceptionHandler(CustomException.class)
