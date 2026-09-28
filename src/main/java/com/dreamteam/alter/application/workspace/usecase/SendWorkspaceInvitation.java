@@ -60,7 +60,8 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
 
         Set<String> phoneNumbers = request.getPhoneNumbers();
         Map<String, User> contactToUser = userQueryRepository.findByContactIn(phoneNumbers)
-            .stream().collect(Collectors.toMap(User::getContact, Function.identity()));
+            .stream().collect(Collectors.toMap(User::getContact, Function.identity(),
+                (a, b) -> a.getStatus() == UserStatus.ACTIVE ? a : b));
 
         Set<Long> registeredUserIds = contactToUser.values().stream()
             .filter(user -> user.getStatus() == UserStatus.ACTIVE)
@@ -105,7 +106,7 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
         try {
             businessInvitationRepository.saveAll(invitationsToSave);
         } catch (DataIntegrityViolationException e) {
-            // ponytail: 부분 유니크 인덱스 충돌은 같은 요청의 동시 제출이 대부분이라 저장 대상 전부를 ALREADY_INVITED 로 본다.
+            // 부분 유니크 인덱스 충돌은 같은 요청의 동시 제출이 대부분이라 저장 대상 전부를 ALREADY_INVITED 로 본다.
             // 번호별 정확한 판정이 필요하면 저장을 REQUIRES_NEW 로 분리하고 충돌 후 PENDING 을 재조회한다.
             throw new InvitationUnavailableException(invitationsToSave.stream()
                 .map(inv -> new InvitationUnavailableDetail(inv.getInvitedUser().getContact(), InvitationUnavailableReason.ALREADY_INVITED))

@@ -36,7 +36,7 @@ class BusinessInvitationTests {
     }
 
     @Test
-    void isExpired_expiresAt이_now와_같으면_만료() {
+    void getEffectiveStatus_expiresAt이_now와_같으면_EXPIRED() {
         LocalDateTime now = LocalDateTime.now();
         BusinessInvitation invitation = pendingInvitation();
         ReflectionTestUtils.setField(invitation, "expiresAt", now);

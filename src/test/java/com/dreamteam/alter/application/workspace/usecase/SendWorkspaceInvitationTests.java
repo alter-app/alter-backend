@@ -401,5 +401,37 @@ class SendWorkspaceInvitationTests {
             then(businessInvitationQueryRepository).should().findPendingInvitedUserIdsByUserIds(eq(1L), eq(Set.of()), any(LocalDateTime.class));
             then(businessInvitationRepository).should(never()).saveAll(any());
         }
+
+        @Test
+        @DisplayName("같은 번호에 정지 계정과 활성 계정이 함께 조회되면 활성 계정으로 초대")
+        void succeeds_prefersActiveUser_whenSameContactHasSuspendedAndActiveAccounts() {
+            // given
+            User suspendedUser = mock(User.class);
+            given(suspendedUser.getId()).willReturn(80L);
+            given(suspendedUser.getContact()).willReturn("01088888888");
+            given(suspendedUser.getStatus()).willReturn(UserStatus.SUSPENDED);
+            User activeUser = mock(User.class);
+            given(activeUser.getId()).willReturn(81L);
+            given(activeUser.getContact()).willReturn("01088888888");
+            given(activeUser.getStatus()).willReturn(UserStatus.ACTIVE);
+
+            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
+            given(userQueryRepository.findByContactIn(Set.of("01088888888"))).willReturn(List.of(suspendedUser, activeUser));
+            given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(81L))).willReturn(Set.of());
+            given(businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(eq(1L), eq(Set.of(81L)), any(LocalDateTime.class))).willReturn(Set.of());
+            SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01088888888"));
+
+            // when
+            sendWorkspaceInvitation.execute(actor, 1L, request);
+
+            // then
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<BusinessInvitation>> captor = ArgumentCaptor.forClass(List.class);
+            then(businessInvitationRepository).should().saveAll(captor.capture());
+            assertThat(captor.getValue()).hasSize(1);
+            assertThat(captor.getValue().get(0).getInvitedUser()).isSameAs(activeUser);
+            then(eventPublisher).should().publishEvent(any(FcmNotificationEvent.class));
+        }
     }
 }
