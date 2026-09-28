@@ -39,6 +39,21 @@ public enum SubstituteRequestStatus {
     }
 
     /**
+     * 대상자가 받은 요청 목록에서 기본으로 조회하는 대타 요청 상태 목록을 반환합니다.
+     * 요청자가 취소했거나 만료된 요청은 제외합니다.
+     * @return 대상자 조회 가능 상태 목록
+     */
+    public static List<SubstituteRequestStatus> getReceiverViewableStatuses() {
+        return List.of(
+            PENDING,
+            ACCEPTED,
+            REJECTED_BY_TARGET,
+            APPROVED,
+            REJECTED_BY_APPROVER
+        );
+    }
+
+    /**
      * 해당 상태가 매니저가 조회할 수 있는 상태인지 확인합니다.
      * @param status 확인할 상태
      * @return 매니저 조회 가능 여부

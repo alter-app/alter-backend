@@ -125,7 +125,7 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             )
             .where(
                 workspaceCondition
-                    .and(statusCondition(filter.getStatus()))
+                    .and(receivedRequestStatusCondition(filter.getStatus()))
                     .and(substituteRequest.requesterId.ne(workspaceWorker.id))
                     .and(
                         substituteRequest.requestType.eq(SubstituteRequestType.ALL)
@@ -209,7 +209,7 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             )
             .where(
                 workspaceCondition
-                    .and(statusCondition(filter.getStatus()))
+                    .and(receivedRequestStatusCondition(filter.getStatus()))
                     .and(substituteRequest.requesterId.ne(workspaceWorker.id))
                     .and(
                         substituteRequest.requestType.eq(SubstituteRequestType.ALL)
@@ -443,6 +443,16 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
         if (status == null) {
             return null;
         }
+        return substituteRequest.status.eq(status);
+    }
+
+    private BooleanExpression receivedRequestStatusCondition(SubstituteRequestStatus status) {
+        if (ObjectUtils.isEmpty(status)) {
+            // 상태가 지정되지 않은 경우 취소·만료를 제외한 상태만 조회
+            return substituteRequest.status.in(SubstituteRequestStatus.getReceiverViewableStatuses());
+        }
+
+        // 특정 상태가 지정된 경우 해당 상태만 조회
         return substituteRequest.status.eq(status);
     }
 
