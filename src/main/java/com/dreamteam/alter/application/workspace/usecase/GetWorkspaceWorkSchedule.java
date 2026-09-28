@@ -19,7 +19,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,7 +53,7 @@ public class GetWorkspaceWorkSchedule implements GetWorkspaceScheduleUseCase {
         // 본인에게 배정된 근무 일정들의 근무 시간 합산 및 예상 급여 계산
         double myTotalWorkHours = shifts.stream()
             .filter(shift -> workspaceWorker.get().equals(shift.getAssignedWorkspaceWorker()))
-            .mapToDouble(shift -> Duration.between(shift.getStartDateTime(), shift.getEndDateTime()).toMinutes() / 60.0)
+            .mapToDouble(WorkspaceShift::getWorkHours)
             .sum();
         long estimatedSalary = Math.round(myTotalWorkHours * WorkspaceConstants.MINIMUM_HOURLY_WAGE);
 

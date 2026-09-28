@@ -9,6 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Entity
@@ -96,6 +97,10 @@ public class WorkspaceShift {
         if (!startDateTime.isBefore(endDateTime)) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "시작 시간은 종료 시간보다 늦을 수 없습니다.");
         }
+    }
+
+    public double getWorkHours() {
+        return Duration.between(startDateTime, endDateTime).toMinutes() / 60.0;
     }
 
 }
