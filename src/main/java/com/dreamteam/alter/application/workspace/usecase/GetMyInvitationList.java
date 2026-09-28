@@ -14,6 +14,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service("getMyInvitationList")
@@ -26,18 +27,19 @@ public class GetMyInvitationList implements GetMyInvitationListUseCase {
 
     @Override
     public CursorPaginatedApiResponse<MyInvitationResponseDto> execute(AppActor actor, MyInvitationListFilterDto filter, CursorPageRequestDto cursorPageRequest) {
+        LocalDateTime now = LocalDateTime.now();
         CursorDto cursorDto = null;
         if (ObjectUtils.isNotEmpty(cursorPageRequest.cursor())) {
             cursorDto = CursorUtil.decodeCursor(cursorPageRequest.cursor(), CursorDto.class, objectMapper);
         }
         CursorPageRequest<CursorDto> pageRequest = CursorPageRequest.of(cursorDto, cursorPageRequest.pageSize());
 
-        long count = businessInvitationQueryRepository.countByUser(actor.getUser(), filter);
+        long count = businessInvitationQueryRepository.countByUser(actor.getUser(), filter, now);
         if (count == 0) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(cursorPageRequest.pageSize(), (int) count));
         }
 
-        List<BusinessInvitation> invitations = businessInvitationQueryRepository.findByUserWithCursor(pageRequest, actor.getUser(), filter);
+        List<BusinessInvitation> invitations = businessInvitationQueryRepository.findByUserWithCursor(pageRequest, actor.getUser(), filter, now);
         if (ObjectUtils.isEmpty(invitations)) {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(cursorPageRequest.pageSize(), (int) count));
         }
@@ -52,7 +54,7 @@ public class GetMyInvitationList implements GetMyInvitationListUseCase {
         return CursorPaginatedApiResponse.of(
             pageResponseDto,
             invitations.stream()
-                .map(MyInvitationResponseDto::from)
+                .map(inv -> MyInvitationResponseDto.from(inv, now))
                 .toList()
         );
     }

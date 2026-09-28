@@ -9,11 +9,11 @@ import java.util.List;
 @Getter
 public class InvitationUnavailableException extends CustomException {
 
-    private final List<String> unavailablePhoneNumbers;
+    private final List<InvitationUnavailableDetail> details;
 
-    public InvitationUnavailableException(List<String> unavailablePhoneNumbers) {
+    public InvitationUnavailableException(List<InvitationUnavailableDetail> details) {
         super(ErrorCode.ILLEGAL_ARGUMENT, "발송할 수 없는 전화번호가 포함되어 있습니다.");
-        this.unavailablePhoneNumbers = unavailablePhoneNumbers;
+        this.details = details;
     }
 
 }
