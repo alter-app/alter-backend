@@ -48,7 +48,7 @@ public class CreateUserWithSocialRequestDto {
     private String name;
 
     @NotBlank
-    @Size(max = 64)
+    @Size(min = 2, max = 10)
     @Schema(description = "닉네임", example = "유땡땡")
     private String nickname;
 

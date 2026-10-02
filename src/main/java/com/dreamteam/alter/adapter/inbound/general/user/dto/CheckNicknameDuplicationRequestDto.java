@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "닉네임 중복 확인 요청 DTO")
 public class CheckNicknameDuplicationRequestDto {
 
-    @Size(max = 64)
+    @Size(min = 2, max = 10)
     @Schema(description = "닉네임", example = "유땡땡")
     private String nickname;
 

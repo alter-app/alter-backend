@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class UpdateNicknameRequestDto {
 
     @NotBlank
-    @Size(max = 64)
-    @Schema(description = "변경할 닉네임 (최대 64자)", example = "newNickname")
+    @Size(min = 2, max = 10)
+    @Schema(description = "변경할 닉네임 (2~10자)", example = "newNickname")
     private String nickname;
 }
