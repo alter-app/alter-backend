@@ -10,12 +10,28 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
 public class PostingScheduleQueryRepositoryImpl implements PostingScheduleQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public void initializeWorkingDaysByIds(List<Long> scheduleIds) {
+        if (ObjectUtils.isNotEmpty(scheduleIds)) {
+            fetchWorkingDays(scheduleIds);
+        }
+    }
+
+    private void fetchWorkingDays(List<Long> scheduleIds) {
+        QPostingSchedule schedule = QPostingSchedule.postingSchedule;
+        queryFactory.selectFrom(schedule)
+            .leftJoin(schedule.workingDays).fetchJoin()
+            .where(schedule.id.in(scheduleIds))
+            .fetch();
+    }
 
     @Override
     public Optional<PostingSchedule> findByIdAndPostingId(Long postingId, Long postingScheduleId) {

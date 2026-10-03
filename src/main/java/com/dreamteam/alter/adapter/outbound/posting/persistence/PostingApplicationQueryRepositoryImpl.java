@@ -13,6 +13,8 @@ import com.dreamteam.alter.domain.posting.entity.QPosting;
 import com.dreamteam.alter.domain.posting.entity.QPostingApplication;
 import com.dreamteam.alter.domain.posting.entity.QPostingSchedule;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationQueryRepository;
+import com.dreamteam.alter.domain.posting.port.outbound.PostingScheduleQueryRepository;
+import com.dreamteam.alter.domain.posting.entity.PostingSchedule;
 import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
 import com.dreamteam.alter.domain.user.entity.*;
 import com.dreamteam.alter.domain.workspace.entity.QBusinessType;
@@ -26,6 +28,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 import com.dreamteam.alter.domain.reputation.entity.QReputationSummary;
@@ -36,6 +40,38 @@ import com.dreamteam.alter.domain.reputation.type.ReputationType;
 public class PostingApplicationQueryRepositoryImpl implements PostingApplicationQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+    private final PostingScheduleQueryRepository postingScheduleQueryRepository;
+
+    private void initializeScheduleWorkingDays(List<PostingSchedule> schedules) {
+        postingScheduleQueryRepository.initializeWorkingDaysByIds(schedules.stream()
+            .map(PostingSchedule::getId).distinct().toList());
+    }
+
+    @Override
+    public Map<Long, Long> countAcceptedByPostingIds(List<Long> postingIds) {
+        if (ObjectUtils.isEmpty(postingIds)) {
+            return Map.of();
+        }
+        QPostingApplication application = QPostingApplication.postingApplication;
+        Map<Long, Long> counts = new HashMap<>();
+        queryFactory.select(application.posting.id, application.count())
+            .from(application)
+            .where(application.posting.id.in(postingIds), application.status.eq(PostingApplicationStatus.ACCEPTED))
+            .groupBy(application.posting.id)
+            .fetch()
+            .forEach(row -> counts.put(row.get(application.posting.id), row.get(application.count())));
+        return counts;
+    }
+
+    @Override
+    public List<PostingApplication> findPendingByPostingIdWithUser(Long postingId) {
+        QPostingApplication application = QPostingApplication.postingApplication;
+        return queryFactory.selectFrom(application)
+            .join(application.user, QUser.user).fetchJoin()
+            .where(application.posting.id.eq(postingId),
+                application.status.in(PostingApplicationStatus.SUBMITTED, PostingApplicationStatus.SHORTLISTED))
+            .fetch();
+    }
 
     @Override
     public long getCountByUser(User user, UserPostingApplicationListFilterDto filter) {
@@ -75,7 +111,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             );
         }
 
-        return queryFactory
+        List<UserPostingApplicationListResponse> results = queryFactory
             .select(Projections.constructor(
                 UserPostingApplicationListResponse.class,
                 qPostingApplication.id,
@@ -95,6 +131,9 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .orderBy(qPostingApplication.createdAt.desc(), qPostingApplication.id.desc())
             .limit(pageRequest.pageSize())
             .fetch();
+
+        initializeScheduleWorkingDays(results.stream().map(UserPostingApplicationListResponse::getPostingSchedule).toList());
+        return results;
     }
 
     @Override
@@ -158,7 +197,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         QUser qUser = QUser.user;
         QReputationSummary qReputationSummary = QReputationSummary.reputationSummary;
 
-        return queryFactory
+        List<ManagerPostingApplicationListResponse> results = queryFactory
             .select(Projections.constructor(
                 ManagerPostingApplicationListResponse.class,
                 qPostingApplication.id,
@@ -192,6 +231,9 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
             .orderBy(qPostingApplication.createdAt.desc(), qPostingApplication.id.desc())
             .limit(request.pageSize())
             .fetch();
+
+        initializeScheduleWorkingDays(results.stream().map(ManagerPostingApplicationListResponse::getSchedule).toList());
+        return results;
     }
 
     @Override
@@ -206,8 +248,7 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
         QManagerUser qManagerUser = QManagerUser.managerUser;
         QUser qUser = QUser.user;
 
-        return Optional.ofNullable(
-            queryFactory
+        ManagerPostingApplicationDetailResponse result = queryFactory
             .select(Projections.constructor(
                 ManagerPostingApplicationDetailResponse.class,
                 qPostingApplication.id,
@@ -233,8 +274,11 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
                 qPostingApplication.id.eq(postingApplicationId),
                 qPostingApplication.status.ne(PostingApplicationStatus.DELETED)
             )
-            .fetchOne()
-        );
+            .fetchOne();
+        if (result != null) {
+            initializeScheduleWorkingDays(List.of(result.getSchedule()));
+        }
+        return Optional.ofNullable(result);
     }
 
     @Override
