@@ -67,7 +67,10 @@ public class ManagerPostingDetailResponseDto {
     @Schema(description = "지원자 수 (취소·불합격·만료 제외)", example = "7")
     private long applicantCount;
 
-    public static ManagerPostingDetailResponseDto of(ManagerPostingDetailResponse entity, long applicantCount) {
+    @Schema(description = "합격자 수 (ACCEPTED 지원서 수, 모집 인원 초과 가능)", example = "3")
+    private long acceptedCount;
+
+    public static ManagerPostingDetailResponseDto of(ManagerPostingDetailResponse entity, long applicantCount, long acceptedCount) {
         return ManagerPostingDetailResponseDto.builder()
             .id(entity.getId())
             .workspace(PostingDetailWorkspaceResponseDto.from(entity.getWorkspace()))
@@ -83,6 +86,7 @@ public class ManagerPostingDetailResponseDto {
                 .map(PostingScheduleResponseDto::from)
                 .toList())
             .applicantCount(applicantCount)
+            .acceptedCount(acceptedCount)
             .build();
     }
 }
