@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -83,6 +84,11 @@ public class NotificationService {
         Optional<FcmDeviceToken> deviceTokenOpt = userFCMDeviceTokenQueryRepository.findByUser(user);
 
         deviceTokenOpt.ifPresent(userFCMDeviceTokenRepository::delete);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void sendNotificationAfterCommit(FcmNotificationRequestDto request) {
+        sendNotification(request);
     }
 
     public void sendNotification(FcmNotificationRequestDto request) {
