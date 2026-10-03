@@ -32,6 +32,7 @@ public interface PostingQueryRepository {
     List<ManagerPostingListResponse> getManagerPostingsWithCursor(CursorPageRequest<CursorDto> request, ManagerUser managerUser, ManagerPostingListFilterDto filter);
     Optional<ManagerPostingDetailResponse> getManagerPostingDetail(Long postingId, ManagerUser managerUser);
     Optional<Posting> findByManagerAndId(Long postingId, ManagerUser managerUser);
+    Optional<Posting> findByManagerAndIdWithPessimisticLock(Long postingId, ManagerUser managerUser);
     
     PostingFilterOptionsResponse getPostingFilterOptions();
 }

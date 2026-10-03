@@ -10,6 +10,7 @@ import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.*;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListFilterDto;
 import com.dreamteam.alter.domain.posting.entity.*;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
+import com.dreamteam.alter.domain.posting.port.outbound.PostingScheduleQueryRepository;
 import com.dreamteam.alter.domain.posting.type.PostingSortType;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.user.entity.QUserFavoritePosting;
@@ -21,6 +22,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.querydsl.jpa.JPAExpressions;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +47,26 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
 
     private final JPAQueryFactory queryFactory;
     private final EntityManager entityManager;
+    private final PostingScheduleQueryRepository postingScheduleQueryRepository;
+
+    private void initializeScheduleWorkingDays(List<Posting> postings) {
+        postingScheduleQueryRepository.initializeWorkingDaysByIds(postings.stream()
+            .flatMap(posting -> posting.getSchedules().stream())
+            .map(PostingSchedule::getId).distinct().toList());
+    }
+
+    @Override
+    public Optional<Posting> findByManagerAndIdWithPessimisticLock(Long postingId, ManagerUser managerUser) {
+        QPosting posting = QPosting.posting;
+        QWorkspace workspace = QWorkspace.workspace;
+        entityManager.createNativeQuery(LOCK_TIMEOUT_STATEMENT).executeUpdate();
+        // 공고 행만 잠가 지원서 생성과 직렬화하고, 소유권은 EXISTS로 검증한다.
+        return Optional.ofNullable(queryFactory.selectFrom(posting)
+            .where(posting.id.eq(postingId), JPAExpressions.selectOne().from(workspace)
+                .where(workspace.id.eq(posting.workspace.id), workspace.managerUser.eq(managerUser)).exists())
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetchOne());
+    }
 
     @Override
     public long getCountOfPostings(PostingListFilterDto filter) {
@@ -67,7 +89,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 gtePayAmount(qPosting, filter.getMinPayAmount()),
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
-                lteEndTime(qPostingSchedule, filter.getEndTime())
+                lteEndTime(qPostingSchedule, filter.getEndTime()),
+                workingDaysIn(qPostingSchedule, filter.getWorkingDays())
             )
             .fetchOne();
 
@@ -116,7 +139,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 gtePayAmount(qPosting, filter.getMinPayAmount()),
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
-                lteEndTime(qPostingSchedule, filter.getEndTime())
+                lteEndTime(qPostingSchedule, filter.getEndTime()),
+                workingDaysIn(qPostingSchedule, filter.getWorkingDays())
             )
             .groupBy(qPosting.id, qPosting.payAmount, qPosting.createdAt)
             .orderBy(getOrderSpecifiers(qPosting, filter.getPayAmountSort()))
@@ -136,6 +160,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .orderBy(getOrderSpecifiers(qPosting, filter.getPayAmountSort()))
             .distinct()
             .fetch();
+
+        initializeScheduleWorkingDays(postings);
 
         Set<Long> scrappedPostingIds =
             new HashSet<>(queryFactory.select(qUserFavoritePosting.posting.id)
@@ -191,6 +217,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .orderBy(getOrderSpecifiersForMapList(qPosting, filter.getSortType()))
             .distinct()
             .fetch();
+
+        initializeScheduleWorkingDays(postings);
 
         Set<Long> scrappedPostingIds =
             new HashSet<>(queryFactory.select(qUserFavoritePosting.posting.id)
@@ -262,6 +290,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
             .fetch();
 
+        initializeScheduleWorkingDays(postings);
+
         if (ObjectUtils.isEmpty(postings)) {
             return Collections.emptyList();
         }
@@ -309,6 +339,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         if (ObjectUtils.isEmpty(posting)) {
             return null;
         }
+
+        initializeScheduleWorkingDays(List.of(posting));
 
         boolean scrapped = ObjectUtils.isNotEmpty(
             queryFactory
@@ -414,6 +446,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
             .distinct()
             .fetch();
+
+        initializeScheduleWorkingDays(postings);
 
         return postings.stream()
             .map(ManagerPostingListResponse::of)
@@ -523,6 +557,10 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         return startTime != null ? qPostingSchedule.startTime.goe(startTime) : null;
     }
 
+    private BooleanExpression workingDaysIn(QPostingSchedule schedule, List<java.time.DayOfWeek> workingDays) {
+        return ObjectUtils.isNotEmpty(workingDays) ? schedule.workingDays.any().in(workingDays) : null;
+    }
+
     private BooleanExpression lteEndTime(QPostingSchedule qPostingSchedule, java.time.LocalTime endTime) {
         return endTime != null ? qPostingSchedule.endTime.loe(endTime) : null;
     }
@@ -614,6 +652,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             return Optional.empty();
         }
 
+        initializeScheduleWorkingDays(List.of(posting));
         return Optional.of(ManagerPostingDetailResponse.of(posting));
     }
 

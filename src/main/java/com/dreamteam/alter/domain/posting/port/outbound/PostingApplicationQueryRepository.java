@@ -12,6 +12,7 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface PostingApplicationQueryRepository {
@@ -40,5 +41,8 @@ public interface PostingApplicationQueryRepository {
     long countActiveApplicationsByPostingId(Long postingId);
 
     boolean existsActiveByPostingIdAndUser(Long postingId, User user);
+
+    List<PostingApplication> findPendingByPostingIdWithUser(Long postingId);
+    Map<Long, Long> countAcceptedByPostingIds(List<Long> postingIds);
 
 }

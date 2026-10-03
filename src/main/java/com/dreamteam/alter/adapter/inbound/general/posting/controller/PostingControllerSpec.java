@@ -24,7 +24,7 @@ import java.util.List;
 @Tag(name = "APP - 공고 API")
 public interface PostingControllerSpec {
 
-    @Operation(summary = "공고 리스트 조회 (커서 페이징)", description = "")
+    @Operation(summary = "공고 리스트 조회 (커서 페이징)", description = "workingDays는 선택한 요일 중 하나와 일치하는 근무 일정으로 필터링합니다. startTime, endTime과 함께 지정하면 같은 근무 일정이 모든 조건을 만족해야 합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "공고 리스트 조회 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
