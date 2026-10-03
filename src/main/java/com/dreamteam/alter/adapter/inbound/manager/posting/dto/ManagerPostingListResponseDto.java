@@ -36,6 +36,9 @@ public class ManagerPostingListResponseDto {
     @Schema(description = "공고 모집 인원 (안내용)", example = "2")
     private int recruitCount;
 
+    @Schema(description = "합격자 수 (ACCEPTED 지원서 수, 모집 인원 초과 가능)", example = "3")
+    private long acceptedCount;
+
     @NotNull
     @Schema(description = "급여 타입", example = "HOURLY")
     private PaymentType paymentType;
@@ -63,12 +66,13 @@ public class ManagerPostingListResponseDto {
     @Schema(description = "업장 정보")
     private ManagerPostingListWorkspaceResponseDto workspace;
 
-    public static ManagerPostingListResponseDto from(ManagerPostingListResponse response) {
+    public static ManagerPostingListResponseDto from(ManagerPostingListResponse response, long acceptedCount) {
         return ManagerPostingListResponseDto.builder()
             .id(response.getId())
             .title(response.getTitle())
             .payAmount(response.getPayAmount())
             .recruitCount(response.getRecruitCount())
+            .acceptedCount(acceptedCount)
             .paymentType(response.getPaymentType())
             .status(DescribedEnumDto.of(response.getStatus(), PostingStatus.describe()))
             .createdAt(response.getCreatedAt())

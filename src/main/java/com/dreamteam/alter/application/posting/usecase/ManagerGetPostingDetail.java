@@ -12,6 +12,7 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 @Service("managerGetPostingDetail")
 @RequiredArgsConstructor
@@ -31,6 +32,8 @@ public class ManagerGetPostingDetail implements ManagerGetPostingDetailUseCase {
 
         long applicantCount = postingApplicationQueryRepository.countActiveApplicationsByPostingId(postingId);
 
-        return ManagerPostingDetailResponseDto.of(postingDetail, applicantCount);
+        long acceptedCount = postingApplicationQueryRepository.countAcceptedByPostingIds(List.of(postingId))
+            .getOrDefault(postingId, 0L);
+        return ManagerPostingDetailResponseDto.of(postingDetail, applicantCount, acceptedCount);
     }
 }

@@ -26,6 +26,8 @@ import org.mockito.quality.Strictness;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Map;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -73,6 +75,7 @@ class ManagerGetPostingDetailTests {
         given(posting.getTitle()).willReturn("홀서빙 구합니다");
         given(posting.getDescription()).willReturn("많은 지원 바랍니다");
         given(posting.getPayAmount()).willReturn(10000);
+        given(posting.getRecruitCount()).willReturn(2);
         given(posting.getPaymentType()).willReturn(PaymentType.HOURLY);
         given(posting.getStatus()).willReturn(PostingStatus.OPEN);
         given(posting.getCreatedAt()).willReturn(LocalDateTime.of(2026, 7, 1, 12, 0));
@@ -85,6 +88,19 @@ class ManagerGetPostingDetailTests {
     @Nested
     @DisplayName("execute")
     class ExecuteTests {
+
+        @Test
+        void acceptedCountCanExceedRecruitCount() {
+            ManagerActor actor = givenActor();
+            ManagerPostingDetailResponse detail = buildPostingDetail();
+            given(postingQueryRepository.getManagerPostingDetail(eq(POSTING_ID), any(ManagerUser.class)))
+                .willReturn(Optional.of(detail));
+            given(postingApplicationQueryRepository.countAcceptedByPostingIds(List.of(POSTING_ID)))
+                .willReturn(Map.of(POSTING_ID, 3L));
+            ManagerPostingDetailResponseDto result = managerGetPostingDetail.execute(POSTING_ID, actor);
+            assertThat(result.getRecruitCount()).isEqualTo(2);
+            assertThat(result.getAcceptedCount()).isEqualTo(3);
+        }
 
         @Test
         @DisplayName("지원자 수 조회 결과가 응답의 applicantCount 로 전달된다")
