@@ -16,7 +16,7 @@ public class FcmNotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleFcmNotification(FcmNotificationEvent event) {
         try {
-            notificationService.sendNotification(event.request());
+            notificationService.sendNotificationAfterCommit(event.request());
         } catch (Exception e) {
             log.warn("FCM 알림 발송 실패. targetUserId={}, error={}",
                 event.request().getTargetUserId(), e.getMessage());
