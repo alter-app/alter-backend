@@ -9,6 +9,7 @@ public record CreatePostingCommand(
     String title,
     String description,
     int payAmount,
+    int recruitCount,
     PaymentType paymentType,
     List<PostingScheduleCommand> schedules
 ) {}

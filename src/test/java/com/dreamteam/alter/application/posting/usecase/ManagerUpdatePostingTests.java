@@ -73,6 +73,7 @@ class ManagerUpdatePostingTests {
             "수정된 제목",
             "수정된 설명",
             13000,
+            3,
             PaymentType.HOURLY,
             List.of(),
             List.of(),

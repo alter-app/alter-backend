@@ -31,7 +31,7 @@ class GlobalExceptionHandlerTests {
     @DisplayName("요일 값이 잘못되면 프로젝트 오류 포맷으로 400을 반환한다")
     void 잘못된_요일값_400() throws Exception {
         String body = """
-            {"id": 1, "workingDays": ["monday"], "startTime": "09:00", "endTime": "18:00", "positionsNeeded": 1, "position": "홀서빙"}
+            {"id": 1, "workingDays": ["monday"], "startTime": "09:00", "endTime": "18:00", "position": "홀서빙"}
             """;
 
         mockMvc.perform(post("/test").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -43,7 +43,7 @@ class GlobalExceptionHandlerTests {
     @DisplayName("시각 값이 잘못되면 프로젝트 오류 포맷으로 400을 반환한다")
     void 잘못된_시각값_400() throws Exception {
         String body = """
-            {"id": 1, "workingDays": ["MONDAY"], "startTime": "25:00", "endTime": "18:00", "positionsNeeded": 1, "position": "홀서빙"}
+            {"id": 1, "workingDays": ["MONDAY"], "startTime": "25:00", "endTime": "18:00", "position": "홀서빙"}
             """;
 
         mockMvc.perform(post("/test").contentType(MediaType.APPLICATION_JSON).content(body))
