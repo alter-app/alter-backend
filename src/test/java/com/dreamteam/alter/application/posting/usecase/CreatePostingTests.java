@@ -87,8 +87,8 @@ class CreatePostingTests {
         assertThat(saved.getStatus()).isEqualTo(PostingStatus.OPEN);
         assertThat(saved.getPaymentType()).isEqualTo(PaymentType.HOURLY);
         assertThat(saved.getSchedules()).hasSize(1);
+        assertThat(saved.getRecruitCount()).isEqualTo(3);
         assertThat(saved.getSchedules().getFirst().getPosition()).isEqualTo("홀서빙");
-        assertThat(saved.getSchedules().getFirst().getPositionsAvailable()).isEqualTo(3);
     }
 
     private CreatePostingCommand command() {
@@ -97,12 +97,12 @@ class CreatePostingTests {
             "홀서빙 구합니다",
             "주말 근무 가능하신 분",
             12000,
+            3,
             PaymentType.HOURLY,
             List.of(new PostingScheduleCommand(
                 List.of(DayOfWeek.MONDAY),
                 LocalTime.of(9, 0),
                 LocalTime.of(18, 0),
-                3,
                 "홀서빙"
             ))
         );

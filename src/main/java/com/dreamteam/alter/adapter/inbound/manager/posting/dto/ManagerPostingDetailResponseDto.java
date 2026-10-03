@@ -41,6 +41,9 @@ public class ManagerPostingDetailResponseDto {
     @Schema(description = "급여", example = "10000")
     private int payAmount;
 
+    @Schema(description = "공고 모집 인원 (안내용)", example = "2")
+    private int recruitCount;
+
     @NotNull
     @Schema(description = "급여 타입", example = "HOURLY")
     private PaymentType paymentType;
@@ -58,7 +61,7 @@ public class ManagerPostingDetailResponseDto {
     private LocalDateTime updatedAt;
 
     @NotNull
-    @Schema(description = "공고 스케줄", example = "[{\"id\":1,\"workingDays\":[\"MONDAY\",\"WEDNESDAY\"],\"startTime\":\"09:00\",\"endTime\":\"18:00\",\"positionsNeeded\":3,\"positionsAvailable\":2,\"position\":\"홀서빙\"}]")
+    @Schema(description = "공고 스케줄", example = "[{\"id\":1,\"workingDays\":[\"MONDAY\",\"WEDNESDAY\"],\"startTime\":\"09:00\",\"endTime\":\"18:00\",\"position\":\"홀서빙\"}]")
     private List<PostingScheduleResponseDto> schedules;
 
     @Schema(description = "지원자 수 (취소·불합격·만료 제외)", example = "7")
@@ -71,6 +74,7 @@ public class ManagerPostingDetailResponseDto {
             .title(entity.getTitle())
             .description(entity.getDescription())
             .payAmount(entity.getPayAmount())
+            .recruitCount(entity.getRecruitCount())
             .paymentType(entity.getPaymentType())
             .status(DescribedEnumDto.of(entity.getStatus(), PostingStatus.describe()))
             .createdAt(entity.getCreatedAt())

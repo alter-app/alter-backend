@@ -25,6 +25,8 @@ public class ManagerPostingDetailResponse {
 
     private int payAmount;
 
+    private int recruitCount;
+
     private PaymentType paymentType;
 
     private PostingStatus status;
@@ -44,6 +46,7 @@ public class ManagerPostingDetailResponse {
             posting.getTitle(),
             posting.getDescription(),
             posting.getPayAmount(),
+            posting.getRecruitCount(),
             posting.getPaymentType(),
             posting.getStatus(),
             posting.getCreatedAt(),
