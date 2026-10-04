@@ -5,6 +5,8 @@ import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
+import com.dreamteam.alter.domain.user.entity.User;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
@@ -38,6 +40,7 @@ class ManagerUpdateWorkScheduleTests {
 
     @Mock
     private WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
+    @Mock private UserQueryRepository userQueryRepository;
 
     @InjectMocks
     private ManagerUpdateWorkSchedule managerUpdateWorkSchedule;
@@ -46,11 +49,11 @@ class ManagerUpdateWorkScheduleTests {
     @DisplayName("배정된 근무자의 다른 근무와 겹치는 시간으로 수정하면 예외가 발생한다")
     void execute_배정_근무자_겹침_예외() {
         ManagerUser managerUser = mock(ManagerUser.class);
-        WorkspaceWorker worker = mock(WorkspaceWorker.class);
+        WorkspaceWorker worker = worker();
         WorkspaceShift shift = createShift(managerUser);
         shift.assignWorker(worker);
 
-        when(workspaceShiftQueryRepository.findById(SHIFT_ID)).thenReturn(Optional.of(shift));
+        when(workspaceShiftQueryRepository.findByIdForUpdate(SHIFT_ID)).thenReturn(Optional.of(shift));
         when(workspaceShiftQueryRepository.hasConflictingSchedule(worker, NEW_START, NEW_END, SHIFT_ID)).thenReturn(true);
 
         assertThatThrownBy(() -> managerUpdateWorkSchedule.execute(actorOf(managerUser), SHIFT_ID, request()))
@@ -63,11 +66,11 @@ class ManagerUpdateWorkScheduleTests {
     @DisplayName("겹침이 없으면 시간이 수정된다")
     void execute_겹침_없으면_수정() {
         ManagerUser managerUser = mock(ManagerUser.class);
-        WorkspaceWorker worker = mock(WorkspaceWorker.class);
+        WorkspaceWorker worker = worker();
         WorkspaceShift shift = createShift(managerUser);
         shift.assignWorker(worker);
 
-        when(workspaceShiftQueryRepository.findById(SHIFT_ID)).thenReturn(Optional.of(shift));
+        when(workspaceShiftQueryRepository.findByIdForUpdate(SHIFT_ID)).thenReturn(Optional.of(shift));
         when(workspaceShiftQueryRepository.hasConflictingSchedule(worker, NEW_START, NEW_END, SHIFT_ID)).thenReturn(false);
 
         managerUpdateWorkSchedule.execute(actorOf(managerUser), SHIFT_ID, request());
@@ -82,7 +85,7 @@ class ManagerUpdateWorkScheduleTests {
         ManagerUser managerUser = mock(ManagerUser.class);
         WorkspaceShift shift = createShift(managerUser);
 
-        when(workspaceShiftQueryRepository.findById(SHIFT_ID)).thenReturn(Optional.of(shift));
+        when(workspaceShiftQueryRepository.findByIdForUpdate(SHIFT_ID)).thenReturn(Optional.of(shift));
 
         managerUpdateWorkSchedule.execute(actorOf(managerUser), SHIFT_ID, request());
 
@@ -97,7 +100,7 @@ class ManagerUpdateWorkScheduleTests {
         WorkspaceShift shift = createShift(managerUser);
         LocalDateTime before = shift.getStartDateTime();
 
-        when(workspaceShiftQueryRepository.findById(SHIFT_ID)).thenReturn(Optional.of(shift));
+        when(workspaceShiftQueryRepository.findByIdForUpdate(SHIFT_ID)).thenReturn(Optional.of(shift));
 
         assertThatThrownBy(() -> managerUpdateWorkSchedule.execute(
                 actorOf(managerUser), SHIFT_ID, new UpdateWorkScheduleRequestDto(NEW_END, NEW_START, "홀")))
@@ -111,6 +114,14 @@ class ManagerUpdateWorkScheduleTests {
         when(workspace.getManagerUser()).thenReturn(managerUser);
         return WorkspaceShift.create(
             workspace, NEW_START.minusDays(1), NEW_END.minusDays(1), "홀", WorkspaceShiftStatus.PLANNED);
+    }
+
+    private WorkspaceWorker worker() {
+        WorkspaceWorker worker = mock(WorkspaceWorker.class);
+        User user = mock(User.class);
+        when(worker.getUser()).thenReturn(user);
+        when(user.getId()).thenReturn(10L);
+        return worker;
     }
 
     private ManagerActor actorOf(ManagerUser managerUser) {

@@ -4,7 +4,9 @@ import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.UpdateWorkSchedu
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerUpdateScheduleUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.List;
 
 @Service("managerUpdateWorkSchedule")
 @RequiredArgsConstructor
@@ -20,11 +23,13 @@ import java.util.Optional;
 public class ManagerUpdateWorkSchedule implements ManagerUpdateScheduleUseCase {
 
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
+    private final UserQueryRepository userQueryRepository;
 
     @Override
     public void execute(ManagerActor actor, Long shiftId, UpdateWorkScheduleRequestDto request) {
         // 스케줄 존재 확인
-        Optional<WorkspaceShift> shift = workspaceShiftQueryRepository.findById(shiftId);
+        Optional<WorkspaceShift> shift = workspaceShiftQueryRepository.findByIdForUpdate(shiftId)
+            .filter(schedule -> schedule.getStatus() != WorkspaceShiftStatus.DELETED);
         if (shift.isEmpty()) {
             throw new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 근무 스케줄입니다.");
         }
@@ -35,6 +40,10 @@ public class ManagerUpdateWorkSchedule implements ManagerUpdateScheduleUseCase {
         }
 
         WorkspaceShift workspaceShift = shift.get();
+
+        if (ObjectUtils.isNotEmpty(workspaceShift.getAssignedWorkspaceWorker())) {
+            userQueryRepository.findAllByIdForUpdate(List.of(workspaceShift.getAssignedWorkspaceWorker().getUser().getId()));
+        }
 
         // 배정된 근무자가 있으면 바뀐 시간대가 그 근무자의 다른 근무와 겹치는지 재검증한다 (자기 자신은 제외)
         if (ObjectUtils.isNotEmpty(workspaceShift.getAssignedWorkspaceWorker())
