@@ -56,6 +56,7 @@ public interface ManagerSubstituteRequestControllerSpec {
     @Operation(summary = "대타 요청 승인", description = "대타 요청을 승인하고 실제 스케줄을 교환합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "승인 성공"),
+        @ApiResponse(responseCode = "409", description = "삭제된 근무 일정 또는 수락자의 시간 충돌 (CONFLICT / B020)"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
             content = @Content(
                 mediaType = "application/json",
