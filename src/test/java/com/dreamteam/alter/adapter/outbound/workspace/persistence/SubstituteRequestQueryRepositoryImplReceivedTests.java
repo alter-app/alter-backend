@@ -13,6 +13,7 @@ import com.dreamteam.alter.domain.user.type.ManagerUserStatus;
 import com.dreamteam.alter.domain.user.type.UserGender;
 import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
+import com.dreamteam.alter.domain.workspace.entity.SubstituteRequestTarget;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
@@ -77,6 +78,8 @@ class SubstituteRequestQueryRepositoryImplReceivedTests {
     private Workspace workspace;
     private WorkspaceWorker requester;
     private User receiverUser;
+    private WorkspaceWorker receiver;
+    private WorkspaceWorker other;
 
     private User saveUser() {
         User user = User.create(
@@ -106,27 +109,42 @@ class SubstituteRequestQueryRepositoryImplReceivedTests {
 
         requester = saveWorker(saveUser());
         receiverUser = saveUser();
-        saveWorker(receiverUser);
+        receiver = saveWorker(receiverUser);
+        other = saveWorker(saveUser());
     }
 
-    private SubstituteRequest saveRequest(Consumer<SubstituteRequest> transition) {
+    /** requester가 보낸 요청에 targetWorkers를 대상자로 추가하고 transition을 적용해 저장 */
+    private SubstituteRequest saveRequest(
+        WorkspaceWorker requesterWorker,
+        SubstituteRequestType type,
+        List<WorkspaceWorker> targetWorkers,
+        Consumer<SubstituteRequest> transition
+    ) {
         LocalDateTime start = LocalDateTime.now().plusDays(1);
         WorkspaceShift shift = WorkspaceShift.create(workspace, start, start.plusHours(4), "홀", WorkspaceShiftStatus.CONFIRMED);
-        shift.assignWorker(requester);
+        shift.assignWorker(requesterWorker);
         workspaceShiftRepository.save(shift);
 
-        SubstituteRequest request = SubstituteRequest.create(shift, requester.getId(), SubstituteRequestType.ALL, "사정");
+        SubstituteRequest request = SubstituteRequest.create(shift, requesterWorker.getId(), type, "사정");
+        targetWorkers.forEach(w -> request.getTargets().add(SubstituteRequestTarget.create(request, w.getId())));
         transition.accept(request);
         substituteRequestRepository.save(request);
         return request;
     }
 
-    private List<Long> receivedIds(SubstituteRequestStatus status) {
+    /** requester가 receiver·other 전체에게 보낸 ALL 요청 */
+    private SubstituteRequest saveAllRequest(Consumer<SubstituteRequest> transition) {
+        return saveRequest(requester, SubstituteRequestType.ALL, List.of(receiver, other), transition);
+    }
+
+    private List<ReceivedSubstituteRequestListResponse> received(SubstituteRequestStatus status) {
         GetReceivedSubstituteRequestsFilterDto filter = new GetReceivedSubstituteRequestsFilterDto(null, status);
         CursorPageRequest<CursorDto> page = CursorPageRequest.of(null, 20);
-        return substituteRequestQueryRepository.getReceivedRequestListWithCursor(receiverUser, filter, page).stream()
-            .map(ReceivedSubstituteRequestListResponse::getId)
-            .toList();
+        return substituteRequestQueryRepository.getReceivedRequestListWithCursor(receiverUser, filter, page);
+    }
+
+    private List<Long> receivedIds(SubstituteRequestStatus status) {
+        return received(status).stream().map(ReceivedSubstituteRequestListResponse::getId).toList();
     }
 
     private long receivedCount(SubstituteRequestStatus status) {
@@ -135,21 +153,91 @@ class SubstituteRequestQueryRepositoryImplReceivedTests {
     }
 
     @Test
-    void 받은_요청_상태_미지정시_취소_만료_요청_제외() {
-        SubstituteRequest pending = saveRequest(r -> {});
-        saveRequest(SubstituteRequest::cancel);
-        saveRequest(SubstituteRequest::expire);
+    void 받은_요청_상태_미지정시_본인_대상자_상태_기준으로_노출() {
+        SubstituteRequest pending = saveAllRequest(r -> {});
+        SubstituteRequest rejectedByMe = saveAllRequest(r -> r.rejectByTarget(receiver.getId(), "불가"));
+        SubstituteRequest acceptedByMe = saveAllRequest(r -> r.accept(receiver.getId()));
+        SubstituteRequest approvedForMe = saveAllRequest(r -> {
+            r.accept(receiver.getId());
+            r.approve(1L, "ok");
+        });
+        SubstituteRequest rejectedByApproverForMe = saveAllRequest(r -> {
+            r.accept(receiver.getId());
+            r.rejectByApprover(1L, "no");
+        });
+        SubstituteRequest allRejected = saveAllRequest(r -> {
+            r.rejectByTarget(receiver.getId(), "불가");
+            r.rejectByTarget(other.getId(), "불가");
+        });
+        SubstituteRequest cancelledAfterMyAccept = saveAllRequest(r -> {
+            r.accept(receiver.getId());
+            r.cancel();
+        });
+        saveAllRequest(r -> r.accept(other.getId()));
+        saveAllRequest(r -> {
+            r.accept(other.getId());
+            r.approve(1L, "ok");
+        });
+        saveAllRequest(r -> {
+            r.accept(other.getId());
+            r.rejectByApprover(1L, "no");
+        });
+        saveAllRequest(r -> {
+            r.rejectByTarget(receiver.getId(), "불가");
+            r.cancelPendingTargetAndCancelIfNoPendingTargets(other.getId());
+        });
+        saveAllRequest(SubstituteRequest::cancel);
+        saveAllRequest(SubstituteRequest::expire);
 
-        assertThat(receivedIds(null)).containsExactly(pending.getId());
+        List<ReceivedSubstituteRequestListResponse> result = received(null);
+
+        assertThat(result).extracting(ReceivedSubstituteRequestListResponse::getId).containsExactlyInAnyOrder(
+            pending.getId(), rejectedByMe.getId(), acceptedByMe.getId(), approvedForMe.getId(),
+            rejectedByApproverForMe.getId(), allRejected.getId(), cancelledAfterMyAccept.getId()
+        );
+        assertThat(receivedCount(null)).isEqualTo(result.size());
+    }
+
+    @Test
+    void 받은_요청_CANCELLED_명시하면_수락_여부_무관하게_취소_요청_조회() {
+        saveAllRequest(r -> {});
+        SubstituteRequest cancelled = saveAllRequest(SubstituteRequest::cancel);
+        SubstituteRequest cancelledAfterMyAccept = saveAllRequest(r -> {
+            r.accept(receiver.getId());
+            r.cancel();
+        });
+
+        assertThat(receivedIds(SubstituteRequestStatus.CANCELLED))
+            .containsExactlyInAnyOrder(cancelled.getId(), cancelledAfterMyAccept.getId());
+        assertThat(receivedCount(SubstituteRequestStatus.CANCELLED)).isEqualTo(2);
+    }
+
+    @Test
+    void 받은_요청_SPECIFIC은_본인이_대상자인_요청만_조회() {
+        SubstituteRequest toMe = saveRequest(requester, SubstituteRequestType.SPECIFIC, List.of(receiver), r -> {});
+        saveRequest(requester, SubstituteRequestType.SPECIFIC, List.of(other), r -> {});
+
+        assertThat(receivedIds(null)).containsExactly(toMe.getId());
         assertThat(receivedCount(null)).isEqualTo(1);
     }
 
     @Test
-    void 받은_요청_CANCELLED_명시하면_조회() {
-        saveRequest(r -> {});
-        SubstituteRequest cancelled = saveRequest(SubstituteRequest::cancel);
+    void 받은_요청_ALL이어도_본인_대상자_행이_없으면_미조회() {
+        saveRequest(requester, SubstituteRequestType.ALL, List.of(other), r -> {});
 
-        assertThat(receivedIds(SubstituteRequestStatus.CANCELLED)).containsExactly(cancelled.getId());
-        assertThat(receivedCount(SubstituteRequestStatus.CANCELLED)).isEqualTo(1);
+        assertThat(receivedIds(null)).isEmpty();
+        assertThat(receivedCount(null)).isEqualTo(0);
+    }
+
+    @Test
+    void 받은_요청_재입사해도_예전_근무자_id로_보낸_본인_요청은_미조회() {
+        receiver.resign();
+        workspaceWorkerRepository.save(receiver);
+        saveRequest(receiver, SubstituteRequestType.ALL, List.of(other), r -> r.rejectByTarget(other.getId(), "불가"));
+        WorkspaceWorker rejoined = saveWorker(receiverUser);
+        SubstituteRequest toRejoined = saveRequest(requester, SubstituteRequestType.ALL, List.of(rejoined), r -> {});
+
+        assertThat(receivedIds(null)).containsExactly(toRejoined.getId());
+        assertThat(receivedCount(null)).isEqualTo(1);
     }
 }
