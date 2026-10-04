@@ -18,6 +18,7 @@ import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
+import com.dreamteam.alter.domain.workspace.type.SubstituteRequestTargetStatus;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestType;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
@@ -31,7 +32,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -196,6 +199,15 @@ class SubstituteRequestQueryRepositoryImplReceivedTests {
             rejectedByApproverForMe.getId(), allRejected.getId(), cancelledAfterMyAccept.getId()
         );
         assertThat(receivedCount(null)).isEqualTo(result.size());
+
+        Map<Long, SubstituteRequestTargetStatus> myStatuses = result.stream().collect(
+            Collectors.toMap(ReceivedSubstituteRequestListResponse::getId, ReceivedSubstituteRequestListResponse::getMyTargetStatus));
+        assertThat(myStatuses.get(pending.getId())).isEqualTo(SubstituteRequestTargetStatus.PENDING);
+        assertThat(myStatuses.get(rejectedByMe.getId())).isEqualTo(SubstituteRequestTargetStatus.REJECTED);
+        assertThat(myStatuses.get(acceptedByMe.getId())).isEqualTo(SubstituteRequestTargetStatus.ACCEPTED);
+        assertThat(myStatuses.get(approvedForMe.getId())).isEqualTo(SubstituteRequestTargetStatus.APPROVED);
+        assertThat(myStatuses.get(rejectedByApproverForMe.getId())).isEqualTo(SubstituteRequestTargetStatus.REJECTED_BY_APPROVER);
+        assertThat(myStatuses.get(cancelledAfterMyAccept.getId())).isEqualTo(SubstituteRequestTargetStatus.CANCELLED);
     }
 
     @Test

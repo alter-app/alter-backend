@@ -188,7 +188,8 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
                 substituteRequest.requestReason,
                 substituteRequest.createdAt,
                 substituteRequest.acceptedAt,
-                substituteRequest.processedAt
+                substituteRequest.processedAt,
+                myTarget.status
             ))
             .from(substituteRequest)
             .join(substituteRequest.workspaceShift, workspaceShift)
