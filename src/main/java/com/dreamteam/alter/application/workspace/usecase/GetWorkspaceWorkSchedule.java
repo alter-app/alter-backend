@@ -49,7 +49,8 @@ public class GetWorkspaceWorkSchedule implements GetWorkspaceScheduleUseCase {
         }
 
         List<WorkspaceShift> shifts = workspaceShiftQueryRepository
-            .findByWorkspaceAndDateRange(workspaceWorker.get().getWorkspace(), request.getYear(), request.getMonth());
+            .findByUserAndWorkspaceAndMonthFrom(actor.getUser(), workspaceWorker.get().getWorkspace(),
+                request.getYear(), request.getMonth(), null);
 
         // 본인에게 배정된 근무 일정들의 근무 시간 합산 및 예상 급여 계산
         double myTotalWorkHours = shifts.stream()

@@ -191,7 +191,7 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
                 .and(workspaceShift.workspace.eq(workspace))
                 .and(workspaceShift.startDateTime.year().eq(year))
                 .and(workspaceShift.startDateTime.month().eq(month))
-                .and(workspaceShift.startDateTime.goe(fromInclusive))
+                .and(fromInclusive != null ? workspaceShift.startDateTime.goe(fromInclusive) : null)
                 .and(workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)))
             .orderBy(workspaceShift.startDateTime.asc())
             .fetch();
