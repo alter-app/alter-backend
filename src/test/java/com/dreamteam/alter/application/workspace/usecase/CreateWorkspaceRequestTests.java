@@ -18,6 +18,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -41,6 +43,22 @@ import static org.mockito.Mockito.never;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CreateWorkspaceRequest 테스트")
 class CreateWorkspaceRequestTests {
+
+    @ParameterizedTest
+    @CsvSource({"010-1234-5678,01012345678", "02-123-4567,021234567", "099-1234-5678,09912345678", "07012345678,07012345678"})
+    void 신청_연락처를_숫자로_저장한다(String contact, String expected) {
+        User user = mock(User.class);
+        given(user.getId()).willReturn(100L);
+        given(businessTypeRepository.findById(1L)).willReturn(Optional.of(BusinessTypeFixture.of(false)));
+        given(workspaceRequestRepository.save(any())).willReturn(1L);
+        CreateWorkspaceRequestDto request = baseRequest();
+        request.setContact(contact);
+
+        createWorkspaceRequest.execute(request.toCommand(user));
+
+        then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
+        assertThat(workspaceRequestCaptor.getValue().getContact()).isEqualTo(expected);
+    }
 
     @Mock
     private WorkspaceRequestRepository workspaceRequestRepository;
@@ -96,7 +114,7 @@ class CreateWorkspaceRequestTests {
             given(workspaceRequestRepository.save(any())).willReturn(1L);
 
             // when
-            createWorkspaceRequest.execute(user, baseRequest());
+            createWorkspaceRequest.execute(baseRequest().toCommand(user));
 
             // then
             then(attachFiles).should().executeMap(any(), eq("1"), eq(100L));
@@ -122,7 +140,7 @@ class CreateWorkspaceRequestTests {
             dto.setRepresentativeImages(images);
 
             // when
-            createWorkspaceRequest.execute(user, dto);
+            createWorkspaceRequest.execute(dto.toCommand(user));
 
             // then
             then(attachFiles).should().execute(
@@ -158,7 +176,7 @@ class CreateWorkspaceRequestTests {
             dto.setRepresentativeImages(images);
 
             // when & then
-            assertThatThrownBy(() -> createWorkspaceRequest.execute(user, dto))
+            assertThatThrownBy(() -> createWorkspaceRequest.execute(dto.toCommand(user)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
             then(workspaceRequestImageRepository).should(never()).saveAll(any());
@@ -174,7 +192,7 @@ class CreateWorkspaceRequestTests {
             given(businessTypeRepository.findById(99L)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> createWorkspaceRequest.execute(user, dto))
+            assertThatThrownBy(() -> createWorkspaceRequest.execute(dto.toCommand(user)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
             then(workspaceRequestRepository).should(never()).save(any());
@@ -191,7 +209,7 @@ class CreateWorkspaceRequestTests {
             given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
 
             // when & then
-            assertThatThrownBy(() -> createWorkspaceRequest.execute(user, dto))
+            assertThatThrownBy(() -> createWorkspaceRequest.execute(dto.toCommand(user)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
             then(workspaceRequestRepository).should(never()).save(any());
@@ -211,7 +229,7 @@ class CreateWorkspaceRequestTests {
             dto.setBusinessTypeDetail("  떡볶이 전문점  ");
 
             // when
-            createWorkspaceRequest.execute(user, dto);
+            createWorkspaceRequest.execute(dto.toCommand(user));
 
             // then
             then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
@@ -233,7 +251,7 @@ class CreateWorkspaceRequestTests {
             dto.setBusinessTypeDetail("무시되어야 함");
 
             // when
-            createWorkspaceRequest.execute(user, dto);
+            createWorkspaceRequest.execute(dto.toCommand(user));
 
             // then
             then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
