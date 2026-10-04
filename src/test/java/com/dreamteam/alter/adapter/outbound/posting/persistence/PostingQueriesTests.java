@@ -340,4 +340,103 @@ public class PostingQueriesTests {
         assertThat(applications.getManagerPostingApplicationDetail(manager, Long.MAX_VALUE)).isEmpty();
         assertThat(SqlCapture.statements).noneMatch(sql -> sql.contains("posting_schedule_working_days"));
     }
+
+    @Test
+    void keywordBindsFromQueryAndFiltersCountAndCursorByTitle() {
+        Posting first = savePosting(schedule(List.of(DayOfWeek.MONDAY), 9, 18));
+        ReflectionTestUtils.setField(first, "title", "Coffee 모집");
+        Posting second = savePosting(schedule(List.of(DayOfWeek.FRIDAY), 10, 19));
+        ReflectionTestUtils.setField(second, "title", "COFFEE 야간");
+        savePosting(schedule(List.of(DayOfWeek.MONDAY), 9, 18));
+        clear();
+        PostingListFilterDto filter = keywordFilter("coffee");
+        assertThat(postings.getCountOfPostings(filter)).isEqualTo(2);
+        List<PostingListResponse> page = postings.getPostingsWithCursor(CursorPageRequest.of(null, 1), filter, user);
+        assertThat(page).extracting(PostingListResponse::getId).containsExactly(second.getId());
+        PostingListResponse last = page.getFirst();
+        List<PostingListResponse> next = postings.getPostingsWithCursor(
+            CursorPageRequest.of(new CursorDto(last.getId(), last.getCreatedAt()), 1), filter, user);
+        assertThat(next).extracting(PostingListResponse::getId).containsExactly(first.getId());
+        PostingListResponse finalRow = next.getFirst();
+        assertThat(postings.getPostingsWithCursor(
+            CursorPageRequest.of(new CursorDto(finalRow.getId(), finalRow.getCreatedAt()), 1), filter, user)).isEmpty();
+        assertThat(postings.getCountOfPostings(filter)).isEqualTo(2);
+        assertThat(postings.getCountOfPostings(keywordFilter("모집"))).isEqualTo(1);
+        assertThat(postings.getCountOfPostings(keywordFilter("없는검색어"))).isZero();
+        assertThat(postings.getCountOfPostings(keywordFilter("설명"))).isZero();
+    }
+
+    @Test
+    void keywordMatchesWorkspaceNameAndKeepsMapContract() {
+        Posting matching = savePosting(schedule(List.of(DayOfWeek.MONDAY), 9, 18));
+        Workspace other = Workspace.create(manager, "1234567890", "다른 가게", workspace.getBusinessType(), null,
+            "01000000000", "설명", WorkspaceStatus.ACTIVATED, "서울", "서울", "강남구", "역삼동",
+            new BigDecimal("37.500000"), new BigDecimal("127.000000"));
+        em.persist(other);
+        Posting unrelated = Posting.create(new CreatePostingCommand(other.getId(), "공고", "설명", 12000, 2,
+            PaymentType.HOURLY, List.of(schedule(List.of(DayOfWeek.MONDAY), 9, 18))), other);
+        em.persist(unrelated);
+        clear();
+        PostingListFilterDto filter = keywordFilter("알터");
+        PostingMapListFilterDto map = new PostingMapListFilterDto(
+            new CoordinateDto(new BigDecimal("38"), new BigDecimal("126")),
+            new CoordinateDto(new BigDecimal("37"), new BigDecimal("128")), "알터", PostingSortType.LATEST);
+        assertThat(postings.getCountOfPostings(filter)).isEqualTo(1);
+        assertThat(postings.getPostingsWithCursor(CursorPageRequest.of(null, 10), filter, user))
+            .extracting(PostingListResponse::getId).containsExactly(matching.getId());
+        assertThat(postings.getCountOfPostingMapList(map)).isEqualTo(1);
+        assertThat(postings.getPostingMapListWithCursor(CursorPageRequest.of(null, 10), map, user))
+            .extracting(PostingListResponse::getId).containsExactly(matching.getId());
+    }
+
+    @Test
+    void keywordCombinesWithExactRegionBusinessPayAndSameScheduleDayTime() {
+        Posting matching = savePosting(schedule(List.of(DayOfWeek.MONDAY), 14, 20));
+        Posting split = savePosting(schedule(List.of(DayOfWeek.MONDAY), 9, 12),
+            schedule(List.of(DayOfWeek.FRIDAY), 14, 20));
+        Posting closed = savePosting(schedule(List.of(DayOfWeek.MONDAY), 14, 20));
+        closed.updateStatus(PostingStatus.CLOSED);
+        for (Posting posting : List.of(matching, split, closed)) {
+            ReflectionTestUtils.setField(posting, "title", "Coffee");
+        }
+        clear();
+        PostingListFilterDto filter = keywordFilter("coffee");
+        filter.setProvince("서울");
+        filter.setDistrict("강남구");
+        filter.setTown("역삼동");
+        filter.setBusinessTypeIds(List.of(workspace.getBusinessType().getId()));
+        filter.setMinPayAmount(12000);
+        filter.setMaxPayAmount(12000);
+        filter.setWorkingDays(List.of(DayOfWeek.MONDAY));
+        filter.setStartTime(LocalTime.of(14, 0));
+        filter.setEndTime(LocalTime.of(20, 0));
+        assertThat(postings.getCountOfPostings(filter)).isEqualTo(1);
+        assertThat(postings.getPostingsWithCursor(CursorPageRequest.of(null, 10), filter, user))
+            .extracting(PostingListResponse::getId).containsExactly(matching.getId());
+        filter.setProvince("서울특별시");
+        assertThat(postings.getCountOfPostings(filter)).isZero();
+        assertThat(postings.getPostingsWithCursor(CursorPageRequest.of(null, 10), filter, user)).isEmpty();
+    }
+
+    @Test
+    void blankKeywordKeepsOmittedFilterBehaviorAndPaySort() {
+        Posting low = savePosting(schedule(List.of(DayOfWeek.MONDAY), 9, 18));
+        Posting high = savePosting(schedule(List.of(DayOfWeek.MONDAY), 9, 18));
+        ReflectionTestUtils.setField(high, "payAmount", 15000);
+        clear();
+        PostingListFilterDto filter = keywordFilter("   ");
+        filter.setPayAmountSort(true);
+        assertThat(postings.getCountOfPostings(filter)).isEqualTo(2);
+        assertThat(postings.getPostingsWithCursor(CursorPageRequest.of(null, 10), filter, user))
+            .extracting(PostingListResponse::getId).containsExactly(high.getId(), low.getId());
+        assertThat(postings.getCountOfPostings(keywordFilter(""))).isEqualTo(2);
+        assertThat(postings.getCountOfPostings(new PostingListFilterDto())).isEqualTo(2);
+    }
+
+    private PostingListFilterDto keywordFilter(String keyword) {
+        PostingListFilterDto filter = new PostingListFilterDto();
+        new org.springframework.web.bind.WebDataBinder(filter)
+            .bind(new org.springframework.beans.MutablePropertyValues(java.util.Map.of("searchKeyword", keyword)));
+        return filter;
+    }
 }
