@@ -26,8 +26,8 @@ class UpdateUserPostingApplicationStatusTests {
     @InjectMocks UpdateUserPostingApplicationStatus useCase;
 
     @ParameterizedTest
-    @EnumSource(value = PostingApplicationStatus.class, names = {"ACCEPTED", "CANCELLED", "SUBMITTED", "SHORTLISTED"})
-    void cancelRespectsApplicationStatus(PostingApplicationStatus initialStatus) {
+    @EnumSource(value = PostingApplicationStatus.class, names = {"SUBMITTED", "SHORTLISTED"})
+    void cancelsOnlyApplicationsUnderReview(PostingApplicationStatus initialStatus) {
         User user = mock(User.class);
         AppActor actor = mock(AppActor.class);
         given(actor.getUser()).willReturn(user);
@@ -35,15 +35,28 @@ class UpdateUserPostingApplicationStatusTests {
         application.updateStatus(initialStatus);
         given(repository.getUserPostingApplication(user, 1L)).willReturn(Optional.of(application));
         UpdateUserPostingApplicationStatusRequestDto request = new UpdateUserPostingApplicationStatusRequestDto(PostingApplicationStatus.CANCELLED);
-        if (initialStatus == PostingApplicationStatus.ACCEPTED || initialStatus == PostingApplicationStatus.CANCELLED) {
-            assertThatThrownBy(() -> useCase.execute(actor, 1L, request))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", initialStatus == PostingApplicationStatus.ACCEPTED
-                    ? ErrorCode.POSTING_APPLICATION_STATUS_NOT_UPDATABLE : ErrorCode.POSTING_APPLICATION_ALREADY_CANCELLED);
-            assertThat(application.getStatus()).isEqualTo(initialStatus);
-        } else {
-            useCase.execute(actor, 1L, request);
-            assertThat(application.getStatus()).isEqualTo(PostingApplicationStatus.CANCELLED);
+        useCase.execute(actor, 1L, request);
+        assertThat(application.getStatus()).isEqualTo(PostingApplicationStatus.CANCELLED);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = PostingApplicationStatus.class, names = {"ACCEPTED", "CANCELLED", "REJECTED", "EXPIRED", "DELETED"})
+    void rejectsCancellationOfCompletedApplications(PostingApplicationStatus initialStatus) {
+        User user = mock(User.class);
+        AppActor actor = mock(AppActor.class);
+        given(actor.getUser()).willReturn(user);
+        PostingApplication application = PostingApplication.create(mock(PostingSchedule.class), user, "지원");
+        application.updateStatus(initialStatus);
+        given(repository.getUserPostingApplication(user, 1L)).willReturn(Optional.of(application));
+        UpdateUserPostingApplicationStatusRequestDto request = new UpdateUserPostingApplicationStatusRequestDto(PostingApplicationStatus.CANCELLED);
+
+        var exception = assertThatThrownBy(() -> useCase.execute(actor, 1L, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", initialStatus == PostingApplicationStatus.CANCELLED
+                ? ErrorCode.POSTING_APPLICATION_ALREADY_CANCELLED : ErrorCode.POSTING_APPLICATION_STATUS_NOT_UPDATABLE);
+        if (initialStatus == PostingApplicationStatus.ACCEPTED) {
+            exception.hasMessage("합격한 지원서는 취소할 수 없습니다.");
         }
+        assertThat(application.getStatus()).isEqualTo(initialStatus);
     }
 }
