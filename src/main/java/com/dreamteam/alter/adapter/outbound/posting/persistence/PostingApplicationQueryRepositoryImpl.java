@@ -63,6 +63,16 @@ public class PostingApplicationQueryRepositoryImpl implements PostingApplication
     }
 
     @Override
+    public Optional<Long> findPostingIdByUserAndApplicationId(User user, Long applicationId) {
+        QPostingApplication application = QPostingApplication.postingApplication;
+        return Optional.ofNullable(queryFactory.select(application.posting.id)
+            .from(application)
+            .where(application.id.eq(applicationId), application.user.eq(user),
+                application.status.ne(PostingApplicationStatus.DELETED))
+            .fetchOne());
+    }
+
+    @Override
     public Optional<Long> findPostingIdByManagerAndApplicationId(ManagerUser managerUser, Long postingApplicationId) {
         QPostingApplication application = QPostingApplication.postingApplication;
         QPosting posting = QPosting.posting;

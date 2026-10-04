@@ -19,6 +19,7 @@ public interface PostingApplicationQueryRepository {
     long getCountByUser(User user, UserPostingApplicationListFilterDto filter);
     List<UserPostingApplicationListResponse> getUserPostingApplicationListWithCursor(User user, CursorPageRequest<CursorDto> pageRequest, UserPostingApplicationListFilterDto filter);
     Optional<PostingApplication> getUserPostingApplication(User user, Long applicationId);
+    Optional<Long> findPostingIdByUserAndApplicationId(User user, Long applicationId);
 
     long getManagerPostingApplicationCount(
         ManagerUser managerUser,

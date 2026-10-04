@@ -249,6 +249,29 @@ public class PostingQueriesTests {
     }
 
     @Test
+    void scalarPostingLookupChecksUserOwnershipAndExcludesDeletedApplications() {
+        Posting posting = savePosting(schedule(List.of(DayOfWeek.MONDAY), 9, 18));
+        PostingApplication application = PostingApplication.create(posting.getSchedules().getFirst(), user, "지원");
+        em.persist(application);
+        PostingApplication deleted = PostingApplication.create(posting.getSchedules().getFirst(), user, "삭제");
+        deleted.updateStatus(PostingApplicationStatus.DELETED);
+        em.persist(deleted);
+        User otherUser = User.create("01000000001", "encoded", "다른 사용자", "other" + System.nanoTime(),
+            UserGender.GENDER_MALE, "19990101", "other" + System.nanoTime() + "@example.com");
+        em.persist(otherUser);
+        clear();
+
+        assertThat(applications.findPostingIdByUserAndApplicationId(user, application.getId()))
+            .contains(posting.getId());
+        assertThat(SqlCapture.statements).hasSize(1);
+        assertThat(SqlCapture.statements.getFirst()).doesNotContain("for update");
+        assertThat(SqlCapture.statements.getFirst()).contains("posting_id").doesNotContain("description");
+        assertThat(applications.findPostingIdByUserAndApplicationId(otherUser, application.getId())).isEmpty();
+        assertThat(applications.findPostingIdByUserAndApplicationId(user, deleted.getId())).isEmpty();
+        assertThat(applications.findPostingIdByUserAndApplicationId(user, Long.MAX_VALUE)).isEmpty();
+    }
+
+    @Test
     void scalarPostingLookupChecksManagerOwnershipAndExcludesDeletedApplications() {
         Posting posting = savePosting(schedule(List.of(DayOfWeek.MONDAY), 9, 18));
         PostingApplication application = PostingApplication.create(posting.getSchedules().getFirst(), user, "지원");
