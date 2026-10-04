@@ -41,7 +41,7 @@ public interface UserPublicControllerSpec {
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginWithPassword(@Valid LoginWithPasswordRequestDto request);
 
-    @Operation(summary = "사용자 소셜 로그인")
+    @Operation(summary = "사용자 소셜 로그인", description = "토큰 교환 HTTP 4xx는 카카오 KOE320만 A010(무효·만료 인가 코드)이며 기타 카카오 오류와 애플 오류는 C001입니다. 애플 invalid_grant는 client_id 불일치도 포함하므로 코드 만료를 단정하지 않습니다. HTTP 상태는 기존 400을 유지합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "로그인 성공 (JWT 응답)"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
@@ -53,6 +53,8 @@ public interface UserPublicControllerSpec {
                         name = "존재하지 않는 사용자 계정",
                         value = "{\"code\" : \"B011\"}"
                     ),
+                    @ExampleObject(name = "카카오 무효·만료 인가 코드 (KOE320)", value = "{\"code\":\"A010\"}"),
+                    @ExampleObject(name = "토큰 교환 4xx 설정·요청 오류 또는 원인 미확인", value = "{\"code\":\"C001\"}")
                 }))
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginWithSocial(@Valid SocialLoginRequestDto request);
@@ -93,7 +95,7 @@ public interface UserPublicControllerSpec {
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> createUser(@Valid CreateUserRequestDto request);
 
-    @Operation(summary = "소셜 계정으로 회원가입을 수행한다")
+    @Operation(summary = "소셜 계정으로 회원가입을 수행한다", description = "토큰 교환 HTTP 4xx는 카카오 KOE320만 A010(무효·만료 인가 코드)이며 기타 카카오 오류와 애플 오류는 C001입니다. 애플 invalid_grant는 client_id 불일치도 포함하므로 코드 만료를 단정하지 않습니다. HTTP 상태는 기존 400을 유지합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "소셜 회원 가입 및 로그인 성공 (JWT 응답)"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
@@ -105,7 +107,9 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(name = "사용자 닉네임 중복",            value = "{\"code\" : \"A008\"}"),
                     @ExampleObject(name = "사용자 휴대폰 번호 중복",         value = "{\"code\" : \"A009\"}"),
                     @ExampleObject(name = "소셜 플랫폼 ID 중복",           value = "{\"code\" : \"A005\"}"),
-                    @ExampleObject(name = "소셜 토큰 만료 (재 로그인 필요)", value = "{\"code\" : \"A007\"}")
+                    @ExampleObject(name = "소셜 토큰 만료 (재 로그인 필요)", value = "{\"code\" : \"A007\"}"),
+                    @ExampleObject(name = "카카오 무효·만료 인가 코드 (KOE320)", value = "{\"code\":\"A010\"}"),
+                    @ExampleObject(name = "토큰 교환 4xx 설정·요청 오류 또는 원인 미확인", value = "{\"code\":\"C001\"}")
                 }))
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> createUserWithSocial(@Valid CreateUserWithSocialRequestDto request);
