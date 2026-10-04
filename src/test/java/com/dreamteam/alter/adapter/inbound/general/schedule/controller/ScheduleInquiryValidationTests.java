@@ -18,6 +18,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.InjectMocks;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
@@ -37,10 +40,17 @@ class ScheduleInquiryValidationTests {
     private GetWorkspaceScheduleUseCase workspace;
     private MockMvc mvc;
     private LocalValidatorFactoryBean validator;
+    private WorkspaceQueryRepository workspaces;
+    @Spy private GetExchangeableSelfSchedules candidateUseCase;
+    @InjectMocks private UserSubstituteRequestController candidateController;
+    private AutoCloseable mocks;
 
     @BeforeEach
     void setup() {
         shifts = mock(WorkspaceShiftQueryRepository.class);
+        workspaces = mock(WorkspaceQueryRepository.class);
+        candidateUseCase = new GetExchangeableSelfSchedules(workspaces, shifts);
+        mocks = MockitoAnnotations.openMocks(this);
         workspace = mock(GetWorkspaceScheduleUseCase.class);
         when(shifts.findByUserAndDate(any(), anyInt(), anyInt(), anyInt())).thenAnswer(call -> {
             LocalDate.of((Integer) call.getArgument(1), (Integer) call.getArgument(2), (Integer) call.getArgument(3));
@@ -55,9 +65,10 @@ class ScheduleInquiryValidationTests {
     }
 
     @AfterEach
-    void cleanup() {
+    void cleanup() throws Exception {
         validator.close();
         AppActionContext.clear();
+        mocks.close();
     }
 
     @ParameterizedTest
@@ -113,15 +124,12 @@ class ScheduleInquiryValidationTests {
 
     @Test
     void candidateEndpointPreservesIgnoredDayAndItsOwnMissingYearMonthMessage() throws Exception {
-        WorkspaceQueryRepository workspaces = mock(WorkspaceQueryRepository.class);
         Workspace existing = mock(Workspace.class);
         when(workspaces.findById(1L)).thenReturn(Optional.of(existing));
         when(workspaces.isUserActiveWorkerInWorkspace(any(), eq(1L))).thenReturn(true);
         when(shifts.findByUserAndWorkspaceAndMonthFrom(any(), eq(existing), eq(2030), eq(1), any()))
             .thenReturn(List.of());
-        var controller = new UserSubstituteRequestController(null, null, null, null, null, null, null, null,
-            new GetExchangeableSelfSchedules(workspaces, shifts));
-        MockMvc candidateMvc = MockMvcBuilders.standaloneSetup(controller).setValidator(validator)
+        MockMvc candidateMvc = MockMvcBuilders.standaloneSetup(candidateController).setValidator(validator)
             .setControllerAdvice(new GlobalExceptionHandler()).build();
         candidateMvc.perform(get("/app/workspaces/1/exchangeable-schedules")
             .param("year", "2030").param("month", "1").param("day", "32"))
