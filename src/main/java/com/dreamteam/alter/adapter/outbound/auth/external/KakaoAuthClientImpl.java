@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+@Slf4j
 @Component("KakaoAuthClient")
 @RequiredArgsConstructor
 public class KakaoAuthClientImpl implements KakaoAuthClient {
@@ -74,7 +76,22 @@ public class KakaoAuthClientImpl implements KakaoAuthClient {
                 jsonNode.get(KEY_REFRESH_TOKEN).asText()
             );
         } catch (HttpClientErrorException e) {
-            throw new CustomException(ErrorCode.SOCIAL_AUTH_CODE_EXPIRED);
+            String providerErrorCode = "unknown";
+            try {
+                JsonNode error = objectMapper.readTree(e.getResponseBodyAsString());
+                if (error != null) {
+                    String code = error.path("error_code").asText();
+                    if (code.matches("KOE[0-9]{3}")) {
+                        providerErrorCode = code;
+                    }
+                }
+            } catch (JsonProcessingException ignored) {
+                // 오류 본문이 JSON이 아니면 제공자 코드를 알 수 없다.
+            }
+            log.warn("Social auth error provider=KAKAO stage=token httpStatus={} providerErrorCode={}",
+                e.getStatusCode().value(), providerErrorCode);
+            throw new CustomException("KOE320".equals(providerErrorCode)
+                ? ErrorCode.SOCIAL_AUTH_CODE_EXPIRED : ErrorCode.INTERNAL_SERVER_ERROR);
         } catch (JsonProcessingException e) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
