@@ -26,6 +26,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -48,6 +50,18 @@ import static org.mockito.Mockito.never;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UpdateWorkspaceRequestStatus 테스트")
 class UpdateWorkspaceRequestStatusTests {
+
+    @ParameterizedTest
+    @CsvSource({"010-1234-5678,01012345678", "02-123-4567,021234567", "099-1234-5678,09912345678", "07012345678,07012345678"})
+    void 기존_신청_연락처를_숫자로_승인한다(String contact, String expected) {
+        WorkspaceRequest request = mockApprovedRequest();
+        given(request.getContact()).willReturn(contact);
+
+        updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.ACTIVATED);
+
+        then(workspaceRepository).should().save(workspaceCaptor.capture());
+        assertThat(workspaceCaptor.getValue().getContact()).isEqualTo(expected);
+    }
 
     @Mock
     private WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
@@ -133,6 +147,7 @@ class UpdateWorkspaceRequestStatusTests {
             ManagerUser managerUser = mock(ManagerUser.class);
             User managerUnderlyingUser = mock(User.class);
             File identityFile = mock(File.class);
+            given(request.getContact()).willReturn("01012345678");
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
             given(managerUser.getUser()).willReturn(managerUnderlyingUser);
@@ -160,6 +175,7 @@ class UpdateWorkspaceRequestStatusTests {
             User user = mock(User.class);
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             ManagerUser newManagerUser = mock(ManagerUser.class);
+            given(request.getContact()).willReturn("01012345678");
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
             given(newManagerUser.getUser()).willReturn(user);
@@ -188,6 +204,7 @@ class UpdateWorkspaceRequestStatusTests {
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             BusinessType businessType = mock(BusinessType.class);
             ManagerUser managerUser = mock(ManagerUser.class);
+            given(request.getContact()).willReturn("01012345678");
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
             given(managerUser.getUser()).willReturn(user);
@@ -215,6 +232,7 @@ class UpdateWorkspaceRequestStatusTests {
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             ManagerUser managerUser = mock(ManagerUser.class);
             User managerUnderlyingUser = mock(User.class);
+            given(request.getContact()).willReturn("01012345678");
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
             given(managerUser.getUser()).willReturn(managerUnderlyingUser);
@@ -327,6 +345,7 @@ class UpdateWorkspaceRequestStatusTests {
         WorkspaceRequest request = mock(WorkspaceRequest.class);
         User user = mock(User.class);
         given(user.getId()).willReturn(1L);
+        given(request.getContact()).willReturn("01012345678");
         given(request.getUser()).willReturn(user);
         given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
         ManagerUser managerUser = mock(ManagerUser.class);
