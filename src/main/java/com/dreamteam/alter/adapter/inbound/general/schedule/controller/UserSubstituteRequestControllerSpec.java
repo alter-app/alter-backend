@@ -26,6 +26,7 @@ public interface UserSubstituteRequestControllerSpec {
     @Operation(summary = "교환 가능한 근무자 조회", description = "특정 스케줄에 대해 교환 가능한 근무자 목록을 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 커서 또는 커서의 id/createdAt 누락 (INVALID_CURSOR / B005)"),
         @ApiResponse(responseCode = "404", description = "실패 케이스",
             content = @Content(
                 mediaType = "application/json",
