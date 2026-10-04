@@ -1,6 +1,7 @@
 package com.dreamteam.alter.application.notification;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.FcmNotificationRequestDto;
+import com.dreamteam.alter.adapter.inbound.common.dto.FcmBatchNotificationRequestDto;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.notification.type.NotificationType;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.support.TransactionTemplate;
 import javax.sql.DataSource;
+import java.util.List;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -62,5 +64,35 @@ class FcmNotificationEventListenerTests {
         assertThatCode(() -> new TransactionTemplate(transactionManager)
             .executeWithoutResult(status -> publisher.publishEvent(event()))).doesNotThrowAnyException();
         verify(service).sendNotificationAfterCommit(any());
+    }
+
+    private FcmBatchNotificationEvent batchEvent() {
+        return new FcmBatchNotificationEvent(FcmBatchNotificationRequestDto.of(List.of(1L, 2L), TokenScope.APP,
+            NotificationType.POSTING_APPLICATION, "지원 결과", "불합격"));
+    }
+
+    @Test void batchNotificationRunsOnceAfterCommit() {
+        FcmBatchNotificationEvent event = batchEvent();
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            publisher.publishEvent(event);
+            verifyNoInteractions(service);
+        });
+        verify(service).sendMultipleNotificationsAfterCommit(event.request());
+        verifyNoMoreInteractions(service);
+    }
+
+    @Test void rollbackDoesNotSendBatchNotification() {
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            publisher.publishEvent(batchEvent());
+            status.setRollbackOnly();
+        });
+        verifyNoInteractions(service);
+    }
+
+    @Test void batchDeliveryFailureDoesNotFailCommittedTransaction() {
+        doThrow(new IllegalStateException("FCM 실패")).when(service).sendMultipleNotificationsAfterCommit(any());
+        assertThatCode(() -> new TransactionTemplate(transactionManager)
+            .executeWithoutResult(status -> publisher.publishEvent(batchEvent()))).doesNotThrowAnyException();
+        verify(service).sendMultipleNotificationsAfterCommit(any());
     }
 }

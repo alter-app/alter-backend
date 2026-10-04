@@ -91,6 +91,11 @@ public class NotificationService {
         sendNotification(request);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void sendMultipleNotificationsAfterCommit(FcmBatchNotificationRequestDto request) {
+        sendMultipleNotifications(request);
+    }
+
     public void sendNotification(FcmNotificationRequestDto request) {
         // 1. 사용자 조회
         User user = userQueryRepository.findById(request.getTargetUserId())
