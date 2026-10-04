@@ -26,7 +26,7 @@ public class CancelWorkspaceRequest implements CancelWorkspaceRequestUseCase {
 
 	@Override
 	public void execute(User user, Long workspaceRequestId) {
-		WorkspaceRequest workspaceRequest = workspaceRequestQueryRepository.findByIdWithUser(workspaceRequestId)
+		WorkspaceRequest workspaceRequest = workspaceRequestQueryRepository.findByIdForUpdate(workspaceRequestId)
 			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "등록 신청한 업장을 찾을 수 없습니다."));
 
 		if (!workspaceRequest.getUser().getId().equals(user.getId())) {
