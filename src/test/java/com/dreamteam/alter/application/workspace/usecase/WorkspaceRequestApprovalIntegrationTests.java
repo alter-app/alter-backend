@@ -17,6 +17,7 @@ import com.dreamteam.alter.domain.user.type.UserGender;
 import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceRequestStatus;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,6 +59,7 @@ class WorkspaceRequestApprovalIntegrationTests {
     @MockitoBean private AttachFilesUseCase attachFiles;
     @MockitoBean private FileQueryRepository files;
     @MockitoBean private FileDeleteService fileDelete;
+    @MockitoBean private WorkspaceRequestQueryRepository requests;
 
     private TransactionTemplate tx;
     private User user;
@@ -66,6 +68,8 @@ class WorkspaceRequestApprovalIntegrationTests {
     @BeforeEach
     void seed() {
         tx = new TransactionTemplate(transactionManager);
+        when(requests.findByIdForUpdate(anyLong())).thenAnswer(invocation ->
+            Optional.ofNullable(em.find(WorkspaceRequest.class, invocation.getArgument(0, Long.class))));
         tx.executeWithoutResult(status -> {
             user = User.create("01012345678", "encoded", "연락처 테스트", UUID.randomUUID().toString(),
                 UserGender.GENDER_MALE, "19900101", null);

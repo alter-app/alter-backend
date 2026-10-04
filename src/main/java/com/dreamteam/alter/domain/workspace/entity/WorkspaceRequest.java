@@ -129,6 +129,9 @@ public class WorkspaceRequest {
 		if (WorkspaceRequestStatus.ACTIVATED.equals(status)) {
 			throw new CustomException(ErrorCode.CONFLICT, "이미 승인된 요청입니다.");
 		}
+		if (WorkspaceRequestStatus.CANCELLED.equals(status)) {
+			throw new CustomException(ErrorCode.CONFLICT, "취소된 요청은 승인할 수 없습니다.");
+		}
 
 		this.status = WorkspaceRequestStatus.ACTIVATED;
 	}

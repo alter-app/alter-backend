@@ -61,7 +61,7 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "ACTIVATED 또는 REVOKED 만 설정 가능합니다.");
 		}
 
-		WorkspaceRequest workspaceRequest = workspaceRequestQueryRepository.findByIdWithUser(workspaceRequestId)
+		WorkspaceRequest workspaceRequest = workspaceRequestQueryRepository.findByIdForUpdate(workspaceRequestId)
 			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 업장 등록 신청을 찾을 수 없습니다."));
 
 		if (status == WorkspaceRequestStatus.ACTIVATED) {
