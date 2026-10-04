@@ -26,8 +26,6 @@ import org.mockito.quality.Strictness;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.Map;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -95,11 +93,13 @@ class ManagerGetPostingDetailTests {
             ManagerPostingDetailResponse detail = buildPostingDetail();
             given(postingQueryRepository.getManagerPostingDetail(eq(POSTING_ID), any(ManagerUser.class)))
                 .willReturn(Optional.of(detail));
-            given(postingApplicationQueryRepository.countAcceptedByPostingIds(List.of(POSTING_ID)))
-                .willReturn(Map.of(POSTING_ID, 3L));
+            given(postingApplicationQueryRepository.countAcceptedByPostingId(POSTING_ID))
+                .willReturn(3L);
             ManagerPostingDetailResponseDto result = managerGetPostingDetail.execute(POSTING_ID, actor);
             assertThat(result.getRecruitCount()).isEqualTo(2);
             assertThat(result.getAcceptedCount()).isEqualTo(3);
+            then(postingApplicationQueryRepository).should().countAcceptedByPostingId(POSTING_ID);
+            then(postingApplicationQueryRepository).should(never()).countAcceptedByPostingIds(any());
         }
 
         @Test
@@ -139,7 +139,9 @@ class ManagerGetPostingDetailTests {
 
             // then
             assertThat(result.getApplicantCount()).isZero();
+            assertThat(result.getAcceptedCount()).isZero();
             then(postingApplicationQueryRepository).should().countActiveApplicationsByPostingId(POSTING_ID);
+            then(postingApplicationQueryRepository).should().countAcceptedByPostingId(POSTING_ID);
         }
 
         @Test
@@ -156,6 +158,7 @@ class ManagerGetPostingDetailTests {
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POSTING_NOT_FOUND);
             then(postingApplicationQueryRepository).should(never()).countActiveApplicationsByPostingId(POSTING_ID);
+            then(postingApplicationQueryRepository).should(never()).countAcceptedByPostingId(POSTING_ID);
         }
     }
 }

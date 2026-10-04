@@ -10,7 +10,6 @@ import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.*;
 import com.dreamteam.alter.adapter.inbound.manager.posting.dto.ManagerPostingListFilterDto;
 import com.dreamteam.alter.domain.posting.entity.*;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
-import com.dreamteam.alter.domain.posting.port.outbound.PostingScheduleQueryRepository;
 import com.dreamteam.alter.domain.posting.type.PostingSortType;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import com.dreamteam.alter.domain.user.entity.QUserFavoritePosting;
@@ -47,12 +46,19 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
 
     private final JPAQueryFactory queryFactory;
     private final EntityManager entityManager;
-    private final PostingScheduleQueryRepository postingScheduleQueryRepository;
 
     private void initializeScheduleWorkingDays(List<Posting> postings) {
-        postingScheduleQueryRepository.initializeWorkingDaysByIds(postings.stream()
+        List<Long> scheduleIds = postings.stream()
             .flatMap(posting -> posting.getSchedules().stream())
-            .map(PostingSchedule::getId).distinct().toList());
+            .map(PostingSchedule::getId).distinct().toList();
+        if (ObjectUtils.isEmpty(scheduleIds)) {
+            return;
+        }
+        QPostingSchedule schedule = QPostingSchedule.postingSchedule;
+        queryFactory.selectFrom(schedule)
+            .leftJoin(schedule.workingDays).fetchJoin()
+            .where(schedule.id.in(scheduleIds))
+            .fetch();
     }
 
     @Override

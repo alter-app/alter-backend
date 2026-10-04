@@ -44,8 +44,7 @@ import static org.assertj.core.api.Assertions.*;
     "spring.jpa.properties.hibernate.session_factory.statement_inspector=com.dreamteam.alter.adapter.outbound.posting.persistence.PostingQueriesTests$SqlCapture"
 })
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({QueryDslConfig.class, PostingQueryRepositoryImpl.class,
-    PostingScheduleQueryRepositoryImpl.class, PostingApplicationQueryRepositoryImpl.class})
+@Import({QueryDslConfig.class, PostingQueryRepositoryImpl.class, PostingApplicationQueryRepositoryImpl.class})
 public class PostingQueriesTests {
     @Autowired EntityManager em;
     @Autowired PostingQueryRepositoryImpl postings;
@@ -229,5 +228,93 @@ public class PostingQueriesTests {
         assertThat(SqlCapture.statements).hasSize(1);
         assertThat(applications.countAcceptedByPostingIds(List.of())).isEmpty();
         assertThat(SqlCapture.statements).hasSize(1);
+    }
+
+    @Test
+    void acceptedCountForSinglePostingIncludesOnlyAcceptedAndDefaultsToZero() {
+        Posting posting = savePosting(schedule(List.of(DayOfWeek.MONDAY), 9, 18));
+        Posting emptyPosting = savePosting(schedule(List.of(DayOfWeek.FRIDAY), 9, 18));
+        for (PostingApplicationStatus status : PostingApplicationStatus.values()) {
+            PostingApplication application = PostingApplication.create(posting.getSchedules().getFirst(), user, "지원");
+            application.updateStatus(status);
+            em.persist(application);
+        }
+        clear();
+
+        assertThat(applications.countAcceptedByPostingId(posting.getId())).isEqualTo(1L);
+        assertThat(applications.countAcceptedByPostingId(emptyPosting.getId())).isZero();
+        assertThat(applications.countAcceptedByPostingId(Long.MAX_VALUE)).isZero();
+        assertThat(SqlCapture.statements).hasSize(3);
+        assertThat(SqlCapture.statements).allMatch(sql -> !sql.contains("group by"));
+    }
+
+    @Test
+    void scalarPostingLookupChecksManagerOwnershipAndExcludesDeletedApplications() {
+        Posting posting = savePosting(schedule(List.of(DayOfWeek.MONDAY), 9, 18));
+        PostingApplication application = PostingApplication.create(posting.getSchedules().getFirst(), user, "지원");
+        em.persist(application);
+        PostingApplication deleted = PostingApplication.create(posting.getSchedules().getFirst(), user, "삭제");
+        deleted.updateStatus(PostingApplicationStatus.DELETED);
+        em.persist(deleted);
+        User otherUser = User.create("01000000001", "encoded", "다른 매니저", "other" + System.nanoTime(),
+            UserGender.GENDER_MALE, "19990101", "other" + System.nanoTime() + "@example.com");
+        em.persist(otherUser);
+        ManagerUser otherManager = ManagerUser.create(otherUser, ManagerUserStatus.ACTIVATED);
+        em.persist(otherManager);
+        clear();
+
+        assertThat(applications.findPostingIdByManagerAndApplicationId(manager, application.getId()))
+            .contains(posting.getId());
+        assertThat(SqlCapture.statements).hasSize(1);
+        assertThat(SqlCapture.statements.getFirst()).doesNotContain("for update");
+        assertThat(SqlCapture.statements.getFirst()).contains("posting_id").doesNotContain("description");
+        assertThat(applications.findPostingIdByManagerAndApplicationId(otherManager, application.getId())).isEmpty();
+        assertThat(applications.findPostingIdByManagerAndApplicationId(manager, deleted.getId())).isEmpty();
+        assertThat(applications.findPostingIdByManagerAndApplicationId(manager, Long.MAX_VALUE)).isEmpty();
+    }
+
+    @Test
+    void applicationListsBatchDaysAcrossSharedAndEmptySchedules() {
+        Posting posting = savePosting(schedule(List.of(DayOfWeek.FRIDAY, DayOfWeek.MONDAY), 9, 18),
+            schedule(List.of(DayOfWeek.SUNDAY), 10, 19), schedule(List.of(), 11, 20));
+        for (PostingSchedule postingSchedule : posting.getSchedules()) {
+            em.persist(PostingApplication.create(postingSchedule, user, "지원"));
+        }
+        em.persist(PostingApplication.create(posting.getSchedules().getFirst(), user, "중복 스케줄 지원"));
+        clear();
+
+        var userRows = applications.getUserPostingApplicationListWithCursor(user, CursorPageRequest.of(null, 10),
+            new UserPostingApplicationListFilterDto());
+        assertThat(userRows).hasSize(4);
+        userRows.forEach(row -> assertDaysLoaded(row.getPostingSchedule()));
+        assertThat(userRows).extracting(row -> row.getPostingSchedule().getWorkingDays())
+            .containsExactlyInAnyOrder(List.of(DayOfWeek.MONDAY, DayOfWeek.FRIDAY),
+                List.of(DayOfWeek.MONDAY, DayOfWeek.FRIDAY), List.of(DayOfWeek.SUNDAY), List.of());
+        assertThat(SqlCapture.statements.stream().filter(sql -> sql.contains("posting_schedule_working_days")).count())
+            .isEqualTo(1);
+        clear();
+
+        var managerRows = applications.getManagerPostingApplicationListWithCursor(manager, CursorPageRequest.of(null, 10),
+            new PostingApplicationListFilterDto());
+        assertThat(managerRows).hasSize(4);
+        managerRows.forEach(row -> assertDaysLoaded(row.getSchedule()));
+        assertThat(managerRows).extracting(row -> row.getSchedule().getWorkingDays())
+            .containsExactlyInAnyOrder(List.of(DayOfWeek.MONDAY, DayOfWeek.FRIDAY),
+                List.of(DayOfWeek.MONDAY, DayOfWeek.FRIDAY), List.of(DayOfWeek.SUNDAY), List.of());
+        assertThat(SqlCapture.statements.stream().filter(sql -> sql.contains("posting_schedule_working_days")).count())
+            .isEqualTo(1);
+    }
+
+    @Test
+    void emptyQueryResultsSkipWorkingDayQueries() {
+        clear();
+        assertThat(postings.getPostingsWithCursor(CursorPageRequest.of(null, 10), new PostingListFilterDto(), user)).isEmpty();
+        assertThat(postings.getWorkspacePostingList(workspace.getId(), user)).isEmpty();
+        assertThat(applications.getUserPostingApplicationListWithCursor(user, CursorPageRequest.of(null, 10),
+            new UserPostingApplicationListFilterDto())).isEmpty();
+        assertThat(applications.getManagerPostingApplicationListWithCursor(manager, CursorPageRequest.of(null, 10),
+            new PostingApplicationListFilterDto())).isEmpty();
+        assertThat(applications.getManagerPostingApplicationDetail(manager, Long.MAX_VALUE)).isEmpty();
+        assertThat(SqlCapture.statements).noneMatch(sql -> sql.contains("posting_schedule_working_days"));
     }
 }

@@ -13,7 +13,6 @@ import com.dreamteam.alter.domain.posting.entity.QPosting;
 import com.dreamteam.alter.domain.posting.entity.QPostingApplication;
 import com.dreamteam.alter.domain.posting.entity.QPostingSchedule;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationQueryRepository;
-import com.dreamteam.alter.domain.posting.port.outbound.PostingScheduleQueryRepository;
 import com.dreamteam.alter.domain.posting.entity.PostingSchedule;
 import com.dreamteam.alter.domain.posting.type.PostingApplicationStatus;
 import com.dreamteam.alter.domain.user.entity.*;
@@ -40,11 +39,41 @@ import com.dreamteam.alter.domain.reputation.type.ReputationType;
 public class PostingApplicationQueryRepositoryImpl implements PostingApplicationQueryRepository {
 
     private final JPAQueryFactory queryFactory;
-    private final PostingScheduleQueryRepository postingScheduleQueryRepository;
 
     private void initializeScheduleWorkingDays(List<PostingSchedule> schedules) {
-        postingScheduleQueryRepository.initializeWorkingDaysByIds(schedules.stream()
-            .map(PostingSchedule::getId).distinct().toList());
+        List<Long> scheduleIds = schedules.stream().map(PostingSchedule::getId).distinct().toList();
+        if (ObjectUtils.isEmpty(scheduleIds)) {
+            return;
+        }
+        QPostingSchedule schedule = QPostingSchedule.postingSchedule;
+        queryFactory.selectFrom(schedule)
+            .leftJoin(schedule.workingDays).fetchJoin()
+            .where(schedule.id.in(scheduleIds))
+            .fetch();
+    }
+
+    @Override
+    public long countAcceptedByPostingId(Long postingId) {
+        QPostingApplication application = QPostingApplication.postingApplication;
+        Long count = queryFactory.select(application.count())
+            .from(application)
+            .where(application.posting.id.eq(postingId), application.status.eq(PostingApplicationStatus.ACCEPTED))
+            .fetchOne();
+        return ObjectUtils.isEmpty(count) ? 0 : count;
+    }
+
+    @Override
+    public Optional<Long> findPostingIdByManagerAndApplicationId(ManagerUser managerUser, Long postingApplicationId) {
+        QPostingApplication application = QPostingApplication.postingApplication;
+        QPosting posting = QPosting.posting;
+        QWorkspace workspace = QWorkspace.workspace;
+        return Optional.ofNullable(queryFactory.select(application.posting.id)
+            .from(application)
+            .join(application.posting, posting)
+            .join(posting.workspace, workspace)
+            .where(workspace.managerUser.eq(managerUser), application.id.eq(postingApplicationId),
+                application.status.ne(PostingApplicationStatus.DELETED))
+            .fetchOne());
     }
 
     @Override
