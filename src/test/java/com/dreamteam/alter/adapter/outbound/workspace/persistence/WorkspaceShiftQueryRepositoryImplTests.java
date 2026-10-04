@@ -18,6 +18,61 @@ class WorkspaceShiftQueryRepositoryImplTests extends WorkspaceShiftPersistenceTe
     private static final LocalDateTime END = LocalDateTime.of(2026, 10, 5, 18, 0);
 
     @Test
+    void findByUserAndWorkspaceAndMonthFrom_isolatesUserWorkspaceMonthAndConfirmedStatus() {
+        User user = saveUser();
+        Workspace workspace = saveWorkspace();
+        WorkspaceWorker previous = saveWorker(workspace, user);
+        previous.resign();
+        workspaceWorkerRepository.save(previous);
+        WorkspaceWorker current = saveWorker(workspace, user);
+        WorkspaceShift history = saveConfirmedShift(previous, START.minusDays(1), END.minusDays(1));
+        WorkspaceShift own = saveConfirmedShift(current, START, END);
+        saveConfirmedShift(saveWorker(workspace, saveUser()), START, END);
+        saveConfirmedShift(saveWorker(saveWorkspace(), user), START, END);
+        saveConfirmedShift(current, START.minusMonths(1), END.minusMonths(1));
+        saveConfirmedShift(current, START.plusMonths(1), END.plusMonths(1));
+        WorkspaceShift deleted = saveConfirmedShift(current, START.plusDays(1), END.plusDays(1));
+        deleted.delete();
+        workspaceShiftRepository.save(deleted);
+        workspaceShiftRepository.save(WorkspaceShift.create(workspace, START, END, "홀", WorkspaceShiftStatus.PLANNED));
+
+        List<WorkspaceShift> result = workspaceShiftQueryRepository.findByUserAndWorkspaceAndMonthFrom(
+            user, workspace, 2026, 10, null);
+
+        assertThat(result).extracting(WorkspaceShift::getId).containsExactly(history.getId(), own.getId());
+        assertThat(result).allSatisfy(shift ->
+            assertThat(shift.getAssignedWorkspaceWorker().getUser().getId()).isEqualTo(user.getId()));
+        assertThat(workspaceShiftQueryRepository.findByUserAndWorkspaceAndMonthFrom(
+            user, workspace, 2026, 13, null)).isEmpty();
+    }
+
+    @Test
+    void findByUserAndWorkspaceAndMonthFrom_preservesSubstituteCandidateTimeBoundary() {
+        User user = saveUser();
+        Workspace workspace = saveWorkspace();
+        WorkspaceWorker worker = saveWorker(workspace, user);
+        saveConfirmedShift(worker, START.minusDays(1), END.minusDays(1));
+        WorkspaceShift candidate = saveConfirmedShift(worker, START, END);
+
+        List<WorkspaceShift> result = workspaceShiftQueryRepository.findByUserAndWorkspaceAndMonthFrom(
+            user, workspace, 2026, 10, START);
+
+        assertThat(result).extracting(WorkspaceShift::getId).containsExactly(candidate.getId());
+    }
+
+    @Test
+    void findByManagerAndDateRange_preservesWholeWorkspaceView() {
+        Workspace workspace = saveWorkspace();
+        WorkspaceShift first = saveConfirmedShift(saveWorker(workspace, saveUser()), START, END);
+        WorkspaceShift second = saveConfirmedShift(saveWorker(workspace, saveUser()), START.plusDays(1), END.plusDays(1));
+
+        List<WorkspaceShift> result = workspaceShiftQueryRepository.findByManagerAndDateRange(
+            workspace.getManagerUser(), workspace.getId(), 2026, 10);
+
+        assertThat(result).extracting(WorkspaceShift::getId).containsExactly(first.getId(), second.getId());
+    }
+
+    @Test
     void hasConflictingSchedule_타_업장의_CONFIRMED_근무와_겹치면_true() {
         User user = saveUser();
         WorkspaceWorker workerA = saveWorker(saveWorkspace(), user);
