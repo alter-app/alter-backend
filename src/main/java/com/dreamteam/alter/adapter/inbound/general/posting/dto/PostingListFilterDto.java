@@ -45,4 +45,7 @@ public class PostingListFilterDto {
 
     @Parameter(description = "급여순 정렬 여부")
     private Boolean payAmountSort;
+
+    @Parameter(description = "검색 키워드 (공고 제목 또는 업장명, 대소문자 무시; 생략하거나 공백만 있으면 전체 조회)")
+    private String searchKeyword;
 }

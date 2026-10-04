@@ -82,7 +82,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
                 lteEndTime(qPostingSchedule, filter.getEndTime()),
-                workingDaysIn(qPostingSchedule, filter.getWorkingDays())
+                workingDaysIn(qPostingSchedule, filter.getWorkingDays()),
+                containsSearchKeyword(qPosting, qWorkspace, filter.getSearchKeyword())
             )
             .fetchOne();
 
@@ -132,7 +133,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
                 lteEndTime(qPostingSchedule, filter.getEndTime()),
-                workingDaysIn(qPostingSchedule, filter.getWorkingDays())
+                workingDaysIn(qPostingSchedule, filter.getWorkingDays()),
+                containsSearchKeyword(qPosting, qWorkspace, filter.getSearchKeyword())
             )
             .groupBy(qPosting.id, qPosting.payAmount, qPosting.createdAt)
             .orderBy(getOrderSpecifiers(qPosting, filter.getPayAmountSort()))
