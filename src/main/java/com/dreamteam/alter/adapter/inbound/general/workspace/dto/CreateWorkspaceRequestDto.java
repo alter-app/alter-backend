@@ -5,11 +5,15 @@ import java.util.List;
 import java.util.Set;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.WorkspaceImageRequestDto;
+import com.dreamteam.alter.common.util.PhoneNumberUtil;
+import com.dreamteam.alter.domain.user.entity.User;
+import com.dreamteam.alter.domain.workspace.command.CreateWorkspaceRequestCommand;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -62,7 +66,10 @@ public class CreateWorkspaceRequestDto {
 	private String businessTypeDetail;
 
 	@NotBlank
-	@Schema(description = "업장 연락처", example = "02-1234-5678")
+	@Size(max = 13)
+	@Pattern(regexp = PhoneNumberUtil.LOCAL_PHONE_NUMBER_PATTERN,
+		message = "연락처는 0으로 시작하는 9~11자리 숫자 또는 2~3자리-3~4자리-4자리 형식이어야 합니다.")
+	@Schema(description = "업장 연락처. 0으로 시작하는 9~11자리 ASCII 숫자 또는 2~3자리-3~4자리-4자리 형식. 접두번호 제한 없이 원문 검증 후 하이픈을 제거하여 숫자로 저장합니다.", example = "02-1234-5678")
 	private String contact;
 
 	@NotBlank
@@ -82,5 +89,11 @@ public class CreateWorkspaceRequestDto {
 
 	public List<String> getOrderedRepresentativeImageFileIds() {
 		return WorkspaceImageRequestDto.toOrderedFileIds(representativeImages);
+	}
+
+	public CreateWorkspaceRequestCommand toCommand(User user) {
+		return new CreateWorkspaceRequestCommand(user, bizName, brn, address, province, district, town,
+			latitude, longitude, businessTypeId, businessTypeDetail, contact, workspaceCertFileId,
+			workspaceOwnIdentityFileId, workspaceWarrantFileId, getOrderedRepresentativeImageFileIds());
 	}
 }
