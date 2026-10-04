@@ -54,10 +54,10 @@ public class ManagerPostingListResponseDto {
     @NotNull
     @Schema(description = "공고 스케줄", example = "[" +
         "{" +
-        "\"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"position\": 3" +
+        "\"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"position\": \"홀서빙\"" +
         "}," +
         "{" +
-        "\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"position\": 2" +
+        "\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"position\": \"설거지\"" +
         "}" +
         "]")
     private List<PostingScheduleResponseDto> schedules;
