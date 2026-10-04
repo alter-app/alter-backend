@@ -57,7 +57,7 @@ class CancelWorkspaceRequestTests {
             File identityFile = mock(File.class);
             given(user.getId()).willReturn(1L);
             given(request.getUser()).willReturn(user);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdForUpdate(1L)).willReturn(Optional.of(request));
             given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
                 .willReturn(Optional.of(identityFile));
 
@@ -77,7 +77,7 @@ class CancelWorkspaceRequestTests {
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             given(user.getId()).willReturn(1L);
             given(request.getUser()).willReturn(user);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdForUpdate(1L)).willReturn(Optional.of(request));
             given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
                 .willReturn(Optional.empty());
 
@@ -94,7 +94,7 @@ class CancelWorkspaceRequestTests {
         void execute_존재하지않음_예외발생() {
             // given
             User user = mock(User.class);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.empty());
+            given(workspaceRequestQueryRepository.findByIdForUpdate(1L)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> cancelWorkspaceRequest.execute(user, 1L))
@@ -113,7 +113,7 @@ class CancelWorkspaceRequestTests {
             given(requester.getId()).willReturn(1L);
             given(owner.getId()).willReturn(2L);
             given(request.getUser()).willReturn(owner);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdForUpdate(1L)).willReturn(Optional.of(request));
 
             // when & then
             assertThatThrownBy(() -> cancelWorkspaceRequest.execute(requester, 1L))
@@ -131,7 +131,7 @@ class CancelWorkspaceRequestTests {
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             given(user.getId()).willReturn(1L);
             given(request.getUser()).willReturn(user);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdForUpdate(1L)).willReturn(Optional.of(request));
             willThrow(new CustomException(ErrorCode.CONFLICT, "취소할 수 없는 상태입니다.")).given(request).cancel();
 
             // when & then
