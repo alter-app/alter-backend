@@ -60,7 +60,7 @@ public class ManagerGetPostingList implements ManagerGetPostingListUseCase {
         return CursorPaginatedApiResponse.of(
             pageResponseDto,
             postings.stream()
-                .map(posting -> ManagerPostingListResponseDto.from(posting,
+                .map(posting -> ManagerPostingListResponseDto.of(posting,
                     acceptedCounts.getOrDefault(posting.getId(), 0L)))
                 .toList()
         );
