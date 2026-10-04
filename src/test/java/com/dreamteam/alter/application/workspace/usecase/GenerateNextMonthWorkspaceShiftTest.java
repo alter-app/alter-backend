@@ -3,6 +3,8 @@ package com.dreamteam.alter.application.workspace.usecase;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
@@ -13,8 +15,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,11 +33,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerScheduleQueryRepository;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GenerateNextMonthWorkspaceShift 테스트")
@@ -108,7 +115,7 @@ class GenerateNextMonthWorkspaceShiftTest {
         when(workspaceShiftQueryRepository.findConfirmedByUserIdsAndDateRange(anyList(), any(), any()))
             .thenReturn(List.of());
         when(generateNextMonthWorkspaceShiftTx.execute(eq(workspace), eq(List.of(schedule)), eq(YearMonth.of(2025, 2)), anyMap()))
-            .thenReturn(new GenerateNextMonthWorkspaceShiftTx.GenerationResult(4, 0));
+            .thenReturn(new GenerateNextMonthWorkspaceShiftTx.GenerationResult(List.of(), 0));
 
         generateNextMonthWorkspaceShift.execute();
 
@@ -135,7 +142,7 @@ class GenerateNextMonthWorkspaceShiftTest {
         when(generateNextMonthWorkspaceShiftTx.execute(eq(workspace1), eq(List.of(schedule1)), eq(YearMonth.of(2025, 2)), anyMap()))
             .thenThrow(new RuntimeException("워크스페이스1 실패"));
         when(generateNextMonthWorkspaceShiftTx.execute(eq(workspace2), eq(List.of(schedule2)), eq(YearMonth.of(2025, 2)), anyMap()))
-            .thenReturn(new GenerateNextMonthWorkspaceShiftTx.GenerationResult(4, 0));
+            .thenReturn(new GenerateNextMonthWorkspaceShiftTx.GenerationResult(List.of(), 0));
 
         generateNextMonthWorkspaceShift.execute();
 
@@ -143,6 +150,44 @@ class GenerateNextMonthWorkspaceShiftTest {
             .execute(eq(workspace1), eq(List.of(schedule1)), eq(YearMonth.of(2025, 2)), anyMap());
         verify(generateNextMonthWorkspaceShiftTx, times(1))
             .execute(eq(workspace2), eq(List.of(schedule2)), eq(YearMonth.of(2025, 2)), anyMap());
+    }
+
+    @Test
+    @DisplayName("기존 근무는 사용자 id로 묶이고, 앞 업장에서 생성한 근무는 뒤 업장 호출 전에 그 맵에 합쳐진다")
+    void execute_mergesCreatedShifts_beforeNextWorkspace() {
+        Workspace workspace1 = createMockWorkspace(1L);
+        Workspace workspace2 = createMockWorkspace(2L);
+        WorkspaceWorker worker1 = createMockWorker(workspace1, 10L);
+        WorkspaceWorker worker2 = createMockWorker(workspace2, 10L);
+        WorkspaceWorkerSchedule schedule1 = createMockSchedule(worker1);
+        WorkspaceWorkerSchedule schedule2 = createMockSchedule(worker2);
+        WorkspaceShift existingElsewhere = WorkspaceShift.create(
+            mock(Workspace.class), LocalDateTime.of(2025, 2, 4, 9, 0), LocalDateTime.of(2025, 2, 4, 18, 0), "홀", WorkspaceShiftStatus.CONFIRMED);
+        existingElsewhere.assignWorker(worker2);
+        WorkspaceShift created = WorkspaceShift.create(
+            workspace1, LocalDateTime.of(2025, 2, 3, 9, 0), LocalDateTime.of(2025, 2, 3, 18, 0), "고정 근무", WorkspaceShiftStatus.CONFIRMED);
+        created.assignWorker(worker1);
+
+        when(workspaceQueryRepository.findAllForNextMonthShiftGeneration(25, false))
+            .thenReturn(List.of(workspace1, workspace2));
+        when(workspaceWorkerScheduleQueryRepository.findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List.of(1L, 2L)))
+            .thenReturn(List.of(schedule1, schedule2));
+        when(workspaceShiftQueryRepository.findConfirmedByUserIdsAndDateRange(eq(List.of(10L)), any(), any()))
+            .thenReturn(List.of(existingElsewhere));
+        when(generateNextMonthWorkspaceShiftTx.execute(eq(workspace1), eq(List.of(schedule1)), eq(YearMonth.of(2025, 2)), anyMap()))
+            .thenReturn(new GenerateNextMonthWorkspaceShiftTx.GenerationResult(List.of(created), 0));
+        Map<Long, List<WorkspaceShift>> seenByWorkspace2 = new HashMap<>();
+        doAnswer(invocation -> {
+            // 호출 시점의 내용을 복사해 둔다. 참조만 담으면 호출 뒤에 합쳐진 근무도 보이게 된다.
+            invocation.<Map<Long, List<WorkspaceShift>>>getArgument(3)
+                .forEach((userId, shifts) -> seenByWorkspace2.put(userId, List.copyOf(shifts)));
+            return new GenerateNextMonthWorkspaceShiftTx.GenerationResult(List.of(), 0);
+        }).when(generateNextMonthWorkspaceShiftTx)
+            .execute(eq(workspace2), eq(List.of(schedule2)), eq(YearMonth.of(2025, 2)), anyMap());
+
+        generateNextMonthWorkspaceShift.execute();
+
+        assertThat(seenByWorkspace2.get(10L)).containsExactlyInAnyOrder(existingElsewhere, created);
     }
 
     @Test

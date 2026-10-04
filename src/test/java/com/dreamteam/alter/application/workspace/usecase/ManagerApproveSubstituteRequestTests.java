@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -43,6 +44,7 @@ import static org.mockito.Mockito.when;
 class ManagerApproveSubstituteRequestTests {
 
     private static final Long REQUEST_ID = 1L;
+    private static final Long SHIFT_ID = 30L;
     private static final Long ACCEPTED_WORKER_ID = 20L;
     private static final LocalDateTime START = LocalDateTime.of(2026, 10, 5, 9, 0);
     private static final LocalDateTime END = LocalDateTime.of(2026, 10, 5, 18, 0);
@@ -72,7 +74,7 @@ class ManagerApproveSubstituteRequestTests {
 
         when(substituteRequestQueryRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
         when(workspaceWorkerQueryRepository.findById(ACCEPTED_WORKER_ID)).thenReturn(Optional.of(acceptedWorker));
-        when(workspaceShiftQueryRepository.hasConflictingSchedule(acceptedWorker, START, END, shift.getId())).thenReturn(true);
+        when(workspaceShiftQueryRepository.hasConflictingSchedule(acceptedWorker, START, END, SHIFT_ID)).thenReturn(true);
 
         assertThatThrownBy(() -> managerApproveSubstituteRequest.execute(actorOf(managerUser), REQUEST_ID, new ApproveSubstituteRequestDto("ok")))
             .isInstanceOf(CustomException.class)
@@ -93,7 +95,7 @@ class ManagerApproveSubstituteRequestTests {
 
         when(substituteRequestQueryRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
         when(workspaceWorkerQueryRepository.findById(ACCEPTED_WORKER_ID)).thenReturn(Optional.of(acceptedWorker));
-        when(workspaceShiftQueryRepository.hasConflictingSchedule(acceptedWorker, START, END, shift.getId())).thenReturn(false);
+        when(workspaceShiftQueryRepository.hasConflictingSchedule(acceptedWorker, START, END, SHIFT_ID)).thenReturn(false);
 
         managerApproveSubstituteRequest.execute(actorOf(managerUser), REQUEST_ID, new ApproveSubstituteRequestDto("ok"));
 
@@ -104,7 +106,9 @@ class ManagerApproveSubstituteRequestTests {
     private WorkspaceShift createShift(ManagerUser managerUser) {
         Workspace workspace = mock(Workspace.class);
         when(workspace.getManagerUser()).thenReturn(managerUser);
-        return WorkspaceShift.create(workspace, START, END, "홀", WorkspaceShiftStatus.CONFIRMED);
+        WorkspaceShift shift = WorkspaceShift.create(workspace, START, END, "홀", WorkspaceShiftStatus.CONFIRMED);
+        ReflectionTestUtils.setField(shift, "id", SHIFT_ID);
+        return shift;
     }
 
     private SubstituteRequest createAcceptedRequest(WorkspaceShift shift) {

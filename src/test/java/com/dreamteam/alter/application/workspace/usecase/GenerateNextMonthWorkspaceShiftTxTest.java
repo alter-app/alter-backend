@@ -150,32 +150,40 @@ class GenerateNextMonthWorkspaceShiftTxTest {
     }
 
     @Test
-    @DisplayName("같은 배치에서 앞 업장에 생성한 근무와 겹치는 다른 업장의 고정 근무는 건너뛴다")
-    void execute_skipsCrossWorkspaceConflict_withinSameBatch() {
-        Workspace workspaceA = createMockWorkspace(1L);
-        Workspace workspaceB = createMockWorkspace(2L);
-        User sameUser = mock(User.class);
-        when(sameUser.getId()).thenReturn(99L);
-        WorkspaceWorker workerA = mock(WorkspaceWorker.class);
-        WorkspaceWorker workerB = mock(WorkspaceWorker.class);
-        when(workerA.getUser()).thenReturn(sameUser);
-        when(workerB.getUser()).thenReturn(sameUser);
-        WorkspaceWorkerSchedule scheduleA = createMockSchedule(
-            workerA, DayOfWeek.MONDAY, LocalTime.of(9, 0), DayOfWeek.MONDAY, LocalTime.of(18, 0)
+    @DisplayName("생성한 근무는 결과로 돌려주고 전달받은 기존 근무 맵은 바꾸지 않는다")
+    void execute_returnsCreatedShifts_withoutMutatingExistingMap() {
+        Workspace workspace = createMockWorkspace(1L);
+        WorkspaceWorker worker = createMockWorker(workspace, 10L);
+        WorkspaceWorkerSchedule schedule = createMockSchedule(
+            worker, DayOfWeek.MONDAY, LocalTime.of(9, 0), DayOfWeek.MONDAY, LocalTime.of(18, 0)
         );
-        WorkspaceWorkerSchedule scheduleB = createMockSchedule(
-            workerB, DayOfWeek.MONDAY, LocalTime.of(13, 0), DayOfWeek.MONDAY, LocalTime.of(22, 0)
+        Map<Long, List<WorkspaceShift>> existing = Map.of();
+
+        GenerateNextMonthWorkspaceShiftTx.GenerationResult result =
+            generateNextMonthWorkspaceShiftTx.execute(workspace, List.of(schedule), YearMonth.of(2025, 2), existing);
+
+        assertThat(result.createdShifts()).hasSize(4)
+            .allSatisfy(shift -> assertThat(shift.getAssignedWorkspaceWorker()).isEqualTo(worker));
+        assertThat(existing).isEmpty();
+    }
+
+    @Test
+    @DisplayName("같은 업장 안에서 같은 사용자의 두 고정 스케줄이 겹치면 뒤 스케줄 회차를 건너뛴다")
+    void execute_skipsConflict_betweenSchedulesOfSameUser_inSameCall() {
+        Workspace workspace = createMockWorkspace(1L);
+        WorkspaceWorker worker = createMockWorker(workspace, 10L);
+        WorkspaceWorkerSchedule morning = createMockSchedule(
+            worker, DayOfWeek.MONDAY, LocalTime.of(9, 0), DayOfWeek.MONDAY, LocalTime.of(18, 0)
         );
-        Map<Long, List<WorkspaceShift>> existing = new HashMap<>();
+        WorkspaceWorkerSchedule afternoon = createMockSchedule(
+            worker, DayOfWeek.MONDAY, LocalTime.of(13, 0), DayOfWeek.MONDAY, LocalTime.of(22, 0)
+        );
 
-        GenerateNextMonthWorkspaceShiftTx.GenerationResult resultA =
-            generateNextMonthWorkspaceShiftTx.execute(workspaceA, List.of(scheduleA), YearMonth.of(2025, 2), existing);
-        GenerateNextMonthWorkspaceShiftTx.GenerationResult resultB =
-            generateNextMonthWorkspaceShiftTx.execute(workspaceB, List.of(scheduleB), YearMonth.of(2025, 2), existing);
+        GenerateNextMonthWorkspaceShiftTx.GenerationResult result = generateNextMonthWorkspaceShiftTx.execute(
+            workspace, List.of(morning, afternoon), YearMonth.of(2025, 2), new HashMap<>());
 
-        assertThat(resultA.created()).isEqualTo(4);
-        assertThat(resultB.created()).isEqualTo(0);
-        assertThat(resultB.skipped()).isEqualTo(4);
+        assertThat(result.created()).isEqualTo(4);
+        assertThat(result.skipped()).isEqualTo(4);
     }
 
     private Workspace createMockWorkspace(Long id) {

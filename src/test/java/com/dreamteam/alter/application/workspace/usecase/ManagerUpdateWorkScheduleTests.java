@@ -23,7 +23,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -87,8 +86,24 @@ class ManagerUpdateWorkScheduleTests {
 
         managerUpdateWorkSchedule.execute(actorOf(managerUser), SHIFT_ID, request());
 
-        verify(workspaceShiftQueryRepository, never()).hasConflictingSchedule(any(), any(), any(), anyLong());
+        verify(workspaceShiftQueryRepository, never()).hasConflictingSchedule(any(), any(), any(), any());
         assertThat(shift.getStartDateTime()).isEqualTo(NEW_START);
+    }
+
+    @Test
+    @DisplayName("시작이 종료보다 늦거나 같은 역전 구간으로 수정하면 예외가 발생하고 시간이 바뀌지 않는다")
+    void execute_역전_구간_예외() {
+        ManagerUser managerUser = mock(ManagerUser.class);
+        WorkspaceShift shift = createShift(managerUser);
+        LocalDateTime before = shift.getStartDateTime();
+
+        when(workspaceShiftQueryRepository.findById(SHIFT_ID)).thenReturn(Optional.of(shift));
+
+        assertThatThrownBy(() -> managerUpdateWorkSchedule.execute(
+                actorOf(managerUser), SHIFT_ID, new UpdateWorkScheduleRequestDto(NEW_END, NEW_START, "홀")))
+            .isInstanceOf(CustomException.class)
+            .extracting("errorCode").isEqualTo(ErrorCode.ILLEGAL_ARGUMENT);
+        assertThat(shift.getStartDateTime()).isEqualTo(before);
     }
 
     private WorkspaceShift createShift(ManagerUser managerUser) {
