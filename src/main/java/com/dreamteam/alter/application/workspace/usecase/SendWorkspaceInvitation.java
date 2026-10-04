@@ -12,18 +12,22 @@ import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
+import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableDetail;
 import com.dreamteam.alter.domain.workspace.exception.InvitationUnavailableException;
 import com.dreamteam.alter.domain.workspace.port.inbound.SendWorkspaceInvitationUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessInvitationQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.BusinessInvitationRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
+import com.dreamteam.alter.domain.workspace.type.InvitationUnavailableReason;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
+import com.dreamteam.alter.domain.user.type.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +49,9 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
 
     @Override
     public void execute(ManagerActor actor, Long workspaceId, SendWorkspaceInvitationRequestDto request) {
-        Workspace workspace = workspaceQueryRepository.findById(workspaceId)
+        LocalDateTime now = LocalDateTime.now();
+        // 같은 업장의 초대 발송을 직렬화해 조회·저장 사이의 중복 초대 경쟁을 막는다. V15 부분 유니크 인덱스는 안전망.
+        Workspace workspace = workspaceQueryRepository.findByIdWithPessimisticLock(workspaceId)
             .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
 
         if (!workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser())) {
@@ -54,37 +60,65 @@ public class SendWorkspaceInvitation implements SendWorkspaceInvitationUseCase {
 
         Set<String> phoneNumbers = request.getPhoneNumbers();
         Map<String, User> contactToUser = userQueryRepository.findByContactIn(phoneNumbers)
-            .stream().collect(Collectors.toMap(User::getContact, Function.identity()));
+            .stream().collect(Collectors.toMap(User::getContact, Function.identity(),
+                (a, b) -> a.getStatus() == UserStatus.ACTIVE ? a : b));
 
         Set<Long> registeredUserIds = contactToUser.values().stream()
+            .filter(user -> user.getStatus() == UserStatus.ACTIVE)
             .map(User::getId)
             .collect(Collectors.toSet());
 
         Set<Long> activeWorkerUserIds = workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(workspaceId, registeredUserIds);
-        Set<Long> pendingInvitedUserIds = businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(workspaceId, registeredUserIds);
+        Set<Long> pendingInvitedUserIds = businessInvitationQueryRepository.findPendingInvitedUserIdsByUserIds(workspaceId, registeredUserIds, now);
 
-        List<String> unavailablePhoneNumbers = new ArrayList<>();
+        List<InvitationUnavailableDetail> details = new ArrayList<>();
         List<BusinessInvitation> invitationsToSave = new ArrayList<>();
 
         for (String phoneNumber : phoneNumbers) {
             User invitedUser = contactToUser.get(phoneNumber);
 
-            if (invitedUser == null
-                || activeWorkerUserIds.contains(invitedUser.getId())
-                || pendingInvitedUserIds.contains(invitedUser.getId())) {
-                unavailablePhoneNumbers.add(phoneNumber);
+            if (invitedUser == null) {
+                details.add(new InvitationUnavailableDetail(phoneNumber, InvitationUnavailableReason.NOT_REGISTERED));
+                continue;
+            }
+            if (invitedUser.getStatus() != UserStatus.ACTIVE) {
+                details.add(new InvitationUnavailableDetail(phoneNumber, InvitationUnavailableReason.ACCOUNT_UNAVAILABLE));
+                continue;
+            }
+            if (activeWorkerUserIds.contains(invitedUser.getId())) {
+                details.add(new InvitationUnavailableDetail(phoneNumber, InvitationUnavailableReason.ALREADY_WORKING));
+                continue;
+            }
+            if (pendingInvitedUserIds.contains(invitedUser.getId())) {
+                details.add(new InvitationUnavailableDetail(phoneNumber, InvitationUnavailableReason.ALREADY_INVITED));
                 continue;
             }
 
             invitationsToSave.add(BusinessInvitation.create(workspace, invitedUser, actor.getManagerUser()));
         }
 
-        if (!unavailablePhoneNumbers.isEmpty()) {
-            throw new InvitationUnavailableException(unavailablePhoneNumbers);
+        if (!details.isEmpty()) {
+            throw new InvitationUnavailableException(details);
         }
+
+        expireStalePendingInvitations(workspaceId, invitationsToSave, now);
 
         businessInvitationRepository.saveAll(invitationsToSave);
         invitationsToSave.forEach(inv -> sendInvitationNotification(workspace, inv.getInvitedUser()));
+    }
+
+    // 만료된 PENDING 은 부분 유니크 인덱스(status = PENDING)에 걸리므로 새 초대를 insert 하기 전에 EXPIRED 로 바꿔 flush 한다.
+    private void expireStalePendingInvitations(Long workspaceId, List<BusinessInvitation> invitationsToSave, LocalDateTime now) {
+        Set<Long> userIds = invitationsToSave.stream()
+            .map(inv -> inv.getInvitedUser().getId())
+            .collect(Collectors.toSet());
+        List<BusinessInvitation> staleInvitations =
+            businessInvitationQueryRepository.findExpiredPendingByWorkspaceAndUserIds(workspaceId, userIds, now);
+        if (staleInvitations.isEmpty()) {
+            return;
+        }
+        staleInvitations.forEach(BusinessInvitation::expire);
+        businessInvitationRepository.saveAll(staleInvitations);
     }
 
     private void sendInvitationNotification(Workspace workspace, User invitedUser) {

@@ -20,6 +20,7 @@ import java.util.Set;
 
 public interface WorkspaceQueryRepository {
     Optional<Workspace> findById(Long id);
+    Optional<Workspace> findByIdWithPessimisticLock(Long id);
     Optional<Workspace> findByIdAndManagerUser(Long id, ManagerUser managerUser);
     List<ManagerWorkspaceListResponse> getManagerWorkspaceList(ManagerUser managerUser);
 

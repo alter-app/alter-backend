@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +38,7 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
     }
 
     @Override
-    public Set<Long> findPendingInvitedUserIdsByUserIds(Long workspaceId, Set<Long> userIds) {
+    public Set<Long> findPendingInvitedUserIdsByUserIds(Long workspaceId, Set<Long> userIds, LocalDateTime now) {
         QBusinessInvitation qBusinessInvitation = QBusinessInvitation.businessInvitation;
 
         return new HashSet<>(queryFactory
@@ -45,14 +46,27 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
             .from(qBusinessInvitation)
             .where(
                 qBusinessInvitation.workspace.id.eq(workspaceId),
-                qBusinessInvitation.status.eq(BusinessInvitationStatus.PENDING),
-                qBusinessInvitation.invitedUser.id.in(userIds)
+                qBusinessInvitation.invitedUser.id.in(userIds),
+                pendingAndValid(qBusinessInvitation, now)
             )
             .fetch());
     }
 
     @Override
-    public long countByUser(User user, MyInvitationListFilterDto filter) {
+    public List<BusinessInvitation> findExpiredPendingByWorkspaceAndUserIds(Long workspaceId, Set<Long> userIds, LocalDateTime now) {
+        QBusinessInvitation qBusinessInvitation = QBusinessInvitation.businessInvitation;
+
+        return queryFactory.selectFrom(qBusinessInvitation)
+            .where(
+                qBusinessInvitation.workspace.id.eq(workspaceId),
+                qBusinessInvitation.invitedUser.id.in(userIds),
+                pendingAndExpired(qBusinessInvitation, now)
+            )
+            .fetch();
+    }
+
+    @Override
+    public long countByUser(User user, MyInvitationListFilterDto filter, LocalDateTime now) {
         QBusinessInvitation q = QBusinessInvitation.businessInvitation;
 
         Long count = queryFactory
@@ -60,7 +74,7 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
             .from(q)
             .where(
                 q.invitedUser.eq(user),
-                statusCondition(q, filter),
+                statusCondition(q, filter, now),
                 dateFromCondition(q, filter),
                 dateToCondition(q, filter)
             )
@@ -70,14 +84,14 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
     }
 
     @Override
-    public List<BusinessInvitation> findByUserWithCursor(CursorPageRequest<CursorDto> pageRequest, User user, MyInvitationListFilterDto filter) {
+    public List<BusinessInvitation> findByUserWithCursor(CursorPageRequest<CursorDto> pageRequest, User user, MyInvitationListFilterDto filter, LocalDateTime now) {
         QBusinessInvitation q = QBusinessInvitation.businessInvitation;
 
         return queryFactory.selectFrom(q)
             .join(q.workspace).fetchJoin()
             .where(
                 q.invitedUser.eq(user),
-                statusCondition(q, filter),
+                statusCondition(q, filter, now),
                 dateFromCondition(q, filter),
                 dateToCondition(q, filter),
                 cursorCondition(q, pageRequest.cursor())
@@ -87,11 +101,26 @@ public class BusinessInvitationQueryRepositoryImpl implements BusinessInvitation
             .fetch();
     }
 
-    private BooleanExpression statusCondition(QBusinessInvitation q, MyInvitationListFilterDto filter) {
-        if (filter == null || filter.getStatus() == null) {
-            return null;
+    private BooleanExpression pendingAndValid(QBusinessInvitation q, LocalDateTime now) {
+        return q.status.eq(BusinessInvitationStatus.PENDING).and(q.expiresAt.gt(now));
+    }
+
+    private BooleanExpression pendingAndExpired(QBusinessInvitation q, LocalDateTime now) {
+        return q.status.eq(BusinessInvitationStatus.PENDING).and(q.expiresAt.loe(now));
+    }
+
+    private BooleanExpression statusCondition(QBusinessInvitation q, MyInvitationListFilterDto filter, LocalDateTime now) {
+        BusinessInvitationStatus status = filter == null ? null : filter.getStatus();
+        if (status == null) {
+            return q.status.ne(BusinessInvitationStatus.EXPIRED).and(pendingAndExpired(q, now).not());
         }
-        return q.status.eq(filter.getStatus());
+        if (BusinessInvitationStatus.PENDING.equals(status)) {
+            return pendingAndValid(q, now);
+        }
+        if (BusinessInvitationStatus.EXPIRED.equals(status)) {
+            return q.status.eq(BusinessInvitationStatus.EXPIRED).or(pendingAndExpired(q, now));
+        }
+        return q.status.eq(status);
     }
 
     private BooleanExpression dateFromCondition(QBusinessInvitation q, MyInvitationListFilterDto filter) {

@@ -82,6 +82,14 @@ public class BusinessInvitation {
     }
 
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiresAt);
+        return isExpiredAt(LocalDateTime.now());
+    }
+
+    public BusinessInvitationStatus getEffectiveStatus(LocalDateTime now) {
+        return BusinessInvitationStatus.PENDING.equals(status) && isExpiredAt(now) ? BusinessInvitationStatus.EXPIRED : status;
+    }
+
+    private boolean isExpiredAt(LocalDateTime now) {
+        return !expiresAt.isAfter(now);
     }
 }

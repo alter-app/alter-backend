@@ -45,6 +45,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 
 @Repository
@@ -60,6 +61,18 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             queryFactory
                 .selectFrom(qWorkspace)
                 .where(qWorkspace.id.eq(id))
+                .fetchOne()
+        );
+    }
+
+    @Override
+    public Optional<Workspace> findByIdWithPessimisticLock(Long id) {
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        return Optional.ofNullable(
+            queryFactory
+                .selectFrom(qWorkspace)
+                .where(qWorkspace.id.eq(id))
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
                 .fetchOne()
         );
     }
@@ -156,7 +169,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .where(
                 qWorkspace.managerUser.eq(managerUser),
                 qWorkspace.id.eq(workspaceId),
-                eqWorkerStatus(qWorkspaceWorker, filter.getStatus()),
+                workerStatusCondition(qWorkspaceWorker, filter),
                 likeWorkerName(qUser, filter.getName()),
                 gteEmployedAt(qWorkspaceWorker, filter.getEmployedAtFrom()),
                 lteEmployedAt(qWorkspaceWorker, filter.getEmployedAtTo()),
@@ -215,7 +228,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .where(
                 qWorkspace.managerUser.eq(managerUser),
                 qWorkspace.id.eq(workspaceId),
-                eqWorkerStatus(qWorkspaceWorker, filter.getStatus()),
+                workerStatusCondition(qWorkspaceWorker, filter),
                 likeWorkerName(qUser, filter.getName()),
                 gteEmployedAt(qWorkspaceWorker, filter.getEmployedAtFrom()),
                 lteEmployedAt(qWorkspaceWorker, filter.getEmployedAtTo()),
@@ -673,8 +686,12 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         return result != null;
     }
 
-    private BooleanExpression eqWorkerStatus(QWorkspaceWorker qWorkspaceWorker, WorkspaceWorkerStatus status) {
-        return status != null ? qWorkspaceWorker.status.eq(status) : null;
+    private BooleanExpression workerStatusCondition(QWorkspaceWorker qWorkspaceWorker, ManagerWorkspaceWorkerListFilterDto filter) {
+        WorkspaceWorkerStatus status = filter.getStatus();
+        if (status == null && (filter.getResignedAtFrom() != null || filter.getResignedAtTo() != null)) {
+            return null;
+        }
+        return qWorkspaceWorker.status.eq(ObjectUtils.defaultIfNull(status, WorkspaceWorkerStatus.ACTIVATED));
     }
 
     private BooleanExpression likeWorkerName(QUser qUser, String name) {

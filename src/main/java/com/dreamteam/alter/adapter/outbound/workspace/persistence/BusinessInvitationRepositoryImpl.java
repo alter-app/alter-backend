@@ -20,6 +20,6 @@ public class BusinessInvitationRepositoryImpl implements BusinessInvitationRepos
 
     @Override
     public void saveAll(List<BusinessInvitation> invitations) {
-        businessInvitationJpaRepository.saveAll(invitations);
+        businessInvitationJpaRepository.saveAllAndFlush(invitations);
     }
 }

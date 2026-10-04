@@ -133,8 +133,7 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
         QUser qUser = QUser.user;
         return queryFactory.selectFrom(qUser)
             .where(
-                qUser.contact.in(contacts),
-                qUser.status.eq(UserStatus.ACTIVE)
+                qUser.contact.in(contacts)
             )
             .fetch();
     }

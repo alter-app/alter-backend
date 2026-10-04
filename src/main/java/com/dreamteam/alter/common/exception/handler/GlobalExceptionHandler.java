@@ -2,6 +2,7 @@ package com.dreamteam.alter.common.exception.handler;
 
 import com.dreamteam.alter.adapter.inbound.common.dto.ErrorResponse;
 import com.dreamteam.alter.adapter.inbound.general.auth.dto.SignupSessionResponseDto;
+import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.InvitationUnavailableResponseDto;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.exception.FieldErrorDetail;
@@ -37,9 +38,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvitationUnavailableException.class)
-    public ResponseEntity<ErrorResponse<List<String>>> handleInvitationUnavailableException(InvitationUnavailableException e) {
+    public ResponseEntity<ErrorResponse<List<InvitationUnavailableResponseDto>>> handleInvitationUnavailableException(InvitationUnavailableException e) {
         return ResponseEntity.status(e.getErrorCode().getStatus())
-            .body(ErrorResponse.of(e.getErrorCode(), e.getMessage(), e.getUnavailablePhoneNumbers()));
+            .body(ErrorResponse.of(e.getErrorCode(), e.getMessage(), e.getDetails().stream().map(InvitationUnavailableResponseDto::from).toList()));
     }
 
     @ExceptionHandler(CustomException.class)

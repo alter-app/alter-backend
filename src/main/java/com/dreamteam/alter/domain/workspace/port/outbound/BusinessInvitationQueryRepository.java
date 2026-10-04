@@ -6,13 +6,15 @@ import com.dreamteam.alter.adapter.inbound.general.workspace.dto.MyInvitationLis
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.BusinessInvitation;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 public interface BusinessInvitationQueryRepository {
     Optional<BusinessInvitation> findById(Long id);
-    Set<Long> findPendingInvitedUserIdsByUserIds(Long workspaceId, Set<Long> userIds);
-    long countByUser(User user, MyInvitationListFilterDto filter);
-    List<BusinessInvitation> findByUserWithCursor(CursorPageRequest<CursorDto> pageRequest, User user, MyInvitationListFilterDto filter);
+    Set<Long> findPendingInvitedUserIdsByUserIds(Long workspaceId, Set<Long> userIds, LocalDateTime now);
+    List<BusinessInvitation> findExpiredPendingByWorkspaceAndUserIds(Long workspaceId, Set<Long> userIds, LocalDateTime now);
+    long countByUser(User user, MyInvitationListFilterDto filter, LocalDateTime now);
+    List<BusinessInvitation> findByUserWithCursor(CursorPageRequest<CursorDto> pageRequest, User user, MyInvitationListFilterDto filter, LocalDateTime now);
 }
