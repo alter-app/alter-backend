@@ -6,6 +6,7 @@ import com.dreamteam.alter.adapter.inbound.common.dto.CursorPaginatedApiResponse
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.*;
 import com.dreamteam.alter.application.aop.AppActionContext;
 import com.dreamteam.alter.domain.user.context.AppActor;
+import com.dreamteam.alter.domain.workspace.command.GetReceivedSubstituteRequestDetailCommand;
 import com.dreamteam.alter.domain.workspace.port.inbound.*;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
 import jakarta.annotation.Resource;
@@ -39,6 +40,9 @@ public class UserSubstituteRequestController implements UserSubstituteRequestCon
 
     @Resource(name = "getSentSubstituteRequestDetail")
     private final GetSentSubstituteRequestDetailUseCase getSentSubstituteRequestDetailUseCase;
+
+    @Resource(name = "getReceivedSubstituteRequestDetail")
+    private final GetReceivedSubstituteRequestDetailUseCase getReceivedSubstituteRequestDetailUseCase;
 
     @Resource(name = "acceptSubstituteRequest")
     private final AcceptSubstituteRequestUseCase acceptSubstituteRequestUseCase;
@@ -84,6 +88,19 @@ public class UserSubstituteRequestController implements UserSubstituteRequestCon
         AppActor actor = AppActionContext.getInstance().getActor();
         return ResponseEntity.ok(CommonApiResponse.of(
             getReceivedSubstituteRequestListUseCase.execute(actor, filter, pageRequest)
+        ));
+    }
+
+    @Override
+    @GetMapping("/users/me/substitute-requests/received/{requestId}")
+    public ResponseEntity<CommonApiResponse<ReceivedSubstituteRequestDetailResponseDto>> getReceivedRequestDetail(
+        @PathVariable Long requestId
+    ) {
+        AppActor actor = AppActionContext.getInstance().getActor();
+        return ResponseEntity.ok(CommonApiResponse.of(
+            ReceivedSubstituteRequestDetailResponseDto.from(
+                getReceivedSubstituteRequestDetailUseCase.execute(
+                    new GetReceivedSubstituteRequestDetailCommand(actor.getUser(), requestId)))
         ));
     }
 
