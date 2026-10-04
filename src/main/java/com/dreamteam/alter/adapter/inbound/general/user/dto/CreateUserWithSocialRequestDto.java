@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -48,8 +49,9 @@ public class CreateUserWithSocialRequestDto {
     private String name;
 
     @NotBlank
-    @Size(max = 64)
-    @Schema(description = "닉네임", example = "유땡땡")
+    @Size(min = 2, max = 10)
+    @Pattern(regexp = "^[가-힣a-zA-Z0-9]+$", message = "닉네임은 한글, 영문, 숫자만 사용할 수 있습니다")
+    @Schema(description = "닉네임 (2~10자, 한글·영문·숫자)", example = "유땡땡")
     private String nickname;
 
     @NotNull
