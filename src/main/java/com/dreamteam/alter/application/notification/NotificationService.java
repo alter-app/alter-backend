@@ -41,6 +41,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class NotificationService {
 
+    private static final int FCM_BATCH_SIZE = 500;
+
     private final FcmClient fcmClient;
     private final UserFcmDeviceTokenRepository userFCMDeviceTokenRepository;
     private final UserFcmDeviceTokenQueryRepository userFCMDeviceTokenQueryRepository;
@@ -88,15 +90,19 @@ public class NotificationService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendNotificationAfterCommit(FcmNotificationRequestDto request) {
-        sendNotification(request);
+        sendNotification(request, request.getType() == NotificationType.POSTING_APPLICATION);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendMultipleNotificationsAfterCommit(FcmBatchNotificationRequestDto request) {
-        sendMultipleNotifications(request);
+        sendMultipleNotifications(request, request.getType() == NotificationType.POSTING_APPLICATION);
     }
 
     public void sendNotification(FcmNotificationRequestDto request) {
+        sendNotification(request, false);
+    }
+
+    private void sendNotification(FcmNotificationRequestDto request, boolean preserveOnFcmFailure) {
         // 1. 사용자 조회
         User user = userQueryRepository.findById(request.getTargetUserId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -109,10 +115,14 @@ public class NotificationService {
         saveNotification(user, request.getScope(), request.getType(), deviceTokenString, request.getTitle(), request.getBody());
 
         // 4. FCM 발송
-        sendFcmNotification(user, request.getType(), request.getTitle(), request.getBody(), true);
+        sendFcmNotification(user, deviceTokenOpt, request.getType(), request.getTitle(), request.getBody(), preserveOnFcmFailure);
     }
 
     public void sendMultipleNotifications(FcmBatchNotificationRequestDto request) {
+        sendMultipleNotifications(request, false);
+    }
+
+    private void sendMultipleNotifications(FcmBatchNotificationRequestDto request, boolean preserveOnFcmFailure) {
         // 1. 사용자들 조회
         List<User> users = userQueryRepository.findAllById(request.getTargetUserIds());
 
@@ -144,21 +154,21 @@ public class NotificationService {
             .toList();
         notificationRepository.saveAll(notifications);
 
-        // 4. 수신 동의 기반 필터링 후 FCM 배치 발송 (실패 시 예외 전파)
+        // 4. 수신 동의를 통과한 토큰을 FCM 제한에 맞춰 발송
         List<FcmDeviceToken> eligibleTokens = filterEligibleTokens(users, deviceTokens, request.getType());
-        dispatchBatch(eligibleTokens, request.getTitle(), request.getBody(), true);
+        dispatchBatch(eligibleTokens, request.getTitle(), request.getBody(), !preserveOnFcmFailure, preserveOnFcmFailure);
     }
 
     /**
      * 배치 응답 처리
      */
-    private void processBatchResponse(BatchResponse response, List<FcmDeviceToken> deviceTokens) {
-        List<FcmDeviceToken> invalidTokens = new ArrayList<>();
-
-        int responseSize = response.getResponses().size();
+    private void processBatchResponse(
+        BatchResponse response, List<FcmDeviceToken> deviceTokens, List<FcmDeviceToken> invalidTokens
+    ) {
+        List<SendResponse> responses = response.getResponses();
+        int responseSize = responses.size();
         for (int i = 0; i < responseSize; i++) {
-            SendResponse sendResponse = response.getResponses()
-                .get(i);
+            SendResponse sendResponse = responses.get(i);
             FcmDeviceToken deviceToken = deviceTokens.get(i);
 
             if (sendResponse.isSuccessful()) {
@@ -176,11 +186,6 @@ public class NotificationService {
                     invalidTokens.add(deviceToken);
                 }
             }
-        }
-
-        // 무효한 토큰들 일괄 삭제
-        if (!invalidTokens.isEmpty()) {
-            userFCMDeviceTokenRepository.deleteAll(invalidTokens);
         }
     }
 
@@ -205,9 +210,9 @@ public class NotificationService {
             return;
         }
 
-        // 3. 수신 동의 기반 필터링 후 FCM 배치 발송 (채팅 알림은 best-effort — 실패해도 예외를 던지지 않음)
+        // 3. 채팅은 기존과 같이 FirebaseMessagingException만 기록하고 계속 발송한다.
         List<FcmDeviceToken> eligibleTokens = filterEligibleTokens(users, deviceTokens, type);
-        dispatchBatch(eligibleTokens, title, body, false);
+        dispatchBatch(eligibleTokens, title, body, false, false);
     }
 
     /**
@@ -235,28 +240,37 @@ public class NotificationService {
 
     /**
      * 대상 토큰들에 FCM 배치 발송 후 결과 처리.
-     * @param throwOnError true면 실패 시 예외 전파, false면 로그만 남기는 best-effort
+     * 응답은 각 배치의 토큰 순서에 대응하며 무효 토큰은 전체 발송 후 한 번에 삭제한다.
+     * @param throwOnError FirebaseMessagingException을 기존 CustomException으로 전파할지 여부
+     * @param preserveOnFcmFailure 커밋 후 지원 알림에서 FCM 호출의 런타임 실패까지 기록하고 계속할지 여부
      */
     private void dispatchBatch(
-        List<FcmDeviceToken> eligibleTokens, String title, String body, boolean throwOnError
+        List<FcmDeviceToken> eligibleTokens, String title, String body,
+        boolean throwOnError, boolean preserveOnFcmFailure
     ) {
         if (eligibleTokens.isEmpty()) {
             return;
         }
 
-        try {
-            List<String> deviceTokenStrings = eligibleTokens.stream()
+        List<FcmDeviceToken> invalidTokens = new ArrayList<>();
+        for (int start = 0; start < eligibleTokens.size(); start += FCM_BATCH_SIZE) {
+            List<FcmDeviceToken> batch = eligibleTokens.subList(start, Math.min(start + FCM_BATCH_SIZE, eligibleTokens.size()));
+            List<String> deviceTokenStrings = batch.stream()
                 .map(FcmDeviceToken::getDeviceToken)
                 .toList();
-
-            BatchResponse response = fcmClient.sendMultipleNotifications(deviceTokenStrings, title, body);
-            processBatchResponse(response, eligibleTokens);
-
-        } catch (FirebaseMessagingException e) {
-            log.error("FCM 배치 알림 발송 실패: {}", e.getMessage(), e);
-            if (throwOnError) {
-                throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "FCM 다중 알림 발송 실패");
+            BatchResponse response;
+            try {
+                response = fcmClient.sendMultipleNotifications(deviceTokenStrings, title, body);
+            } catch (FirebaseMessagingException | RuntimeException e) {
+                log.error("FCM 배치 알림 발송 실패: {}", e.getMessage(), e);
+                rethrowFcmFailure(e, throwOnError, preserveOnFcmFailure, "FCM 다중 알림 발송 실패");
+                continue;
             }
+            // DB 변경과 응답 처리는 FCM 호출의 예외 처리 범위 밖에서 수행한다.
+            processBatchResponse(response, batch, invalidTokens);
+        }
+        if (!invalidTokens.isEmpty()) {
+            userFCMDeviceTokenRepository.deleteAll(invalidTokens);
         }
     }
 
@@ -265,16 +279,16 @@ public class NotificationService {
      * @param user 대상 사용자
      * @param title 알림 제목
      * @param body 알림 본문
-     * @param throwOnError 발송 실패 시 예외 throw 여부
      */
-    private void sendFcmNotification(User user, NotificationType type, String title, String body, boolean throwOnError) {
+    private void sendFcmNotification(
+        User user, Optional<FcmDeviceToken> deviceTokenOpt, NotificationType type,
+        String title, String body, boolean preserveOnFcmFailure
+    ) {
         if (isNotificationBlocked(user, type)) {
             log.debug("알림 수신 동의 거부로 FCM 발송 건너뜀. userId={}", user.getId());
             return;
         }
 
-        // 디바이스 토큰 조회
-        Optional<FcmDeviceToken> deviceTokenOpt = userFCMDeviceTokenQueryRepository.findByUser(user);
         if (deviceTokenOpt.isEmpty()) {
             log.warn("사용자 {}의 디바이스 토큰이 없습니다.", user.getId());
             return;
@@ -285,19 +299,30 @@ public class NotificationService {
         try {
             // FCM 알림 전송
             fcmClient.sendNotification(deviceToken.getDeviceToken(), title, body);
-            deviceToken.updateLastNotificationSentAt();
-
-        } catch (FirebaseMessagingException e) {
+        } catch (FirebaseMessagingException | RuntimeException e) {
             log.error("FCM 알림 발송 실패. UserId: {}, Error: {}", user.getId(), e.getMessage(), e);
 
             // 토큰 무효화 처리
-            if (isTokenInvalid(e)) {
+            if (e instanceof FirebaseMessagingException firebaseException && isTokenInvalid(firebaseException)) {
                 userFCMDeviceTokenRepository.delete(deviceToken);
             }
+            rethrowFcmFailure(e, !preserveOnFcmFailure, preserveOnFcmFailure, "FCM 알림 발송 실패");
+            return;
+        }
+        deviceToken.updateLastNotificationSentAt();
+    }
 
-            if (throwOnError) {
-                throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "FCM 알림 발송 실패");
-            }
+    private void rethrowFcmFailure(
+        Exception failure, boolean throwOnError, boolean preserveOnFcmFailure, String message
+    ) {
+        if (preserveOnFcmFailure) {
+            return;
+        }
+        if (failure instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+        }
+        if (throwOnError) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, message);
         }
     }
 

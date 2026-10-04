@@ -1,12 +1,10 @@
 package com.dreamteam.alter.application.notification;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class FcmNotificationEventListener {
@@ -15,21 +13,11 @@ public class FcmNotificationEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleFcmNotification(FcmNotificationEvent event) {
-        try {
-            notificationService.sendNotificationAfterCommit(event.request());
-        } catch (Exception e) {
-            log.warn("FCM 알림 발송 실패. targetUserId={}, error={}",
-                event.request().getTargetUserId(), e.getMessage());
-        }
+        notificationService.sendNotificationAfterCommit(event.request());
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleFcmBatchNotification(FcmBatchNotificationEvent event) {
-        try {
-            notificationService.sendMultipleNotificationsAfterCommit(event.request());
-        } catch (Exception e) {
-            log.warn("FCM 일괄 알림 발송 실패. targetUserIds={}, error={}",
-                event.request().getTargetUserIds(), e.getMessage());
-        }
+        notificationService.sendMultipleNotificationsAfterCommit(event.request());
     }
 }

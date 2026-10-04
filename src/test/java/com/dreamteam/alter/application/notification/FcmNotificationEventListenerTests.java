@@ -95,4 +95,18 @@ class FcmNotificationEventListenerTests {
             .executeWithoutResult(status -> publisher.publishEvent(batchEvent()))).doesNotThrowAnyException();
         verify(service).sendMultipleNotificationsAfterCommit(any());
     }
+
+    @Autowired FcmNotificationEventListener listener;
+
+    @Test void listenerDoesNotSuppressDatabaseFailure() {
+        var failure = new org.springframework.dao.DataAccessResourceFailureException("DB 실패");
+        doThrow(failure).when(service).sendNotificationAfterCommit(any());
+        assertThatThrownBy(() -> listener.handleFcmNotification(event())).isSameAs(failure);
+    }
+
+    @Test void batchListenerDoesNotSuppressDatabaseFailure() {
+        var failure = new org.springframework.dao.DataAccessResourceFailureException("DB 실패");
+        doThrow(failure).when(service).sendMultipleNotificationsAfterCommit(any());
+        assertThatThrownBy(() -> listener.handleFcmBatchNotification(batchEvent())).isSameAs(failure);
+    }
 }
