@@ -90,7 +90,7 @@ class SendWorkspaceInvitationTests {
         @DisplayName("업장이 존재하지 않으면 WORKSPACE_NOT_FOUND 예외 발생")
         void fails_whenWorkspaceNotFound() {
             // given
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.empty());
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.empty());
             SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01011111111"));
 
             // when & then
@@ -105,7 +105,7 @@ class SendWorkspaceInvitationTests {
         @DisplayName("해당 업장의 관리자가 아니면 FORBIDDEN 예외 발생")
         void fails_whenNotWorkspaceManager() {
             // given
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(false);
             SendWorkspaceInvitationRequestDto request = requestOf(Set.of("01011111111"));
 
@@ -121,7 +121,7 @@ class SendWorkspaceInvitationTests {
         @DisplayName("앱에 가입되지 않은 번호가 포함되면 InvitationUnavailableException 발생")
         void fails_whenPhoneNumberNotRegistered() {
             // given
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01099999999"))).willReturn(List.of());
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(any(), any())).willReturn(Set.of());
@@ -150,7 +150,7 @@ class SendWorkspaceInvitationTests {
             given(activeWorker.getContact()).willReturn("01011111111");
             given(activeWorker.getStatus()).willReturn(UserStatus.ACTIVE);
 
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01011111111"))).willReturn(List.of(activeWorker));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(10L))).willReturn(Set.of(10L));
@@ -179,7 +179,7 @@ class SendWorkspaceInvitationTests {
             given(pendingUser.getContact()).willReturn("01022222222");
             given(pendingUser.getStatus()).willReturn(UserStatus.ACTIVE);
 
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01022222222"))).willReturn(List.of(pendingUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(20L))).willReturn(Set.of());
@@ -206,7 +206,7 @@ class SendWorkspaceInvitationTests {
             given(invitedUser.getContact()).willReturn("01033333333");
             given(invitedUser.getStatus()).willReturn(UserStatus.ACTIVE);
 
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01033333333"))).willReturn(List.of(invitedUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(30L))).willReturn(Set.of());
@@ -233,7 +233,7 @@ class SendWorkspaceInvitationTests {
             given(validUser.getContact()).willReturn("01044444444");
             given(validUser.getStatus()).willReturn(UserStatus.ACTIVE);
 
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             // 01099999999는 미가입 → contactToUser에서 조회 안 됨
             given(userQueryRepository.findByContactIn(any())).willReturn(List.of(validUser));
@@ -263,7 +263,7 @@ class SendWorkspaceInvitationTests {
             given(pendingUser.getContact()).willReturn("01022222222");
             given(pendingUser.getStatus()).willReturn(UserStatus.ACTIVE);
 
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             // 01099999999는 미가입 → contactToUser에서 조회 안 됨
             given(userQueryRepository.findByContactIn(any())).willReturn(List.of(pendingUser));
@@ -294,7 +294,7 @@ class SendWorkspaceInvitationTests {
             given(user.getContact()).willReturn("01044444444");
             given(user.getStatus()).willReturn(UserStatus.ACTIVE);
 
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01044444444"))).willReturn(List.of(user));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(40L))).willReturn(Set.of(40L));
@@ -325,7 +325,7 @@ class SendWorkspaceInvitationTests {
             BusinessInvitation stale = BusinessInvitation.create(workspace, invitedUser, managerUser);
             ReflectionTestUtils.setField(stale, "expiresAt", java.time.LocalDateTime.now().minusDays(1));
 
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01055555555"))).willReturn(List.of(invitedUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(50L))).willReturn(Set.of());
@@ -345,15 +345,15 @@ class SendWorkspaceInvitationTests {
         }
 
         @Test
-        @DisplayName("저장 시 PENDING 유니크 충돌이 나면 ALREADY_INVITED 사유로 InvitationUnavailableException 발생")
-        void fails_withAlreadyInvited_whenPendingUniqueConstraintViolated() {
+        @DisplayName("저장 시 무결성 오류는 사유로 바꾸지 않고 그대로 전파")
+        void propagates_dataIntegrityViolation_fromSave() {
             // given
             User invitedUser = mock(User.class);
             given(invitedUser.getId()).willReturn(60L);
             given(invitedUser.getContact()).willReturn("01066666666");
             given(invitedUser.getStatus()).willReturn(UserStatus.ACTIVE);
 
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01066666666"))).willReturn(List.of(invitedUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(60L))).willReturn(Set.of());
@@ -364,9 +364,7 @@ class SendWorkspaceInvitationTests {
 
             // when & then
             assertThatThrownBy(() -> sendWorkspaceInvitation.execute(actor, 1L, request))
-                .isInstanceOf(InvitationUnavailableException.class)
-                .satisfies(ex -> assertThat(((InvitationUnavailableException) ex).getDetails())
-                    .containsExactly(new InvitationUnavailableDetail("01066666666", InvitationUnavailableReason.ALREADY_INVITED)));
+                .isInstanceOf(DataIntegrityViolationException.class);
 
             then(eventPublisher).should(never()).publishEvent(any(FcmNotificationEvent.class));
         }
@@ -380,7 +378,7 @@ class SendWorkspaceInvitationTests {
             given(suspendedUser.getContact()).willReturn("01077777777");
             given(suspendedUser.getStatus()).willReturn(UserStatus.SUSPENDED);
 
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01077777777"))).willReturn(List.of(suspendedUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(any(), any())).willReturn(Set.of());
@@ -415,7 +413,7 @@ class SendWorkspaceInvitationTests {
             given(activeUser.getContact()).willReturn("01088888888");
             given(activeUser.getStatus()).willReturn(UserStatus.ACTIVE);
 
-            given(workspaceQueryRepository.findById(1L)).willReturn(Optional.of(workspace));
+            given(workspaceQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(workspace));
             given(workspaceQueryRepository.existsByIdAndManagerUser(1L, managerUser)).willReturn(true);
             given(userQueryRepository.findByContactIn(Set.of("01088888888"))).willReturn(List.of(suspendedUser, activeUser));
             given(workspaceQueryRepository.findActiveWorkerUserIdsByUserIds(1L, Set.of(81L))).willReturn(Set.of());

@@ -45,6 +45,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 
 @Repository
@@ -60,6 +61,18 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             queryFactory
                 .selectFrom(qWorkspace)
                 .where(qWorkspace.id.eq(id))
+                .fetchOne()
+        );
+    }
+
+    @Override
+    public Optional<Workspace> findByIdWithPessimisticLock(Long id) {
+        QWorkspace qWorkspace = QWorkspace.workspace;
+        return Optional.ofNullable(
+            queryFactory
+                .selectFrom(qWorkspace)
+                .where(qWorkspace.id.eq(id))
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
                 .fetchOne()
         );
     }
