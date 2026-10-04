@@ -2,6 +2,7 @@ package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkScheduleInquiryRequestDto;
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.ApproveSubstituteRequestDto;
+import com.dreamteam.alter.adapter.outbound.user.persistence.UserQueryRepositoryImpl;
 import com.dreamteam.alter.application.notification.NotificationService;
 import com.dreamteam.alter.application.workspace.usecase.GetMySchedule;
 import com.dreamteam.alter.application.workspace.usecase.ManagerApproveSubstituteRequest;
@@ -31,13 +32,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -51,14 +59,29 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+@Testcontainers
+@DataJpaTest(showSql = false, properties = {
+    "spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect",
+    "spring.jpa.hibernate.ddl-auto=create", "spring.jpa.show-sql=false"
+})
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Import({GetMySchedule.class, ManagerDeleteWorkSchedule.class, ManagerApproveSubstituteRequest.class,
     ManagerAssignWorkerToSchedule.class, ManagerUpdateWorkerInSchedule.class, ManagerRemoveWorkerFromSchedule.class,
     GetWorkspaceWorkSchedule.class,
-    SubstituteRequestQueryRepositoryImpl.class, WorkspaceWorkerQueryRepositoryImpl.class})
+    SubstituteRequestQueryRepositoryImpl.class, WorkspaceWorkerQueryRepositoryImpl.class, UserQueryRepositoryImpl.class})
 class ScheduleDeletionFlowTests extends WorkspaceShiftPersistenceTestSupport {
+    @Container static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17.2");
     private static final LocalDateTime START = LocalDateTime.of(2030, 1, 7, 9, 0);
+
+    @DynamicPropertySource
+    static void database(DynamicPropertyRegistry properties) {
+        properties.add("spring.datasource.url", postgres::getJdbcUrl);
+        properties.add("spring.datasource.username", postgres::getUsername);
+        properties.add("spring.datasource.password", postgres::getPassword);
+        properties.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
+    }
     @Autowired EntityManager em;
     @Autowired PlatformTransactionManager transactionManager;
     @Autowired GetMySchedule getMine;
