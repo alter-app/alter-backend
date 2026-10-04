@@ -36,6 +36,8 @@ public interface PostingApplicationQueryRepository {
 
     Optional<PostingApplication> getByManagerAndId(ManagerUser managerUser, Long postingApplicationId);
 
+    Optional<Long> findPostingIdByManagerAndApplicationId(ManagerUser managerUser, Long postingApplicationId);
+
     List<PostingApplication> findAllActiveByUserId(Long userId);
 
     long countActiveApplicationsByPostingId(Long postingId);
@@ -44,5 +46,6 @@ public interface PostingApplicationQueryRepository {
 
     List<PostingApplication> findPendingByPostingIdWithUser(Long postingId);
     Map<Long, Long> countAcceptedByPostingIds(List<Long> postingIds);
+    long countAcceptedByPostingId(Long postingId);
 
 }
