@@ -71,6 +71,9 @@ public class WorkspaceShift {
     }
 
     public void assignWorker(WorkspaceWorker workspaceWorker) {
+        if (status == WorkspaceShiftStatus.DELETED) {
+            throw new CustomException(ErrorCode.CONFLICT, "삭제된 근무 일정에는 근무자를 배정할 수 없습니다.");
+        }
         this.assignedWorkspaceWorker = workspaceWorker;
         this.status = WorkspaceShiftStatus.CONFIRMED;
     }
