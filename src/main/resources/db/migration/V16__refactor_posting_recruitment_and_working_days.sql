@@ -32,7 +32,7 @@ CREATE TABLE posting_schedule_working_days (
 );
 
 INSERT INTO posting_schedule_working_days (posting_schedule_id, day_of_week)
-SELECT schedule.id, working_day.day_of_week
+SELECT DISTINCT schedule.id, working_day.day_of_week
 FROM posting_schedules schedule
 CROSS JOIN LATERAL jsonb_array_elements_text(schedule.working_days)
     AS working_day(day_of_week);
