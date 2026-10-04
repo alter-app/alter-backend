@@ -22,4 +22,14 @@ public class FcmNotificationEventListener {
                 event.request().getTargetUserId(), e.getMessage());
         }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleFcmBatchNotification(FcmBatchNotificationEvent event) {
+        try {
+            notificationService.sendMultipleNotificationsAfterCommit(event.request());
+        } catch (Exception e) {
+            log.warn("FCM 일괄 알림 발송 실패. targetUserIds={}, error={}",
+                event.request().getTargetUserIds(), e.getMessage());
+        }
+    }
 }
