@@ -38,10 +38,10 @@ public interface AdminWorkspaceRequestControllerSpec {
 		@Parameter(description = "업장 등록 신청 ID", example = "1") @PathVariable Long workspaceRequestId
 	);
 
-	@Operation(summary = "업장 등록 신청 상태 변경", description = "관리자가 업장 등록 신청을 승인(ACTIVATED) 또는 반려(REVOKED) 처리합니다.")
+	@Operation(summary = "업장 등록 신청 상태 변경", description = "관리자가 업장 등록 신청을 승인(ACTIVATED) 또는 반려(REVOKED) 처리합니다. 승인 시 기존 신청 연락처도 국내형 형식을 검증하고 하이픈을 제거하여 업장에 저장합니다.")
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "상태 변경 성공"),
-		@ApiResponse(responseCode = "400", description = "잘못된 상태 값"),
+		@ApiResponse(responseCode = "400", description = "잘못된 상태 값 또는 기존 신청의 연락처 형식 오류 (ILLEGAL_ARGUMENT)"),
 		@ApiResponse(responseCode = "404", description = "존재하지 않는 업장 등록 신청")
 	})
 	ResponseEntity<CommonApiResponse<Void>> updateStatus(
