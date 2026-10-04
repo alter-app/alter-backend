@@ -20,7 +20,6 @@ import com.dreamteam.alter.domain.workspace.entity.QSubstituteRequestTarget;
 import com.dreamteam.alter.domain.workspace.port.outbound.SubstituteRequestQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestTargetStatus;
-import com.dreamteam.alter.domain.workspace.type.SubstituteRequestType;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -96,6 +95,7 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
     @Override
     public long getReceivedRequestCount(User user, GetReceivedSubstituteRequestsFilterDto filter) {
         QWorkspaceWorker myWorker = new QWorkspaceWorker("myWorker");
+        QSubstituteRequestTarget myTarget = new QSubstituteRequestTarget("myTarget");
 
         BooleanExpression workspaceCondition;
         if (ObjectUtils.isNotEmpty(filter.getWorkspaceId())) {
@@ -123,17 +123,13 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
                     .and(workspaceWorker.user.eq(user))
                     .and(workspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED))
             )
+            .join(myTarget).on(
+                myTarget.substituteRequest.eq(substituteRequest)
+                    .and(myTarget.targetWorkerId.eq(workspaceWorker.id))
+            )
             .where(
                 workspaceCondition
-                    .and(statusCondition(filter.getStatus()))
-                    .and(substituteRequest.requesterId.ne(workspaceWorker.id))
-                    .and(
-                        substituteRequest.requestType.eq(SubstituteRequestType.ALL)
-                            .or(JPAExpressions.selectFrom(QSubstituteRequestTarget.substituteRequestTarget)
-                                .where(QSubstituteRequestTarget.substituteRequestTarget.substituteRequest.eq(substituteRequest)
-                                    .and(QSubstituteRequestTarget.substituteRequestTarget.targetWorkerId.eq(workspaceWorker.id)))
-                                .exists())
-                    )
+                    .and(receivedRequestStatusCondition(filter.getStatus()))
             )
             .fetchOne();
 
@@ -153,6 +149,7 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
         QWorkspaceWorker myWorker = new QWorkspaceWorker("myWorker");
         QFile requesterFile = new QFile("requesterFile");
         QFile acceptedFile = new QFile("acceptedFile");
+        QSubstituteRequestTarget myTarget = new QSubstituteRequestTarget("myTarget");
 
         BooleanExpression workspaceCondition;
         if (ObjectUtils.isNotEmpty(filter.getWorkspaceId())) {
@@ -191,7 +188,8 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
                 substituteRequest.requestReason,
                 substituteRequest.createdAt,
                 substituteRequest.acceptedAt,
-                substituteRequest.processedAt
+                substituteRequest.processedAt,
+                myTarget.status
             ))
             .from(substituteRequest)
             .join(substituteRequest.workspaceShift, workspaceShift)
@@ -207,17 +205,13 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
                     .and(workspaceWorker.user.eq(user))
                     .and(workspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED))
             )
+            .join(myTarget).on(
+                myTarget.substituteRequest.eq(substituteRequest)
+                    .and(myTarget.targetWorkerId.eq(workspaceWorker.id))
+            )
             .where(
                 workspaceCondition
-                    .and(statusCondition(filter.getStatus()))
-                    .and(substituteRequest.requesterId.ne(workspaceWorker.id))
-                    .and(
-                        substituteRequest.requestType.eq(SubstituteRequestType.ALL)
-                            .or(JPAExpressions.selectFrom(QSubstituteRequestTarget.substituteRequestTarget)
-                                .where(QSubstituteRequestTarget.substituteRequestTarget.substituteRequest.eq(substituteRequest)
-                                    .and(QSubstituteRequestTarget.substituteRequestTarget.targetWorkerId.eq(workspaceWorker.id)))
-                                .exists())
-                    )
+                    .and(receivedRequestStatusCondition(filter.getStatus()))
                     .and(cursorCondition(pageRequest.cursor()))
             )
             .orderBy(substituteRequest.id.desc())
@@ -446,14 +440,27 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
         return substituteRequest.status.eq(status);
     }
 
-    private BooleanExpression managerRequestStatusCondition(SubstituteRequestStatus status) {
-        if (ObjectUtils.isEmpty(status)) {
-            // 상태가 지정되지 않은 경우 모든 조회 가능한 상태 조회
-            return substituteRequest.status.in(SubstituteRequestStatus.getManagerViewableStatuses());
-        }
+    private BooleanExpression receivedRequestStatusCondition(SubstituteRequestStatus status) {
+        // 상태 미지정 시: 본인이 수락한 요청은 상태와 무관하게 조회,
+        // 수락자가 없는 요청은 취소·만료만 제외 (다른 근무자가 수락한 요청은 제외)
+        return statusConditionOrDefault(
+            status,
+            substituteRequest.acceptedWorkerId.eq(workspaceWorker.id)
+                .or(substituteRequest.acceptedWorkerId.isNull()
+                    .and(substituteRequest.status.notIn(SubstituteRequestStatus.CANCELLED, SubstituteRequestStatus.EXPIRED)))
+        );
+    }
 
+    private BooleanExpression managerRequestStatusCondition(SubstituteRequestStatus status) {
+        return statusConditionOrDefault(
+            status,
+            substituteRequest.status.in(SubstituteRequestStatus.getManagerViewableStatuses())
+        );
+    }
+
+    private BooleanExpression statusConditionOrDefault(SubstituteRequestStatus status, BooleanExpression defaultCondition) {
         // 특정 상태가 지정된 경우 해당 상태만 조회
-        return substituteRequest.status.eq(status);
+        return ObjectUtils.isEmpty(status) ? defaultCondition : substituteRequest.status.eq(status);
     }
 
     @Override

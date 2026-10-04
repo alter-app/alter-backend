@@ -1,6 +1,7 @@
 package com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly;
 
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
+import com.dreamteam.alter.domain.workspace.type.SubstituteRequestTargetStatus;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -50,5 +51,7 @@ public class ReceivedSubstituteRequestListResponse {
     private LocalDateTime acceptedAt;
 
     private LocalDateTime processedAt;
+
+    private SubstituteRequestTargetStatus myTargetStatus;
 
 }

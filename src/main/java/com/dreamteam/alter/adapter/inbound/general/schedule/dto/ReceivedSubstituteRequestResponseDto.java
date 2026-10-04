@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.inbound.general.schedule.dto;
 import com.dreamteam.alter.adapter.inbound.common.dto.DescribedEnumDto;
 import com.dreamteam.alter.adapter.outbound.workspace.persistence.readonly.ReceivedSubstituteRequestListResponse;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
+import com.dreamteam.alter.domain.workspace.type.SubstituteRequestTargetStatus;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -37,6 +38,9 @@ public class ReceivedSubstituteRequestResponseDto {
 
     @Schema(description = "요청 상태")
     private DescribedEnumDto<SubstituteRequestStatus> status;
+
+    @Schema(description = "조회자 본인의 대상자 상태 (거절함·다른 근무자가 수락 등 본인 기준 응답 상태)")
+    private DescribedEnumDto<SubstituteRequestTargetStatus> myTargetStatus;
 
     @Schema(description = "요청 사유")
     private String requestReason;
@@ -75,6 +79,7 @@ public class ReceivedSubstituteRequestResponseDto {
                 response.getAcceptedWorkerProfileImageUrl()
             ) : null)
             .status(DescribedEnumDto.of(response.getStatus(), SubstituteRequestStatus.describe()))
+            .myTargetStatus(DescribedEnumDto.of(response.getMyTargetStatus(), SubstituteRequestTargetStatus.describe()))
             .requestReason(response.getRequestReason())
             .createdAt(response.getCreatedAt())
             .acceptedAt(response.getAcceptedAt())
