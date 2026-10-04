@@ -11,10 +11,15 @@ import com.dreamteam.alter.domain.user.port.outbound.UserRepository;
 import com.dreamteam.alter.domain.user.type.UserGender;
 import com.dreamteam.alter.domain.user.type.DevicePlatformType;
 import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.BatchResponse;
+import com.google.firebase.messaging.MessagingErrorCode;
+import com.google.firebase.messaging.SendResponse;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,13 +39,14 @@ class FcmNotificationPersistenceTests {
     @Autowired PlatformTransactionManager transactionManager;
     @MockitoBean FcmClient fcmClient;
 
-    @Test
-    void afterCommitNotificationIsVisibleInNextTransaction() {
+    @ParameterizedTest
+    @EnumSource(value = NotificationType.class, names = {"POSTING_APPLICATION", "WORKSPACE_INVITATION", "JOIN_REQUEST"})
+    void afterCommitNotificationIsVisibleInNextTransaction(NotificationType type) {
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         Long userId = tx.execute(status -> users.save(User.create("01029500000", "encoded", "알림 검증",
             "notification" + System.nanoTime(), UserGender.GENDER_MALE, "19990101", null)).getId());
         tx.executeWithoutResult(status -> publisher.publishEvent(new FcmNotificationEvent(
-            FcmNotificationRequestDto.of(userId, TokenScope.APP, NotificationType.POSTING_APPLICATION,
+            FcmNotificationRequestDto.of(userId, TokenScope.APP, type,
                 "지원 결과를 안내드립니다", "ALT295 테스트 업장 지원 결과: 불합격"))));
         Long saved = tx.execute(status -> em.createQuery(
             "select count(n) from Notification n where n.targetUser.id = :userId and n.body = :body", Long.class)
@@ -48,8 +54,9 @@ class FcmNotificationPersistenceTests {
         assertThat(saved).isEqualTo(1);
     }
 
-    @Test
-    void afterCommitBatchNotificationsAreVisibleInNextTransaction() {
+    @ParameterizedTest
+    @EnumSource(value = NotificationType.class, names = {"POSTING_APPLICATION", "WORKSPACE_INVITATION", "JOIN_REQUEST"})
+    void afterCommitBatchNotificationsAreVisibleInNextTransaction(NotificationType type) {
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         List<Long> userIds = tx.execute(status -> List.of(
             users.save(User.create("01029500001", "encoded", "일괄 알림1", "batch1" + System.nanoTime(),
@@ -58,7 +65,7 @@ class FcmNotificationPersistenceTests {
                 UserGender.GENDER_MALE, "19990101", null)).getId()));
         String body = "ALT295 테스트 업장 일괄 지원 결과: 불합격";
         tx.executeWithoutResult(status -> publisher.publishEvent(new FcmBatchNotificationEvent(
-            FcmBatchNotificationRequestDto.of(userIds, TokenScope.APP, NotificationType.POSTING_APPLICATION,
+            FcmBatchNotificationRequestDto.of(userIds, TokenScope.APP, type,
                 "지원 결과를 안내드립니다", body))));
         Long saved = tx.execute(status -> em.createQuery(
             "select count(n) from Notification n where n.targetUser.id in :userIds and n.body = :body", Long.class)
@@ -123,18 +130,82 @@ class FcmNotificationPersistenceTests {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void originalRollbackDoesNotCreateHistoryOrSendFcm(boolean batch) {
+    @CsvSource({
+        "WORKSPACE_INVITATION,APP,false,false", "WORKSPACE_INVITATION,APP,false,true",
+        "JOIN_REQUEST,APP,false,false", "JOIN_REQUEST,APP,false,true",
+        "JOIN_REQUEST,MANAGER,false,false", "JOIN_REQUEST,MANAGER,false,true",
+        "WORKSPACE_INVITATION,APP,true,false", "WORKSPACE_INVITATION,APP,true,true",
+        "JOIN_REQUEST,MANAGER,true,false", "JOIN_REQUEST,MANAGER,true,true"
+    })
+    void invitationAndJoinEventsKeepHistoryAndCommittedBusinessOnFcmFailure(
+        NotificationType type, TokenScope scope, boolean batch, boolean runtimeFailure
+    ) throws Exception {
+        TransactionTemplate tx = new TransactionTemplate(transactionManager);
+        List<Long> ids = recipients(tx);
+        Exception failure = runtimeFailure ? new IllegalStateException("FCM 테스트 실패") : mock(FirebaseMessagingException.class);
+        if (batch) when(fcmClient.sendMultipleNotifications(anyList(), anyString(), anyString())).thenThrow(failure);
+        else doThrow(failure).when(fcmClient).sendNotification(anyString(), anyString(), anyString());
+        String body = "ALT300 " + type + " " + System.nanoTime();
+        Long committedUser = tx.execute(status -> {
+            Long id = users.save(User.create("01030000000", "encoded", "업무 커밋", "business" + System.nanoTime(),
+                UserGender.GENDER_MALE, "19990101", null)).getId();
+            publisher.publishEvent(batch
+                ? new FcmBatchNotificationEvent(FcmBatchNotificationRequestDto.of(ids, scope, type, "이벤트", body))
+                : new FcmNotificationEvent(FcmNotificationRequestDto.of(ids.getFirst(), scope, type, "이벤트", body)));
+            return id;
+        });
+
+        tx.executeWithoutResult(status -> assertThat(em.find(User.class, committedUser)).isNotNull());
+        assertThat(notificationCount(tx, ids, body)).isEqualTo(batch ? 2 : 1);
+        if (batch) verify(fcmClient).sendMultipleNotifications(anyList(), anyString(), anyString());
+        else verify(fcmClient).sendNotification(anyString(), anyString(), anyString());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"POSTING_APPLICATION,APP,false", "POSTING_APPLICATION,APP,true",
+        "WORKSPACE_INVITATION,APP,false", "WORKSPACE_INVITATION,APP,true",
+        "JOIN_REQUEST,MANAGER,false", "JOIN_REQUEST,MANAGER,true"})
+    void originalRollbackDoesNotCreateHistoryOrSendFcm(NotificationType type, TokenScope scope, boolean batch) {
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         List<Long> ids = recipients(tx);
         String body = "롤백 후 이력 " + System.nanoTime();
 
         tx.executeWithoutResult(status -> {
-            publisher.publishEvent(failureEvent(ids, batch, body));
+            publisher.publishEvent(batch
+                ? new FcmBatchNotificationEvent(FcmBatchNotificationRequestDto.of(ids, scope, type, "롤백", body))
+                : new FcmNotificationEvent(FcmNotificationRequestDto.of(ids.getFirst(), scope, type, "롤백", body)));
             status.setRollbackOnly();
         });
 
         assertThat(notificationCount(tx, ids, body)).isZero();
         verifyNoInteractions(fcmClient);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"WORKSPACE_INVITATION,false", "WORKSPACE_INVITATION,true", "JOIN_REQUEST,false", "JOIN_REQUEST,true"})
+    void invalidTokensAreRemovedWithoutLosingCommittedHistory(NotificationType type, boolean batch) throws Exception {
+        TransactionTemplate tx = new TransactionTemplate(transactionManager);
+        List<Long> ids = recipients(tx);
+        FirebaseMessagingException failure = mock(FirebaseMessagingException.class);
+        when(failure.getMessagingErrorCode()).thenReturn(MessagingErrorCode.UNREGISTERED);
+        if (batch) {
+            SendResponse failed = mock(SendResponse.class);
+            when(failed.getException()).thenReturn(failure);
+            BatchResponse response = mock(BatchResponse.class);
+            when(response.getResponses()).thenReturn(List.of(failed, failed));
+            when(fcmClient.sendMultipleNotifications(anyList(), anyString(), anyString())).thenReturn(response);
+        } else {
+            doThrow(failure).when(fcmClient).sendNotification(anyString(), anyString(), anyString());
+        }
+        String body = "무효 토큰 이력 " + System.nanoTime();
+        tx.executeWithoutResult(status -> publisher.publishEvent(batch
+            ? new FcmBatchNotificationEvent(FcmBatchNotificationRequestDto.of(ids, TokenScope.APP, type, "무효 토큰", body))
+            : new FcmNotificationEvent(FcmNotificationRequestDto.of(ids.getFirst(), TokenScope.APP, type, "무효 토큰", body))));
+
+        assertThat(notificationCount(tx, ids, body)).isEqualTo(batch ? 2 : 1);
+        Long remainingTokens = tx.execute(status -> em.createQuery(
+            "select count(t) from FcmDeviceToken t where t.user.id in :ids", Long.class)
+            .setParameter("ids", ids).getSingleResult());
+        assertThat(remainingTokens).isEqualTo(batch ? 0 : 1);
     }
 }
