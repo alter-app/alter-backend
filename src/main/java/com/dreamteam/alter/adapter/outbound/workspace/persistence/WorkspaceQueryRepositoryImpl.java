@@ -9,6 +9,8 @@ import java.util.Set;
 
 import com.dreamteam.alter.domain.file.type.FileStatus;
 import com.dreamteam.alter.domain.file.type.FileTargetType;
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Repository;
 
@@ -234,7 +236,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 lteEmployedAt(qWorkspaceWorker, filter.getEmployedAtTo()),
                 gteResignedAt(qWorkspaceWorker, filter.getResignedAtFrom()),
                 lteResignedAt(qWorkspaceWorker, filter.getResignedAtTo()),
-                cursorConditions(qWorkspaceWorker, pageRequest.cursor())
+                cursorConditions(qWorkspaceWorker, qUser, pageRequest.cursor())
             )
             .groupBy(
                 qWorkspaceWorker.id,
@@ -331,7 +333,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .where(
                 qWorkspace.id.eq(workspaceId),
                 qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
-                cursorConditions(qWorkspaceWorker, pageRequest.cursor())
+                cursorConditions(qWorkspaceWorker, qUser, pageRequest.cursor())
             )
             .groupBy(
                 qWorkspaceWorker.id,
@@ -425,7 +427,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
                 excludeCondition,
                 hasConflictingSchedule.not(),
-                cursorConditions(qWorkspaceWorker, pageRequest.cursor())
+                cursorConditions(qWorkspaceWorker, qUser, pageRequest.cursor())
             )
             .groupBy(
                 qWorkspaceWorker.id,
@@ -685,13 +687,19 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         return resignedAtTo != null ? qWorkspaceWorker.resignedAt.loe(resignedAtTo) : null;
     }
 
-    private BooleanExpression cursorConditions(QWorkspaceWorker qWorkspaceWorker, CursorDto cursor) {
+    private BooleanExpression cursorConditions(QWorkspaceWorker qWorkspaceWorker, QUser qUser, CursorDto cursor) {
         if (cursor == null) {
             return null;
         }
-        return qWorkspaceWorker.createdAt.lt(cursor.getCreatedAt())
-            .or(qWorkspaceWorker.createdAt.eq(cursor.getCreatedAt())
-                .and(qWorkspaceWorker.id.lt(cursor.getId())));
+        if (ObjectUtils.anyNull(cursor.getId(), cursor.getCreatedAt())) {
+            throw new CustomException(ErrorCode.INVALID_CURSOR);
+        }
+        QWorkspaceWorker cursorWorker = new QWorkspaceWorker("cursorWorker");
+        var cursorName = JPAExpressions.select(cursorWorker.user.name)
+            .from(cursorWorker)
+            .where(cursorWorker.id.eq(cursor.getId()), cursorWorker.workspace.eq(qWorkspaceWorker.workspace));
+        return qUser.name.gt(cursorName)
+            .or(qUser.name.eq(cursorName).and(qWorkspaceWorker.id.gt(cursor.getId())));
     }
 
     private BooleanExpression cursorConditions(QManagerUser qManagerUser, CursorDto cursor) {
