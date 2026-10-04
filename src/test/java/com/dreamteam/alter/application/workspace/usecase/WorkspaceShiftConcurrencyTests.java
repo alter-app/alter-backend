@@ -205,13 +205,14 @@ class WorkspaceShiftConcurrencyTests {
     }
 
     @Test
-    void approval_preservesExistingDeletedShiftBehaviorWithoutNewStatusPolicy() {
+    void forUpdateReadsDeletedShiftWithoutChangingItsState() {
         Fixture fixture = fixture(Scenario.SUBSTITUTE);
         tx().executeWithoutResult(status -> em.find(WorkspaceShift.class, fixture.secondShiftId()).delete());
-        tx().executeWithoutResult(status -> approve.execute(actor(fixture), fixture.requestId(), new ApproveSubstituteRequestDto("승인")));
         tx().executeWithoutResult(status -> {
-            assertThat(em.find(WorkspaceShift.class, fixture.secondShiftId()).getStatus()).isEqualTo(WorkspaceShiftStatus.CONFIRMED);
-            assertThat(em.find(SubstituteRequest.class, fixture.requestId()).getStatus()).isEqualTo(SubstituteRequestStatus.APPROVED);
+            WorkspaceShift shift = shifts.findByIdForUpdate(fixture.secondShiftId()).orElseThrow();
+            assertThat(shift.getId()).isEqualTo(fixture.secondShiftId());
+            assertThat(shift.getStatus()).isEqualTo(WorkspaceShiftStatus.DELETED);
+            assertThat(em.find(SubstituteRequest.class, fixture.requestId()).getStatus()).isEqualTo(SubstituteRequestStatus.ACCEPTED);
         });
     }
 
