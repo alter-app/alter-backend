@@ -7,6 +7,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
@@ -60,6 +61,7 @@ class ManagerApproveSubstituteRequestTests {
 
     @Mock
     private NotificationService notificationService;
+    @Mock private UserQueryRepository userQueryRepository;
 
     @InjectMocks
     private ManagerApproveSubstituteRequest managerApproveSubstituteRequest;
@@ -70,6 +72,9 @@ class ManagerApproveSubstituteRequestTests {
         ManagerUser managerUser = mock(ManagerUser.class);
         WorkspaceShift shift = createShift(managerUser);
         WorkspaceWorker acceptedWorker = mock(WorkspaceWorker.class);
+        User acceptedUser = mock(User.class);
+        when(acceptedWorker.getUser()).thenReturn(acceptedUser);
+        when(acceptedUser.getId()).thenReturn(20L);
         SubstituteRequest request = createAcceptedRequest(shift);
 
         when(substituteRequestQueryRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
@@ -91,6 +96,7 @@ class ManagerApproveSubstituteRequestTests {
         WorkspaceWorker acceptedWorker = mock(WorkspaceWorker.class);
         User acceptedUser = mock(User.class);
         when(acceptedWorker.getUser()).thenReturn(acceptedUser);
+        when(acceptedUser.getId()).thenReturn(20L);
         SubstituteRequest request = createAcceptedRequest(shift);
 
         when(substituteRequestQueryRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
@@ -108,6 +114,7 @@ class ManagerApproveSubstituteRequestTests {
         when(workspace.getManagerUser()).thenReturn(managerUser);
         WorkspaceShift shift = WorkspaceShift.create(workspace, START, END, "홀", WorkspaceShiftStatus.CONFIRMED);
         ReflectionTestUtils.setField(shift, "id", SHIFT_ID);
+        when(workspaceShiftQueryRepository.findByIdForUpdate(SHIFT_ID)).thenReturn(Optional.of(shift));
         return shift;
     }
 
