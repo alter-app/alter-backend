@@ -1,5 +1,7 @@
 package com.dreamteam.alter.domain.workspace.entity;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -58,6 +60,7 @@ public class WorkspaceShift {
         String position,
         WorkspaceShiftStatus status
     ) {
+        validatePeriod(startDateTime, endDateTime);
         return WorkspaceShift.builder()
             .workspace(workspace)
             .startDateTime(startDateTime)
@@ -78,6 +81,7 @@ public class WorkspaceShift {
     }
 
     public void update(LocalDateTime startDateTime, LocalDateTime endDateTime, String position) {
+        validatePeriod(startDateTime, endDateTime);
         this.startDateTime = startDateTime;
         this.endDateTime = endDateTime;
         this.position = position;
@@ -85,6 +89,13 @@ public class WorkspaceShift {
 
     public void delete() {
         this.status = WorkspaceShiftStatus.DELETED;
+    }
+
+    // 역전 구간(start >= end)은 겹침 조건이 절대 참이 되지 않아 겹침 검사를 그대로 통과하므로 생성·수정 모두 막는다
+    private static void validatePeriod(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        if (!startDateTime.isBefore(endDateTime)) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "시작 시간은 종료 시간보다 늦을 수 없습니다.");
+        }
     }
 
 }

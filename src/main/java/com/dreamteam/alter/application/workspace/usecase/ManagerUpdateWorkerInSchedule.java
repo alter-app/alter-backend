@@ -54,11 +54,12 @@ public class ManagerUpdateWorkerInSchedule implements ManagerUpdateWorkerUseCase
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "해당 업장의 근무자가 아닙니다.");
         }
 
-        // 새로운 근무자가 이미 같은 시간대에 배정된 스케줄이 있는지 확인
+        // 새로운 근무자가 이미 같은 시간대에 배정된 스케줄이 있는지 확인 (같은 사용자의 재입사 행으로 교체하는 경우를 위해 이 스케줄 자신은 제외)
         if (workspaceShiftQueryRepository.hasConflictingSchedule(
-            newWorkspaceWorker.get(), 
-            workspaceShift.getStartDateTime(), 
-            workspaceShift.getEndDateTime()
+            newWorkspaceWorker.get(),
+            workspaceShift.getStartDateTime(),
+            workspaceShift.getEndDateTime(),
+            workspaceShift.getId()
         )) {
             throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "해당 근무자가 이미 같은 시간대에 배정된 스케줄이 있습니다.");
         }

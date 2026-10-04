@@ -12,6 +12,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
@@ -49,7 +52,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
             workspace,
             List.of(),
             YearMonth.of(2025, 2),
-            Map.of()
+            new HashMap<>()
         );
 
         verify(workspaceShiftRepository, never()).saveAll(anyList());
@@ -70,7 +73,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
             workspace,
             List.of(schedule),
             YearMonth.of(2025, 2),
-            Map.of()
+            new HashMap<>()
         );
 
         @SuppressWarnings("unchecked")
@@ -104,7 +107,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
             workspace,
             List.of(schedule),
             YearMonth.of(2025, 2),
-            Map.of(worker.getId(), List.of(conflictingShift))
+            new HashMap<>(Map.of(worker.getUser().getId(), new ArrayList<>(List.of(conflictingShift))))
         );
 
         @SuppressWarnings("unchecked")
@@ -129,7 +132,7 @@ class GenerateNextMonthWorkspaceShiftTxTest {
             workspace,
             List.of(schedule),
             YearMonth.of(2025, 2),
-            Map.of()
+            new HashMap<>()
         );
 
         @SuppressWarnings("unchecked")
@@ -146,13 +149,52 @@ class GenerateNextMonthWorkspaceShiftTxTest {
         assertThat(firstShift.getEndDateTime()).isEqualTo(LocalDateTime.of(2025, 2, 8, 6, 0));
     }
 
+    @Test
+    @DisplayName("생성한 근무는 결과로 돌려주고 전달받은 기존 근무 맵은 바꾸지 않는다")
+    void execute_returnsCreatedShifts_withoutMutatingExistingMap() {
+        Workspace workspace = createMockWorkspace(1L);
+        WorkspaceWorker worker = createMockWorker(workspace, 10L);
+        WorkspaceWorkerSchedule schedule = createMockSchedule(
+            worker, DayOfWeek.MONDAY, LocalTime.of(9, 0), DayOfWeek.MONDAY, LocalTime.of(18, 0)
+        );
+        Map<Long, List<WorkspaceShift>> existing = Map.of();
+
+        GenerateNextMonthWorkspaceShiftTx.GenerationResult result =
+            generateNextMonthWorkspaceShiftTx.execute(workspace, List.of(schedule), YearMonth.of(2025, 2), existing);
+
+        assertThat(result.createdShifts()).hasSize(4)
+            .allSatisfy(shift -> assertThat(shift.getAssignedWorkspaceWorker()).isEqualTo(worker));
+        assertThat(existing).isEmpty();
+    }
+
+    @Test
+    @DisplayName("같은 업장 안에서 같은 사용자의 두 고정 스케줄이 겹치면 뒤 스케줄 회차를 건너뛴다")
+    void execute_skipsConflict_betweenSchedulesOfSameUser_inSameCall() {
+        Workspace workspace = createMockWorkspace(1L);
+        WorkspaceWorker worker = createMockWorker(workspace, 10L);
+        WorkspaceWorkerSchedule morning = createMockSchedule(
+            worker, DayOfWeek.MONDAY, LocalTime.of(9, 0), DayOfWeek.MONDAY, LocalTime.of(18, 0)
+        );
+        WorkspaceWorkerSchedule afternoon = createMockSchedule(
+            worker, DayOfWeek.MONDAY, LocalTime.of(13, 0), DayOfWeek.MONDAY, LocalTime.of(22, 0)
+        );
+
+        GenerateNextMonthWorkspaceShiftTx.GenerationResult result = generateNextMonthWorkspaceShiftTx.execute(
+            workspace, List.of(morning, afternoon), YearMonth.of(2025, 2), new HashMap<>());
+
+        assertThat(result.created()).isEqualTo(4);
+        assertThat(result.skipped()).isEqualTo(4);
+    }
+
     private Workspace createMockWorkspace(Long id) {
         return mock(Workspace.class);
     }
 
     private WorkspaceWorker createMockWorker(Workspace workspace, Long id) {
         WorkspaceWorker worker = mock(WorkspaceWorker.class);
-        when(worker.getId()).thenReturn(id);
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(id);
+        when(worker.getUser()).thenReturn(user);
         return worker;
     }
 
