@@ -5,6 +5,7 @@ import com.dreamteam.alter.domain.user.type.UserGender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.lang.Nullable;
 import lombok.AllArgsConstructor;
@@ -41,7 +42,8 @@ public class CreateUserRequestDto {
 
     @NotBlank
     @Size(min = 2, max = 10)
-    @Schema(description = "닉네임", example = "유땡땡")
+    @Pattern(regexp = "^[가-힣a-zA-Z0-9]+$", message = "닉네임은 한글, 영문, 숫자만 사용할 수 있습니다")
+    @Schema(description = "닉네임 (2~10자, 한글·영문·숫자)", example = "유땡땡")
     private String nickname;
 
     @NotNull
