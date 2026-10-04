@@ -33,17 +33,12 @@ public class UpdateUserPostingApplicationStatus implements UpdateUserPostingAppl
             postingApplicationQueryRepository.getUserPostingApplication(user, applicationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POSTING_APPLICATION_NOT_FOUND));
 
-        // 이미 CANCELLED 상태인 경우 예외 발생
-        if (result.getStatus()
-            .equals(PostingApplicationStatus.CANCELLED)) {
-            throw new CustomException(ErrorCode.POSTING_APPLICATION_ALREADY_CANCELLED);
+        switch (result.getStatus()) {
+            case SUBMITTED, SHORTLISTED -> result.updateStatus(request.getStatus());
+            case CANCELLED -> throw new CustomException(ErrorCode.POSTING_APPLICATION_ALREADY_CANCELLED);
+            case ACCEPTED -> throw new CustomException(ErrorCode.POSTING_APPLICATION_STATUS_NOT_UPDATABLE, "합격한 지원서는 취소할 수 없습니다.");
+            default -> throw new CustomException(ErrorCode.POSTING_APPLICATION_STATUS_NOT_UPDATABLE);
         }
-
-        if (result.getStatus() == PostingApplicationStatus.ACCEPTED) {
-            throw new CustomException(ErrorCode.POSTING_APPLICATION_STATUS_NOT_UPDATABLE, "합격한 지원서는 취소할 수 없습니다.");
-        }
-
-        result.updateStatus(request.getStatus());
     }
 
 }
