@@ -66,7 +66,7 @@ public class ManagerPostingListResponseDto {
     @Schema(description = "업장 정보")
     private ManagerPostingListWorkspaceResponseDto workspace;
 
-    public static ManagerPostingListResponseDto from(ManagerPostingListResponse response, long acceptedCount) {
+    public static ManagerPostingListResponseDto of(ManagerPostingListResponse response, long acceptedCount) {
         return ManagerPostingListResponseDto.builder()
             .id(response.getId())
             .title(response.getTitle())
