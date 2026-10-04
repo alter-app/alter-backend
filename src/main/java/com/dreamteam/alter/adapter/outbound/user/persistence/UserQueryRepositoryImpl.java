@@ -12,6 +12,8 @@ import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.user.type.UserStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -24,6 +26,17 @@ import java.util.Set;
 public class UserQueryRepositoryImpl implements UserQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+    private final EntityManager entityManager;
+
+    @Override
+    public List<User> findAllByIdForUpdate(List<Long> ids) {
+        entityManager.createNativeQuery("SET LOCAL lock_timeout = '5s'").executeUpdate();
+        return queryFactory.selectFrom(QUser.user)
+            .where(QUser.user.id.in(ids))
+            .orderBy(QUser.user.id.asc())
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetch();
+    }
 
     @Override
     public Optional<User> findById(Long id) {
