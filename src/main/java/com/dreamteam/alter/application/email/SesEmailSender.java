@@ -20,6 +20,9 @@ public class SesEmailSender implements EmailClient {
     @Value("${alter.email.from}")
     private String from;
 
+    @Value("${aws.region}")
+    private String region;
+
     @Override
     public void sendVerificationCode(String toEmail, String code) {
         try {
@@ -40,10 +43,12 @@ public class SesEmailSender implements EmailClient {
             sesClient.sendEmail(request);
 
         } catch (SesException e) {
-            log.error("Failed to send SES email to {}: {}", toEmail, e.awsErrorDetails().errorMessage());
+            log.error("SES 이메일 발송 실패. region={}, status={}, awsErrorCode={}, errorType={}",
+                region, e.statusCode(), e.awsErrorDetails() == null ? "UNKNOWN" : e.awsErrorDetails().errorCode(),
+                e.getClass().getSimpleName());
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "이메일 전송에 실패했습니다.");
         } catch (Exception e) {
-            log.error("Unexpected error sending email to {}: {}", toEmail, e.getMessage());
+            log.error("SES 이메일 발송 실패. region={}, errorType={}", region, e.getClass().getSimpleName());
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "이메일 전송에 실패했습니다.");
         }
     }
