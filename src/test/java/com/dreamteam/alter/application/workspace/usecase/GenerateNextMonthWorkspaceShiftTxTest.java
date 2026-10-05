@@ -26,11 +26,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.dreamteam.alter.domain.user.entity.User;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftRepository;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +41,8 @@ class GenerateNextMonthWorkspaceShiftTxTest {
 
     @Mock
     private WorkspaceShiftRepository workspaceShiftRepository;
+    @Mock private WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
+    @Mock private UserQueryRepository userQueryRepository;
 
     @InjectMocks
     private GenerateNextMonthWorkspaceShiftTx generateNextMonthWorkspaceShiftTx;
@@ -102,6 +106,9 @@ class GenerateNextMonthWorkspaceShiftTxTest {
             WorkspaceShiftStatus.CONFIRMED
         );
         conflictingShift.assignWorker(worker);
+        when(workspaceShiftQueryRepository.findConfirmedByUserIdsAndDateRange(
+            List.of(10L), LocalDateTime.of(2025, 2, 1, 0, 0), LocalDateTime.of(2025, 3, 7, 0, 0)))
+            .thenReturn(List.of(conflictingShift));
 
         GenerateNextMonthWorkspaceShiftTx.GenerationResult result = generateNextMonthWorkspaceShiftTx.execute(
             workspace,

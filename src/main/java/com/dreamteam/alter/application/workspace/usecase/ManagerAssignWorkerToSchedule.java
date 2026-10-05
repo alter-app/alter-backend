@@ -9,7 +9,9 @@ import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.port.inbound.ManagerAssignWorkerUseCase;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.List;
 
 @Service("managerAssignWorkerToSchedule")
 @RequiredArgsConstructor
@@ -30,11 +33,13 @@ public class ManagerAssignWorkerToSchedule implements ManagerAssignWorkerUseCase
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
     private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
     private final NotificationService notificationService;
+    private final UserQueryRepository userQueryRepository;
 
     @Override
     public void execute(ManagerActor actor, Long shiftId, Long workerId) {
         // 스케줄 존재 확인
-        Optional<WorkspaceShift> shift = workspaceShiftQueryRepository.findById(shiftId);
+        Optional<WorkspaceShift> shift = workspaceShiftQueryRepository.findByIdForUpdate(shiftId)
+            .filter(schedule -> schedule.getStatus() != WorkspaceShiftStatus.DELETED);
         if (shift.isEmpty()) {
             throw new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 근무 스케줄입니다.");
         }
@@ -63,6 +68,7 @@ public class ManagerAssignWorkerToSchedule implements ManagerAssignWorkerUseCase
         }
         
         // 해당 근무자가 이미 같은 시간대에 배정된 스케줄이 있는지 확인
+        userQueryRepository.findAllByIdForUpdate(List.of(workspaceWorker.get().getUser().getId()));
         if (workspaceShiftQueryRepository.hasConflictingSchedule(
             workspaceWorker.get(), 
             workspaceShift.getStartDateTime(), 

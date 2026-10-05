@@ -14,5 +14,6 @@ public interface UserQueryRepository {
     Optional<User> findByContact(String contact);
     Optional<UserSelfInfoResponse> getUserSelfInfoSummary(Long id);
     List<User> findAllById(List<Long> ids);
+    List<User> findAllByIdForUpdate(List<Long> ids);
     List<User> findByContactIn(Set<String> contacts);
 }

@@ -12,6 +12,8 @@ import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -30,6 +32,17 @@ import static com.dreamteam.alter.domain.workspace.entity.QWorkspaceWorker.works
 public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+    private final EntityManager entityManager;
+
+    @Override
+    public Optional<WorkspaceShift> findByIdForUpdate(Long id) {
+        entityManager.createNativeQuery("SET LOCAL lock_timeout = '5s'").executeUpdate();
+        WorkspaceShift result = queryFactory.selectFrom(workspaceShift)
+            .where(workspaceShift.id.eq(id))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetchOne();
+        return Optional.ofNullable(result);
+    }
 
     @Override
     public List<WorkspaceShiftTodayResponse> getTodayShiftList(

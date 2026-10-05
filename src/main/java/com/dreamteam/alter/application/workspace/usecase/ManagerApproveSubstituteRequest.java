@@ -9,6 +9,7 @@ import com.dreamteam.alter.domain.notification.type.NotificationType;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.common.notification.NotificationMessageConstants;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
@@ -21,6 +22,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import java.util.ArrayList;
 
 @Service("managerApproveSubstituteRequest")
 @RequiredArgsConstructor
@@ -32,6 +35,7 @@ public class ManagerApproveSubstituteRequest implements ManagerApproveSubstitute
     private final WorkspaceWorkerQueryRepository workspaceWorkerQueryRepository;
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
     private final NotificationService notificationService;
+    private final UserQueryRepository userQueryRepository;
 
     @Override
     public void execute(
@@ -42,6 +46,9 @@ public class ManagerApproveSubstituteRequest implements ManagerApproveSubstitute
         // 대타 요청 조회
         SubstituteRequest substituteRequest = substituteRequestQueryRepository.findById(requestId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 대타 요청입니다."));
+
+        WorkspaceShift shift = workspaceShiftQueryRepository.findByIdForUpdate(substituteRequest.getWorkspaceShift().getId())
+            .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 근무 스케줄입니다."));
 
         // 권한 확인
         if (!substituteRequest.getWorkspaceShift().getWorkspace().getManagerUser().equals(actor.getManagerUser())) {
@@ -58,7 +65,12 @@ public class ManagerApproveSubstituteRequest implements ManagerApproveSubstitute
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "수락한 근무자 정보를 찾을 수 없습니다."));
 
         // 수락 이후 승인 전에 다른 근무가 배정됐을 수 있으므로 실제 배정 시점에 겹침을 재검증한다 (교환 대상 근무 자신은 제외)
-        WorkspaceShift shift = substituteRequest.getWorkspaceShift();
+        List<Long> userIds = new ArrayList<>();
+        userIds.add(acceptedWorker.getUser().getId());
+        if (shift.getAssignedWorkspaceWorker() != null) {
+            userIds.add(shift.getAssignedWorkspaceWorker().getUser().getId());
+        }
+        userQueryRepository.findAllByIdForUpdate(userIds);
         if (workspaceShiftQueryRepository.hasConflictingSchedule(
             acceptedWorker, shift.getStartDateTime(), shift.getEndDateTime(), shift.getId()
         )) {
