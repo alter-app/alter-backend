@@ -30,6 +30,9 @@ public class UserFavoritePostingListPostingSummaryResponseDto {
     @Schema(description = "급여", example = "10000")
     private int payAmount;
 
+    @Schema(description = "공고 모집 인원 (안내용)", example = "2")
+    private int recruitCount;
+
     @NotNull
     @Schema(description = "급여 타입", example = "HOURLY")
     private PaymentType paymentType;
@@ -40,6 +43,7 @@ public class UserFavoritePostingListPostingSummaryResponseDto {
             .businessName(entity.getWorkspace().getBusinessName())
             .title(entity.getTitle())
             .payAmount(entity.getPayAmount())
+            .recruitCount(entity.getRecruitCount())
             .paymentType(entity.getPaymentType())
             .build();
     }

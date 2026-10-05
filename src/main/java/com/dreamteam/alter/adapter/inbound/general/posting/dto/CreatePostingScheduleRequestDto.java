@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.time.DayOfWeek;
@@ -31,16 +30,12 @@ public class CreatePostingScheduleRequestDto {
     @NotNull
     private LocalTime endTime;
 
-    @Schema(description = "필요 인원", example = "3")
-    @Positive
-    private int positionsNeeded;
-
     @Schema(description = "아르바이트 포지션", example = "홀서빙")
     @NotBlank
     private String position;
 
     public PostingScheduleCommand toCommand() {
-        return new PostingScheduleCommand(workingDays, startTime, endTime, positionsNeeded, position);
+        return new PostingScheduleCommand(workingDays, startTime, endTime, position);
     }
 
 }

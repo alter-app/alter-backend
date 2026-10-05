@@ -31,7 +31,7 @@ import java.util.List;
 @Tag(name = "MANAGER - 업장 관리자 공고 관리 API")
 public interface ManagerPostingControllerSpec {
 
-    @Operation(summary = "공고 등록", description = "")
+    @Operation(summary = "공고 등록", description = "공고 단위 모집 인원(recruitCount)은 필수이며 1 이상입니다. 근무 일정은 지원자의 희망 근무 시간입니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "공고 등록 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
@@ -51,7 +51,7 @@ public interface ManagerPostingControllerSpec {
     })
     ResponseEntity<CommonApiResponse<Void>> createPosting(@Valid @RequestBody CreatePostingRequestDto request);
 
-    @Operation(summary = "매니저 - 내가 등록한 공고 목록 조회 (커서 페이징)", description = "")
+    @Operation(summary = "매니저 - 내가 등록한 공고 목록 조회 (커서 페이징)", description = "모집 인원(recruitCount)과 합격자 수(acceptedCount)를 제공합니다. 합격자 수는 모집 인원보다 클 수 있습니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "공고 목록 조회 성공")
     })
@@ -60,7 +60,7 @@ public interface ManagerPostingControllerSpec {
         ManagerPostingListFilterDto filter
     );
 
-    @Operation(summary = "매니저 - 내가 등록한 공고 상세 조회", description = "")
+    @Operation(summary = "매니저 - 내가 등록한 공고 상세 조회", description = "모집 인원(recruitCount)과 합격자 수(acceptedCount)를 제공합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "공고 상세 조회 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
@@ -136,7 +136,7 @@ public interface ManagerPostingControllerSpec {
         @Valid @RequestBody UpdatePostingApplicationStatusRequestDto request
     );
 
-    @Operation(summary = "매니저 - 내가 등록한 공고 상태 변경", description = "")
+    @Operation(summary = "매니저 - 내가 등록한 공고 상태 변경", description = "CLOSED 또는 CANCELLED로 변경하면 SUBMITTED, SHORTLISTED 지원서를 모두 REJECTED로 변경하고 커밋 후 불합격 알림을 보냅니다. OPEN으로 다시 변경해도 불합격 지원서는 복원되지 않습니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "공고 상태 변경 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
@@ -161,7 +161,7 @@ public interface ManagerPostingControllerSpec {
 
     @Operation(
         summary = "매니저 - 내가 등록한 공고 내용 수정",
-        description = "수정을 마친 뒤 남은 근무일정이 하나도 없으면 공고가 모집 완료(CLOSED)로 바뀌며 더 이상 지원을 받지 않습니다."
+        description = "모집 인원(recruitCount)은 필수이며 1 이상입니다. 수정 결과 활성 근무 일정은 최소 1개 있어야 하며, 공고 상태는 사장님이 직접 변경합니다."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "공고 내용 수정 성공"),
@@ -173,6 +173,10 @@ public interface ManagerPostingControllerSpec {
                     @ExampleObject(
                         name = "존재하지 않는 공고",
                         value = "{\"code\" : \"B007\"}"
+                    ),
+                    @ExampleObject(
+                        name = "수정 결과 활성 근무 일정이 없는 경우",
+                        value = "{\"code\":\"B001\",\"message\":\"근무 일정은 최소 1개 이상 있어야 합니다.\"}"
                     ),
                 })),
         @ApiResponse(responseCode = "404", description = "404 Error 실패 케이스",

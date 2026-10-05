@@ -73,6 +73,7 @@ class ManagerGetPostingDetailTests {
         given(posting.getTitle()).willReturn("홀서빙 구합니다");
         given(posting.getDescription()).willReturn("많은 지원 바랍니다");
         given(posting.getPayAmount()).willReturn(10000);
+        given(posting.getRecruitCount()).willReturn(2);
         given(posting.getPaymentType()).willReturn(PaymentType.HOURLY);
         given(posting.getStatus()).willReturn(PostingStatus.OPEN);
         given(posting.getCreatedAt()).willReturn(LocalDateTime.of(2026, 7, 1, 12, 0));
@@ -85,6 +86,21 @@ class ManagerGetPostingDetailTests {
     @Nested
     @DisplayName("execute")
     class ExecuteTests {
+
+        @Test
+        void acceptedCountCanExceedRecruitCount() {
+            ManagerActor actor = givenActor();
+            ManagerPostingDetailResponse detail = buildPostingDetail();
+            given(postingQueryRepository.getManagerPostingDetail(eq(POSTING_ID), any(ManagerUser.class)))
+                .willReturn(Optional.of(detail));
+            given(postingApplicationQueryRepository.countAcceptedByPostingId(POSTING_ID))
+                .willReturn(3L);
+            ManagerPostingDetailResponseDto result = managerGetPostingDetail.execute(POSTING_ID, actor);
+            assertThat(result.getRecruitCount()).isEqualTo(2);
+            assertThat(result.getAcceptedCount()).isEqualTo(3);
+            then(postingApplicationQueryRepository).should().countAcceptedByPostingId(POSTING_ID);
+            then(postingApplicationQueryRepository).should(never()).countAcceptedByPostingIds(any());
+        }
 
         @Test
         @DisplayName("지원자 수 조회 결과가 응답의 applicantCount 로 전달된다")
@@ -123,7 +139,9 @@ class ManagerGetPostingDetailTests {
 
             // then
             assertThat(result.getApplicantCount()).isZero();
+            assertThat(result.getAcceptedCount()).isZero();
             then(postingApplicationQueryRepository).should().countActiveApplicationsByPostingId(POSTING_ID);
+            then(postingApplicationQueryRepository).should().countAcceptedByPostingId(POSTING_ID);
         }
 
         @Test
@@ -140,6 +158,7 @@ class ManagerGetPostingDetailTests {
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POSTING_NOT_FOUND);
             then(postingApplicationQueryRepository).should(never()).countActiveApplicationsByPostingId(POSTING_ID);
+            then(postingApplicationQueryRepository).should(never()).countAcceptedByPostingId(POSTING_ID);
         }
     }
 }

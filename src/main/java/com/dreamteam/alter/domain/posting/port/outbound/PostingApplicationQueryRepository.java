@@ -12,12 +12,14 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface PostingApplicationQueryRepository {
     long getCountByUser(User user, UserPostingApplicationListFilterDto filter);
     List<UserPostingApplicationListResponse> getUserPostingApplicationListWithCursor(User user, CursorPageRequest<CursorDto> pageRequest, UserPostingApplicationListFilterDto filter);
     Optional<PostingApplication> getUserPostingApplication(User user, Long applicationId);
+    Optional<Long> findPostingIdByUserAndApplicationId(User user, Long applicationId);
 
     long getManagerPostingApplicationCount(
         ManagerUser managerUser,
@@ -35,10 +37,16 @@ public interface PostingApplicationQueryRepository {
 
     Optional<PostingApplication> getByManagerAndId(ManagerUser managerUser, Long postingApplicationId);
 
+    Optional<Long> findPostingIdByManagerAndApplicationId(ManagerUser managerUser, Long postingApplicationId);
+
     List<PostingApplication> findAllActiveByUserId(Long userId);
 
     long countActiveApplicationsByPostingId(Long postingId);
 
     boolean existsActiveByPostingIdAndUser(Long postingId, User user);
+
+    List<PostingApplication> findPendingByPostingIdWithUser(Long postingId);
+    Map<Long, Long> countAcceptedByPostingIds(List<Long> postingIds);
+    long countAcceptedByPostingId(Long postingId);
 
 }

@@ -8,6 +8,5 @@ public record PostingScheduleCommand(
     List<DayOfWeek> workingDays,
     LocalTime startTime,
     LocalTime endTime,
-    int positionsNeeded,
     String position
 ) {}

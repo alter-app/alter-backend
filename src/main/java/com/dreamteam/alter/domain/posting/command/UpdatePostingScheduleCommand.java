@@ -9,6 +9,5 @@ public record UpdatePostingScheduleCommand(
     List<DayOfWeek> workingDays,
     LocalTime startTime,
     LocalTime endTime,
-    int positionsNeeded,
     String position
 ) {}

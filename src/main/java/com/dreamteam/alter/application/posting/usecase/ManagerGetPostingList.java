@@ -7,6 +7,7 @@ import com.dreamteam.alter.adapter.outbound.posting.persistence.readonly.Manager
 import com.dreamteam.alter.common.util.CursorUtil;
 import com.dreamteam.alter.domain.posting.port.inbound.ManagerGetPostingListUseCase;
 import com.dreamteam.alter.domain.posting.port.outbound.PostingQueryRepository;
+import com.dreamteam.alter.domain.posting.port.outbound.PostingApplicationQueryRepository;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,6 +17,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service("managerGetPostingList")
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ import java.util.List;
 public class ManagerGetPostingList implements ManagerGetPostingListUseCase {
 
     private final PostingQueryRepository postingQueryRepository;
+    private final PostingApplicationQueryRepository postingApplicationQueryRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -46,6 +49,8 @@ public class ManagerGetPostingList implements ManagerGetPostingListUseCase {
         }
 
         ManagerPostingListResponse last = postings.getLast();
+        Map<Long, Long> acceptedCounts = postingApplicationQueryRepository.countAcceptedByPostingIds(
+            postings.stream().map(ManagerPostingListResponse::getId).toList());
         CursorPageResponseDto pageResponseDto = CursorPageResponseDto.of(
             CursorUtil.encodeCursor(new CursorDto(last.getId(), last.getCreatedAt()), objectMapper),
             pageRequest.pageSize(),
@@ -55,7 +60,8 @@ public class ManagerGetPostingList implements ManagerGetPostingListUseCase {
         return CursorPaginatedApiResponse.of(
             pageResponseDto,
             postings.stream()
-                .map(ManagerPostingListResponseDto::from)
+                .map(posting -> ManagerPostingListResponseDto.of(posting,
+                    acceptedCounts.getOrDefault(posting.getId(), 0L)))
                 .toList()
         );
     }

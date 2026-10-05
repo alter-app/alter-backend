@@ -48,6 +48,9 @@ public class Posting {
     @Column(name = "pay_amount", nullable = false)
     private int payAmount;
 
+    @Column(name = "recruit_count", nullable = false)
+    private int recruitCount;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "pay_type", length = 20, nullable = false)
     private PaymentType paymentType;
@@ -73,6 +76,7 @@ public class Posting {
             .title(command.title())
             .description(command.description())
             .payAmount(command.payAmount())
+            .recruitCount(command.recruitCount())
             .paymentType(command.paymentType())
             .status(PostingStatus.OPEN)
             .build();
@@ -110,6 +114,7 @@ public class Posting {
         this.title = command.title();
         this.description = command.description();
         this.payAmount = command.payAmount();
+        this.recruitCount = command.recruitCount();
         this.paymentType = command.paymentType();
 
         // 스케줄 삭제 처리
@@ -124,7 +129,9 @@ public class Posting {
         if (ObjectUtils.isNotEmpty(command.createSchedules()))
             addSchedules(command.createSchedules());
 
-        closeIfNoActiveSchedules();
+        if (getActiveSchedules().isEmpty()) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "근무 일정은 최소 1개 이상 있어야 합니다.");
+        }
     }
 
     /**
@@ -137,7 +144,6 @@ public class Posting {
                 createCommand.workingDays(),
                 createCommand.startTime(),
                 createCommand.endTime(),
-                createCommand.positionsNeeded(),
                 createCommand.position(),
                 this
             );
@@ -160,7 +166,6 @@ public class Posting {
                 updateCommand.workingDays(),
                 updateCommand.startTime(),
                 updateCommand.endTime(),
-                updateCommand.positionsNeeded(),
                 updateCommand.position()
             );
         }
@@ -190,13 +195,4 @@ public class Posting {
         }
     }
 
-    /**
-     * 모집할 근무일정이 하나도 남지 않으면 마감된 공고로 본다.
-     * 삭제·수정·추가를 모두 마친 뒤에 판정해야 전부 지우고 새로 추가하는 요청을 마감으로 잘못 처리하지 않는다.
-     */
-    private void closeIfNoActiveSchedules() {
-        if (PostingStatus.OPEN.equals(this.status) && getActiveSchedules().isEmpty()) {
-            this.status = PostingStatus.CLOSED;
-        }
-    }
 }

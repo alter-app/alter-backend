@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,15 +41,20 @@ public class UpdatePostingRequestDto {
     private int payAmount;
 
     @NotNull
+    @Min(1)
+    @Schema(description = "공고 모집 인원 (안내용)", example = "2")
+    private Integer recruitCount;
+
+    @NotNull
     @Schema(description = "급여 타입", example = "HOURLY")
     private PaymentType paymentType;
 
     @Valid
-    @Schema(description = "새로 추가할 스케줄", example = "[{\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"positionsNeeded\": 1, \"position\": \"설거지\"}]")
+    @Schema(description = "새로 추가할 스케줄", example = "[{\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"position\": \"설거지\"}]")
     private List<CreatePostingScheduleRequestDto> createSchedules;
 
     @Valid
-    @Schema(description = "수정할 스케줄", example = "[{\"id\": 1, \"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"positionsNeeded\": 3, \"position\": \"홀서빙\"}]")
+    @Schema(description = "수정할 스케줄", example = "[{\"id\": 1, \"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"position\": \"홀서빙\"}]")
     private List<UpdatePostingScheduleDto> updateSchedules;
 
     @Schema(description = "삭제할 스케줄 ID", example = "[2, 3]")
@@ -59,6 +65,7 @@ public class UpdatePostingRequestDto {
             title,
             description,
             payAmount,
+            recruitCount,
             paymentType,
             toCommands(createSchedules, CreatePostingScheduleRequestDto::toCommand),
             toCommands(updateSchedules, UpdatePostingScheduleDto::toCommand),
