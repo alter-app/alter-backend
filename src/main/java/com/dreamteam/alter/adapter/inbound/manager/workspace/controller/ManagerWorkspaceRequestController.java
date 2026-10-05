@@ -58,7 +58,7 @@ public class ManagerWorkspaceRequestController implements ManagerWorkspaceReques
         @RequestBody @Valid CreateWorkspaceRequestDto request
     ) {
         ManagerActor actor = ManagerActionContext.getInstance().getActor();
-        createWorkspaceRequest.execute(actor.getManagerUser().getUser(), request);
+        createWorkspaceRequest.execute(request.toCommand(actor.getManagerUser().getUser()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

@@ -15,6 +15,7 @@ import com.dreamteam.alter.application.chat.event.ChatMembershipJoinedEvent;
 import com.dreamteam.alter.application.file.FileDeleteService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.common.util.PhoneNumberUtil;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
@@ -72,6 +73,7 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 
 	private void approve(WorkspaceRequest workspaceRequest, Long workspaceRequestId) {
 		workspaceRequest.approve();
+		String contact = PhoneNumberUtil.normalizeLocalNumber(workspaceRequest.getContact());
 
 		ManagerUser managerUser = managerUserQueryRepository.findByUserId(workspaceRequest.getUser().getId())
 			.orElseGet(() -> managerUserRepository.save(ManagerUser.create(workspaceRequest.getUser(), ManagerUserStatus.ACTIVATED)));
@@ -82,7 +84,7 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 			workspaceRequest.getBusinessName(),
 			workspaceRequest.getBusinessType(),
 			workspaceRequest.getBusinessTypeDetail(),
-			workspaceRequest.getContact(),
+			contact,
 			null,
 			WorkspaceStatus.ACTIVATED,
 			workspaceRequest.getFullAddress(),

@@ -7,12 +7,38 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DisplayName("PhoneNumberUtil 테스트")
 class PhoneNumberUtilTests {
+
+    @ParameterizedTest
+    @CsvSource({"010-1234-5678,01012345678", "01012345678,01012345678", "02-123-4567,021234567",
+        "021234567,021234567", "02-1234-5678,0212345678", "0212345678,0212345678",
+        "031-123-4567,0311234567", "0311234567,0311234567", "070-1234-5678,07012345678",
+        "07012345678,07012345678", "099-1234-5678,09912345678", "09912345678,09912345678"})
+    void 국내형_번호를_검증하고_하이픈만_제거한다(String input, String expected) {
+        assertThat(PhoneNumberUtil.isValidLocalNumber(input)).isTrue();
+        assertThat(PhoneNumberUtil.normalizeLocalNumber(input)).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", " 01012345678", "01012345678 ", "01012a45678", "+821012345678",
+        "010-12345678", "0101234-5678", "010--1234-5678", "010.1234.5678", "010 1234 5678",
+        "010–1234–5678", "０１０１２３４５６７８", "123456789", "01234567", "012345678901",
+        "010-12345-6789", "0-1234-5678", "01012345678\n"})
+    void 잘못된_국내형_번호는_정규화하지_않는다(String input) {
+        assertThat(PhoneNumberUtil.isValidLocalNumber(input)).isFalse();
+        CustomException exception = assertThrows(CustomException.class, () -> PhoneNumberUtil.normalizeLocalNumber(input));
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT);
+        assertThat(exception.getMessage()).isEqualTo("연락처는 0으로 시작하는 9~11자리 숫자 또는 2~3자리-3~4자리-4자리 형식이어야 합니다.");
+    }
 
     @Test
     @DisplayName("유효한 한국 E.164 번호를 로컬 형식으로 변환")
