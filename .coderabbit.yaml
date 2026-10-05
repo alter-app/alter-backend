@@ -65,8 +65,10 @@ reviews:
         - AssertJ fluent assertions (not JUnit assertions).
         - @ExtendWith(MockitoExtension.class) with @Mock and @InjectMocks.
         - @Nested classes group related tests with @DisplayName.
-        - Prefer UseCase and Util class tests first.
-        - Allow controller slice tests when endpoint behavior must be verified.
+        - Only unit tests per UseCase, Service and Util are allowed.
+        - Flag any test that starts a Spring context or needs a real DB
+          (SpringBootTest, DataJpaTest, WebMvcTest, SpringJUnitConfig,
+          Testcontainers, H2, direct JDBC) and any controller test.
   tools:
     ast-grep:
       essential_rules: true
