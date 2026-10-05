@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 
+@Slf4j
 @Component
 public class AppleAuthClientImpl implements AppleAuthClient {
 
@@ -120,7 +122,22 @@ public class AppleAuthClientImpl implements AppleAuthClient {
                 jsonNode.get(KEY_ID_TOKEN).asText()
             );
         } catch (HttpClientErrorException e) {
-            throw new CustomException(ErrorCode.SOCIAL_AUTH_CODE_EXPIRED);
+            String providerErrorCode = "unknown";
+            try {
+                JsonNode error = objectMapper.readTree(e.getResponseBodyAsString());
+                if (error != null) {
+                    providerErrorCode = switch (error.path("error").asText()) {
+                        case "invalid_request", "invalid_client", "invalid_grant", "unauthorized_client",
+                             "unsupported_grant_type", "invalid_scope" -> error.path("error").asText();
+                        default -> "unknown";
+                    };
+                }
+            } catch (JsonProcessingException ignored) {
+                // 오류 본문이 JSON이 아니면 제공자 코드를 알 수 없다.
+            }
+            log.warn("Social auth error provider=APPLE stage=token httpStatus={} providerErrorCode={}",
+                e.getStatusCode().value(), providerErrorCode);
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         } catch (JsonProcessingException e) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
