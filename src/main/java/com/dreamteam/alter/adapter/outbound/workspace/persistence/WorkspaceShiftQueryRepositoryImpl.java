@@ -95,7 +95,8 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
                 .where(
                         workspaceShift.assignedWorkspaceWorker.user.eq(user),
                         workspaceShift.startDateTime.goe(startOfDay),
-                        workspaceShift.startDateTime.lt(endOfDay)
+                        workspaceShift.startDateTime.lt(endOfDay),
+                        workspaceShift.status.ne(WorkspaceShiftStatus.DELETED)
                 )
                 .orderBy(workspaceShift.startDateTime.asc())
                 .fetch();

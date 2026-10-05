@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -22,10 +23,12 @@ public interface UserScheduleControllerSpec {
                                                            "- year, month: 해당 월 스케줄 조회 (예상 급여 포함)<br>" +
                                                            "- year, month, day: 해당 일 스케줄 조회")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "스케줄 조회 성공")
+        @ApiResponse(responseCode = "200", description = "스케줄 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 파라미터 조합 또는 존재하지 않는 일별 날짜 (B001)",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     ResponseEntity<CommonApiResponse<GetMyScheduleResponseDto>> getMySchedule(
-        WorkScheduleInquiryRequestDto request
+        @Valid WorkScheduleInquiryRequestDto request
     );
 
     @Operation(summary = "업장별 근무 스케줄 조회", description = "year, month 값을 모두 포함해야합니다. 응답에는 나의 총 근무 시간과 예상 급여가 포함됩니다.")
