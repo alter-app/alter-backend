@@ -18,6 +18,7 @@ import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequestTarget;
 import com.dreamteam.alter.domain.workspace.entity.QSubstituteRequestTarget;
 import com.dreamteam.alter.domain.workspace.port.outbound.SubstituteRequestQueryRepository;
+import com.dreamteam.alter.domain.workspace.result.ReceivedSubstituteRequestDetailResult;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestTargetStatus;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerStatus;
@@ -270,6 +271,48 @@ public class SubstituteRequestQueryRepositoryImpl implements SubstituteRequestQu
             .orderBy(substituteRequest.id.desc())
             .limit(pageRequest.pageSize())
             .fetch();
+    }
+
+    @Override
+    public Optional<ReceivedSubstituteRequestDetailResult> getReceivedRequestDetail(User user, Long requestId) {
+        QWorkspaceWorker requesterWorker = new QWorkspaceWorker("requesterWorker");
+        QUser requesterUser = new QUser("requesterUser");
+        QFile requesterFile = new QFile("requesterFile");
+        QSubstituteRequestTarget myTarget = new QSubstituteRequestTarget("myTarget");
+
+        return Optional.ofNullable(queryFactory
+            .select(Projections.constructor(
+                ReceivedSubstituteRequestDetailResult.class,
+                substituteRequest.id,
+                substituteRequest.status,
+                myTarget.status,
+                workspaceShift.id,
+                workspaceShift.startDateTime,
+                workspaceShift.endDateTime,
+                workspaceShift.position,
+                workspace.id,
+                workspace.businessName,
+                requesterWorker.id,
+                requesterUser.name,
+                requesterFile.fileUrl
+            ))
+            .from(substituteRequest)
+            .join(substituteRequest.workspaceShift, workspaceShift)
+            .join(workspaceShift.workspace, workspace)
+            .join(requesterWorker).on(requesterWorker.id.eq(substituteRequest.requesterId))
+            .join(requesterUser).on(requesterUser.id.eq(requesterWorker.user.id))
+            .leftJoin(requesterFile).on(fileConditions(requesterFile, requesterUser))
+            .join(workspaceWorker).on(
+                workspaceWorker.workspace.id.eq(workspace.id)
+                    .and(workspaceWorker.user.eq(user))
+                    .and(workspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED))
+            )
+            .join(myTarget).on(
+                myTarget.substituteRequest.eq(substituteRequest)
+                    .and(myTarget.targetWorkerId.eq(workspaceWorker.id))
+            )
+            .where(substituteRequest.id.eq(requestId), requesterWorker.user.ne(user))
+            .fetchOne());
     }
 
     @Override

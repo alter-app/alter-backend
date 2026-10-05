@@ -11,6 +11,7 @@ import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequest;
 import com.dreamteam.alter.domain.workspace.entity.SubstituteRequestTarget;
 import com.dreamteam.alter.domain.workspace.type.SubstituteRequestStatus;
+import com.dreamteam.alter.domain.workspace.result.ReceivedSubstituteRequestDetailResult;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -46,6 +47,8 @@ public interface SubstituteRequestQueryRepository {
     );
     
     Optional<SentSubstituteRequestDetailResponse> getSentRequestDetail(User user, Long requestId);
+
+    Optional<ReceivedSubstituteRequestDetailResult> getReceivedRequestDetail(User user, Long requestId);
 
     List<SubstituteRequest> findAllActiveByRequesterUserId(Long userId);
     List<SubstituteRequestTarget> findAllPendingTargetsByUserId(Long userId);
