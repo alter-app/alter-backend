@@ -55,7 +55,7 @@ public class ManagerFixedWorkerScheduleController implements ManagerFixedWorkerS
 		@RequestBody @Valid CreateWorkerScheduleRequestDto request
 	) {
 		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		managerCreateFixedWorkerSchedule.execute(actor, workspaceId, request);
+		managerCreateFixedWorkerSchedule.execute(actor, workspaceId, request.toCommand());
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 
@@ -67,7 +67,7 @@ public class ManagerFixedWorkerScheduleController implements ManagerFixedWorkerS
 		@RequestBody @Valid UpdateWorkerScheduleRequestDto request
 	) {
 		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		managerUpdateFixedWorkerSchedule.execute(actor, workspaceId, workerScheduleId, request);
+		managerUpdateFixedWorkerSchedule.execute(actor, workspaceId, workerScheduleId, request.toCommand());
 		return ResponseEntity.ok(CommonApiResponse.empty());
 	}
 
@@ -88,6 +88,7 @@ public class ManagerFixedWorkerScheduleController implements ManagerFixedWorkerS
 		@PathVariable Long workspaceId
 	) {
 		ManagerActor actor = ManagerActionContext.getInstance().getActor();
-		return ResponseEntity.ok(CommonApiResponse.of(managerGetFixedWorkerScheduleList.execute(actor, workspaceId)));
+		return ResponseEntity.ok(CommonApiResponse.of(managerGetFixedWorkerScheduleList.execute(actor, workspaceId).stream()
+			.map(FixedWorkerScheduleResponseDto::from).toList()));
 	}
 }

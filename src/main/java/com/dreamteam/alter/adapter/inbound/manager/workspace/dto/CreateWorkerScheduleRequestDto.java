@@ -3,6 +3,7 @@ package com.dreamteam.alter.adapter.inbound.manager.workspace.dto;
 import java.util.List;
 
 import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.WorkerScheduleDto;
+import com.dreamteam.alter.domain.workspace.command.CreateFixedWorkerScheduleCommand;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -25,4 +26,10 @@ public class CreateWorkerScheduleRequestDto {
 	@NotEmpty(message = "스케줄 목록은 필수입니다.")
 	@Valid
 	private List<WorkerScheduleDto> schedules;
+
+	public CreateFixedWorkerScheduleCommand toCommand() {
+		return new CreateFixedWorkerScheduleCommand(
+			workspaceWorkerId, schedules.stream().map(WorkerScheduleDto::toCommand).toList()
+		);
+	}
 }

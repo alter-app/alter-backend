@@ -24,7 +24,15 @@ import jakarta.validation.Valid;
 @Tag(name = "MANAGER - 근무자 고정 스케줄 관리 API")
 public interface ManagerFixedWorkerScheduleControllerSpec {
 
-	@Operation(summary = "매니저 - 근무자 고정 스케줄 등록", description = "근무자의 요일별 고정 근무 시간을 등록합니다.")
+	@Operation(summary = "매니저 - 근무자 고정 스케줄 등록", description = """
+		매주 또는 매월 n번째 요일의 고정 근무 규칙과 적용 기간을 등록합니다.
+		매월의 다섯째 요일이 없으면 그 달은 건너뜁니다. 적용 기간은 근무 시작일 기준 양끝을 포함합니다.
+		종료일 null은 무기한입니다. 반복·기간 필드 전체 생략은 기존 무기한 매주 규칙입니다.
+		등록은 규칙만 저장하며 실제 근무는 업장별 지정일에 다음 달 배치로 생성합니다.
+		매월 예시: recurrenceType=MONTHLY, weekOfMonth=2, startDayOfWeek=TUESDAY,
+		endDayOfWeek=TUESDAY, startTime=09:00:00, endTime=18:00:00,
+		startDate=2026-10-01, endDate=2027-03-31.
+		""")
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "고정 스케줄 등록 성공"),
 		@ApiResponse(responseCode = "400", description = "400 Error 실패 케이스",
@@ -67,7 +75,13 @@ public interface ManagerFixedWorkerScheduleControllerSpec {
 		@RequestBody @Valid CreateWorkerScheduleRequestDto requests
 	);
 
-	@Operation(summary = "매니저 - 근무자 고정 스케줄 수정", description = "근무자의 요일별 고정 근무 시간을 수정합니다.")
+	@Operation(summary = "매니저 - 근무자 고정 스케줄 수정", description = """
+		고정 근무의 요일·시간·반복·적용 기간을 수정합니다. 이미 생성된 실제 근무는 보존합니다.
+		반복·기간 필드 전체 생략은 기존 반복·기간 보존입니다.
+		반복·기간 변경 시 recurrenceType과 startDate를 함께 보내며 MONTHLY는 weekOfMonth도 필수입니다.
+		WEEKLY의 weekOfMonth는 null입니다. endDate=null로 종료일을 해제할 수 있습니다.
+		일요일 밤→월요일 아침처럼 종료 요일을 명시한 주 경계 근무를 지원합니다.
+		""")
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "고정 스케줄 수정 성공"),
 		@ApiResponse(responseCode = "400", description = "400 Error 실패 케이스",
@@ -111,7 +125,7 @@ public interface ManagerFixedWorkerScheduleControllerSpec {
 		@RequestBody @Valid UpdateWorkerScheduleRequestDto request
 	);
 
-	@Operation(summary = "매니저 - 근무자 고정 스케줄 삭제", description = "근무자의 요일별 고정 근무 시간을 삭제합니다.")
+	@Operation(summary = "매니저 - 근무자 고정 스케줄 삭제", description = "고정 근무 규칙을 삭제합니다. 이미 생성된 실제 근무는 보존하고 이후 배치 생성에서 제외합니다.")
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "고정 스케줄 삭제 성공"),
 		@ApiResponse(responseCode = "404", description = "404 Error 실패 케이스",
