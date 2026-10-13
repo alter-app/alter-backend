@@ -1,6 +1,5 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -19,6 +18,7 @@ import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftRepository;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
+import com.dreamteam.alter.domain.workspace.util.FixedWorkerScheduleCalculator;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,24 +57,14 @@ public class GenerateNextMonthWorkspaceShiftTx {
         int skipped = 0;
 
         for (WorkspaceWorkerSchedule schedule : schedules) {
-            LocalDate firstStartDate = calculateFirstOccurrence(startDate, schedule.getStartDayOfWeek());
-            if (firstStartDate.isAfter(endDate)) {
-                continue;
-            }
-
             WorkspaceWorker workspaceWorker = schedule.getWorkspaceWorker();
             Long userId = workspaceWorker.getUser().getId();
             List<WorkspaceShift> existingShifts = existingShiftsByUserId.getOrDefault(userId, List.of());
             List<WorkspaceShift> createdShifts = createdByUserId.computeIfAbsent(userId, k -> new ArrayList<>());
 
-            for (LocalDate currentStartDate = firstStartDate;
-                 !currentStartDate.isAfter(endDate);
-                 currentStartDate = currentStartDate.plusWeeks(1)) {
-
-                LocalDateTime startDateTime = currentStartDate.atTime(schedule.getStartTime());
-                LocalDateTime endDateTime = currentStartDate
-                    .plusDays(calculateDayOffset(schedule.getStartDayOfWeek(), schedule.getEndDayOfWeek()))
-                    .atTime(schedule.getEndTime());
+            for (var occurrence : FixedWorkerScheduleCalculator.occurrences(schedule, startDate, endDate)) {
+                LocalDateTime startDateTime = occurrence.start();
+                LocalDateTime endDateTime = occurrence.end();
 
                 if (hasConflict(existingShifts, startDateTime, endDateTime)
                     || hasConflict(createdShifts, startDateTime, endDateTime)) {
@@ -111,22 +101,6 @@ public class GenerateNextMonthWorkspaceShiftTx {
             }
         }
         return false;
-    }
-
-    private LocalDate calculateFirstOccurrence(LocalDate monthStart, DayOfWeek targetDay) {
-        int diff = targetDay.getValue() - monthStart.getDayOfWeek().getValue();
-        if (diff < 0) {
-            diff += 7;
-        }
-        return monthStart.plusDays(diff);
-    }
-
-    private long calculateDayOffset(DayOfWeek startDay, DayOfWeek endDay) {
-        long offset = endDay.getValue() - startDay.getValue();
-        if (offset < 0) {
-            offset += 7;
-        }
-        return offset;
     }
 
     public record GenerationResult(List<WorkspaceShift> createdShifts, int skipped) {

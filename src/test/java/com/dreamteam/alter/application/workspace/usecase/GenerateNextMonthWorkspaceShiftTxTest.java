@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
@@ -26,12 +27,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.dreamteam.alter.domain.user.entity.User;
+import com.dreamteam.alter.domain.workspace.command.FixedWorkerScheduleCommand;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftRepository;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerScheduleRecurrenceType;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GenerateNextMonthWorkspaceShiftTx 테스트")
@@ -184,6 +187,70 @@ class GenerateNextMonthWorkspaceShiftTxTest {
 
         assertThat(result.created()).isEqualTo(4);
         assertThat(result.skipped()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("일요일 밤에 시작해 월요일에 끝나는 고정 근무를 생성한다")
+    void execute_supportsSundayToMonday() {
+        Workspace workspace = createMockWorkspace(1L);
+        WorkspaceWorker worker = createMockWorker(workspace, 10L);
+        WorkspaceWorkerSchedule schedule = WorkspaceWorkerSchedule.create(
+            worker, DayOfWeek.SUNDAY, LocalTime.of(22, 0), DayOfWeek.MONDAY, LocalTime.of(6, 0)
+        );
+
+        var result = generateNextMonthWorkspaceShiftTx.execute(
+            workspace, List.of(schedule), YearMonth.of(2025, 2), Map.of()
+        );
+
+        assertThat(result.created()).isEqualTo(4);
+        assertThat(result.createdShifts().getFirst().getStartDateTime())
+            .isEqualTo(LocalDateTime.of(2025, 2, 2, 22, 0));
+        assertThat(result.createdShifts().getFirst().getEndDateTime())
+            .isEqualTo(LocalDateTime.of(2025, 2, 3, 6, 0));
+    }
+
+    @Test
+    void execute_generatesMonthlyOccurrenceWithinPeriod() {
+        Workspace workspace = createMockWorkspace(1L);
+        WorkspaceWorker worker = createMockWorker(workspace, 10L);
+        var schedule = WorkspaceWorkerSchedule.create(worker, new FixedWorkerScheduleCommand(
+            DayOfWeek.TUESDAY, LocalTime.of(9, 0), DayOfWeek.TUESDAY, LocalTime.of(18, 0),
+            WorkspaceWorkerScheduleRecurrenceType.MONTHLY, 2, LocalDate.of(2026, 10, 13), LocalDate.of(2026, 10, 13)
+        ));
+        var result = generateNextMonthWorkspaceShiftTx.execute(workspace, List.of(schedule), YearMonth.of(2026, 10), Map.of());
+        assertThat(result.createdShifts()).singleElement()
+            .satisfies(shift -> assertThat(shift.getStartDateTime()).isEqualTo(LocalDateTime.of(2026, 10, 13, 9, 0)));
+    }
+
+    @Test
+    void execute_missingFifthWeekdayDoesNotSave() {
+        Workspace workspace = createMockWorkspace(1L);
+        WorkspaceWorker worker = createMockWorker(workspace, 10L);
+        var schedule = WorkspaceWorkerSchedule.create(worker, new FixedWorkerScheduleCommand(
+            DayOfWeek.TUESDAY, LocalTime.of(9, 0), DayOfWeek.TUESDAY, LocalTime.of(18, 0),
+            WorkspaceWorkerScheduleRecurrenceType.MONTHLY, 5, LocalDate.of(2026, 10, 1), null
+        ));
+        var result = generateNextMonthWorkspaceShiftTx.execute(workspace, List.of(schedule), YearMonth.of(2026, 10), Map.of());
+        assertThat(result.created()).isZero();
+        verify(workspaceShiftRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void execute_sequentialRerunSkipsAlreadyConfirmedOccurrences() {
+        Workspace workspace = createMockWorkspace(1L);
+        WorkspaceWorker worker = createMockWorker(workspace, 10L);
+        var schedule = WorkspaceWorkerSchedule.create(worker, new FixedWorkerScheduleCommand(
+            DayOfWeek.TUESDAY, LocalTime.of(9, 0), DayOfWeek.TUESDAY, LocalTime.of(18, 0),
+            WorkspaceWorkerScheduleRecurrenceType.MONTHLY, 2, LocalDate.of(2026, 10, 1), null
+        ));
+        var first = generateNextMonthWorkspaceShiftTx.execute(workspace, List.of(schedule), YearMonth.of(2026, 10), Map.of());
+        var second = generateNextMonthWorkspaceShiftTx.execute(
+            workspace, List.of(schedule), YearMonth.of(2026, 10), Map.of(worker.getUser().getId(), first.createdShifts())
+        );
+        assertThat(first.created()).isEqualTo(1);
+        assertThat(second.created()).isZero();
+        assertThat(second.skipped()).isEqualTo(1);
+        verify(workspaceShiftRepository, times(1)).saveAll(anyList());
     }
 
     private Workspace createMockWorkspace(Long id) {
