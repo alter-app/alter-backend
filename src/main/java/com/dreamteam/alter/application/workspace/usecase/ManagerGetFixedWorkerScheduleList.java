@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.FixedWorkerScheduleResponseDto;
+import com.dreamteam.alter.domain.workspace.result.FixedWorkerScheduleResult;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
@@ -24,12 +24,12 @@ public class ManagerGetFixedWorkerScheduleList implements ManagerGetFixedWorkerS
 	private final WorkspaceWorkerScheduleQueryRepository workspaceWorkerScheduleQueryRepository;
 
 	@Override
-	public List<FixedWorkerScheduleResponseDto> execute(ManagerActor actor, Long workspaceId) {
+	public List<FixedWorkerScheduleResult> execute(ManagerActor actor, Long workspaceId) {
 		if (!workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser()))
 			throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
 
 		return workspaceWorkerScheduleQueryRepository.findAllActivatedWithWorkspaceWorkerByWorkspaceIds(List.of(workspaceId)).stream()
-			.map(FixedWorkerScheduleResponseDto::of)
+			.map(FixedWorkerScheduleResult::from)
 			.toList();
 	}
 }
