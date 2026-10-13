@@ -29,6 +29,9 @@ public class ManagerDeleteFixedWorkerSchedule implements ManagerDeleteFixedWorke
 		WorkspaceWorkerSchedule workspaceWorkerSchedule = workspaceWorkerScheduleQueryRepository.findById(workerScheduleId)
 			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "삭제할 스케줄을 찾지 못하였습니다."));
 
+		if (!workspaceWorkerSchedule.getWorkspaceWorker().getWorkspace().getId().equals(workspaceId))
+			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "해당 업장의 고정 근무가 아닙니다.");
+
 		workspaceWorkerSchedule.delete();
 	}
 }
