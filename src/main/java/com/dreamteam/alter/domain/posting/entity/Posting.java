@@ -18,8 +18,9 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -68,7 +69,8 @@ public class Posting {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "posting", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostingSchedule> schedules;
+    @OrderBy("id ASC")
+    private Set<PostingSchedule> schedules;
 
     public static Posting create(CreatePostingCommand command, Workspace workspace) {
         Posting posting = Posting.builder()
@@ -81,7 +83,7 @@ public class Posting {
             .status(PostingStatus.OPEN)
             .build();
 
-        posting.schedules = new ArrayList<>();
+        posting.schedules = new LinkedHashSet<>();
         if (ObjectUtils.isNotEmpty(command.schedules())) {
             posting.addSchedules(command.schedules());
         }

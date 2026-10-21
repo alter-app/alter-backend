@@ -78,7 +78,7 @@ class ManagerGetPostingDetailTests {
         given(posting.getStatus()).willReturn(PostingStatus.OPEN);
         given(posting.getCreatedAt()).willReturn(LocalDateTime.of(2026, 7, 1, 12, 0));
         given(posting.getUpdatedAt()).willReturn(LocalDateTime.of(2026, 7, 2, 12, 0));
-        given(posting.getSchedules()).willReturn(Collections.emptyList());
+        given(posting.getSchedules()).willReturn(Collections.emptySet());
 
         return ManagerPostingDetailResponse.of(posting);
     }

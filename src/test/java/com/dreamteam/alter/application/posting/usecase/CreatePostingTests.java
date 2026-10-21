@@ -88,7 +88,7 @@ class CreatePostingTests {
         assertThat(saved.getPaymentType()).isEqualTo(PaymentType.HOURLY);
         assertThat(saved.getSchedules()).hasSize(1);
         assertThat(saved.getRecruitCount()).isEqualTo(3);
-        assertThat(saved.getSchedules().getFirst().getPosition()).isEqualTo("홀서빙");
+        assertThat(saved.getSchedules().iterator().next().getPosition()).isEqualTo("홀서빙");
     }
 
     private CreatePostingCommand command() {

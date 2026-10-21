@@ -75,8 +75,8 @@ class ManagerUpdatePostingStatusTests {
         given(user.getId()).willReturn(11L);
         User anotherUser = mock(User.class);
         given(anotherUser.getId()).willReturn(12L);
-        PostingApplication submitted = PostingApplication.create(posting.getSchedules().getFirst(), user, "지원");
-        PostingApplication shortlisted = PostingApplication.create(posting.getSchedules().getFirst(), anotherUser, "지원");
+        PostingApplication submitted = PostingApplication.create(posting.getSchedules().iterator().next(), user, "지원");
+        PostingApplication shortlisted = PostingApplication.create(posting.getSchedules().iterator().next(), anotherUser, "지원");
         shortlisted.updateStatus(PostingApplicationStatus.SHORTLISTED);
         given(postingApplicationQueryRepository.findPendingByPostingIdWithUser(1L))
             .willReturn(List.of(submitted, shortlisted));
@@ -166,7 +166,7 @@ class ManagerUpdatePostingStatusTests {
     private void assertFlushFailureMapsToTooManyRequests(RuntimeException failure) {
         Posting posting = posting();
         ManagerActor actor = actorWithPosting(posting);
-        PostingApplication submitted = PostingApplication.create(posting.getSchedules().getFirst(), mock(User.class), "지원");
+        PostingApplication submitted = PostingApplication.create(posting.getSchedules().iterator().next(), mock(User.class), "지원");
         given(postingApplicationQueryRepository.findPendingByPostingIdWithUser(1L)).willReturn(List.of(submitted));
         doThrow(failure).when(entityManager).flush();
         assertThatThrownBy(() -> useCase.execute(1L, new UpdatePostingStatusRequestDto(PostingStatus.CLOSED), actor))
@@ -181,8 +181,8 @@ class ManagerUpdatePostingStatusTests {
         User user = mock(User.class);
         given(user.getId()).willReturn(11L);
         given(postingApplicationQueryRepository.findPendingByPostingIdWithUser(1L)).willReturn(List.of(
-            PostingApplication.create(posting.getSchedules().getFirst(), user, "지원"),
-            PostingApplication.create(posting.getSchedules().getFirst(), user, "다른 일정 지원")));
+            PostingApplication.create(posting.getSchedules().iterator().next(), user, "지원"),
+            PostingApplication.create(posting.getSchedules().iterator().next(), user, "다른 일정 지원")));
         useCase.execute(1L, new UpdatePostingStatusRequestDto(PostingStatus.CLOSED), actor);
         ArgumentCaptor<FcmBatchNotificationEvent> captor = ArgumentCaptor.forClass(FcmBatchNotificationEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
