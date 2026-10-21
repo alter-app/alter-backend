@@ -122,4 +122,31 @@ class EmailVerificationUseCaseTests {
         order.verify(sessions).deleteCode(EMAIL);
         order.verify(sessions).createVerificationSession(EMAIL, Duration.ofSeconds(900));
     }
+
+    @Test
+    void mixedCaseEmailIsNormalizedForLookupCodeAndEvent() {
+        when(generator.generate()).thenReturn("123456");
+        when(sendLogs.save(any())).thenAnswer(invocation -> {
+            EmailSendLog log = invocation.getArgument(0);
+            ReflectionTestUtils.setField(log, "id", 1L);
+            return log;
+        });
+        send.execute(new SendEmailVerificationCodeCommand("  Synthetic-Verification@Example.COM "));
+        verify(users).findByEmail(EMAIL);
+        verify(sessions).isCooldown(EMAIL);
+        verify(sessions).saveCode(EMAIL, "123456", Duration.ofSeconds(300));
+        verify(sessions).markCooldown(EMAIL, Duration.ofSeconds(30));
+        var captor = org.mockito.ArgumentCaptor.forClass(EmailSendEvent.class);
+        verify(publisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().getEmail()).isEqualTo(EMAIL);
+    }
+
+    @Test
+    void mixedCaseEmailVerifiesAgainstCodeStoredUnderNormalizedEmail() {
+        when(sessions.findCode(EMAIL)).thenReturn(Optional.of("123456"));
+        when(sessions.createVerificationSession(EMAIL, Duration.ofSeconds(900))).thenReturn("synthetic-session");
+        var result = verifyCode.execute(new VerifyEmailVerificationCodeCommand("Synthetic-Verification@EXAMPLE.com", "123456"));
+        assertThat(result.sessionId()).isEqualTo("synthetic-session");
+        verify(sessions).deleteCode(EMAIL);
+    }
 }

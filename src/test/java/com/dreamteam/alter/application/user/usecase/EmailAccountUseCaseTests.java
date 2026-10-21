@@ -59,6 +59,15 @@ class EmailAccountUseCaseTests {
     }
 
     @Test
+    void sameEmailWithDifferentCaseIsTreatedAsCurrentEmail() {
+        User user = user("Same@Example.com");
+        when(sessions.getEmailBySession("session")).thenReturn(Optional.of("same@example.com"));
+        assertThatThrownBy(() -> update.execute(new UpdateEmailCommand(user, "session")))
+            .isInstanceOf(CustomException.class).extracting("errorCode").isEqualTo(ErrorCode.CONFLICT);
+        verifyNoInteractions(users);
+    }
+
+    @Test
     void successfulRegistrationConsumesVerifiedSessionAndRemovalClearsEmail() {
         User user = user(null);
         when(sessions.getEmailBySession("session")).thenReturn(Optional.of("verified@example.com"));

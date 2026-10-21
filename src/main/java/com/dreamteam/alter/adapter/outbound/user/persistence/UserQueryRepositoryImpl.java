@@ -45,10 +45,10 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
         User foundUser = queryFactory
             .selectFrom(user)
             .where(
-                user.email.eq(email),
+                user.email.equalsIgnoreCase(email),
                 user.status.eq(UserStatus.ACTIVE)
             )
-            .fetchOne();
+            .fetchFirst();
 
         return Optional.ofNullable(foundUser);
     }
