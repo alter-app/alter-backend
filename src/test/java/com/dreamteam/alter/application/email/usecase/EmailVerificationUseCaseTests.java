@@ -1,6 +1,7 @@
 package com.dreamteam.alter.application.email.usecase;
 
 import com.dreamteam.alter.application.email.event.EmailSendEvent;
+import com.dreamteam.alter.application.email.event.EmailSendEventListener;
 import com.dreamteam.alter.application.email.service.VerificationCodeGenerator;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -148,5 +149,16 @@ class EmailVerificationUseCaseTests {
         var result = verifyCode.execute(new VerifyEmailVerificationCodeCommand("Synthetic-Verification@EXAMPLE.com", "123456"));
         assertThat(result.sessionId()).isEqualTo("synthetic-session");
         verify(sessions).deleteCode(EMAIL);
+    }
+
+    @Test
+    void sendUseCaseOnlyPublishesEventAndNeverCallsMailClientDirectly() throws Exception {
+        assertThat(SendEmailVerificationCode.class.getDeclaredFields())
+            .extracting(java.lang.reflect.Field::getType)
+            .doesNotContain(com.dreamteam.alter.domain.email.port.outbound.EmailClient.class);
+        // 실제 발송은 커밋 이후에만 일어나는 리스너가 맡는다 (롤백되면 메일은 나가지 않는다)
+        var listener = EmailSendEventListener.class.getMethod("handleEmailSendEvent", EmailSendEvent.class);
+        assertThat(listener.getAnnotation(org.springframework.transaction.event.TransactionalEventListener.class).phase())
+            .isEqualTo(org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT);
     }
 }
