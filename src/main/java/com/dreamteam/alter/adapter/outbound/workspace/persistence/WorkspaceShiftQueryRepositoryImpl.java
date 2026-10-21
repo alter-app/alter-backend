@@ -106,18 +106,6 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
     }
 
     @Override
-    public List<WorkspaceShift> findByWorkspaceAndDateRange(Workspace workspace, int year, int month) {
-        return queryFactory
-            .selectFrom(workspaceShift)
-            .where(workspaceShift.workspace.eq(workspace)
-                .and(workspaceShift.startDateTime.year().eq(year))
-                .and(workspaceShift.startDateTime.month().eq(month))
-                .and(workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)))
-            .orderBy(workspaceShift.startDateTime.asc())
-            .fetch();
-    }
-
-    @Override
     public List<WorkspaceShift> findByManagerAndDateRange(
         ManagerUser managerUser,
         Long workspaceId,

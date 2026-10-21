@@ -41,15 +41,11 @@ class GetWorkspaceWorkScheduleTests {
         WorkspaceWorker current = WorkspaceWorker.create(workspace, user);
         WorkspaceWorker previous = WorkspaceWorker.create(workspace, user);
         previous.resign();
-        WorkspaceWorker other = WorkspaceWorker.create(workspace, mock(User.class));
         WorkspaceShift own = shift(current, 5);
         WorkspaceShift history = shift(previous, 4);
-        WorkspaceShift others = shift(other, 6);
         when(workspaceQueryRepository.findById(1L)).thenReturn(Optional.of(workspace));
         when(workspaceWorkerQueryRepository.findActiveWorkerByWorkspaceAndUser(workspace, user))
             .thenReturn(Optional.of(current));
-        lenient().when(workspaceShiftQueryRepository.findByWorkspaceAndDateRange(workspace, 2026, 10))
-            .thenReturn(List.of(history, own, others));
         lenient().when(workspaceShiftQueryRepository.findByUserAndWorkspaceAndMonthFrom(
             user, workspace, 2026, 10, null))
             .thenReturn(List.of(history, own));
@@ -64,7 +60,6 @@ class GetWorkspaceWorkScheduleTests {
         assertThat(result.getEstimatedSalary()).isEqualTo(3L * WorkspaceConstants.MINIMUM_HOURLY_WAGE);
         verify(workspaceShiftQueryRepository).findByUserAndWorkspaceAndMonthFrom(
             user, workspace, 2026, 10, null);
-        verify(workspaceShiftQueryRepository, never()).findByWorkspaceAndDateRange(any(), anyInt(), anyInt());
     }
 
     @Test
