@@ -28,7 +28,7 @@ public class ManagerUpdateWorkSchedule implements ManagerUpdateScheduleUseCase {
     @Override
     public void execute(ManagerActor actor, Long shiftId, UpdateWorkScheduleRequestDto request) {
         // 스케줄 존재 확인
-        Optional<WorkspaceShift> shift = workspaceShiftQueryRepository.findByIdForUpdate(shiftId)
+        Optional<WorkspaceShift> shift = workspaceShiftQueryRepository.findByIdWithPessimisticLock(shiftId)
             .filter(schedule -> schedule.getStatus() != WorkspaceShiftStatus.DELETED);
         if (shift.isEmpty()) {
             throw new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 근무 스케줄입니다.");
@@ -42,7 +42,7 @@ public class ManagerUpdateWorkSchedule implements ManagerUpdateScheduleUseCase {
         WorkspaceShift workspaceShift = shift.get();
 
         if (ObjectUtils.isNotEmpty(workspaceShift.getAssignedWorkspaceWorker())) {
-            userQueryRepository.findAllByIdForUpdate(List.of(workspaceShift.getAssignedWorkspaceWorker().getUser().getId()));
+            userQueryRepository.findAllByIdWithPessimisticLock(List.of(workspaceShift.getAssignedWorkspaceWorker().getUser().getId()));
         }
 
         // 배정된 근무자가 있으면 바뀐 시간대가 그 근무자의 다른 근무와 겹치는지 재검증한다 (자기 자신은 제외)

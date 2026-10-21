@@ -114,7 +114,7 @@ class ManagerApproveSubstituteRequestTests {
         when(workspace.getManagerUser()).thenReturn(managerUser);
         WorkspaceShift shift = WorkspaceShift.create(workspace, START, END, "홀", WorkspaceShiftStatus.CONFIRMED);
         ReflectionTestUtils.setField(shift, "id", SHIFT_ID);
-        when(workspaceShiftQueryRepository.findByIdForUpdate(SHIFT_ID)).thenReturn(Optional.of(shift));
+        when(workspaceShiftQueryRepository.findByIdWithPessimisticLock(SHIFT_ID)).thenReturn(Optional.of(shift));
         return shift;
     }
 

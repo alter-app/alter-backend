@@ -38,19 +38,14 @@ public class GenerateNextMonthWorkspaceShiftTx {
     private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
     private final UserQueryRepository userQueryRepository;
 
-    /**
-     * existingShiftsByUserId 는 읽기만 한다. 이 Tx는 REQUIRES_NEW 로 따로 롤백될 수 있으므로
-     * 생성한 근무는 결과로 돌려주고, 호출 측이 성공한 뒤에만 공유 맵에 합친다.
-     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public GenerationResult execute(
         Workspace workspace,
         List<WorkspaceWorkerSchedule> schedules,
-        YearMonth targetMonth,
-        Map<Long, List<WorkspaceShift>> existingShiftsByUserId
+        YearMonth targetMonth
     ) {
         if (schedules.isEmpty()) {
-            return new GenerationResult(List.of(), 0);
+            return new GenerationResult(0, 0);
         }
 
         LocalDate startDate = targetMonth.atDay(1);
@@ -58,7 +53,7 @@ public class GenerateNextMonthWorkspaceShiftTx {
 
         List<Long> userIds = schedules.stream().map(schedule -> schedule.getWorkspaceWorker().getUser().getId())
             .distinct().sorted().toList();
-        userQueryRepository.findAllByIdForUpdate(userIds);
+        userQueryRepository.findAllByIdWithPessimisticLock(userIds);
         Map<Long, List<WorkspaceShift>> latestShiftsByUserId = workspaceShiftQueryRepository
             .findConfirmedByUserIdsAndDateRange(userIds, startDate.atStartOfDay(), endDate.plusDays(7).atStartOfDay())
             .stream().collect(Collectors.groupingBy(shift -> shift.getAssignedWorkspaceWorker().getUser().getId()));
@@ -113,7 +108,7 @@ public class GenerateNextMonthWorkspaceShiftTx {
             workspaceShiftRepository.saveAll(shiftsToCreate);
         }
 
-        return new GenerationResult(shiftsToCreate, skipped);
+        return new GenerationResult(shiftsToCreate.size(), skipped);
     }
 
     private boolean hasConflict(List<WorkspaceShift> existingShifts, LocalDateTime start, LocalDateTime end) {
@@ -141,9 +136,5 @@ public class GenerateNextMonthWorkspaceShiftTx {
         return offset;
     }
 
-    public record GenerationResult(List<WorkspaceShift> createdShifts, int skipped) {
-        public int created() {
-            return createdShifts.size();
-        }
-    }
+    public record GenerationResult(int created, int skipped) {}
 }

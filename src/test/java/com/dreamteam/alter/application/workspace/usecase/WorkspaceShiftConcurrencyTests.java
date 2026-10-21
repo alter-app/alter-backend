@@ -58,7 +58,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -209,7 +208,7 @@ class WorkspaceShiftConcurrencyTests {
         Fixture fixture = fixture(Scenario.SUBSTITUTE);
         tx().executeWithoutResult(status -> em.find(WorkspaceShift.class, fixture.secondShiftId()).delete());
         tx().executeWithoutResult(status -> {
-            WorkspaceShift shift = shifts.findByIdForUpdate(fixture.secondShiftId()).orElseThrow();
+            WorkspaceShift shift = shifts.findByIdWithPessimisticLock(fixture.secondShiftId()).orElseThrow();
             assertThat(shift.getId()).isEqualTo(fixture.secondShiftId());
             assertThat(shift.getStatus()).isEqualTo(WorkspaceShiftStatus.DELETED);
             assertThat(em.find(SubstituteRequest.class, fixture.requestId()).getStatus()).isEqualTo(SubstituteRequestStatus.ACCEPTED);
@@ -225,7 +224,7 @@ class WorkspaceShiftConcurrencyTests {
         List<Long> expected = List.of(fixture.userId(), secondUser).stream().sorted().toList();
         try (var executor = Executors.newFixedThreadPool(2)) {
             var first = executor.submit(() -> tx().execute(status -> {
-                List<User> result = users.findAllByIdForUpdate(List.of(secondUser, fixture.userId(), secondUser));
+                List<User> result = users.findAllByIdWithPessimisticLock(List.of(secondUser, fixture.userId(), secondUser));
                 firstLocked.countDown();
                 try { assertThat(secondStarted.await(5, TimeUnit.SECONDS)).isTrue(); }
                 catch (InterruptedException exception) { throw new RuntimeException(exception); }
@@ -234,7 +233,7 @@ class WorkspaceShiftConcurrencyTests {
             assertThat(firstLocked.await(5, TimeUnit.SECONDS)).isTrue();
             var second = executor.submit(() -> {
                 secondStarted.countDown();
-                return tx().execute(status -> users.findAllByIdForUpdate(List.of(fixture.userId(), secondUser))
+                return tx().execute(status -> users.findAllByIdWithPessimisticLock(List.of(fixture.userId(), secondUser))
                     .stream().map(User::getId).toList());
             });
             assertThat(first.get(10, TimeUnit.SECONDS)).isEqualTo(expected);
@@ -274,8 +273,8 @@ class WorkspaceShiftConcurrencyTests {
         CountDownLatch release = new CountDownLatch(1);
         try (var executor = Executors.newSingleThreadExecutor()) {
             var holder = executor.submit(() -> tx().executeWithoutResult(status -> {
-                if (target == LockTarget.USER) users.findAllByIdForUpdate(List.of(fixture.userId()));
-                else shifts.findByIdForUpdate(fixture.firstShiftId());
+                if (target == LockTarget.USER) users.findAllByIdWithPessimisticLock(List.of(fixture.userId()));
+                else shifts.findByIdWithPessimisticLock(fixture.firstShiftId());
                 locked.countDown();
                 try { assertThat(release.await(15, TimeUnit.SECONDS)).isTrue(); }
                 catch (InterruptedException exception) { throw new RuntimeException(exception); }
@@ -356,7 +355,7 @@ class WorkspaceShiftConcurrencyTests {
                 WorkspaceWorker worker = em.find(WorkspaceWorker.class, fixture.workerId());
                 WorkspaceWorkerSchedule schedule = WorkspaceWorkerSchedule.create(worker, START.getDayOfWeek(),
                     START.toLocalTime(), START.getDayOfWeek(), END.toLocalTime());
-                generate.execute(worker.getWorkspace(), List.of(schedule), YearMonth.from(START), Map.of());
+                generate.execute(worker.getWorkspace(), List.of(schedule), YearMonth.from(START));
             });
         } else {
             tx().executeWithoutResult(status -> {

@@ -53,7 +53,7 @@ class ManagerUpdateWorkScheduleTests {
         WorkspaceShift shift = createShift(managerUser);
         shift.assignWorker(worker);
 
-        when(workspaceShiftQueryRepository.findByIdForUpdate(SHIFT_ID)).thenReturn(Optional.of(shift));
+        when(workspaceShiftQueryRepository.findByIdWithPessimisticLock(SHIFT_ID)).thenReturn(Optional.of(shift));
         when(workspaceShiftQueryRepository.hasConflictingSchedule(worker, NEW_START, NEW_END, SHIFT_ID)).thenReturn(true);
 
         assertThatThrownBy(() -> managerUpdateWorkSchedule.execute(actorOf(managerUser), SHIFT_ID, request()))
@@ -70,7 +70,7 @@ class ManagerUpdateWorkScheduleTests {
         WorkspaceShift shift = createShift(managerUser);
         shift.assignWorker(worker);
 
-        when(workspaceShiftQueryRepository.findByIdForUpdate(SHIFT_ID)).thenReturn(Optional.of(shift));
+        when(workspaceShiftQueryRepository.findByIdWithPessimisticLock(SHIFT_ID)).thenReturn(Optional.of(shift));
         when(workspaceShiftQueryRepository.hasConflictingSchedule(worker, NEW_START, NEW_END, SHIFT_ID)).thenReturn(false);
 
         managerUpdateWorkSchedule.execute(actorOf(managerUser), SHIFT_ID, request());
@@ -85,7 +85,7 @@ class ManagerUpdateWorkScheduleTests {
         ManagerUser managerUser = mock(ManagerUser.class);
         WorkspaceShift shift = createShift(managerUser);
 
-        when(workspaceShiftQueryRepository.findByIdForUpdate(SHIFT_ID)).thenReturn(Optional.of(shift));
+        when(workspaceShiftQueryRepository.findByIdWithPessimisticLock(SHIFT_ID)).thenReturn(Optional.of(shift));
 
         managerUpdateWorkSchedule.execute(actorOf(managerUser), SHIFT_ID, request());
 
@@ -100,7 +100,7 @@ class ManagerUpdateWorkScheduleTests {
         WorkspaceShift shift = createShift(managerUser);
         LocalDateTime before = shift.getStartDateTime();
 
-        when(workspaceShiftQueryRepository.findByIdForUpdate(SHIFT_ID)).thenReturn(Optional.of(shift));
+        when(workspaceShiftQueryRepository.findByIdWithPessimisticLock(SHIFT_ID)).thenReturn(Optional.of(shift));
 
         assertThatThrownBy(() -> managerUpdateWorkSchedule.execute(
                 actorOf(managerUser), SHIFT_ID, new UpdateWorkScheduleRequestDto(NEW_END, NEW_START, "홀")))

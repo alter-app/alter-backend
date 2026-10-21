@@ -38,7 +38,7 @@ public class ManagerAssignWorkerToSchedule implements ManagerAssignWorkerUseCase
     @Override
     public void execute(ManagerActor actor, Long shiftId, Long workerId) {
         // 스케줄 존재 확인
-        Optional<WorkspaceShift> shift = workspaceShiftQueryRepository.findByIdForUpdate(shiftId)
+        Optional<WorkspaceShift> shift = workspaceShiftQueryRepository.findByIdWithPessimisticLock(shiftId)
             .filter(schedule -> schedule.getStatus() != WorkspaceShiftStatus.DELETED);
         if (shift.isEmpty()) {
             throw new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 근무 스케줄입니다.");
@@ -68,7 +68,7 @@ public class ManagerAssignWorkerToSchedule implements ManagerAssignWorkerUseCase
         }
         
         // 해당 근무자가 이미 같은 시간대에 배정된 스케줄이 있는지 확인
-        userQueryRepository.findAllByIdForUpdate(List.of(workspaceWorker.get().getUser().getId()));
+        userQueryRepository.findAllByIdWithPessimisticLock(List.of(workspaceWorker.get().getUser().getId()));
         if (workspaceShiftQueryRepository.hasConflictingSchedule(
             workspaceWorker.get(), 
             workspaceShift.getStartDateTime(), 
