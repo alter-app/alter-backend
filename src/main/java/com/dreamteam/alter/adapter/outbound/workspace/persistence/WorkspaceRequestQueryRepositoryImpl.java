@@ -22,12 +22,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQueryRepository {
 
+	private static final String LOCK_TIMEOUT_STATEMENT = "SET LOCAL lock_timeout = '5s'";
+
 	private final JPAQueryFactory queryFactory;
 	private final EntityManager entityManager;
 
 	@Override
-	public Optional<WorkspaceRequest> findByIdForUpdate(Long workspaceRequestId) {
-		entityManager.createNativeQuery("SET LOCAL lock_timeout = '5s'").executeUpdate();
+	public Optional<WorkspaceRequest> findByIdWithPessimisticLock(Long workspaceRequestId) {
+		entityManager.createNativeQuery(LOCK_TIMEOUT_STATEMENT).executeUpdate();
 		QWorkspaceRequest request = QWorkspaceRequest.workspaceRequest;
 		return Optional.ofNullable(queryFactory.selectFrom(request)
 			.where(request.id.eq(workspaceRequestId))

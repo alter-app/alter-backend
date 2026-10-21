@@ -17,7 +17,7 @@ public interface WorkspaceRequestQueryRepository {
 	WorkspaceRequestResponse getWorkspaceRequest(Long userId, Long workspaceRequestId);
 
 	Optional<WorkspaceRequest> findByIdWithUser(Long workspaceRequestId);
-	Optional<WorkspaceRequest> findByIdForUpdate(Long workspaceRequestId);
+	Optional<WorkspaceRequest> findByIdWithPessimisticLock(Long workspaceRequestId);
 
 	long countAll();
 
