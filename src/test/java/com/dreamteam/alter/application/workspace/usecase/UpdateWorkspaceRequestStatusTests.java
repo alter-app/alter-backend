@@ -51,18 +51,6 @@ import static org.mockito.Mockito.never;
 @DisplayName("UpdateWorkspaceRequestStatus 테스트")
 class UpdateWorkspaceRequestStatusTests {
 
-    @ParameterizedTest
-    @CsvSource({"010-1234-5678,01012345678", "02-123-4567,021234567", "099-1234-5678,09912345678", "07012345678,07012345678"})
-    void 기존_신청_연락처를_숫자로_승인한다(String contact, String expected) {
-        WorkspaceRequest request = mockApprovedRequest();
-        given(request.getContact()).willReturn(contact);
-
-        updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.ACTIVATED);
-
-        then(workspaceRepository).should().save(workspaceCaptor.capture());
-        assertThat(workspaceCaptor.getValue().getContact()).isEqualTo(expected);
-    }
-
     @Mock
     private WorkspaceRequestQueryRepository workspaceRequestQueryRepository;
 
@@ -338,6 +326,22 @@ class UpdateWorkspaceRequestStatusTests {
             then(fileA).should().attach(anyString());
             then(workspaceImageRepository).should().saveAll(imagesCaptor.capture());
             assertThat(imagesCaptor.getValue()).extracting(WorkspaceImage::getFileId).containsExactly("fileA");
+        }
+
+        @ParameterizedTest
+        @DisplayName("기존 신청의 연락처가 하이픈이어도 숫자로 정규화하여 업장에 저장한다")
+        @CsvSource({"010-1234-5678,01012345678", "02-123-4567,021234567", "099-1234-5678,09912345678", "07012345678,07012345678"})
+        void execute_기존_신청_연락처_정규화(String contact, String expected) {
+            // given
+            WorkspaceRequest request = mockApprovedRequest();
+            given(request.getContact()).willReturn(contact);
+
+            // when
+            updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.ACTIVATED);
+
+            // then
+            then(workspaceRepository).should().save(workspaceCaptor.capture());
+            assertThat(workspaceCaptor.getValue().getContact()).isEqualTo(expected);
         }
     }
 
