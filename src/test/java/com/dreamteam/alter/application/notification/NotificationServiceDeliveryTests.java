@@ -23,6 +23,7 @@ import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -281,22 +282,80 @@ class NotificationServiceDeliveryTests {
     }
 
     @Test
-    void otherSingleAfterCommitTypesStillPropagateFcmFailure() throws Exception {
+    void afterCommitSingleKeepsHistoryWhileSynchronousSingleStillFails() throws Exception {
         singleRecipient();
         doThrow(mock(FirebaseMessagingException.class)).when(fcmClient).sendNotification(anyString(), anyString(), anyString());
         var request = FcmNotificationRequestDto.of(1L, TokenScope.APP, NotificationType.GENERAL, "제목", "본문");
-        assertThatThrownBy(() -> service.sendNotificationAfterCommit(request)).isInstanceOf(CustomException.class);
+        assertThatCode(() -> service.sendNotificationAfterCommit(request)).doesNotThrowAnyException();
+        assertThatThrownBy(() -> service.sendNotification(request)).isInstanceOf(CustomException.class);
     }
 
     @Test
-    void otherAfterCommitTypesAndSynchronousPostingBatchesStillFailFast() throws Exception {
+    void afterCommitBatchKeepsHistoryWhileSynchronousPostingBatchStillFails() throws Exception {
         recipients(501);
         when(fcmClient.sendMultipleNotifications(anyList(), anyString(), anyString())).thenThrow(mock(FirebaseMessagingException.class));
-        assertThatThrownBy(() -> service.sendMultipleNotificationsAfterCommit(batch(NotificationType.GENERAL)))
-            .isInstanceOf(CustomException.class);
+        assertThatCode(() -> service.sendMultipleNotificationsAfterCommit(batch(NotificationType.GENERAL)))
+            .doesNotThrowAnyException();
         assertThatThrownBy(() -> service.sendMultipleNotifications(batch(NotificationType.POSTING_APPLICATION)))
             .isInstanceOf(CustomException.class);
-        verify(fcmClient, times(2)).sendMultipleNotifications(anyList(), anyString(), anyString());
+        verify(fcmClient, times(3)).sendMultipleNotifications(anyList(), anyString(), anyString());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"WORKSPACE_INVITATION,APP", "JOIN_REQUEST,APP", "JOIN_REQUEST,MANAGER"})
+    void afterCommitSingleKeepsHistoryOnFcmFailureForInvitationAndJoinTypes(NotificationType type, TokenScope scope) throws Exception {
+        singleRecipient();
+        doThrow(mock(FirebaseMessagingException.class)).doThrow(new IllegalStateException("FCM unavailable"))
+            .when(fcmClient).sendNotification(anyString(), anyString(), anyString());
+        var request = FcmNotificationRequestDto.of(1L, scope, type, "제목", "본문");
+
+        assertThatCode(() -> service.sendNotificationAfterCommit(request)).doesNotThrowAnyException();
+        assertThatCode(() -> service.sendNotificationAfterCommit(request)).doesNotThrowAnyException();
+
+        verify(notifications, times(2)).save(argThat(saved -> saved.getType() == type && saved.getScope() == scope));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"WORKSPACE_INVITATION,APP", "JOIN_REQUEST,APP", "JOIN_REQUEST,MANAGER"})
+    void afterCommitBatchKeepsHistoryOnFcmFailureForInvitationAndJoinTypes(NotificationType type, TokenScope scope) throws Exception {
+        recipients(2);
+        when(fcmClient.sendMultipleNotifications(anyList(), anyString(), anyString()))
+            .thenThrow(mock(FirebaseMessagingException.class)).thenThrow(new IllegalStateException("FCM unavailable"));
+        var request = FcmBatchNotificationRequestDto.of(ids(), scope, type, "제목", "본문");
+
+        assertThatCode(() -> service.sendMultipleNotificationsAfterCommit(request)).doesNotThrowAnyException();
+        assertThatCode(() -> service.sendMultipleNotificationsAfterCommit(request)).doesNotThrowAnyException();
+
+        verify(notifications, times(2)).saveAll(argThat(saved -> saved.size() == 2));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"WORKSPACE_INVITATION", "JOIN_REQUEST"})
+    void afterCommitSingleDeletesInvalidTokenAndKeepsHistoryForInvitationAndJoinTypes(NotificationType type) throws Exception {
+        singleRecipient();
+        doThrow(firebaseFailure(MessagingErrorCode.UNREGISTERED)).when(fcmClient).sendNotification(anyString(), anyString(), anyString());
+        var request = FcmNotificationRequestDto.of(1L, TokenScope.APP, type, "제목", "본문");
+
+        assertThatCode(() -> service.sendNotificationAfterCommit(request)).doesNotThrowAnyException();
+
+        verify(notifications).save(any());
+        verify(tokens).delete(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"WORKSPACE_INVITATION", "JOIN_REQUEST"})
+    void afterCommitBatchDeletesInvalidTokensAndKeepsHistoryForInvitationAndJoinTypes(NotificationType type) throws Exception {
+        recipients(2);
+        SendResponse rejected = mock(SendResponse.class);
+        doReturn(firebaseFailure(MessagingErrorCode.UNREGISTERED)).when(rejected).getException();
+        BatchResponse result = mock(BatchResponse.class);
+        when(result.getResponses()).thenReturn(List.of(rejected, rejected));
+        when(fcmClient.sendMultipleNotifications(anyList(), anyString(), anyString())).thenReturn(result);
+
+        service.sendMultipleNotificationsAfterCommit(batch(type));
+
+        verify(tokens).deleteAll(devices);
+        verify(notifications).saveAll(argThat(saved -> saved.size() == 2));
     }
 
     @Test

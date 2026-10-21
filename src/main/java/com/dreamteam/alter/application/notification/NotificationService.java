@@ -90,12 +90,12 @@ public class NotificationService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendNotificationAfterCommit(FcmNotificationRequestDto request) {
-        sendNotification(request, request.getType() == NotificationType.POSTING_APPLICATION);
+        sendNotification(request, true);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendMultipleNotificationsAfterCommit(FcmBatchNotificationRequestDto request) {
-        sendMultipleNotifications(request, request.getType() == NotificationType.POSTING_APPLICATION);
+        sendMultipleNotifications(request, true);
     }
 
     public void sendNotification(FcmNotificationRequestDto request) {
