@@ -38,6 +38,16 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 	}
 
 	@Override
+	public Optional<WorkspaceRequest> findByIdAndUserIdWithPessimisticLock(Long workspaceRequestId, Long userId) {
+		entityManager.createNativeQuery(LOCK_TIMEOUT_STATEMENT).executeUpdate();
+		QWorkspaceRequest request = QWorkspaceRequest.workspaceRequest;
+		return Optional.ofNullable(queryFactory.selectFrom(request)
+			.where(request.id.eq(workspaceRequestId), request.user.id.eq(userId))
+			.setLockMode(LockModeType.PESSIMISTIC_WRITE)
+			.fetchOne());
+	}
+
+	@Override
 	public boolean existsByIdAndUserId(Long workspaceRequestId, Long userId) {
 		QWorkspaceRequest qWorkspaceRequest = QWorkspaceRequest.workspaceRequest;
 
