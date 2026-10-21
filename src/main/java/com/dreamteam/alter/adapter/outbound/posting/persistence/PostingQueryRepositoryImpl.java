@@ -47,20 +47,6 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     private final JPAQueryFactory queryFactory;
     private final EntityManager entityManager;
 
-    private void initializeScheduleWorkingDays(List<Posting> postings) {
-        List<Long> scheduleIds = postings.stream()
-            .flatMap(posting -> posting.getSchedules().stream())
-            .map(PostingSchedule::getId).distinct().toList();
-        if (ObjectUtils.isEmpty(scheduleIds)) {
-            return;
-        }
-        QPostingSchedule schedule = QPostingSchedule.postingSchedule;
-        queryFactory.selectFrom(schedule)
-            .leftJoin(schedule.workingDays).fetchJoin()
-            .where(schedule.id.in(scheduleIds))
-            .fetch();
-    }
-
     @Override
     public Optional<Posting> findByManagerAndIdWithPessimisticLock(Long postingId, ManagerUser managerUser) {
         QPosting posting = QPosting.posting;
@@ -160,14 +146,13 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         List<Posting> postings = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(qPosting.id.in(postingIds))
             .orderBy(getOrderSpecifiers(qPosting, filter.getPayAmountSort()))
             .distinct()
             .fetch();
-
-        initializeScheduleWorkingDays(postings);
 
         Set<Long> scrappedPostingIds =
             new HashSet<>(queryFactory.select(qUserFavoritePosting.posting.id)
@@ -217,14 +202,13 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         List<Posting> postings = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(qPosting.id.in(postingIds))
             .orderBy(getOrderSpecifiersForMapList(qPosting, filter.getSortType()))
             .distinct()
             .fetch();
-
-        initializeScheduleWorkingDays(postings);
 
         Set<Long> scrappedPostingIds =
             new HashSet<>(queryFactory.select(qUserFavoritePosting.posting.id)
@@ -289,14 +273,13 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
                 qWorkspace.id.eq(workspaceId)
             )
             .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
             .fetch();
-
-        initializeScheduleWorkingDays(postings);
 
         if (ObjectUtils.isEmpty(postings)) {
             return Collections.emptyList();
@@ -334,6 +317,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         Posting posting = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(
@@ -345,8 +329,6 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         if (ObjectUtils.isEmpty(posting)) {
             return null;
         }
-
-        initializeScheduleWorkingDays(List.of(posting));
 
         boolean scrapped = ObjectUtils.isNotEmpty(
             queryFactory
@@ -446,14 +428,13 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         List<Posting> postings = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(qPosting.id.in(postingIds))
             .orderBy(qPosting.createdAt.desc(), qPosting.id.desc())
             .distinct()
             .fetch();
-
-        initializeScheduleWorkingDays(postings);
 
         return postings.stream()
             .map(ManagerPostingListResponse::of)
@@ -645,6 +626,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         Posting posting = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(
@@ -658,7 +640,6 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             return Optional.empty();
         }
 
-        initializeScheduleWorkingDays(List.of(posting));
         return Optional.of(ManagerPostingDetailResponse.of(posting));
     }
 
