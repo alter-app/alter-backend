@@ -47,7 +47,7 @@ public class ManagerApproveSubstituteRequest implements ManagerApproveSubstitute
         SubstituteRequest substituteRequest = substituteRequestQueryRepository.findById(requestId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 대타 요청입니다."));
 
-        WorkspaceShift shift = workspaceShiftQueryRepository.findByIdForUpdate(substituteRequest.getWorkspaceShift().getId())
+        WorkspaceShift shift = workspaceShiftQueryRepository.findByIdWithPessimisticLock(substituteRequest.getWorkspaceShift().getId())
             .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 근무 스케줄입니다."));
 
         // 권한 확인
@@ -70,7 +70,7 @@ public class ManagerApproveSubstituteRequest implements ManagerApproveSubstitute
         if (shift.getAssignedWorkspaceWorker() != null) {
             userIds.add(shift.getAssignedWorkspaceWorker().getUser().getId());
         }
-        userQueryRepository.findAllByIdForUpdate(userIds);
+        userQueryRepository.findAllByIdWithPessimisticLock(userIds);
         if (workspaceShiftQueryRepository.hasConflictingSchedule(
             acceptedWorker, shift.getStartDateTime(), shift.getEndDateTime(), shift.getId()
         )) {

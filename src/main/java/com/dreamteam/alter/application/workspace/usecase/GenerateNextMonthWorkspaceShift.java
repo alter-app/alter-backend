@@ -1,10 +1,7 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -12,11 +9,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
-import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 import com.dreamteam.alter.domain.workspace.port.inbound.GenerateNextMonthWorkspaceShiftUseCase;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
-import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerScheduleQueryRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +24,6 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
 
     private final WorkspaceQueryRepository workspaceQueryRepository;
     private final WorkspaceWorkerScheduleQueryRepository workspaceWorkerScheduleQueryRepository;
-    private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
     private final GenerateNextMonthWorkspaceShiftTx generateNextMonthWorkspaceShiftTx;
 
     @Override
@@ -64,8 +58,6 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
 
         YearMonth targetMonth = YearMonth.from(now).plusMonths(1);
 
-        Map<Long, List<WorkspaceShift>> existingShiftsByUserId = buildExistingShiftsMap(allSchedules, targetMonth);
-
         int totalCreated = 0;
         int totalSkipped = 0;
         int failedWorkspaceCount = 0;
@@ -82,17 +74,10 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
                 GenerateNextMonthWorkspaceShiftTx.GenerationResult result = generateNextMonthWorkspaceShiftTx.execute(
                     workspace,
                     schedules,
-                    targetMonth,
-                    existingShiftsByUserId
+                    targetMonth
                 );
                 totalCreated += result.created();
                 totalSkipped += result.skipped();
-                // 커밋이 끝난 뒤에만 반영한다. 같은 배치에서 뒤에 처리되는 다른 업장의 고정 근무가 이 근무와 겹치지 않게 한다.
-                for (WorkspaceShift created : result.createdShifts()) {
-                    existingShiftsByUserId
-                        .computeIfAbsent(created.getAssignedWorkspaceWorker().getUser().getId(), k -> new ArrayList<>())
-                        .add(created);
-                }
             } catch (Exception e) {
                 failedWorkspaceCount++;
                 log.error("[고정 근무 생성] 워크스페이스({}) 처리 중 오류 발생: {}", workspace.getId(), e.getMessage(), e);
@@ -101,33 +86,4 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
 
         log.info("[고정 근무 생성] 배치 완료 - 총 생성: {}건, 총 건너뜀: {}건, 실패 워크스페이스: {}개", totalCreated, totalSkipped, failedWorkspaceCount);
     }
-
-    /**
-     * 고정 스케줄의 종료 시간이 월말을 최대 6일 넘을 수 있으므로 조회 범위에 여유를 둔다.
-     * 다른 업장에 배정된 근무와도 겹치지 않도록 사용자 단위로 조회한다.
-     */
-    private Map<Long, List<WorkspaceShift>> buildExistingShiftsMap(
-        List<WorkspaceWorkerSchedule> allSchedules, YearMonth targetMonth) {
-        List<Long> userIds = allSchedules.stream()
-            .map(s -> s.getWorkspaceWorker().getUser().getId())
-            .distinct()
-            .toList();
-
-        if (userIds.isEmpty()) {
-            return new HashMap<>();
-        }
-
-        LocalDateTime from = targetMonth.atDay(1).atStartOfDay();
-        LocalDateTime to = targetMonth.atEndOfMonth().plusDays(7).atStartOfDay();
-
-        return workspaceShiftQueryRepository
-            .findConfirmedByUserIdsAndDateRange(userIds, from, to)
-            .stream()
-            .collect(Collectors.groupingBy(
-                shift -> shift.getAssignedWorkspaceWorker().getUser().getId(),
-                HashMap::new,
-                Collectors.toCollection(ArrayList::new)
-            ));
-    }
-
 }
