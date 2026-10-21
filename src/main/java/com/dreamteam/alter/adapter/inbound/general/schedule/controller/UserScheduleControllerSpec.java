@@ -18,11 +18,21 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface UserScheduleControllerSpec {
 
     @Operation(summary = "나의 근무 스케줄 조회", description = "파라미터 조합에 따라 조회가 달라집니다. <br>"+
-                                                           "- 인자 없음: 이번 주 스케줄 조회<br>" +
-                                                           "- year, month: 해당 월 스케줄 조회 (예상 급여 포함)<br>" +
-                                                           "- year, month, day: 해당 일 스케줄 조회")
+                                                           "- 인자 없음: 이번 주(월~일) 스케줄 조회. totalWorkHours는 이번 주 기준, estimatedSalary·workspaceSummaries는 null<br>" +
+                                                           "- year, month: 해당 월 스케줄 조회. totalWorkHours·estimatedSalary·workspaceSummaries(업장별 근무시간·예상 급여) 모두 해당 월 기준<br>" +
+                                                           "- year, month, day: 해당 일 스케줄 조회. totalWorkHours는 해당 일 기준, estimatedSalary·workspaceSummaries는 null")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "스케줄 조회 성공")
+        @ApiResponse(responseCode = "200", description = "스케줄 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "존재하지 않는 날짜 또는 연 단위 요청",
+                        value = "{\"code\" : \"B001\"}"
+                    )
+                }))
     })
     ResponseEntity<CommonApiResponse<GetMyScheduleResponseDto>> getMySchedule(
         WorkScheduleInquiryRequestDto request

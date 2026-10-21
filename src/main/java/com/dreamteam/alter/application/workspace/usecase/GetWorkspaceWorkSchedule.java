@@ -1,6 +1,5 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
-import com.dreamteam.alter.common.constants.WorkspaceConstants;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.GetWorkspaceScheduleResponseDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkScheduleInquiryRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.schedule.dto.WorkspaceScheduleResponseDto;
@@ -14,12 +13,12 @@ import com.dreamteam.alter.domain.workspace.port.inbound.GetWorkspaceScheduleUse
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceWorkerQueryRepository;
+import com.dreamteam.alter.domain.workspace.result.WorkSummaryResult;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,16 +51,14 @@ public class GetWorkspaceWorkSchedule implements GetWorkspaceScheduleUseCase {
             .findByWorkspaceAndDateRange(workspaceWorker.get().getWorkspace(), request.getYear(), request.getMonth());
 
         // 본인에게 배정된 근무 일정들의 근무 시간 합산 및 예상 급여 계산
-        double myTotalWorkHours = shifts.stream()
+        WorkSummaryResult mySummary = WorkSummaryResult.from(shifts.stream()
             .filter(shift -> workspaceWorker.get().equals(shift.getAssignedWorkspaceWorker()))
-            .mapToDouble(shift -> Duration.between(shift.getStartDateTime(), shift.getEndDateTime()).toMinutes() / 60.0)
-            .sum();
-        long estimatedSalary = Math.round(myTotalWorkHours * WorkspaceConstants.MINIMUM_HOURLY_WAGE);
+            .toList());
 
         List<WorkspaceScheduleResponseDto> scheduleDtos = shifts.stream()
             .map(WorkspaceScheduleResponseDto::of)
             .toList();
 
-        return GetWorkspaceScheduleResponseDto.of(myTotalWorkHours, estimatedSalary, scheduleDtos);
+        return GetWorkspaceScheduleResponseDto.of(mySummary.totalWorkHours(), mySummary.estimatedSalary(), scheduleDtos);
     }
 }
