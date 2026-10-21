@@ -6,6 +6,7 @@ import com.dreamteam.alter.domain.email.command.VerifyEmailVerificationCodeComma
 import com.dreamteam.alter.domain.email.port.inbound.VerifyEmailVerificationCodeUseCase;
 import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
 import com.dreamteam.alter.domain.email.result.VerifyEmailVerificationCodeResult;
+import com.dreamteam.alter.common.util.EmailUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,7 @@ public class VerifyEmailVerificationCode implements VerifyEmailVerificationCodeU
 
     @Override
     public VerifyEmailVerificationCodeResult execute(VerifyEmailVerificationCodeCommand command) {
-        String email = command.email();
+        String email = EmailUtil.normalize(command.email());
         String inputCode = command.code();
 
         // Find Code
