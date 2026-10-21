@@ -28,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -256,6 +257,52 @@ class CreateWorkspaceRequestTests {
             // then
             then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
             assertThat(workspaceRequestCaptor.getValue().getBusinessTypeDetail()).isNull();
+        }
+
+        @ParameterizedTest(name = "cert={0}, identity={1}, warrant={2}")
+        @CsvSource({
+            "same-file, same-file, ",
+            "same-file, identity-file, same-file",
+            "cert-file, same-file, same-file",
+            "same-file, same-file, same-file"
+        })
+        @DisplayName("증빙 역할끼리 같은 파일이면 ILLEGAL_ARGUMENT 예외가 발생하고 신청·파일 연결을 하지 않는다")
+        void execute_증빙역할중복_예외(String certFileId, String identityFileId, String warrantFileId) {
+            // given
+            User user = mock(User.class);
+            CreateWorkspaceRequestDto dto = baseRequest();
+            dto.setWorkspaceCertFileId(certFileId);
+            dto.setWorkspaceOwnIdentityFileId(identityFileId);
+            dto.setWorkspaceWarrantFileId(warrantFileId);
+
+            // when & then
+            assertThatThrownBy(() -> createWorkspaceRequest.execute(dto.toCommand(user)))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
+            then(workspaceRequestRepository).should(never()).save(any());
+            then(attachFiles).should(never()).executeMap(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("증빙 역할마다 다른 파일이면 위임장까지 각 역할로 연결한다")
+        void execute_증빙역할모두다름_정상() {
+            // given
+            User user = mock(User.class);
+            given(user.getId()).willReturn(100L);
+            given(businessTypeRepository.findById(1L)).willReturn(Optional.of(BusinessTypeFixture.of(false)));
+            given(workspaceRequestRepository.save(any())).willReturn(1L);
+            CreateWorkspaceRequestDto dto = baseRequest();
+            dto.setWorkspaceWarrantFileId("warrant-file");
+
+            // when
+            createWorkspaceRequest.execute(dto.toCommand(user));
+
+            // then
+            then(attachFiles).should().executeMap(eq(Map.of(
+                "cert-file", FileTargetType.WORKSPACE_CERTIFICATE,
+                "identity-file", FileTargetType.WORKSPACE_OWN_IDENTITY,
+                "warrant-file", FileTargetType.WORKSPACE_WARRANT
+            )), eq("1"), eq(100L));
         }
     }
 }
