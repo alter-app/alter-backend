@@ -91,6 +91,32 @@ class CreatePostingTests {
         assertThat(saved.getSchedules().getFirst().getPosition()).isEqualTo("홀서빙");
     }
 
+    @Test
+    @DisplayName("근무일정 중 하나라도 시작과 종료 시각이 같으면 예외가 발생하고 공고는 저장되지 않는다")
+    void execute_일정중하나무효_전체거부() {
+        // given
+        ManagerActor actor = mock(ManagerActor.class);
+        ManagerUser managerUser = mock(ManagerUser.class);
+        Workspace workspace = mock(Workspace.class);
+        given(actor.getManagerUser()).willReturn(managerUser);
+        given(workspaceQueryRepository.findByIdAndManagerUser(1L, managerUser)).willReturn(Optional.of(workspace));
+
+        CreatePostingCommand command = new CreatePostingCommand(
+            1L, "홀서빙 구합니다", "주말 근무 가능하신 분", 12000, 3, PaymentType.HOURLY,
+            List.of(
+                new PostingScheduleCommand(List.of(DayOfWeek.MONDAY), LocalTime.of(9, 0), LocalTime.of(18, 0), "홀서빙"),
+                new PostingScheduleCommand(List.of(DayOfWeek.TUESDAY), LocalTime.of(9, 0), LocalTime.of(9, 0), "홀서빙"),
+                new PostingScheduleCommand(List.of(DayOfWeek.WEDNESDAY), LocalTime.of(10, 0), LocalTime.of(19, 0), "홀서빙")
+            )
+        );
+
+        // when & then
+        assertThatThrownBy(() -> createPosting.execute(command, actor))
+            .isInstanceOf(CustomException.class)
+            .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
+        then(postingRepository).should(never()).save(any());
+    }
+
     private CreatePostingCommand command() {
         return new CreatePostingCommand(
             1L,
