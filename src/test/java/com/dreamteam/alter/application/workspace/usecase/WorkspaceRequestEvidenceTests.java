@@ -60,11 +60,32 @@ class WorkspaceRequestEvidenceTests {
             User user = user();
             BusinessType business = BusinessType.create("업종" + System.nanoTime(), null);
             em.persist(business);
-            String cert = file(user, role == DuplicateRole.CERT_IDENTITY ? FileTargetType.WORKSPACE_OWN_IDENTITY :
-                role == DuplicateRole.CERT_WARRANT ? FileTargetType.WORKSPACE_WARRANT : FileTargetType.WORKSPACE_CERTIFICATE);
-            String identity = role == DuplicateRole.CERT_IDENTITY ? cert : file(user,
-                role == DuplicateRole.IDENTITY_WARRANT ? FileTargetType.WORKSPACE_WARRANT : FileTargetType.WORKSPACE_OWN_IDENTITY);
-            String warrant = role == DuplicateRole.CERT_IDENTITY ? null : role == DuplicateRole.CERT_WARRANT ? cert : identity;
+            // 수정 전 코드는 파일 ID를 키로 하는 map에 역할을 put하므로, 같은 ID면 나중에 put한 역할(cert -> identity -> warrant 순)만 남는다.
+            // 덮어쓰기 후 남는 역할의 타입으로 파일을 만들어야 수정 전 코드에서 신청이 저장되는 결함이 재현된다.
+            String cert;
+            String identity;
+            String warrant;
+            switch (role) {
+                case CERT_IDENTITY -> {
+                    // identity가 cert를 덮어쓴다: 남는 역할은 identity
+                    cert = file(user, FileTargetType.WORKSPACE_OWN_IDENTITY);
+                    identity = cert;
+                    warrant = null;
+                }
+                case CERT_WARRANT -> {
+                    // warrant가 cert를 덮어쓴다: 남는 역할은 warrant
+                    cert = file(user, FileTargetType.WORKSPACE_WARRANT);
+                    identity = file(user, FileTargetType.WORKSPACE_OWN_IDENTITY);
+                    warrant = cert;
+                }
+                case IDENTITY_WARRANT -> {
+                    // warrant가 identity를 덮어쓴다: 남는 역할은 warrant
+                    cert = file(user, FileTargetType.WORKSPACE_CERTIFICATE);
+                    identity = file(user, FileTargetType.WORKSPACE_WARRANT);
+                    warrant = identity;
+                }
+                default -> throw new IllegalStateException();
+            }
             return new Fixture(user, business.getId(), cert, identity, warrant, List.of());
         });
 
