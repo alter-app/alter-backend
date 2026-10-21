@@ -27,6 +27,7 @@ import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -96,7 +97,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
                 lteEndTime(qPostingSchedule, filter.getEndTime()),
-                workingDaysIn(qPostingSchedule, filter.getWorkingDays())
+                workingDaysIn(qPostingSchedule, filter.getWorkingDays()),
+                containsSearchKeyword(qPosting, qWorkspace, filter.getSearchKeyword())
             )
             .fetchOne();
 
@@ -146,7 +148,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
                 lteEndTime(qPostingSchedule, filter.getEndTime()),
-                workingDaysIn(qPostingSchedule, filter.getWorkingDays())
+                workingDaysIn(qPostingSchedule, filter.getWorkingDays()),
+                containsSearchKeyword(qPosting, qWorkspace, filter.getSearchKeyword())
             )
             .groupBy(qPosting.id, qPosting.payAmount, qPosting.createdAt)
             .orderBy(getOrderSpecifiers(qPosting, filter.getPayAmountSort()))
@@ -582,11 +585,12 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     }
 
     private BooleanExpression containsSearchKeyword(QPosting qPosting, QWorkspace qWorkspace, String searchKeyword) {
-        if (ObjectUtils.isEmpty(searchKeyword) || searchKeyword.isBlank()) {
+        String keyword = StringUtils.trimToNull(searchKeyword);
+        if (keyword == null) {
             return null;
         }
-        return qPosting.title.containsIgnoreCase(searchKeyword)
-            .or(qWorkspace.businessName.containsIgnoreCase(searchKeyword));
+        return qPosting.title.containsIgnoreCase(keyword)
+            .or(qWorkspace.businessName.containsIgnoreCase(keyword));
     }
 
     private OrderSpecifier<?>[] getOrderSpecifiersForMapList(QPosting qPosting, PostingSortType sortType) {
