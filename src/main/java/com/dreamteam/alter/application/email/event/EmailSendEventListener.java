@@ -53,8 +53,7 @@ public class EmailSendEventListener {
             }
 
             if (lastException != null) {
-                log.error("이메일 발송 최종 실패. logId={}, maxAttempts={}, errorType={}",
-                    logId, MAX_RETRY + 1, lastException.getClass().getSimpleName());
+                log.error("이메일 발송 최종 실패. logId={}, maxAttempts={}", logId, MAX_RETRY + 1);
                 logItem.markFailed();
                 sessionStoreRepository.deleteCode(event.getEmail());
             }
