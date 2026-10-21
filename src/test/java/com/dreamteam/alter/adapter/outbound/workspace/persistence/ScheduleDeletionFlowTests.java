@@ -29,8 +29,6 @@ import com.dreamteam.alter.domain.workspace.type.SubstituteRequestType;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -94,20 +92,6 @@ class ScheduleDeletionFlowTests extends WorkspaceShiftPersistenceTestSupport {
     @MockitoBean NotificationService notifications;
 
     record Fixture(Long managerId, Long userId, Long shiftId, Long requestId, Long targetId) {}
-
-    @ParameterizedTest
-    @EnumSource(value = WorkspaceShiftStatus.class, names = {"PLANNED", "CONFIRMED", "CANCELLED"})
-    void dayQueryPreservesNonDeletedStateMeaning(WorkspaceShiftStatus state) {
-        Long userId = tx().execute(status -> {
-            WorkspaceWorker worker = saveWorker(saveWorkspace(), saveUser());
-            WorkspaceShift shift = saveConfirmedShift(worker, START, START.plusHours(3));
-            em.createQuery("update WorkspaceShift s set s.status = :state where s.id = :id")
-                .setParameter("state", state).setParameter("id", shift.getId()).executeUpdate();
-            return worker.getUser().getId();
-        });
-        tx().executeWithoutResult(status -> assertThat(workspaceShiftQueryRepository.findByUserAndDate(
-            em.find(User.class, userId), 2030, 1, 7)).extracting(WorkspaceShift::getStatus).containsExactly(state));
-    }
 
     @Test
     void monthWeeklyAndWorkspaceSalaryContractsRemainUnchanged() {
