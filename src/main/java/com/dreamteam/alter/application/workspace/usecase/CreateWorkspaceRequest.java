@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.apache.commons.lang3.StringUtils;
 
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
@@ -39,6 +40,12 @@ public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 
 	@Override
 	public void execute(CreateWorkspaceRequestCommand request) {
+		if (StringUtils.equals(request.workspaceCertFileId(), request.workspaceOwnIdentityFileId())
+			|| (request.workspaceWarrantFileId() != null
+				&& (StringUtils.equals(request.workspaceWarrantFileId(), request.workspaceCertFileId())
+					|| StringUtils.equals(request.workspaceWarrantFileId(), request.workspaceOwnIdentityFileId())))) {
+			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "증빙 서류는 역할별로 서로 다른 파일을 첨부해야 합니다.");
+		}
 		User user = request.user();
 		BusinessType businessType = businessTypeRepository.findById(request.businessTypeId())
 			.orElseThrow(() -> new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "존재하지 않는 업종입니다."));
