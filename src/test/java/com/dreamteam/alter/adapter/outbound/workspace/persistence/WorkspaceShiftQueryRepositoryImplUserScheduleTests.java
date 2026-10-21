@@ -1,106 +1,76 @@
 package com.dreamteam.alter.adapter.outbound.workspace.persistence;
 
-import com.dreamteam.alter.adapter.outbound.user.persistence.ManagerUserRepositoryImpl;
-import com.dreamteam.alter.adapter.outbound.user.persistence.UserRepositoryImpl;
-import com.dreamteam.alter.common.config.QueryDslConfig;
-import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
-import com.dreamteam.alter.domain.user.type.ManagerUserStatus;
-import com.dreamteam.alter.domain.user.type.UserGender;
-import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
-import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
-import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@Import({
-    QueryDslConfig.class,
-    WorkspaceShiftQueryRepositoryImpl.class,
-    WorkspaceShiftRepositoryImpl.class,
-    WorkspaceWorkerRepositoryImpl.class,
-    WorkspaceRepositoryImpl.class,
-    UserRepositoryImpl.class,
-    ManagerUserRepositoryImpl.class,
-    BusinessTypeRepositoryImpl.class
-})
-class WorkspaceShiftQueryRepositoryImplUserScheduleTests {
+class WorkspaceShiftQueryRepositoryImplUserScheduleTests extends WorkspaceShiftPersistenceTestSupport {
 
     @Autowired
-    private WorkspaceShiftQueryRepositoryImpl workspaceShiftQueryRepository;
+    private TestEntityManager entityManager;
 
-    @Autowired
-    private WorkspaceShiftRepositoryImpl workspaceShiftRepository;
-
-    @Autowired
-    private WorkspaceWorkerRepositoryImpl workspaceWorkerRepository;
-
-    @Autowired
-    private WorkspaceRepositoryImpl workspaceRepository;
-
-    @Autowired
-    private UserRepositoryImpl userRepository;
-
-    @Autowired
-    private ManagerUserRepositoryImpl managerUserRepository;
-
-    @Autowired
-    private BusinessTypeRepositoryImpl businessTypeRepository;
-
-    private static final AtomicInteger SEQ = new AtomicInteger();
-
-    private User saveUser() {
-        User user = User.create(
-            String.format("010%08d", SEQ.incrementAndGet()), "encoded", "김알바",
-            "nickname" + System.nanoTime(), UserGender.GENDER_MALE, "19990101",
-            "user" + System.nanoTime() + "@example.com"
-        );
-        return userRepository.save(user);
-    }
-
-    private Workspace saveWorkspace() {
-        ManagerUser managerUser = managerUserRepository.save(ManagerUser.create(saveUser(), ManagerUserStatus.ACTIVATED));
-        BusinessType businessType = businessTypeRepository.save(BusinessType.create("업종" + System.nanoTime(), null));
-        Workspace workspace = Workspace.create(
-            managerUser, "000-00-00000", "사장님가게", businessType, null,
-            "01000000000", "설명", WorkspaceStatus.ACTIVATED, "서울시 강남구",
-            "서울특별시", "강남구", "역삼동", BigDecimal.ONE, BigDecimal.ONE
-        );
-        workspaceRepository.save(workspace);
-        return workspace;
-    }
-
-    private WorkspaceShift saveAssignedShift(Workspace workspace, WorkspaceWorker worker, LocalDateTime start) {
-        WorkspaceShift shift = WorkspaceShift.create(workspace, start, start.plusHours(4), "홀", WorkspaceShiftStatus.CONFIRMED);
-        shift.assignWorker(worker);
-        return workspaceShiftRepository.save(shift);
+    private WorkspaceShift saveShift(WorkspaceWorker worker, LocalDateTime start) {
+        return saveConfirmedShift(worker, start, start.plusHours(4));
     }
 
     @Test
     void findByUserAndDate_사장님이_삭제한_근무_제외() {
-        Workspace workspace = saveWorkspace();
         User user = saveUser();
-        WorkspaceWorker worker = WorkspaceWorker.create(workspace, user);
-        workspaceWorkerRepository.save(worker);
+        WorkspaceWorker worker = saveWorker(saveWorkspace(), user);
 
-        WorkspaceShift confirmed = saveAssignedShift(workspace, worker, LocalDateTime.of(2026, 9, 2, 9, 0));
-        WorkspaceShift deleted = saveAssignedShift(workspace, worker, LocalDateTime.of(2026, 9, 2, 15, 0));
+        WorkspaceShift confirmed = saveShift(worker, LocalDateTime.of(2026, 9, 2, 9, 0));
+        WorkspaceShift deleted = saveShift(worker, LocalDateTime.of(2026, 9, 2, 15, 0));
         deleted.delete();
         workspaceShiftRepository.save(deleted);
 
-        assertThat(workspaceShiftQueryRepository.findByUserAndDate(user, 2026, 9, 2))
+        assertThat(workspaceShiftQueryRepository.findByUserAndDate(user, LocalDate.of(2026, 9, 2)))
             .extracting(WorkspaceShift::getId)
             .containsExactly(confirmed.getId());
+    }
+
+    @Test
+    void findByUserAndWeeklyRange_종료일인_일요일_근무_포함() {
+        User user = saveUser();
+        WorkspaceWorker worker = saveWorker(saveWorkspace(), user);
+
+        WorkspaceShift monday = saveShift(worker, LocalDateTime.of(2026, 9, 28, 0, 0));
+        WorkspaceShift sunday = saveShift(worker, LocalDateTime.of(2026, 10, 4, 18, 0));
+        saveShift(worker, LocalDateTime.of(2026, 10, 5, 0, 0));
+
+        assertThat(workspaceShiftQueryRepository.findByUserAndWeeklyRange(user, LocalDate.of(2026, 9, 28), LocalDate.of(2026, 10, 4)))
+            .extracting(WorkspaceShift::getId)
+            .containsExactly(monday.getId(), sunday.getId());
+    }
+
+    @Test
+    void 사용자_근무_조회는_업장을_함께_조회해_업장별_추가_쿼리_없음() {
+        User user = saveUser();
+        Workspace cafe = saveWorkspace();
+        Workspace store = saveWorkspace();
+        saveShift(saveWorker(cafe, user), LocalDateTime.of(2026, 9, 1, 9, 0));
+        saveShift(saveWorker(store, user), LocalDateTime.of(2026, 9, 2, 9, 0));
+        entityManager.flush();
+        entityManager.clear();
+
+        List<List<WorkspaceShift>> results = List.of(
+            workspaceShiftQueryRepository.findByUserAndDateRange(user, 2026, 9),
+            workspaceShiftQueryRepository.findByUserAndWeeklyRange(user, LocalDate.of(2026, 8, 31), LocalDate.of(2026, 9, 6)),
+            workspaceShiftQueryRepository.findByUserAndDate(user, LocalDate.of(2026, 9, 1))
+        );
+
+        assertThat(results).extracting(List::size).containsExactly(2, 2, 1);
+        assertThat(results).flatMap(shifts -> shifts)
+            .allSatisfy(shift -> assertThat(Hibernate.isInitialized(shift.getWorkspace())).isTrue());
     }
 }

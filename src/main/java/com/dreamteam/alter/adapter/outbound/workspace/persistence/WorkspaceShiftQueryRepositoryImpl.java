@@ -66,6 +66,7 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
     public List<WorkspaceShift> findByUserAndDateRange(User user, int year, int month) {
         return queryFactory
             .selectFrom(workspaceShift)
+            .join(workspaceShift.workspace).fetchJoin()
             .where(workspaceShift.assignedWorkspaceWorker.user.eq(user)
                 .and(workspaceShift.startDateTime.year().eq(year))
                 .and(workspaceShift.startDateTime.month().eq(month))
@@ -78,20 +79,22 @@ public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRep
     public List<WorkspaceShift> findByUserAndWeeklyRange(User user, LocalDate startDate, LocalDate endDate) {
         return queryFactory
             .selectFrom(workspaceShift)
+            .join(workspaceShift.workspace).fetchJoin()
             .where(workspaceShift.assignedWorkspaceWorker.user.eq(user)
                 .and(workspaceShift.startDateTime.goe(startDate.atStartOfDay()))
-                .and(workspaceShift.startDateTime.lt(endDate.atStartOfDay()))
+                .and(workspaceShift.startDateTime.lt(endDate.plusDays(1).atStartOfDay()))
                 .and(workspaceShift.status.eq(WorkspaceShiftStatus.CONFIRMED)))
             .orderBy(workspaceShift.startDateTime.asc())
             .fetch();
     }
 
     @Override
-    public List<WorkspaceShift> findByUserAndDate(User user, int year, int month, int day) {
-        LocalDateTime startOfDay = LocalDateTime.of(year, month, day, 0, 0, 0);
+    public List<WorkspaceShift> findByUserAndDate(User user, LocalDate date) {
+        LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1);
         return queryFactory
                 .selectFrom(workspaceShift)
+                .join(workspaceShift.workspace).fetchJoin()
                 .where(
                         workspaceShift.assignedWorkspaceWorker.user.eq(user),
                         workspaceShift.startDateTime.goe(startOfDay),
