@@ -12,6 +12,7 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserRepository;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceImage;
@@ -30,6 +31,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -44,6 +46,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -74,6 +77,9 @@ class UpdateWorkspaceRequestStatusTests {
 
     @Mock
     private ManagerUserRepository managerUserRepository;
+
+    @Mock
+    private UserQueryRepository userQueryRepository;
 
     @Mock
     private WorkspaceImageRepository workspaceImageRepository;
@@ -194,6 +200,49 @@ class UpdateWorkspaceRequestStatusTests {
             then(managerUserRepository).should().save(any(ManagerUser.class));
             then(workspaceRepository).should().save(any(Workspace.class));
             then(fileDeleteService).should(never()).delete(any());
+        }
+
+        @Test
+        @DisplayName("승인은 신청자 User 행을 잠근 뒤에 ManagerUser 를 조회하고 생성한다")
+        void execute_ACTIVATED_사용자잠금후_매니저조회생성() {
+            // given
+            User user = mock(User.class);
+            WorkspaceRequest request = mock(WorkspaceRequest.class);
+            ManagerUser newManagerUser = mock(ManagerUser.class);
+            given(request.getContact()).willReturn("01012345678");
+            given(request.getUser()).willReturn(user);
+            given(user.getId()).willReturn(1L);
+            given(newManagerUser.getUser()).willReturn(user);
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(request));
+            given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.empty());
+            given(managerUserRepository.save(any(ManagerUser.class))).willReturn(newManagerUser);
+            given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
+            given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
+                .willReturn(Optional.empty());
+
+            // when
+            updateWorkspaceRequestStatus.execute(1L, WorkspaceRequestStatus.ACTIVATED);
+
+            // then
+            InOrder inOrder = inOrder(userQueryRepository, managerUserQueryRepository, managerUserRepository);
+            inOrder.verify(userQueryRepository).lockByIdForUpdate(1L);
+            inOrder.verify(managerUserQueryRepository).findByUserId(1L);
+            inOrder.verify(managerUserRepository).save(any(ManagerUser.class));
+        }
+
+        @Test
+        @DisplayName("REVOKED 는 User 행을 잠그지 않는다")
+        void execute_REVOKED_사용자잠금없음() {
+            // given
+            WorkspaceRequest request = mock(WorkspaceRequest.class);
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(request));
+
+            // when
+            updateWorkspaceRequestStatus.execute(1L, WorkspaceRequestStatus.REVOKED);
+
+            // then
+            then(request).should().reject();
+            then(userQueryRepository).shouldHaveNoInteractions();
         }
 
         @Test
