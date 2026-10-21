@@ -142,6 +142,87 @@ class FixedWorkerScheduleCalculatorTests {
         )).isTrue();
     }
 
+    @Test
+    void unboundedWeeklyPairsUseShortWindowWithoutChangingResult() {
+        var monday = weekly(DayOfWeek.MONDAY, "09:00", DayOfWeek.MONDAY, "18:00", null, null);
+        assertThat(FixedWorkerScheduleCalculator.overlaps(
+            monday, weekly(DayOfWeek.MONDAY, "17:00", DayOfWeek.MONDAY, "20:00", null, null))).isTrue();
+        assertThat(FixedWorkerScheduleCalculator.overlaps(
+            monday, weekly(DayOfWeek.TUESDAY, "09:00", DayOfWeek.TUESDAY, "18:00", null, null))).isFalse();
+    }
+
+    @Test
+    void weeklyPairWithOneBoundedSide() {
+        var legacyTuesday = weekly(DayOfWeek.TUESDAY, "09:00", DayOfWeek.TUESDAY, "18:00", null, null);
+        assertThat(FixedWorkerScheduleCalculator.overlaps(legacyTuesday,
+            weekly(DayOfWeek.TUESDAY, "10:00", DayOfWeek.TUESDAY, "11:00", "2030-01-01", null))).isTrue();
+        assertThat(FixedWorkerScheduleCalculator.overlaps(legacyTuesday,
+            weekly(DayOfWeek.TUESDAY, "10:00", DayOfWeek.TUESDAY, "11:00", "2026-10-13", "2026-10-13"))).isTrue();
+        assertThat(FixedWorkerScheduleCalculator.overlaps(legacyTuesday,
+            weekly(DayOfWeek.TUESDAY, "10:00", DayOfWeek.TUESDAY, "11:00", "2026-10-14", "2026-10-19"))).isFalse();
+    }
+
+    @Test
+    void overnightAcrossWeekBoundaryWithShortWindow() {
+        var sundayNight = weekly(DayOfWeek.SUNDAY, "22:00", DayOfWeek.MONDAY, "06:00", null, null);
+        var mondayMorning = weekly(DayOfWeek.MONDAY, "05:00", DayOfWeek.MONDAY, "07:00", "2026-10-05", null);
+        assertThat(FixedWorkerScheduleCalculator.overlaps(sundayNight, mondayMorning)).isTrue();
+        assertThat(FixedWorkerScheduleCalculator.overlaps(mondayMorning, sundayNight)).isTrue();
+        assertThat(FixedWorkerScheduleCalculator.overlaps(sundayNight,
+            weekly(DayOfWeek.MONDAY, "06:00", DayOfWeek.MONDAY, "07:00", "2026-10-05", null))).isFalse();
+    }
+
+    @Test
+    void weeklyAndMonthlyStillUseLongWindow() {
+        var monday = weekly(DayOfWeek.MONDAY, "09:00", DayOfWeek.MONDAY, "18:00", "2026-01-01", null);
+        assertThat(FixedWorkerScheduleCalculator.overlaps(monday,
+            monthly(4, DayOfWeek.MONDAY, "2026-01-01", null))).isTrue();
+        assertThat(FixedWorkerScheduleCalculator.overlaps(
+            weekly(DayOfWeek.TUESDAY, "09:00", DayOfWeek.TUESDAY, "18:00", null, null),
+            monthly(4, DayOfWeek.MONDAY, "2026-01-01", null))).isFalse();
+    }
+
+    @Test
+    void weeklyShortWindowMatchesBruteForce() {
+        String[][] periods = {{null, null}, {"2026-10-01", null}, {"2026-10-04", "2026-10-06"},
+            {"2026-10-05", "2026-10-05"}, {"2027-03-01", "2027-06-30"}};
+        String[][] times = {{"09:00", "18:00"}, {"22:00", "06:00"}, {"05:00", "07:00"}};
+        for (DayOfWeek day : DayOfWeek.values()) {
+            for (String[] time : times) {
+                for (String[] period : periods) {
+                    for (String[] otherPeriod : periods) {
+                        var left = weekly(DayOfWeek.MONDAY, "05:00", DayOfWeek.MONDAY, "07:00",
+                            otherPeriod[0], otherPeriod[1]);
+                        DayOfWeek endDay = time[1].compareTo(time[0]) <= 0 ? day.plus(1) : day;
+                        var right = weekly(day, time[0], endDay, time[1], period[0], period[1]);
+                        assertThat(FixedWorkerScheduleCalculator.overlaps(left, right))
+                            .as("%s %s %s / %s", day, time[0], period[0] + "~" + period[1], otherPeriod[0] + "~" + otherPeriod[1])
+                            .isEqualTo(bruteForceOverlaps(left, right));
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean bruteForceOverlaps(WorkspaceWorkerSchedule left, WorkspaceWorkerSchedule right) {
+        LocalDate from = LocalDate.of(2025, 1, 1);
+        LocalDate to = LocalDate.of(2028, 12, 31);
+        for (var a : FixedWorkerScheduleCalculator.occurrences(left, from, to)) {
+            for (var b : FixedWorkerScheduleCalculator.occurrences(right, from, to)) {
+                if (a.start().isBefore(b.end()) && b.start().isBefore(a.end())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private WorkspaceWorkerSchedule weekly(DayOfWeek startDay, String startTime, DayOfWeek endDay, String endTime,
+        String start, String end) {
+        return rule(startDay, startTime, endDay, endTime,
+            start == null ? null : WorkspaceWorkerScheduleRecurrenceType.WEEKLY, null, start, end);
+    }
+
     @ParameterizedTest
     @CsvSource({"MONTHLY,,2026-01-01,", "MONTHLY,0,2026-01-01,", "MONTHLY,6,2026-01-01,",
         "WEEKLY,2,2026-01-01,", "WEEKLY,,,", "MONTHLY,2,,", "WEEKLY,,2026-10-02,2026-10-01",

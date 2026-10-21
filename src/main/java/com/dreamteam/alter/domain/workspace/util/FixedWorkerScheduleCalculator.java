@@ -48,7 +48,10 @@ public class FixedWorkerScheduleCalculator {
             lower = upper == null ? LocalDate.of(2000, 1, 1) : upper.minusYears(400);
         }
         LocalDate from = lower.minusDays(6);
-        LocalDate cycleEnd = lower.plusYears(400).plusDays(6);
+        // 매주 규칙끼리는 1주 주기라 겹치는 쌍을 함께 몇 주 당기면 lower 이후 2주 안으로 옮길 수 있다.
+        boolean weeklyOnly = left.getRecurrenceType() != WorkspaceWorkerScheduleRecurrenceType.MONTHLY
+            && right.getRecurrenceType() != WorkspaceWorkerScheduleRecurrenceType.MONTHLY;
+        LocalDate cycleEnd = weeklyOnly ? lower.plusDays(13) : lower.plusYears(400).plusDays(6);
         LocalDate to = upper == null ? cycleEnd : earlier(upper.plusDays(6), cycleEnd);
         if (from.isAfter(to)) {
             return false;
