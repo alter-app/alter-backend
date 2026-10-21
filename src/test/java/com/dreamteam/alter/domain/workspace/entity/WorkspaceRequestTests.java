@@ -123,6 +123,25 @@ class WorkspaceRequestTests {
     }
 
     @Nested
+    @DisplayName("approve - 취소 후")
+    class ApproveAfterCancelTests {
+
+        @Test
+        @DisplayName("CANCELLED 상태면 CONFLICT 예외가 발생하고 상태가 유지된다")
+        void approve_CANCELLED_예외발생() {
+            // given
+            WorkspaceRequest request = pendingRequest();
+            request.cancel();
+
+            // when & then
+            assertThatThrownBy(request::approve)
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+            assertThat(request.getStatus()).isEqualTo(WorkspaceRequestStatus.CANCELLED);
+        }
+    }
+
+    @Nested
     @DisplayName("reject")
     class RejectTests {
 
@@ -164,6 +183,20 @@ class WorkspaceRequestTests {
             assertThatThrownBy(request::reject)
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+        }
+
+        @Test
+        @DisplayName("CANCELLED 상태면 CONFLICT 예외가 발생하고 상태가 유지된다")
+        void reject_CANCELLED_예외발생() {
+            // given
+            WorkspaceRequest request = pendingRequest();
+            request.cancel();
+
+            // when & then
+            assertThatThrownBy(request::reject)
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+            assertThat(request.getStatus()).isEqualTo(WorkspaceRequestStatus.CANCELLED);
         }
     }
 }
