@@ -5,6 +5,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.email.port.outbound.EmailClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.ses.SesClient;
@@ -48,7 +49,10 @@ public class SesEmailSender implements EmailClient {
                 e.getClass().getSimpleName());
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "이메일 전송에 실패했습니다.");
         } catch (Exception e) {
-            log.error("SES 이메일 발송 실패. region={}, errorType={}", region, e.getClass().getSimpleName());
+            Throwable rootCause = ExceptionUtils.getRootCause(e);
+            log.error("SES 이메일 발송 실패. region={}, errorType={}, rootCauseType={}",
+                region, e.getClass().getSimpleName(),
+                rootCause == null ? "NONE" : rootCause.getClass().getSimpleName());
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "이메일 전송에 실패했습니다.");
         }
     }

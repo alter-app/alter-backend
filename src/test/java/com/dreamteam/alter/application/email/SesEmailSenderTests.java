@@ -79,6 +79,17 @@ class SesEmailSenderTests {
     }
 
     @Test
+    void clientFailureLogsRootCauseTypeWithoutRawMessage() {
+        RuntimeException failure = new RuntimeException(RAW, new java.io.UncheckedIOException(RAW, new java.net.UnknownHostException(RAW)));
+        when(sesClient.sendEmail(any(SendEmailRequest.class))).thenThrow(failure);
+
+        assertThatThrownBy(() -> sender.sendVerificationCode(EMAIL, CODE))
+            .isInstanceOf(CustomException.class).extracting("errorCode").isEqualTo(ErrorCode.EXTERNAL_API_ERROR);
+        assertThat(logs.list.getFirst().getFormattedMessage()).doesNotContain(EMAIL, CODE, RAW)
+            .contains("errorType=RuntimeException", "rootCauseType=UnknownHostException");
+    }
+
+    @Test
     void missingAwsErrorDetailsDoNotMaskExternalFailure() {
         SesException.Builder builder = SesException.builder();
         builder.statusCode(503);
