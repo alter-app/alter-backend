@@ -57,6 +57,7 @@ class ReceivedSubstituteRequestDetailControllerTests {
         mvc
             .perform(get("/app/users/me/substitute-requests/received/1"))
             .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.id").value(1))
             .andExpect(jsonPath("$.data.status.value").value("CANCELLED"))
             .andExpect(jsonPath("$.data.myTargetStatus.value").value("CANCELLED"))
             .andExpect(jsonPath("$.data.schedule.scheduleId").value(2))
