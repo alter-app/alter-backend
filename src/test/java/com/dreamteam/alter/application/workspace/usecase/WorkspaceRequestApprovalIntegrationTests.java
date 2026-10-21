@@ -68,7 +68,7 @@ class WorkspaceRequestApprovalIntegrationTests {
     @BeforeEach
     void seed() {
         tx = new TransactionTemplate(transactionManager);
-        when(requests.findByIdForUpdate(anyLong())).thenAnswer(invocation ->
+        when(requests.findByIdWithPessimisticLock(anyLong())).thenAnswer(invocation ->
             Optional.ofNullable(em.find(WorkspaceRequest.class, invocation.getArgument(0, Long.class))));
         tx.executeWithoutResult(status -> {
             user = User.create("01012345678", "encoded", "연락처 테스트", UUID.randomUUID().toString(),
