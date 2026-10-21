@@ -281,22 +281,23 @@ class NotificationServiceDeliveryTests {
     }
 
     @Test
-    void otherSingleAfterCommitTypesStillPropagateFcmFailure() throws Exception {
+    void afterCommitSingleKeepsHistoryWhileSynchronousSingleStillFails() throws Exception {
         singleRecipient();
         doThrow(mock(FirebaseMessagingException.class)).when(fcmClient).sendNotification(anyString(), anyString(), anyString());
         var request = FcmNotificationRequestDto.of(1L, TokenScope.APP, NotificationType.GENERAL, "제목", "본문");
-        assertThatThrownBy(() -> service.sendNotificationAfterCommit(request)).isInstanceOf(CustomException.class);
+        assertThatCode(() -> service.sendNotificationAfterCommit(request)).doesNotThrowAnyException();
+        assertThatThrownBy(() -> service.sendNotification(request)).isInstanceOf(CustomException.class);
     }
 
     @Test
-    void otherAfterCommitTypesAndSynchronousPostingBatchesStillFailFast() throws Exception {
+    void afterCommitBatchKeepsHistoryWhileSynchronousPostingBatchStillFails() throws Exception {
         recipients(501);
         when(fcmClient.sendMultipleNotifications(anyList(), anyString(), anyString())).thenThrow(mock(FirebaseMessagingException.class));
-        assertThatThrownBy(() -> service.sendMultipleNotificationsAfterCommit(batch(NotificationType.GENERAL)))
-            .isInstanceOf(CustomException.class);
+        assertThatCode(() -> service.sendMultipleNotificationsAfterCommit(batch(NotificationType.GENERAL)))
+            .doesNotThrowAnyException();
         assertThatThrownBy(() -> service.sendMultipleNotifications(batch(NotificationType.POSTING_APPLICATION)))
             .isInstanceOf(CustomException.class);
-        verify(fcmClient, times(2)).sendMultipleNotifications(anyList(), anyString(), anyString());
+        verify(fcmClient, times(3)).sendMultipleNotifications(anyList(), anyString(), anyString());
     }
 
     @Test

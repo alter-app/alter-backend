@@ -90,12 +90,12 @@ public class NotificationService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendNotificationAfterCommit(FcmNotificationRequestDto request) {
-        sendNotification(request, request.getType() == NotificationType.POSTING_APPLICATION);
+        sendNotification(request, true);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendMultipleNotificationsAfterCommit(FcmBatchNotificationRequestDto request) {
-        sendMultipleNotifications(request, request.getType() == NotificationType.POSTING_APPLICATION);
+        sendMultipleNotifications(request, true);
     }
 
     public void sendNotification(FcmNotificationRequestDto request) {
@@ -242,7 +242,7 @@ public class NotificationService {
      * 대상 토큰들에 FCM 배치 발송 후 결과 처리.
      * 응답은 각 배치의 토큰 순서에 대응하며 무효 토큰은 전체 발송 후 한 번에 삭제한다.
      * @param throwOnError FirebaseMessagingException을 기존 CustomException으로 전파할지 여부
-     * @param preserveOnFcmFailure 커밋 후 지원 알림에서 FCM 호출의 런타임 실패까지 기록하고 계속할지 여부
+     * @param preserveOnFcmFailure 커밋 후 알림에서 FCM 호출의 런타임 실패까지 기록하고 계속할지 여부
      */
     private void dispatchBatch(
         List<FcmDeviceToken> eligibleTokens, String title, String body,
