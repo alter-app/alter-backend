@@ -12,6 +12,7 @@ import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.user.type.UserStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -135,6 +136,16 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
             .where(
                 qUser.contact.in(contacts)
             )
+            .fetch();
+    }
+
+    @Override
+    public void lockByIdForUpdate(Long id) {
+        QUser qUser = QUser.user;
+        queryFactory.select(qUser.id)
+            .from(qUser)
+            .where(qUser.id.eq(id))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
             .fetch();
     }
 }
