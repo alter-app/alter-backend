@@ -5,6 +5,9 @@ server:
       charset: UTF-8
       force: true
 spring:
+  mvc:
+    # 검증 실패 시 Spring 이 거부된 입력값(인증 코드, 이메일 등)을 WARN 로그로 남기는 것을 끈다
+    log-resolved-exception: false
   application:
     name: alter
   servlet:
