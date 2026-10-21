@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -44,6 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -342,6 +344,64 @@ class UpdateWorkspaceRequestStatusTests {
             // then
             then(workspaceRepository).should().save(workspaceCaptor.capture());
             assertThat(workspaceCaptor.getValue().getContact()).isEqualTo(expected);
+        }
+    }
+
+    @Nested
+    @DisplayName("기존 신청 호환")
+    class LegacyRequestTests {
+
+        @ParameterizedTest
+        @DisplayName("형식이 잘못된 기존 연락처는 승인을 ILLEGAL_ARGUMENT 로 거부하고 연락처 값을 메시지에 노출하지 않으며 업장을 만들지 않는다")
+        @ValueSource(strings = {"010--12345678", "invalid", "010 1234 5678"})
+        void execute_잘못된_기존_연락처_승인거부(String contact) {
+            // given
+            WorkspaceRequest request = mock(WorkspaceRequest.class);
+            given(request.getContact()).willReturn(contact);
+            given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
+
+            // when & then
+            assertThatThrownBy(() -> updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.ACTIVATED))
+                .isInstanceOfSatisfying(CustomException.class, ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT);
+                    assertThat(ex.getMessage()).doesNotContain(contact);
+                });
+            then(managerUserRepository).should(never()).save(any());
+            then(workspaceRepository).should(never()).save(any());
+            then(eventPublisher).should(never()).publishEvent(any());
+            then(fileDeleteService).should(never()).delete(any());
+        }
+
+        @Test
+        @DisplayName("잘못된 기존 연락처여도 반려는 연락처를 검사하지 않고 처리된다")
+        void execute_잘못된_기존_연락처_반려() {
+            // given
+            WorkspaceRequest request = mock(WorkspaceRequest.class);
+            given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
+
+            // when
+            updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.REVOKED);
+
+            // then
+            then(request).should().reject();
+            then(request).should(never()).getContact();
+            then(workspaceRepository).should(never()).save(any());
+        }
+
+        @Test
+        @DisplayName("이미 승인된 신청을 다시 승인하면 CONFLICT 예외가 발생하고 업장을 만들지 않는다")
+        void execute_재승인_차단() {
+            // given
+            WorkspaceRequest request = mock(WorkspaceRequest.class);
+            willThrow(new CustomException(ErrorCode.CONFLICT, "이미 승인된 요청입니다.")).given(request).approve();
+            given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
+
+            // when & then
+            assertThatThrownBy(() -> updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.ACTIVATED))
+                .isInstanceOfSatisfying(CustomException.class,
+                    ex -> assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.CONFLICT));
+            then(managerUserRepository).should(never()).save(any());
+            then(workspaceRepository).should(never()).save(any());
         }
     }
 

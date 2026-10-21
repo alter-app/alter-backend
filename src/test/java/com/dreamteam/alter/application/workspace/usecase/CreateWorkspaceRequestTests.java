@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -58,6 +59,21 @@ class CreateWorkspaceRequestTests {
 
         then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
         assertThat(workspaceRequestCaptor.getValue().getContact()).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", " 01012345678", "010--1234-5678", "010.1234.5678", "123456789", "012345678901", "01012345678\n"})
+    void 잘못된_연락처는_저장_전에_거부한다(String contact) {
+        User user = mock(User.class);
+        given(businessTypeRepository.findById(1L)).willReturn(Optional.of(BusinessTypeFixture.of(false)));
+        CreateWorkspaceRequestDto request = baseRequest();
+        request.setContact(contact);
+
+        assertThatThrownBy(() -> createWorkspaceRequest.execute(request.toCommand(user)))
+            .isInstanceOfSatisfying(CustomException.class,
+                ex -> assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
+        then(workspaceRequestRepository).should(never()).save(any());
+        then(attachFiles).shouldHaveNoInteractions();
     }
 
     @Mock
