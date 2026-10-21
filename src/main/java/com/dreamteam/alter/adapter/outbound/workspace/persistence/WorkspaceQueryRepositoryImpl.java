@@ -236,7 +236,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 lteEmployedAt(qWorkspaceWorker, filter.getEmployedAtTo()),
                 gteResignedAt(qWorkspaceWorker, filter.getResignedAtFrom()),
                 lteResignedAt(qWorkspaceWorker, filter.getResignedAtTo()),
-                cursorConditions(qWorkspaceWorker, qUser, pageRequest.cursor())
+                cursorConditions(qWorkspaceWorker, qUser, workspaceId, pageRequest.cursor())
             )
             .groupBy(
                 qWorkspaceWorker.id,
@@ -333,7 +333,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
             .where(
                 qWorkspace.id.eq(workspaceId),
                 qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
-                cursorConditions(qWorkspaceWorker, qUser, pageRequest.cursor())
+                cursorConditions(qWorkspaceWorker, qUser, workspaceId, pageRequest.cursor())
             )
             .groupBy(
                 qWorkspaceWorker.id,
@@ -427,7 +427,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspaceWorker.status.eq(WorkspaceWorkerStatus.ACTIVATED),
                 excludeCondition,
                 hasConflictingSchedule.not(),
-                cursorConditions(qWorkspaceWorker, qUser, pageRequest.cursor())
+                cursorConditions(qWorkspaceWorker, qUser, workspaceId, pageRequest.cursor())
             )
             .groupBy(
                 qWorkspaceWorker.id,
@@ -687,7 +687,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         return resignedAtTo != null ? qWorkspaceWorker.resignedAt.loe(resignedAtTo) : null;
     }
 
-    private BooleanExpression cursorConditions(QWorkspaceWorker qWorkspaceWorker, QUser qUser, CursorDto cursor) {
+    private BooleanExpression cursorConditions(QWorkspaceWorker qWorkspaceWorker, QUser qUser, Long workspaceId, CursorDto cursor) {
         if (cursor == null) {
             return null;
         }
@@ -697,7 +697,7 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
         QWorkspaceWorker cursorWorker = new QWorkspaceWorker("cursorWorker");
         var cursorName = JPAExpressions.select(cursorWorker.user.name)
             .from(cursorWorker)
-            .where(cursorWorker.id.eq(cursor.getId()), cursorWorker.workspace.eq(qWorkspaceWorker.workspace));
+            .where(cursorWorker.id.eq(cursor.getId()), cursorWorker.workspace.id.eq(workspaceId));
         return qUser.name.gt(cursorName)
             .or(qUser.name.eq(cursorName).and(qWorkspaceWorker.id.gt(cursor.getId())));
     }
