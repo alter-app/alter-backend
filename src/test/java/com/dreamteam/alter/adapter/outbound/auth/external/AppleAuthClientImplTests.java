@@ -9,6 +9,7 @@ import java.security.KeyPairGenerator;
 import java.util.Base64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -51,19 +52,27 @@ class AppleAuthClientImplTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"invalid_client", "invalid_request", "invalid_grant", "unauthorized_client", "unsupported_grant_type", "invalid_scope"})
-    void providerErrorsDoNotAssertUnprovenCodeExpiry(String code, CapturedOutput output) {
+    @ValueSource(strings = {"invalid_client", "invalid_request", "unauthorized_client", "unsupported_grant_type", "invalid_scope"})
+    void configurationErrorsAreInternalServerError(String code, CapturedOutput output) {
         failWith("{\"error\":\"" + code + "\",\"error_description\":\"synthetic-private-code synthetic-private-key\"}");
-        assertError();
+        assertError(ErrorCode.INTERNAL_SERVER_ERROR);
         assertThat(output.getAll()).contains("provider=APPLE", "stage=token", "httpStatus=400", "providerErrorCode=" + code)
             .doesNotContain("synthetic-private-code", "synthetic-private-key", "synthetic-authorization-code", "synthetic-private-message");
+    }
+
+    @Test
+    void invalidGrantKeepsAuthCodeExpired(CapturedOutput output) {
+        failWith("{\"error\":\"invalid_grant\",\"error_description\":\"synthetic-private-code\"}");
+        assertError(ErrorCode.SOCIAL_AUTH_CODE_EXPIRED);
+        assertThat(output.getAll()).contains("provider=APPLE", "stage=token", "httpStatus=400", "providerErrorCode=invalid_grant")
+            .doesNotContain("synthetic-private-code");
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"", "not-json", "{}", "{\"error\":\"synthetic-private-key\"}", "{\"error\":\"invalid_client\\nsynthetic-private-key\"}"})
     void unparseableOrUnsafeProviderCodeIsUnknown(String body, CapturedOutput output) {
         failWith(body);
-        assertError();
+        assertError(ErrorCode.INTERNAL_SERVER_ERROR);
         assertThat(output.getAll()).contains("providerErrorCode=unknown").doesNotContain("synthetic-private-key");
     }
 
@@ -83,9 +92,9 @@ class AppleAuthClientImplTests {
                 HttpHeaders.EMPTY, body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
     }
 
-    private void assertError() {
+    private void assertError(ErrorCode expected) {
         assertThatThrownBy(() -> client.exchangeCodeForToken("synthetic-authorization-code", PlatformType.WEB))
             .isInstanceOfSatisfying(CustomException.class,
-                e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.INTERNAL_SERVER_ERROR));
+                e -> assertThat(e.getErrorCode()).isEqualTo(expected));
     }
 }
