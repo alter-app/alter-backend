@@ -68,7 +68,7 @@ class GenerateNextMonthWorkspaceShiftTest {
     @BeforeEach
     void setUp() {
         mockedLocalDate = mockStatic(LocalDate.class, CALLS_REAL_METHODS);
-        mockedLocalDate.when(LocalDate::now).thenReturn(FIXED_TODAY);
+        mockedLocalDate.when(() -> LocalDate.now(java.time.ZoneId.of("Asia/Seoul"))).thenReturn(FIXED_TODAY);
     }
 
     @AfterEach
@@ -92,7 +92,7 @@ class GenerateNextMonthWorkspaceShiftTest {
     @Test
     @DisplayName("말일에는 말일 플래그로 대상 워크스페이스를 조회한다")
     void execute_usesMonthEndFlag_whenLastDayOfMonth() {
-        mockedLocalDate.when(LocalDate::now).thenReturn(MONTH_END_TODAY);
+        mockedLocalDate.when(() -> LocalDate.now(java.time.ZoneId.of("Asia/Seoul"))).thenReturn(MONTH_END_TODAY);
         when(workspaceQueryRepository.findAllForNextMonthShiftGeneration(28, true))
             .thenReturn(List.of());
 
