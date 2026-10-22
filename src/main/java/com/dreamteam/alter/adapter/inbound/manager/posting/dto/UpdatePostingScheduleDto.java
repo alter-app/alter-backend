@@ -24,7 +24,7 @@ public class UpdatePostingScheduleDto {
 
     @NotEmpty
     @Schema(description = "근무일", example = "[\"MONDAY\", \"WEDNESDAY\"]")
-    private List<DayOfWeek> workingDays;
+    private List<@NotNull DayOfWeek> workingDays;
 
     @NotNull
     @Schema(description = "시작 시간", example = "09:00")

@@ -20,7 +20,7 @@ public class CreatePostingScheduleRequestDto {
 
     @Schema(description = "근무 요일", example = "['MONDAY', 'WEDNESDAY']")
     @NotEmpty
-    private List<DayOfWeek> workingDays;
+    private List<@NotNull DayOfWeek> workingDays;
 
     @Schema(description = "시작 시간", example = "09:00")
     @NotNull
