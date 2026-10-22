@@ -6,6 +6,7 @@ import lombok.*;
 import org.springdoc.core.annotations.ParameterObject;
 
 import java.time.LocalTime;
+import java.time.DayOfWeek;
 import java.util.List;
 
 @Data
@@ -38,6 +39,9 @@ public class PostingListFilterDto {
 
     @Parameter(description = "근무 종료 시간")
     private LocalTime endTime;
+
+    @Parameter(description = "근무 요일 목록 — 선택 요일 중 하나와 시간 조건이 같은 일정에서 일치")
+    private List<DayOfWeek> workingDays;
 
     @Parameter(description = "급여순 정렬 여부")
     private Boolean payAmountSort;

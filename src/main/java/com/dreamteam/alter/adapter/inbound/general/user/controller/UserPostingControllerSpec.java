@@ -49,6 +49,10 @@ public interface UserPostingControllerSpec {
                     @ExampleObject(
                         name = "이미 CANCELLED 상태인 경우",
                         value = "{\"code\" : \"B013\"}"
+                    ),
+                    @ExampleObject(
+                        name = "ACCEPTED 지원서를 본인이 취소하는 경우",
+                        value = "{\"code\":\"B017\",\"message\":\"합격한 지원서는 취소할 수 없습니다.\"}"
                     )
                 }))
     })

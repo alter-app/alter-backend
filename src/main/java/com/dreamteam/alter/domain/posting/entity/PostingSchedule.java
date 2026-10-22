@@ -1,10 +1,8 @@
 package com.dreamteam.alter.domain.posting.entity;
 
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
-import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Type;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -13,6 +11,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -32,21 +32,18 @@ public class PostingSchedule {
     @JoinColumn(name = "posting_id", nullable = false)
     private Posting posting;
 
-    @Type(JsonBinaryType.class)
-    @Column(name = "working_days", nullable = false, columnDefinition = "jsonb")
-    private List<DayOfWeek> workingDays;
+    @ElementCollection
+    @CollectionTable(name = "posting_schedule_working_days",
+        joinColumns = @JoinColumn(name = "posting_schedule_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "day_of_week", nullable = false, length = 10)
+    private Set<DayOfWeek> workingDays;
 
     @Column(name = "start_time", nullable = false)
     private LocalTime startTime;
 
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
-
-    @Column(name = "positions_needed", nullable = false)
-    private int positionsNeeded;
-
-    @Column(name = "positions_available", nullable = false)
-    private int positionsAvailable;
 
     @Column(name = "position", length = 128, nullable = false)
     private String position;
@@ -67,17 +64,14 @@ public class PostingSchedule {
         List<DayOfWeek> workingDays,
         LocalTime startTime,
         LocalTime endTime,
-        int positionsNeeded,
         String position,
         Posting posting
     ) {
         return PostingSchedule.builder()
             .posting(posting)
-            .workingDays(workingDays)
+            .workingDays(new HashSet<>(workingDays))
             .startTime(startTime)
             .endTime(endTime)
-            .positionsNeeded(positionsNeeded)
-            .positionsAvailable(positionsNeeded)
             .position(position)
             .status(PostingStatus.OPEN)
             .build();
@@ -87,23 +81,21 @@ public class PostingSchedule {
         List<DayOfWeek> workingDays,
         LocalTime startTime,
         LocalTime endTime,
-        int positionsNeeded,
         String position
     ) {
-        this.workingDays = workingDays;
+        this.workingDays.clear();
+        this.workingDays.addAll(workingDays);
         this.startTime = startTime;
         this.endTime = endTime;
-        
-        // 기존 positionsNeeded와 새로운 positionsNeeded의 차이를 계산
-        int difference = positionsNeeded - this.positionsNeeded;
-        this.positionsAvailable = Math.max(0, this.positionsAvailable + difference);
-        
-        this.positionsNeeded = positionsNeeded;
         this.position = position;
     }
 
     public void updateStatus(PostingStatus status) {
         this.status = status;
+    }
+
+    public List<DayOfWeek> getWorkingDays() {
+        return workingDays.stream().sorted().toList();
     }
 
 }

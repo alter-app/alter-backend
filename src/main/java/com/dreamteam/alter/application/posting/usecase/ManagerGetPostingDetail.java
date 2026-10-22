@@ -31,6 +31,7 @@ public class ManagerGetPostingDetail implements ManagerGetPostingDetailUseCase {
 
         long applicantCount = postingApplicationQueryRepository.countActiveApplicationsByPostingId(postingId);
 
-        return ManagerPostingDetailResponseDto.of(postingDetail, applicantCount);
+        long acceptedCount = postingApplicationQueryRepository.countAcceptedByPostingId(postingId);
+        return ManagerPostingDetailResponseDto.of(postingDetail, applicantCount, acceptedCount);
     }
 }

@@ -29,6 +29,9 @@ public class PostingListResponseDto {
     @Schema(description = "급여", example = "10000")
     private int payAmount;
 
+    @Schema(description = "공고 모집 인원 (안내용)", example = "2")
+    private int recruitCount;
+
     @NotNull
     @Schema(description = "급여 타입", example = "HOURLY")
     private PaymentType paymentType;
@@ -40,10 +43,10 @@ public class PostingListResponseDto {
     @NotNull
     @Schema(description = "공고 스케줄", example = "[" +
         "{" +
-        "\"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"positionsNeeded\": 3, \"position\": 3" +
+        "\"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"position\": \"홀서빙\"" +
         "}," +
         "{" +
-        "\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"positionsNeeded\": 1, \"position\": 2" +
+        "\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"position\": \"설거지\"" +
         "}" +
         "]")
     private List<PostingScheduleResponseDto> schedules;
@@ -61,6 +64,7 @@ public class PostingListResponseDto {
             .id(entity.getId())
             .title(entity.getTitle())
             .payAmount(entity.getPayAmount())
+            .recruitCount(entity.getRecruitCount())
             .paymentType(entity.getPaymentType())
             .createdAt(entity.getCreatedAt())
             .schedules(entity.getSchedules().stream()

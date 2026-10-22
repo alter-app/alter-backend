@@ -3,6 +3,7 @@ package com.dreamteam.alter.domain.posting.entity;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.command.PostingScheduleCommand;
+import com.dreamteam.alter.domain.posting.command.CreatePostingCommand;
 import com.dreamteam.alter.domain.posting.command.UpdatePostingCommand;
 import com.dreamteam.alter.domain.posting.command.UpdatePostingScheduleCommand;
 import com.dreamteam.alter.domain.posting.type.PaymentType;
@@ -13,7 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +31,7 @@ class PostingTests {
         PostingSchedule open = createSchedule(posting, "홀서빙");
         PostingSchedule deleted = createSchedule(posting, "주방보조");
         deleted.updateStatus(PostingStatus.DELETED);
-        ReflectionTestUtils.setField(posting, "schedules", List.of(open, deleted));
+        ReflectionTestUtils.setField(posting, "schedules", new LinkedHashSet<>(List.of(open, deleted)));
 
         // when
         List<PostingSchedule> result = posting.getActiveSchedules();
@@ -56,14 +57,13 @@ class PostingTests {
         Posting posting = new Posting();
         PostingSchedule deleted = createSchedule(posting, 1L, "주방보조");
         deleted.updateStatus(PostingStatus.DELETED);
-        ReflectionTestUtils.setField(posting, "schedules", List.of(deleted));
+        ReflectionTestUtils.setField(posting, "schedules", new LinkedHashSet<>(List.of(deleted)));
 
         UpdatePostingScheduleCommand command = new UpdatePostingScheduleCommand(
             1L,
             List.of(DayOfWeek.TUESDAY),
             LocalTime.of(10, 0),
             LocalTime.of(19, 0),
-            5,
             "홀서빙"
         );
 
@@ -72,7 +72,6 @@ class PostingTests {
             .isInstanceOf(CustomException.class)
             .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND));
         assertThat(deleted.getPosition()).isEqualTo("주방보조");
-        assertThat(deleted.getPositionsAvailable()).isEqualTo(1);
     }
 
     @Test
@@ -82,7 +81,7 @@ class PostingTests {
         Posting posting = new Posting();
         PostingSchedule deleted = createSchedule(posting, 1L, "주방보조");
         deleted.updateStatus(PostingStatus.DELETED);
-        ReflectionTestUtils.setField(posting, "schedules", List.of(deleted));
+        ReflectionTestUtils.setField(posting, "schedules", new LinkedHashSet<>(List.of(deleted)));
 
         // when & then
         assertThatThrownBy(() -> posting.deleteSchedules(List.of(1L)))
@@ -91,18 +90,55 @@ class PostingTests {
     }
 
     @Test
-    @DisplayName("마지막 근무일정을 삭제하면 공고가 모집 완료로 바뀐다")
-    void updateContent_마지막일정삭제_자동종료() {
+    @DisplayName("마지막 근무일정 삭제는 거부하고 공고 상태를 유지한다")
+    void updateContent_마지막일정삭제_예외발생() {
         // given
         Posting posting = openPosting();
         PostingSchedule only = createSchedule(posting, 1L, "홀서빙");
-        ReflectionTestUtils.setField(posting, "schedules", new ArrayList<>(List.of(only)));
+        ReflectionTestUtils.setField(posting, "schedules", new LinkedHashSet<>(List.of(only)));
 
-        // when
-        posting.updateContent(updateCommand(null, null, List.of(1L)));
+        assertThatThrownBy(() -> posting.updateContent(updateCommand(null, null, List.of(1L))))
+            .isInstanceOf(CustomException.class)
+            .hasMessage("근무 일정은 최소 1개 이상 있어야 합니다.")
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ILLEGAL_ARGUMENT);
+        assertThat(posting.getStatus()).isEqualTo(PostingStatus.OPEN);
+    }
 
-        // then
-        assertThat(posting.getActiveSchedules()).isEmpty();
+    @Test
+    void workingDays_중복없이_요일순서로반환하고_수정한다() {
+        PostingSchedule schedule = PostingSchedule.create(
+            List.of(DayOfWeek.FRIDAY, DayOfWeek.MONDAY, DayOfWeek.FRIDAY),
+            LocalTime.of(9, 0), LocalTime.of(18, 0), "홀서빙", openPosting()
+        );
+        assertThat(schedule.getWorkingDays()).containsExactly(DayOfWeek.MONDAY, DayOfWeek.FRIDAY);
+        Object daysCollection = ReflectionTestUtils.getField(schedule, "workingDays");
+        schedule.update(List.of(DayOfWeek.SUNDAY, DayOfWeek.TUESDAY),
+            LocalTime.of(10, 0), LocalTime.of(19, 0), "주방보조");
+        assertThat(schedule.getWorkingDays()).containsExactly(DayOfWeek.TUESDAY, DayOfWeek.SUNDAY);
+        assertThat(ReflectionTestUtils.getField(schedule, "workingDays")).isSameAs(daysCollection);
+    }
+
+    @Test
+    void recruitCount_생성과수정에반영하고_공고상태를유지한다() {
+        PostingScheduleCommand schedule = new PostingScheduleCommand(
+            List.of(DayOfWeek.MONDAY), LocalTime.of(9, 0), LocalTime.of(18, 0), "홀서빙");
+        Posting posting = Posting.create(new CreatePostingCommand(
+            1L, "제목", "설명", 12000, 2, PaymentType.HOURLY, List.of(schedule)), null);
+        assertThat(posting.getRecruitCount()).isEqualTo(2);
+        posting.updateStatus(PostingStatus.CLOSED);
+        posting.updateContent(updateCommand(null, null, null));
+        assertThat(posting.getRecruitCount()).isEqualTo(3);
+        assertThat(posting.getStatus()).isEqualTo(PostingStatus.CLOSED);
+    }
+
+    @Test
+    void updateContent_마감된공고도_활성일정이없으면거부한다() {
+        Posting posting = openPosting();
+        posting.updateStatus(PostingStatus.CLOSED);
+        ReflectionTestUtils.setField(posting, "schedules", new LinkedHashSet<>());
+        assertThatThrownBy(() -> posting.updateContent(updateCommand(null, null, null)))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ILLEGAL_ARGUMENT);
         assertThat(posting.getStatus()).isEqualTo(PostingStatus.CLOSED);
     }
 
@@ -112,13 +148,12 @@ class PostingTests {
         // given
         Posting posting = openPosting();
         PostingSchedule only = createSchedule(posting, 1L, "홀서빙");
-        ReflectionTestUtils.setField(posting, "schedules", new ArrayList<>(List.of(only)));
+        ReflectionTestUtils.setField(posting, "schedules", new LinkedHashSet<>(List.of(only)));
 
         PostingScheduleCommand created = new PostingScheduleCommand(
             List.of(DayOfWeek.FRIDAY),
             LocalTime.of(13, 0),
             LocalTime.of(21, 0),
-            2,
             "주방보조"
         );
 
@@ -137,7 +172,7 @@ class PostingTests {
         Posting posting = openPosting();
         PostingSchedule first = createSchedule(posting, 1L, "홀서빙");
         PostingSchedule second = createSchedule(posting, 2L, "주방보조");
-        ReflectionTestUtils.setField(posting, "schedules", new ArrayList<>(List.of(first, second)));
+        ReflectionTestUtils.setField(posting, "schedules", new LinkedHashSet<>(List.of(first, second)));
 
         // when
         posting.updateContent(updateCommand(null, null, List.of(1L)));
@@ -191,6 +226,7 @@ class PostingTests {
             "제목",
             "설명",
             12000,
+            3,
             PaymentType.HOURLY,
             createSchedules,
             updateSchedules,
@@ -203,7 +239,6 @@ class PostingTests {
             List.of(DayOfWeek.MONDAY),
             LocalTime.of(9, 0),
             LocalTime.of(18, 0),
-            1,
             position,
             posting
         );

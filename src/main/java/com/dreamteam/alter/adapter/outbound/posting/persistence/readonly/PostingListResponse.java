@@ -21,6 +21,8 @@ public class PostingListResponse {
 
     private int payAmount;
 
+    private int recruitCount;
+
     private PaymentType paymentType;
 
     private LocalDateTime createdAt;
@@ -36,6 +38,7 @@ public class PostingListResponse {
             .id(posting.getId())
             .title(posting.getTitle())
             .payAmount(posting.getPayAmount())
+            .recruitCount(posting.getRecruitCount())
             .paymentType(posting.getPaymentType())
             .createdAt(posting.getCreatedAt())
             .schedules(posting.getActiveSchedules())

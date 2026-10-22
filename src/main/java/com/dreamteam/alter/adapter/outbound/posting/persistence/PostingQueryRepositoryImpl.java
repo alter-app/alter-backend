@@ -21,6 +21,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.querydsl.jpa.JPAExpressions;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,19 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     private final EntityManager entityManager;
 
     @Override
+    public Optional<Posting> findByManagerAndIdWithPessimisticLock(Long postingId, ManagerUser managerUser) {
+        QPosting posting = QPosting.posting;
+        QWorkspace workspace = QWorkspace.workspace;
+        entityManager.createNativeQuery(LOCK_TIMEOUT_STATEMENT).executeUpdate();
+        // 공고 행만 잠가 지원서 생성과 직렬화하고, 소유권은 EXISTS로 검증한다.
+        return Optional.ofNullable(queryFactory.selectFrom(posting)
+            .where(posting.id.eq(postingId), JPAExpressions.selectOne().from(workspace)
+                .where(workspace.id.eq(posting.workspace.id), workspace.managerUser.eq(managerUser)).exists())
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetchOne());
+    }
+
+    @Override
     public long getCountOfPostings(PostingListFilterDto filter) {
         QPosting qPosting = QPosting.posting;
         QPostingSchedule qPostingSchedule = QPostingSchedule.postingSchedule;
@@ -67,7 +81,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 gtePayAmount(qPosting, filter.getMinPayAmount()),
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
-                lteEndTime(qPostingSchedule, filter.getEndTime())
+                lteEndTime(qPostingSchedule, filter.getEndTime()),
+                workingDaysIn(qPostingSchedule, filter.getWorkingDays())
             )
             .fetchOne();
 
@@ -116,7 +131,8 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
                 gtePayAmount(qPosting, filter.getMinPayAmount()),
                 ltePayAmount(qPosting, filter.getMaxPayAmount()),
                 gteStartTime(qPostingSchedule, filter.getStartTime()),
-                lteEndTime(qPostingSchedule, filter.getEndTime())
+                lteEndTime(qPostingSchedule, filter.getEndTime()),
+                workingDaysIn(qPostingSchedule, filter.getWorkingDays())
             )
             .groupBy(qPosting.id, qPosting.payAmount, qPosting.createdAt)
             .orderBy(getOrderSpecifiers(qPosting, filter.getPayAmountSort()))
@@ -130,6 +146,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         List<Posting> postings = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(qPosting.id.in(postingIds))
@@ -185,6 +202,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         List<Posting> postings = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(qPosting.id.in(postingIds))
@@ -255,6 +273,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .where(
                 qPosting.status.eq(PostingStatus.OPEN),
                 qWorkspace.id.eq(workspaceId)
@@ -298,6 +317,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         Posting posting = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(
@@ -408,6 +428,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         List<Posting> postings = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(qPosting.id.in(postingIds))
@@ -523,6 +544,10 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         return startTime != null ? qPostingSchedule.startTime.goe(startTime) : null;
     }
 
+    private BooleanExpression workingDaysIn(QPostingSchedule schedule, List<java.time.DayOfWeek> workingDays) {
+        return ObjectUtils.isNotEmpty(workingDays) ? schedule.workingDays.any().in(workingDays) : null;
+    }
+
     private BooleanExpression lteEndTime(QPostingSchedule qPostingSchedule, java.time.LocalTime endTime) {
         return endTime != null ? qPostingSchedule.endTime.loe(endTime) : null;
     }
@@ -601,6 +626,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
         Posting posting = queryFactory
             .selectFrom(qPosting)
             .leftJoin(qPosting.schedules, qPostingSchedule).fetchJoin()
+            .leftJoin(qPostingSchedule.workingDays).fetchJoin()
             .leftJoin(qPosting.workspace, qWorkspace).fetchJoin()
             .leftJoin(qWorkspace.businessType, QBusinessType.businessType).fetchJoin()
             .where(

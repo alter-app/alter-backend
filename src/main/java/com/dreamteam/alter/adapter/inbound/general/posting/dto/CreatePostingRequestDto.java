@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 
 import java.util.List;
@@ -35,16 +36,21 @@ public class CreatePostingRequestDto {
     @Positive
     private int payAmount;
 
+    @NotNull
+    @Min(1)
+    @Schema(description = "공고 모집 인원 (안내용)", example = "2")
+    private Integer recruitCount;
+
     @Schema(description = "급여 타입", example = "HOURLY")
     @NotNull
     private PaymentType paymentType;
 
     @Schema(description = "공고 스케줄", example = "[" +
             "{" +
-                "\"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"positionsNeeded\": 3, \"position\": \"설거지\"" +
+                "\"workingDays\": [\"MONDAY\", \"WEDNESDAY\"], \"startTime\": \"09:00\", \"endTime\": \"18:00\", \"position\": \"설거지\"" +
             "}," +
             "{" +
-                "\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"positionsNeeded\": 1, \"position\": \"홀서빙\"" +
+                "\"workingDays\": [\"FRIDAY\"], \"startTime\": \"13:00\", \"endTime\": \"21:00\", \"position\": \"홀서빙\"" +
             "}" +
         "]")
     @Valid
@@ -57,6 +63,7 @@ public class CreatePostingRequestDto {
             title,
             description,
             payAmount,
+            recruitCount,
             paymentType,
             schedules.stream().map(CreatePostingScheduleRequestDto::toCommand).toList()
         );

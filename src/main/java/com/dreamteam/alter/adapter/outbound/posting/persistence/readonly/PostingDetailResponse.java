@@ -24,6 +24,8 @@ public class PostingDetailResponse {
 
     private int payAmount;
 
+    private int recruitCount;
+
     private PaymentType paymentType;
 
     private LocalDateTime createdAt;
@@ -42,6 +44,7 @@ public class PostingDetailResponse {
             posting.getTitle(),
             posting.getDescription(),
             posting.getPayAmount(),
+            posting.getRecruitCount(),
             posting.getPaymentType(),
             posting.getCreatedAt(),
             posting.getActiveSchedules(),
