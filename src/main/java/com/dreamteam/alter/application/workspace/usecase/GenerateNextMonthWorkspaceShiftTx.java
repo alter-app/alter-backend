@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -18,6 +19,8 @@ import com.dreamteam.alter.domain.workspace.entity.WorkspaceShift;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorker;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceWorkerSchedule;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftRepository;
+import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -32,24 +35,28 @@ public class GenerateNextMonthWorkspaceShiftTx {
     private static final String DEFAULT_POSITION = "고정 근무";
 
     private final WorkspaceShiftRepository workspaceShiftRepository;
+    private final WorkspaceShiftQueryRepository workspaceShiftQueryRepository;
+    private final UserQueryRepository userQueryRepository;
 
-    /**
-     * existingShiftsByUserId 는 읽기만 한다. 이 Tx는 REQUIRES_NEW 로 따로 롤백될 수 있으므로
-     * 생성한 근무는 결과로 돌려주고, 호출 측이 성공한 뒤에만 공유 맵에 합친다.
-     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public GenerationResult execute(
         Workspace workspace,
         List<WorkspaceWorkerSchedule> schedules,
-        YearMonth targetMonth,
-        Map<Long, List<WorkspaceShift>> existingShiftsByUserId
+        YearMonth targetMonth
     ) {
         if (schedules.isEmpty()) {
-            return new GenerationResult(List.of(), 0);
+            return new GenerationResult(0, 0);
         }
 
         LocalDate startDate = targetMonth.atDay(1);
         LocalDate endDate = targetMonth.atEndOfMonth();
+
+        List<Long> userIds = schedules.stream().map(schedule -> schedule.getWorkspaceWorker().getUser().getId())
+            .distinct().sorted().toList();
+        userQueryRepository.findAllByIdWithPessimisticLock(userIds);
+        Map<Long, List<WorkspaceShift>> latestShiftsByUserId = workspaceShiftQueryRepository
+            .findConfirmedByUserIdsAndDateRange(userIds, startDate.atStartOfDay(), endDate.plusDays(7).atStartOfDay())
+            .stream().collect(Collectors.groupingBy(shift -> shift.getAssignedWorkspaceWorker().getUser().getId()));
 
         List<WorkspaceShift> shiftsToCreate = new ArrayList<>();
         // 이 호출에서 생성한 근무. 같은 업장 안에서 뒤 스케줄의 겹침 판정에 쓴다.
@@ -64,7 +71,7 @@ public class GenerateNextMonthWorkspaceShiftTx {
 
             WorkspaceWorker workspaceWorker = schedule.getWorkspaceWorker();
             Long userId = workspaceWorker.getUser().getId();
-            List<WorkspaceShift> existingShifts = existingShiftsByUserId.getOrDefault(userId, List.of());
+            List<WorkspaceShift> existingShifts = latestShiftsByUserId.getOrDefault(userId, List.of());
             List<WorkspaceShift> createdShifts = createdByUserId.computeIfAbsent(userId, k -> new ArrayList<>());
 
             for (LocalDate currentStartDate = firstStartDate;
@@ -101,7 +108,7 @@ public class GenerateNextMonthWorkspaceShiftTx {
             workspaceShiftRepository.saveAll(shiftsToCreate);
         }
 
-        return new GenerationResult(shiftsToCreate, skipped);
+        return new GenerationResult(shiftsToCreate.size(), skipped);
     }
 
     private boolean hasConflict(List<WorkspaceShift> existingShifts, LocalDateTime start, LocalDateTime end) {
@@ -129,9 +136,5 @@ public class GenerateNextMonthWorkspaceShiftTx {
         return offset;
     }
 
-    public record GenerationResult(List<WorkspaceShift> createdShifts, int skipped) {
-        public int created() {
-            return createdShifts.size();
-        }
-    }
+    public record GenerationResult(int created, int skipped) {}
 }
