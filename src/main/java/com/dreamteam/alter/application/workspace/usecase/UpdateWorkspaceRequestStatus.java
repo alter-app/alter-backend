@@ -86,6 +86,8 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 			null,
 			WorkspaceStatus.ACTIVATED,
 			workspaceRequest.getFullAddress(),
+			workspaceRequest.getJibunAddress(),
+			workspaceRequest.getDetailAddress(),
 			workspaceRequest.getProvince(),
 			workspaceRequest.getDistrict(),
 			workspaceRequest.getTown(),

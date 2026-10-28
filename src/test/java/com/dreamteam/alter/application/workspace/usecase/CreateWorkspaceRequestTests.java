@@ -239,5 +239,51 @@ class CreateWorkspaceRequestTests {
             then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
             assertThat(workspaceRequestCaptor.getValue().getBusinessTypeDetail()).isNull();
         }
+
+        @Test
+        @DisplayName("기본·지번·상세 주소를 각각 신청에 저장한다")
+        void execute_주소분리저장() {
+            // given
+            User user = mock(User.class);
+            given(user.getId()).willReturn(100L);
+            BusinessType businessType = BusinessTypeFixture.of(false);
+            given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
+            given(workspaceRequestRepository.save(any())).willReturn(1L);
+
+            CreateWorkspaceRequestDto dto = baseRequest();
+            dto.setJibunAddress("서울특별시 구로구 구로동 3-25");
+            dto.setDetailAddress("101동 1203호");
+
+            // when
+            createWorkspaceRequest.execute(user, dto);
+
+            // then
+            then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
+            WorkspaceRequest saved = workspaceRequestCaptor.getValue();
+            assertThat(saved.getFullAddress()).isEqualTo("서울특별시 구로구 고척동 123");
+            assertThat(saved.getJibunAddress()).isEqualTo("서울특별시 구로구 구로동 3-25");
+            assertThat(saved.getDetailAddress()).isEqualTo("101동 1203호");
+        }
+
+        @Test
+        @DisplayName("지번·상세 주소 없이도 신청을 저장한다")
+        void execute_지번상세주소없음() {
+            // given
+            User user = mock(User.class);
+            given(user.getId()).willReturn(100L);
+            BusinessType businessType = BusinessTypeFixture.of(false);
+            given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
+            given(workspaceRequestRepository.save(any())).willReturn(1L);
+
+            // when
+            createWorkspaceRequest.execute(user, baseRequest());
+
+            // then
+            then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
+            WorkspaceRequest saved = workspaceRequestCaptor.getValue();
+            assertThat(saved.getFullAddress()).isEqualTo("서울특별시 구로구 고척동 123");
+            assertThat(saved.getJibunAddress()).isNull();
+            assertThat(saved.getDetailAddress()).isNull();
+        }
     }
 }
