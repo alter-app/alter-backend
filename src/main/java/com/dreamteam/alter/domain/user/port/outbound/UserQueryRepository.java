@@ -15,5 +15,5 @@ public interface UserQueryRepository {
     Optional<UserSelfInfoResponse> getUserSelfInfoSummary(Long id);
     List<User> findAllById(List<Long> ids);
     List<User> findByContactIn(Set<String> contacts);
-    void lockByIdForUpdate(Long id);
+    void lockByIdWithPessimisticLock(Long id);
 }

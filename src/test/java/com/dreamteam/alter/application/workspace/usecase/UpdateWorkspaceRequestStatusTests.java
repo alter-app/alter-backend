@@ -225,7 +225,7 @@ class UpdateWorkspaceRequestStatusTests {
 
             // then
             InOrder inOrder = inOrder(userQueryRepository, managerUserQueryRepository, managerUserRepository);
-            inOrder.verify(userQueryRepository).lockByIdForUpdate(1L);
+            inOrder.verify(userQueryRepository).lockByIdWithPessimisticLock(1L);
             inOrder.verify(managerUserQueryRepository).findByUserId(1L);
             inOrder.verify(managerUserRepository).save(any(ManagerUser.class));
         }

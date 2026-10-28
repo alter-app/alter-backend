@@ -140,7 +140,7 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
     }
 
     @Override
-    public void lockByIdForUpdate(Long id) {
+    public void lockByIdWithPessimisticLock(Long id) {
         QUser qUser = QUser.user;
         queryFactory.select(qUser.id)
             .from(qUser)
