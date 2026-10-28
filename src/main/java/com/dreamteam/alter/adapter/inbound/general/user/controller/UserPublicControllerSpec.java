@@ -41,7 +41,7 @@ public interface UserPublicControllerSpec {
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginWithPassword(@Valid LoginWithPasswordRequestDto request);
 
-    @Operation(summary = "사용자 소셜 로그인", description = "토큰 교환 HTTP 4xx 중 카카오 KOE320과 애플 invalid_grant는 A010(무효·만료·재사용 인가 코드)이며 기타 카카오 오류와 애플 오류는 C001입니다. HTTP 상태는 기존 400을 유지합니다.")
+    @Operation(summary = "사용자 소셜 로그인", description = "토큰 교환 HTTP 4xx 중 카카오 KOE320과 애플 invalid_grant는 A010(무효·만료·재사용 인가 코드)이며 그 밖의 카카오·애플 오류는 C001입니다. HTTP 상태는 기존 400을 유지합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "로그인 성공 (JWT 응답)"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
@@ -95,7 +95,7 @@ public interface UserPublicControllerSpec {
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> createUser(@Valid CreateUserRequestDto request);
 
-    @Operation(summary = "소셜 계정으로 회원가입을 수행한다", description = "토큰 교환 HTTP 4xx 중 카카오 KOE320과 애플 invalid_grant는 A010(무효·만료·재사용 인가 코드)이며 기타 카카오 오류와 애플 오류는 C001입니다. HTTP 상태는 기존 400을 유지합니다.")
+    @Operation(summary = "소셜 계정으로 회원가입을 수행한다", description = "토큰 교환 HTTP 4xx 중 카카오 KOE320과 애플 invalid_grant는 A010(무효·만료·재사용 인가 코드)이며 그 밖의 카카오·애플 오류는 C001입니다. HTTP 상태는 기존 400을 유지합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "소셜 회원 가입 및 로그인 성공 (JWT 응답)"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",

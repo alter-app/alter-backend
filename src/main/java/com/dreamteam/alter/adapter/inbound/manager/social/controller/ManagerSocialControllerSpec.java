@@ -21,7 +21,7 @@ import java.util.List;
 @Tag(name = "MANAGER - 소셜 계정 관리")
 public interface ManagerSocialControllerSpec {
 
-    @Operation(summary = "소셜 계정 연동")
+    @Operation(summary = "소셜 계정 연동", description = "토큰 교환 HTTP 4xx 중 카카오 KOE320과 애플 invalid_grant는 A010(무효·만료·재사용 인가 코드)이며 그 밖의 카카오·애플 오류는 C001입니다. HTTP 상태는 기존 400을 유지합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "소셜 계정 연동 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
@@ -40,7 +40,9 @@ public interface ManagerSocialControllerSpec {
                     @ExampleObject(
                         name = "소셜 토큰 만료 (재 로그인 필요)",
                         value = "{\"code\" : \"A007\", \"message\" : \"소셜 토큰이 만료되었습니다\"}"
-                    )
+                    ),
+                    @ExampleObject(name = "카카오 KOE320·애플 invalid_grant 무효·만료 인가 코드", value = "{\"code\":\"A010\"}"),
+                    @ExampleObject(name = "토큰 교환 4xx 설정·요청 오류 또는 원인 미확인", value = "{\"code\":\"C001\"}")
                 }
             ))
     })
