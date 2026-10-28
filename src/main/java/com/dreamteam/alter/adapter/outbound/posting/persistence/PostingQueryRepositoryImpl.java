@@ -566,7 +566,7 @@ public class PostingQueryRepositoryImpl implements PostingQueryRepository {
     }
 
     private BooleanExpression containsSearchKeyword(QPosting qPosting, QWorkspace qWorkspace, String searchKeyword) {
-        String keyword = StringUtils.trimToNull(searchKeyword);
+        String keyword = StringUtils.stripToNull(searchKeyword);
         if (keyword == null) {
             return null;
         }
