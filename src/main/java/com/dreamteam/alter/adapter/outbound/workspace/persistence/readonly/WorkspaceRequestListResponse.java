@@ -16,6 +16,8 @@ public class WorkspaceRequestListResponse {
 	private Long id;
 	private String businessName;
 	private String fullAddress;
+	private String jibunAddress;
+	private String detailAddress;
 	private LocalDateTime createdAt;
 	private WorkspaceRequestStatus status;
 }

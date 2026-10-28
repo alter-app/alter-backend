@@ -35,6 +35,10 @@ public class ManagerWorkspaceResponse {
 
     private String fullAddress;
 
+    private String jibunAddress;
+
+    private String detailAddress;
+
     private BigDecimal latitude;
 
     private BigDecimal longitude;

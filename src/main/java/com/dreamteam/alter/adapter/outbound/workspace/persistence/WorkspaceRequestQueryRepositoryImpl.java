@@ -61,6 +61,8 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 				qWorkspaceRequest.id,
 				qWorkspaceRequest.businessName,
 				qWorkspaceRequest.fullAddress,
+				qWorkspaceRequest.jibunAddress,
+				qWorkspaceRequest.detailAddress,
 				qWorkspaceRequest.createdAt,
 				qWorkspaceRequest.status
 			))
@@ -84,6 +86,8 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 				qWorkspaceRequest.businessTypeDetail,
 				qWorkspaceRequest.contact,
 				qWorkspaceRequest.fullAddress,
+				qWorkspaceRequest.jibunAddress,
+				qWorkspaceRequest.detailAddress,
 				qWorkspaceRequest.latitude,
 				qWorkspaceRequest.longitude,
 				qWorkspaceRequest.status,
@@ -130,6 +134,8 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 				qWorkspaceRequest.id,
 				qWorkspaceRequest.businessName,
 				qWorkspaceRequest.fullAddress,
+				qWorkspaceRequest.jibunAddress,
+				qWorkspaceRequest.detailAddress,
 				qWorkspaceRequest.createdAt,
 				qWorkspaceRequest.status
 			))
@@ -154,6 +160,8 @@ public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQuer
 				qWorkspaceRequest.businessTypeDetail,
 				qWorkspaceRequest.contact,
 				qWorkspaceRequest.fullAddress,
+				qWorkspaceRequest.jibunAddress,
+				qWorkspaceRequest.detailAddress,
 				qWorkspaceRequest.latitude,
 				qWorkspaceRequest.longitude,
 				qWorkspaceRequest.status,

@@ -42,8 +42,14 @@ public class WorkspaceRequestResponseDto {
 	@Schema(description = "업장 등록 신청 상태")
 	private DescribedEnumDto<WorkspaceRequestStatus> status;
 
-	@Schema(description = "업장 전체 주소", example = "서울특별시 강남구 테헤란로 123")
+	@Schema(description = "업장 기본 주소 (도로명)", example = "서울특별시 강남구 테헤란로 123")
 	private String fullAddress;
+
+	@Schema(description = "업장 지번 주소", example = "서울특별시 강남구 역삼동 737")
+	private String jibunAddress;
+
+	@Schema(description = "업장 상세 주소 (동·층·호수)", example = "10층 1001호")
+	private String detailAddress;
 
 	@Schema(description = "업장 위도", example = "37.5665")
 	private BigDecimal latitude;
@@ -81,6 +87,8 @@ public class WorkspaceRequestResponseDto {
 			.contact(workspaceRequest.getContact())
 			.status(DescribedEnumDto.of(workspaceRequest.getStatus(), WorkspaceRequestStatus.describe()))
 			.fullAddress(workspaceRequest.getFullAddress())
+			.jibunAddress(workspaceRequest.getJibunAddress())
+			.detailAddress(workspaceRequest.getDetailAddress())
 			.latitude(workspaceRequest.getLatitude())
 			.longitude(workspaceRequest.getLongitude())
 			.workspaceCertFileUrl(workspaceCertFileUrl)

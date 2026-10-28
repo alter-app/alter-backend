@@ -33,8 +33,14 @@ public class ManagerWorkspaceListResponseDto {
     private String businessTypeDetail;
 
     @NotBlank
-    @Schema(description = "업장 전체 주소", example = "서울특별시 강남구 테헤란로 123")
+    @Schema(description = "업장 기본 주소 (도로명)", example = "서울특별시 강남구 테헤란로 123")
     private String fullAddress;
+
+    @Schema(description = "업장 지번 주소", example = "서울특별시 강남구 역삼동 737")
+    private String jibunAddress;
+
+    @Schema(description = "업장 상세 주소 (동·층·호수)", example = "10층 1001호")
+    private String detailAddress;
 
     @NotNull
     @Schema(description = "등록일")
@@ -51,6 +57,8 @@ public class ManagerWorkspaceListResponseDto {
             .businessType(entity.getBusinessType())
             .businessTypeDetail(entity.getBusinessTypeDetail())
             .fullAddress(entity.getFullAddress())
+            .jibunAddress(entity.getJibunAddress())
+            .detailAddress(entity.getDetailAddress())
             .createdAt(entity.getCreatedAt())
             .status(DescribedEnumDto.of(entity.getStatus(), WorkspaceStatus.describe()))
             .build();

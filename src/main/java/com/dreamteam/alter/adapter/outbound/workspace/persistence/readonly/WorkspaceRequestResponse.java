@@ -21,6 +21,8 @@ public class WorkspaceRequestResponse {
 	private String businessTypeDetail;
 	private String contact;
 	private String fullAddress;
+	private String jibunAddress;
+	private String detailAddress;
 	private BigDecimal latitude;
 	private BigDecimal longitude;
 	private WorkspaceRequestStatus status;
