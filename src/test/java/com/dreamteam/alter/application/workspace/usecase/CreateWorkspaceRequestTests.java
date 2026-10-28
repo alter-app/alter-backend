@@ -276,8 +276,10 @@ class CreateWorkspaceRequestTests {
             dto.setWorkspaceWarrantFileId(warrantFileId);
 
             // when & then
+            // 업종 조회 실패도 ILLEGAL_ARGUMENT라 메시지까지 확인해야 중복 검증이 빠진 코드에서 이 테스트가 실패한다
             assertThatThrownBy(() -> createWorkspaceRequest.execute(dto.toCommand(user)))
                 .isInstanceOf(CustomException.class)
+                .hasMessage("증빙 서류는 역할별로 서로 다른 파일을 첨부해야 합니다.")
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
             then(workspaceRequestRepository).should(never()).save(any());
             then(attachFiles).should(never()).executeMap(any(), any(), any());
