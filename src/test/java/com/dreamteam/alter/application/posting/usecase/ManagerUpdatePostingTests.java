@@ -127,7 +127,7 @@ class ManagerUpdatePostingTests {
         assertThatThrownBy(() -> managerUpdatePosting.execute(1L, command, actor))
             .isInstanceOf(CustomException.class)
             .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
-        PostingSchedule schedule = posting.getSchedules().getFirst();
+        PostingSchedule schedule = posting.getSchedules().iterator().next();
         assertThat(schedule.getStartTime()).isEqualTo(LocalTime.of(9, 0));
         assertThat(schedule.getEndTime()).isEqualTo(LocalTime.of(18, 0));
     }
@@ -145,7 +145,7 @@ class ManagerUpdatePostingTests {
                     List.of(DayOfWeek.MONDAY), LocalTime.of(9, 0), LocalTime.of(18, 0), "홀서빙"))),
             mock(Workspace.class)
         );
-        ReflectionTestUtils.setField(posting.getSchedules().getFirst(), "id", 100L);
+        ReflectionTestUtils.setField(posting.getSchedules().iterator().next(), "id", 100L);
         return posting;
     }
 
