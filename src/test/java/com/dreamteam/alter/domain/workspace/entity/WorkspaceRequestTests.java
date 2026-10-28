@@ -26,6 +26,8 @@ class WorkspaceRequestTests {
             null,
             "01012345678",
             "서울특별시 강남구 역삼동",
+            null,
+            null,
             "서울특별시",
             "강남구",
             "역삼동",

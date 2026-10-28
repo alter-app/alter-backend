@@ -208,6 +208,28 @@ class UpdateWorkspaceRequestStatusTests {
         }
 
         @Test
+        @DisplayName("승인 시 신청의 기본·지번·상세 주소를 업장으로 복사한다")
+        void execute_ACTIVATED_주소복사() {
+            // given
+            WorkspaceRequest request = mockApprovedRequest();
+            given(request.getFullAddress()).willReturn("서울특별시 구로구 고척동 123");
+            given(request.getJibunAddress()).willReturn("서울특별시 구로구 구로동 3-25");
+            given(request.getDetailAddress()).willReturn("101동 1203호");
+            given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(10L)).willReturn(List.of());
+            given(fileQueryRepository.findByTargetTypeAndTargetId(any(), any())).willReturn(Optional.empty());
+
+            // when
+            updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.ACTIVATED);
+
+            // then
+            then(workspaceRepository).should().save(workspaceCaptor.capture());
+            Workspace saved = workspaceCaptor.getValue();
+            assertThat(saved.getFullAddress()).isEqualTo("서울특별시 구로구 고척동 123");
+            assertThat(saved.getJibunAddress()).isEqualTo("서울특별시 구로구 구로동 3-25");
+            assertThat(saved.getDetailAddress()).isEqualTo("101동 1203호");
+        }
+
+        @Test
         @DisplayName("ACTIVATED 면 업장 저장 후 채팅 멤버십 join 이벤트를 발행한다")
         void execute_ACTIVATED_채팅멤버십join이벤트발행() {
             // given
