@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -51,11 +52,24 @@ class GlobalExceptionHandlerTests {
             .andExpect(jsonPath("$.code").value("B001"));
     }
 
+    @Test
+    @DisplayName("업로드 요청 크기 한도를 넘으면 프로젝트 오류 포맷으로 400(B024)을 반환한다")
+    void 업로드_크기_초과_400() throws Exception {
+        mockMvc.perform(post("/test/upload"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("B024"));
+    }
+
     @RestController
     static class TestController {
 
         @PostMapping("/test")
         void receive(@RequestBody UpdatePostingScheduleDto request) {
+        }
+
+        @PostMapping("/test/upload")
+        void upload() {
+            throw new MaxUploadSizeExceededException(25L * 1024 * 1024);
         }
     }
 }
