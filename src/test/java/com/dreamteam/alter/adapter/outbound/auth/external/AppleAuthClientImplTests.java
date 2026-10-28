@@ -55,7 +55,7 @@ class AppleAuthClientImplTests {
     @ValueSource(strings = {"invalid_client", "invalid_request", "unauthorized_client", "unsupported_grant_type", "invalid_scope"})
     void configurationErrorsAreInternalServerError(String code, CapturedOutput output) {
         failWith("{\"error\":\"" + code + "\",\"error_description\":\"synthetic-private-code synthetic-private-key\"}");
-        assertError(ErrorCode.INTERNAL_SERVER_ERROR);
+        assertTokenExchangeError();
         assertThat(output.getAll()).contains("provider=APPLE", "stage=token", "httpStatus=400", "providerErrorCode=" + code)
             .doesNotContain("synthetic-private-code", "synthetic-private-key", "synthetic-authorization-code", "synthetic-private-message");
     }
@@ -72,7 +72,7 @@ class AppleAuthClientImplTests {
     @ValueSource(strings = {"", "not-json", "{}", "{\"error\":\"synthetic-private-key\"}", "{\"error\":\"invalid_client\\nsynthetic-private-key\"}"})
     void unparseableOrUnsafeProviderCodeIsUnknown(String body, CapturedOutput output) {
         failWith(body);
-        assertError(ErrorCode.INTERNAL_SERVER_ERROR);
+        assertTokenExchangeError();
         assertThat(output.getAll()).contains("providerErrorCode=unknown").doesNotContain("synthetic-private-key");
     }
 
@@ -96,5 +96,13 @@ class AppleAuthClientImplTests {
         assertThatThrownBy(() -> client.exchangeCodeForToken("synthetic-authorization-code", PlatformType.WEB))
             .isInstanceOfSatisfying(CustomException.class,
                 e -> assertThat(e.getErrorCode()).isEqualTo(expected));
+    }
+
+    private void assertTokenExchangeError() {
+        assertThatThrownBy(() -> client.exchangeCodeForToken("synthetic-authorization-code", PlatformType.WEB))
+            .isInstanceOfSatisfying(CustomException.class, e -> {
+                assertThat(e.getErrorCode()).isEqualTo(ErrorCode.INTERNAL_SERVER_ERROR);
+                assertThat(e.getMessage()).isEqualTo("소셜 계정 인증 처리 중 오류가 발생했습니다.");
+            });
     }
 }

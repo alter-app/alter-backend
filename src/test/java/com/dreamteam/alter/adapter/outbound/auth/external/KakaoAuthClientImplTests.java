@@ -37,7 +37,7 @@ class KakaoAuthClientImplTests {
     void configurationAndUnknownErrorsAreNotCodeExpiry(String code, CapturedOutput output) {
         failWith("{\"error\":\"invalid_grant\",\"error_code\":\"" + code
             + "\",\"error_description\":\"synthetic-private-code synthetic-private-key\"}");
-        assertError(ErrorCode.INTERNAL_SERVER_ERROR);
+        assertTokenExchangeError();
         assertThat(output.getAll()).contains("provider=KAKAO", "stage=token", "httpStatus=400", "providerErrorCode=" + code)
             .doesNotContain("synthetic-private-code", "synthetic-private-key", "synthetic-authorization-code");
     }
@@ -53,7 +53,7 @@ class KakaoAuthClientImplTests {
     @ValueSource(strings = {"", "not-json", "{}", "{\"error\":\"invalid_grant\"}", "{\"error_code\":\"synthetic-private-key\\nKOE320\"}"})
     void unparseableOrUnsafeProviderCodeIsUnknown(String body, CapturedOutput output) {
         failWith(body);
-        assertError(ErrorCode.INTERNAL_SERVER_ERROR);
+        assertTokenExchangeError();
         assertThat(output.getAll()).contains("providerErrorCode=unknown").doesNotContain("synthetic-private-key");
     }
 
@@ -78,5 +78,13 @@ class KakaoAuthClientImplTests {
     private void assertError(ErrorCode expected) {
         assertThatThrownBy(() -> client.exchangeCodeForToken("synthetic-authorization-code", PlatformType.WEB))
             .isInstanceOfSatisfying(CustomException.class, e -> assertThat(e.getErrorCode()).isEqualTo(expected));
+    }
+
+    private void assertTokenExchangeError() {
+        assertThatThrownBy(() -> client.exchangeCodeForToken("synthetic-authorization-code", PlatformType.WEB))
+            .isInstanceOfSatisfying(CustomException.class, e -> {
+                assertThat(e.getErrorCode()).isEqualTo(ErrorCode.INTERNAL_SERVER_ERROR);
+                assertThat(e.getMessage()).isEqualTo("소셜 계정 인증 처리 중 오류가 발생했습니다.");
+            });
     }
 }

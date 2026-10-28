@@ -94,7 +94,9 @@ class SocialTokenErrorPropagationTests {
     }
 
     private void assertConfigurationError(Runnable action) {
-        assertThatThrownBy(action::run).isInstanceOfSatisfying(CustomException.class,
-            e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.INTERNAL_SERVER_ERROR));
+        assertThatThrownBy(action::run).isInstanceOfSatisfying(CustomException.class, e -> {
+            assertThat(e.getErrorCode()).isEqualTo(ErrorCode.INTERNAL_SERVER_ERROR);
+            assertThat(e.getMessage()).isEqualTo("소셜 계정 인증 처리 중 오류가 발생했습니다.");
+        });
     }
 }
