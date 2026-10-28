@@ -26,8 +26,14 @@ public class AdminWorkspaceRequestListResponseDto {
 	@Schema(description = "업장 이름", example = "세븐일레븐")
 	private String businessName;
 
-	@Schema(description = "업장 전체 주소", example = "서울특별시 강남구 테헤란로 123")
+	@Schema(description = "업장 기본 주소 (도로명)", example = "서울특별시 강남구 테헤란로 123")
 	private String fullAddress;
+
+	@Schema(description = "업장 지번 주소", example = "서울특별시 강남구 역삼동 737")
+	private String jibunAddress;
+
+	@Schema(description = "업장 상세 주소 (동·층·호수)", example = "10층 1001호")
+	private String detailAddress;
 
 	@Schema(description = "등록일", example = "2026-03-01T10:00:00")
 	private LocalDateTime createdAt;
@@ -40,6 +46,8 @@ public class AdminWorkspaceRequestListResponseDto {
 			.id(entity.getId())
 			.businessName(entity.getBusinessName())
 			.fullAddress(entity.getFullAddress())
+			.jibunAddress(entity.getJibunAddress())
+			.detailAddress(entity.getDetailAddress())
 			.createdAt(entity.getCreatedAt())
 			.status(DescribedEnumDto.of(entity.getStatus(), WorkspaceRequestStatus.describe()))
 			.build();

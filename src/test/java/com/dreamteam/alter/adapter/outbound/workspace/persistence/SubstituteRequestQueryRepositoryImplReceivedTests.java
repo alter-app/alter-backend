@@ -105,7 +105,7 @@ class SubstituteRequestQueryRepositoryImplReceivedTests {
         BusinessType businessType = businessTypeRepository.save(BusinessType.create("업종" + System.nanoTime(), null));
         workspace = Workspace.create(
             managerUser, "000-00-00000", "사장님가게", businessType, null,
-            "01000000000", "설명", WorkspaceStatus.ACTIVATED, "서울시 강남구",
+            "01000000000", "설명", WorkspaceStatus.ACTIVATED, "서울시 강남구", null, null,
             "서울특별시", "강남구", "역삼동", BigDecimal.ONE, BigDecimal.ONE
         );
         workspaceRepository.save(workspace);

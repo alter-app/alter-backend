@@ -104,6 +104,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                 qWorkspace.businessType.name,
                 qWorkspace.businessTypeDetail,
                 qWorkspace.fullAddress,
+                qWorkspace.jibunAddress,
+                qWorkspace.detailAddress,
                 qWorkspace.createdAt,
                 qWorkspace.status
             ))
@@ -131,6 +133,8 @@ public class WorkspaceQueryRepositoryImpl implements WorkspaceQueryRepository {
                     qWorkspace.description,
                     qWorkspace.status,
                     qWorkspace.fullAddress,
+                    qWorkspace.jibunAddress,
+                    qWorkspace.detailAddress,
                     qWorkspace.latitude,
                     qWorkspace.longitude,
                     qWorkspace.nextMonthShiftGenDay,

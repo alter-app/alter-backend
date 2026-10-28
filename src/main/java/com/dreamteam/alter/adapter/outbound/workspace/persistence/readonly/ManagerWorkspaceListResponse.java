@@ -22,6 +22,10 @@ public class ManagerWorkspaceListResponse {
 
     private String fullAddress;
 
+    private String jibunAddress;
+
+    private String detailAddress;
+
     private LocalDateTime createdAt;
 
     private WorkspaceStatus status;
