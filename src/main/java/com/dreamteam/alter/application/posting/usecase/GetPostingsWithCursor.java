@@ -30,7 +30,7 @@ public class GetPostingsWithCursor implements GetPostingsWithCursorUseCase {
         if (ObjectUtils.isNotEmpty(request.cursor())) {
             cursorDto = CursorUtil.decodeCursor(request.cursor(), CursorDto.class, objectMapper);
         }
-        CursorPageRequest<CursorDto> pageRequest = CursorPageRequest.of(cursorDto, request.pageSize() + 1);
+        CursorPageRequest<CursorDto> pageRequest = CursorPageRequest.of(cursorDto, request.pageSize());
 
         long count = postingQueryRepository.getCountOfPostings(filter);
         if (count == 0) {
@@ -42,19 +42,16 @@ public class GetPostingsWithCursor implements GetPostingsWithCursorUseCase {
             return CursorPaginatedApiResponse.empty(CursorPageResponseDto.empty(request.pageSize(), (int) count));
         }
 
-        List<PostingListResponse> page = postings.subList(0, Math.min(postings.size(), request.pageSize()));
-        boolean hasNext = !page.isEmpty() && postings.size() > page.size();
-
-        String nextCursor = null;
-        if (hasNext) {
-            PostingListResponse last = page.getLast();
-            nextCursor = CursorUtil.encodeCursor(new CursorDto(last.getId(), last.getCreatedAt()), objectMapper);
-        }
-        CursorPageResponseDto pageResponseDto = CursorPageResponseDto.of(nextCursor, request.pageSize(), (int) count);
+        PostingListResponse last = postings.getLast();
+        CursorPageResponseDto pageResponseDto = CursorPageResponseDto.of(
+            CursorUtil.encodeCursor(new CursorDto(last.getId(), last.getCreatedAt()), objectMapper),
+            pageRequest.pageSize(),
+            (int) count
+        );
 
         return CursorPaginatedApiResponse.of(
             pageResponseDto,
-            page.stream()
+            postings.stream()
                 .map(PostingListResponseDto::from)
                 .toList()
         );
