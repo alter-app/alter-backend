@@ -27,6 +27,7 @@ public interface UserWorkControllerSpec {
     @Operation(summary = "근무중인 업장의 근무자 목록 조회", description = "사용자가 근무중인 업장의 근무자 목록을 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "근무자 목록 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 커서 또는 커서의 id/createdAt 누락 (INVALID_CURSOR / B005)")
     })
     ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<UserWorkspaceWorkerListResponseDto>>> getWorkspaceWorkerList(
         Long workspaceId,

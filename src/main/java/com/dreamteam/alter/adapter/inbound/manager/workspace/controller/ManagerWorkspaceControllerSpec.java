@@ -39,7 +39,8 @@ public interface ManagerWorkspaceControllerSpec {
 
     @Operation(summary = "매니저 - 업장 근무자 목록 조회", description = "")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "근무자 목록 조회 성공")
+        @ApiResponse(responseCode = "200", description = "근무자 목록 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 커서 또는 커서의 id/createdAt 누락 (INVALID_CURSOR / B005)")
     })
     ResponseEntity<CommonApiResponse<CursorPaginatedApiResponse<ManagerWorkspaceWorkerListResponseDto>>> getWorkspaceWorkerList(
         @PathVariable Long workspaceId,
