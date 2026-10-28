@@ -1,5 +1,7 @@
 package com.dreamteam.alter.domain.posting.entity;
 
+import com.dreamteam.alter.common.exception.CustomException;
+import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.posting.type.PostingStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -67,6 +69,7 @@ public class PostingSchedule {
         String position,
         Posting posting
     ) {
+        validatePeriod(startTime, endTime);
         return PostingSchedule.builder()
             .posting(posting)
             .workingDays(new HashSet<>(workingDays))
@@ -83,6 +86,7 @@ public class PostingSchedule {
         LocalTime endTime,
         String position
     ) {
+        validatePeriod(startTime, endTime);
         this.workingDays.clear();
         this.workingDays.addAll(workingDays);
         this.startTime = startTime;
@@ -96,6 +100,12 @@ public class PostingSchedule {
 
     public List<DayOfWeek> getWorkingDays() {
         return workingDays.stream().sorted().toList();
+    }
+
+    private static void validatePeriod(LocalTime startTime, LocalTime endTime) {
+        if (startTime.equals(endTime)) {
+            throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "근무 시작 시간과 종료 시간은 같을 수 없습니다.");
+        }
     }
 
 }
