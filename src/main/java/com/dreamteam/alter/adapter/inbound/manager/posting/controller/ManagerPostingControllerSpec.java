@@ -31,7 +31,7 @@ import java.util.List;
 @Tag(name = "MANAGER - 업장 관리자 공고 관리 API")
 public interface ManagerPostingControllerSpec {
 
-    @Operation(summary = "공고 등록", description = "공고 단위 모집 인원(recruitCount)은 필수이며 1 이상입니다. 근무 일정은 지원자의 희망 근무 시간입니다. 근무 시작 시간과 종료 시간이 같은 일정은 등록할 수 없으며(종료가 시작보다 이른 22:00~06:00 같은 일정은 허용), 일정 중 하나라도 이 조건에 맞지 않으면 요청 전체가 실패합니다.")
+    @Operation(summary = "공고 등록", description = "공고 단위 모집 인원(recruitCount)은 필수이며 1 이상입니다. 근무 일정은 지원자의 희망 근무 시간입니다. 근무 시작 시간과 종료 시간이 같은 일정은 등록할 수 없으며(22:00~06:00처럼 종료 시간이 시작 시간보다 이르면 다음 날 종료로 봅니다), 일정 중 하나라도 이 조건에 맞지 않으면 요청 전체가 실패합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "공고 등록 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",
@@ -165,7 +165,7 @@ public interface ManagerPostingControllerSpec {
 
     @Operation(
         summary = "매니저 - 내가 등록한 공고 내용 수정",
-        description = "모집 인원(recruitCount)은 필수이며 1 이상입니다. 수정 결과 활성 근무 일정은 최소 1개 있어야 하며, 공고 상태는 사장님이 직접 변경합니다. 수정(updateSchedules)·추가(createSchedules)하는 일정도 근무 시작 시간과 종료 시간이 같을 수 없으며(종료가 시작보다 이른 22:00~06:00 같은 일정은 허용), 일정 중 하나라도 이 조건에 맞지 않으면 요청 전체가 실패합니다."
+        description = "모집 인원(recruitCount)은 필수이며 1 이상입니다. 수정 결과 활성 근무 일정은 최소 1개 있어야 하며, 공고 상태는 사장님이 직접 변경합니다. 수정(updateSchedules)·추가(createSchedules)하는 일정도 근무 시작 시간과 종료 시간이 같을 수 없으며(22:00~06:00처럼 종료 시간이 시작 시간보다 이르면 다음 날 종료로 봅니다), 일정 중 하나라도 이 조건에 맞지 않으면 요청 전체가 실패합니다."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "공고 내용 수정 성공"),
