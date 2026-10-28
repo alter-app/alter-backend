@@ -345,11 +345,6 @@ class UpdateWorkspaceRequestStatusTests {
             then(workspaceRepository).should().save(workspaceCaptor.capture());
             assertThat(workspaceCaptor.getValue().getContact()).isEqualTo(expected);
         }
-    }
-
-    @Nested
-    @DisplayName("기존 신청 호환")
-    class LegacyRequestTests {
 
         @ParameterizedTest
         @DisplayName("형식이 잘못된 기존 연락처는 승인을 ILLEGAL_ARGUMENT 로 거부하고 연락처 값을 메시지에 노출하지 않으며 업장을 만들지 않는다")
