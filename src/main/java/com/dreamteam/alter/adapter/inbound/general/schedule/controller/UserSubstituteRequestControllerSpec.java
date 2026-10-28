@@ -83,6 +83,21 @@ public interface UserSubstituteRequestControllerSpec {
         CursorPageRequestDto pageRequest
     );
 
+    @Operation(summary = "받은 대타 요청 상세 조회",
+        description = "현재 활성 근무자 행이 요청의 대상자인 경우 본인 대상자 상태와 상세를 조회합니다. 취소·만료 등 처리된 상태도 조회하며, 비대상자·요청자 본인·퇴사 후 다른 근무자 행으로 재입사한 사용자는 404/B019로 거부합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 ID",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "요청이 없거나 조회자에게 대상자 권한이 없음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = "{\"code\":\"B019\",\"message\":\"존재하지 않는 대타 요청입니다.\"}")))
+    })
+    ResponseEntity<CommonApiResponse<ReceivedSubstituteRequestDetailResponseDto>> getReceivedRequestDetail(
+        @Parameter(description = "대타 요청 ID", example = "1", required = true)
+        @PathVariable Long requestId
+    );
+
     @Operation(summary = "보낸 대타 요청 목록 조회", description = "내가 보낸 대타 요청 목록을 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공")
