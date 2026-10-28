@@ -54,7 +54,7 @@ public interface UserPublicControllerSpec {
                         value = "{\"code\" : \"B011\"}"
                     ),
                     @ExampleObject(name = "카카오 KOE320·애플 invalid_grant 무효·만료 인가 코드", value = "{\"code\":\"A010\"}"),
-                    @ExampleObject(name = "토큰 교환 4xx 설정·요청 오류 또는 원인 미확인", value = "{\"code\":\"C001\"}")
+                    @ExampleObject(name = "토큰 교환 4xx 설정·요청 오류 또는 원인 미확인", value = "{\"code\":\"C001\",\"message\":\"소셜 계정 인증 처리 중 오류가 발생했습니다.\"}")
                 }))
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> loginWithSocial(@Valid SocialLoginRequestDto request);
@@ -109,7 +109,7 @@ public interface UserPublicControllerSpec {
                     @ExampleObject(name = "소셜 플랫폼 ID 중복",           value = "{\"code\" : \"A005\"}"),
                     @ExampleObject(name = "소셜 토큰 만료 (재 로그인 필요)", value = "{\"code\" : \"A007\"}"),
                     @ExampleObject(name = "카카오 KOE320·애플 invalid_grant 무효·만료 인가 코드", value = "{\"code\":\"A010\"}"),
-                    @ExampleObject(name = "토큰 교환 4xx 설정·요청 오류 또는 원인 미확인", value = "{\"code\":\"C001\"}")
+                    @ExampleObject(name = "토큰 교환 4xx 설정·요청 오류 또는 원인 미확인", value = "{\"code\":\"C001\",\"message\":\"소셜 계정 인증 처리 중 오류가 발생했습니다.\"}")
                 }))
     })
     ResponseEntity<CommonApiResponse<GenerateTokenResponseDto>> createUserWithSocial(@Valid CreateUserWithSocialRequestDto request);
