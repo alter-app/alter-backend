@@ -56,8 +56,8 @@ class GetPostingsWithCursorTests {
     }
 
     @Test
-    @DisplayName("마지막 페이지가 페이지 크기보다 작으면 커서를 내려주지 않는다")
-    void lastPageShorterThanPageSizeHasNoCursor() {
+    @DisplayName("다음 페이지 유무와 관계없이 마지막으로 반환한 행을 가리키는 커서를 내려준다")
+    void cursorPointsAtLastReturnedRowRegardlessOfNextPage() {
         // given
         given(postingQueryRepository.getCountOfPostings(any())).willReturn(2L);
         List<PostingListResponse> rows = List.of(row(1L), row(2L));
@@ -68,52 +68,17 @@ class GetPostingsWithCursorTests {
         var result = useCase.execute(new CursorPageRequestDto(null, 10), new PostingListFilterDto(), actor());
 
         // then
-        assertThat(result.page().cursor()).isNull();
+        assertThat(result.data()).extracting(dto -> dto.getId()).containsExactly(1L, 2L);
         assertThat(result.page().pageSize()).isEqualTo(10);
         assertThat(result.page().totalCount()).isEqualTo(2);
-        assertThat(result.data()).hasSize(2);
-    }
-
-    @Test
-    @DisplayName("마지막 페이지가 페이지 크기와 같아도 다음 행이 없으면 커서를 내려주지 않는다")
-    void lastPageExactlyPageSizeHasNoCursor() {
-        // given
-        given(postingQueryRepository.getCountOfPostings(any())).willReturn(2L);
-        List<PostingListResponse> rows = List.of(row(1L), row(2L));
-        given(postingQueryRepository.getPostingsWithCursor(any(), any(), any()))
-            .willReturn(rows);
-
-        // when
-        var result = useCase.execute(new CursorPageRequestDto(null, 2), new PostingListFilterDto(), actor());
-
-        // then
-        assertThat(result.page().cursor()).isNull();
-        assertThat(result.data()).hasSize(2);
-    }
-
-    @Test
-    @DisplayName("다음 페이지가 있으면 추가로 조회한 행은 빼고, 커서는 마지막으로 반환한 행을 가리킨다")
-    void middlePageDropsExtraRowAndPointsCursorAtLastReturnedRow() {
-        // given
-        given(postingQueryRepository.getCountOfPostings(any())).willReturn(3L);
-        List<PostingListResponse> rows = List.of(row(1L), row(2L), row(3L));
-        given(postingQueryRepository.getPostingsWithCursor(any(), any(), any()))
-            .willReturn(rows);
-
-        // when
-        var result = useCase.execute(new CursorPageRequestDto(null, 2), new PostingListFilterDto(), actor());
-
-        // then
-        assertThat(result.data()).extracting(dto -> dto.getId()).containsExactly(1L, 2L);
-        assertThat(result.page().totalCount()).isEqualTo(3);
         CursorDto cursor = CursorUtil.decodeCursor(result.page().cursor(), CursorDto.class, objectMapper);
         assertThat(cursor.getId()).isEqualTo(2L);
         assertThat(cursor.getCreatedAt()).isEqualTo(rows.get(1).getCreatedAt());
     }
 
     @Test
-    @DisplayName("다음 페이지 여부를 알기 위해 페이지 크기보다 한 행 더 조회한다")
-    void repositoryIsAskedForOneMoreRowThanPageSize() {
+    @DisplayName("요청한 페이지 크기 그대로 조회한다")
+    void repositoryIsAskedForRequestedPageSize() {
         // given
         given(postingQueryRepository.getCountOfPostings(any())).willReturn(1L);
         List<PostingListResponse> rows = List.of(row(1L));
@@ -127,7 +92,7 @@ class GetPostingsWithCursorTests {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<CursorPageRequest<CursorDto>> captor = ArgumentCaptor.forClass(CursorPageRequest.class);
         then(postingQueryRepository).should().getPostingsWithCursor(captor.capture(), any(), any());
-        assertThat(captor.getValue().pageSize()).isEqualTo(6);
+        assertThat(captor.getValue().pageSize()).isEqualTo(5);
     }
 
     @Test
@@ -146,18 +111,18 @@ class GetPostingsWithCursorTests {
     }
 
     @Test
-    @DisplayName("페이지 크기가 0이면 행과 커서를 내려주지 않는다")
-    void zeroPageSizeReturnsNoRowsAndNoCursor() {
+    @DisplayName("커서 이후 남은 공고가 없으면 커서 없이 빈 목록을 반환한다")
+    void noRowsAfterCursorReturnsEmptyWithoutCursor() {
         // given
-        given(postingQueryRepository.getCountOfPostings(any())).willReturn(3L);
-        List<PostingListResponse> rows = List.of(row(1L));
-        given(postingQueryRepository.getPostingsWithCursor(any(), any(), any())).willReturn(rows);
+        given(postingQueryRepository.getCountOfPostings(any())).willReturn(2L);
+        given(postingQueryRepository.getPostingsWithCursor(any(), any(), any())).willReturn(List.of());
 
         // when
-        var result = useCase.execute(new CursorPageRequestDto(null, 0), new PostingListFilterDto(), actor());
+        var result = useCase.execute(new CursorPageRequestDto(null, 10), new PostingListFilterDto(), actor());
 
         // then
         assertThat(result.page().cursor()).isNull();
+        assertThat(result.page().totalCount()).isEqualTo(2);
         assertThat(result.data()).isEmpty();
     }
 }
