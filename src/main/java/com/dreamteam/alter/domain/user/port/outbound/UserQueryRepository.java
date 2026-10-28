@@ -16,5 +16,5 @@ public interface UserQueryRepository {
     List<User> findAllById(List<Long> ids);
     List<User> findAllByIdWithPessimisticLock(List<Long> ids);
     List<User> findByContactIn(Set<String> contacts);
-    void lockByIdForUpdate(Long id);
+    void lockByIdWithPessimisticLock(Long id);
 }

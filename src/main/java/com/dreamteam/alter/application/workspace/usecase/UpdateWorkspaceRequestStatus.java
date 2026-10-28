@@ -78,7 +78,7 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 		String contact = PhoneNumberUtil.normalizeLocalNumber(workspaceRequest.getContact());
 
 		// manager_users.user_id 에 유니크 제약이 없어 같은 사용자의 다른 신청이 동시에 승인되면 중복 생성될 수 있으므로 User 행으로 직렬화
-		userQueryRepository.lockByIdForUpdate(workspaceRequest.getUser().getId());
+		userQueryRepository.lockByIdWithPessimisticLock(workspaceRequest.getUser().getId());
 		ManagerUser managerUser = managerUserQueryRepository.findByUserId(workspaceRequest.getUser().getId())
 			.orElseGet(() -> managerUserRepository.save(ManagerUser.create(workspaceRequest.getUser(), ManagerUserStatus.ACTIVATED)));
 
