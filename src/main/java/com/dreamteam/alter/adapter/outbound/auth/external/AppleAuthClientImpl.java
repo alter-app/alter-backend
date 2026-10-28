@@ -142,8 +142,10 @@ public class AppleAuthClientImpl implements AppleAuthClient {
             }
             log.warn("Social auth error provider=APPLE stage=token httpStatus={} providerErrorCode={}",
                 e.getStatusCode().value(), providerErrorCode);
-            throw new CustomException("invalid_grant".equals(providerErrorCode)
-                ? ErrorCode.SOCIAL_AUTH_CODE_EXPIRED : ErrorCode.INTERNAL_SERVER_ERROR);
+            if ("invalid_grant".equals(providerErrorCode)) {
+                throw new CustomException(ErrorCode.SOCIAL_AUTH_CODE_EXPIRED);
+            }
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "소셜 계정 인증 처리 중 오류가 발생했습니다.");
         } catch (JsonProcessingException e) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
