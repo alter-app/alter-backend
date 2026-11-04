@@ -2,6 +2,7 @@ package com.dreamteam.alter.application.workspace.usecase;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,7 +29,7 @@ public class GenerateNextMonthWorkspaceShift implements GenerateNextMonthWorkspa
 
     @Override
     public void execute() {
-        LocalDate now = LocalDate.now();
+        LocalDate now = LocalDate.now(ZoneId.of("Asia/Seoul"));
         int todayDayOfMonth = now.getDayOfMonth();
         int lastDayOfMonth = now.lengthOfMonth();
         boolean isLastDayOfMonth = todayDayOfMonth == lastDayOfMonth;

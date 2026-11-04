@@ -1,6 +1,8 @@
 package com.dreamteam.alter.domain.workspace.entity;
 
 import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -10,7 +12,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.domain.workspace.command.FixedWorkerScheduleCommand;
+import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerScheduleRecurrenceType;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceWorkerScheduleStatus;
+import com.dreamteam.alter.domain.workspace.util.FixedWorkerScheduleCalculator;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -62,6 +67,19 @@ public class WorkspaceWorkerSchedule {
 	private LocalTime endTime;
 
 	@Enumerated(EnumType.STRING)
+	@Column(name = "recurrence_type", length = 16, nullable = false)
+	private WorkspaceWorkerScheduleRecurrenceType recurrenceType;
+
+	@Column(name = "week_of_month")
+	private Integer weekOfMonth;
+
+	@Column(name = "start_date")
+	private LocalDate startDate;
+
+	@Column(name = "end_date")
+	private LocalDate endDate;
+
+	@Enumerated(EnumType.STRING)
 	@Column(name = "status", length = 32, nullable = false)
 	private WorkspaceWorkerScheduleStatus status;
 
@@ -80,49 +98,87 @@ public class WorkspaceWorkerSchedule {
 		DayOfWeek endDayOfWeek,
 		LocalTime endTime
 	) {
+		return create(workspaceWorker, new FixedWorkerScheduleCommand(
+			startDayOfWeek, startTime, endDayOfWeek, endTime, null, null, null, null
+		));
+	}
+
+	public static WorkspaceWorkerSchedule create(WorkspaceWorker worker, FixedWorkerScheduleCommand command) {
+		if (command.recurrenceType() == null
+			&& (command.weekOfMonth() != null || command.startDate() != null || command.endDate() != null)) {
+			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "반복 방식과 적용 기간을 함께 입력해야 합니다.");
+		}
 		WorkspaceWorkerSchedule workspaceWorkerSchedule = WorkspaceWorkerSchedule.builder()
-			.workspaceWorker(workspaceWorker)
-			.startDayOfWeek(startDayOfWeek)
-			.startTime(startTime)
-			.endDayOfWeek(endDayOfWeek)
-			.endTime(endTime)
+			.workspaceWorker(worker)
+			.startDayOfWeek(command.startDayOfWeek())
+			.startTime(command.startTime())
+			.endDayOfWeek(command.endDayOfWeek())
+			.endTime(command.endTime())
+			.recurrenceType(command.recurrenceType() == null ? WorkspaceWorkerScheduleRecurrenceType.WEEKLY : command.recurrenceType())
+			.weekOfMonth(command.weekOfMonth())
+			.startDate(command.startDate())
+			.endDate(command.endDate())
 			.status(WorkspaceWorkerScheduleStatus.ACTIVATED)
 			.build();
 
 		workspaceWorkerSchedule.validTime();
+		workspaceWorkerSchedule.validRecurrence(command.recurrenceType() != null);
 		return workspaceWorkerSchedule;
 	}
 
-	public void update(DayOfWeek startDayOfWeek, LocalTime startTime, DayOfWeek endDayOfWeek, LocalTime endTime) {
-		this.startDayOfWeek = startDayOfWeek;
-		this.startTime = startTime;
-		this.endDayOfWeek = endDayOfWeek;
-		this.endTime = endTime;
+	public WorkspaceWorkerSchedule updatedSchedule(FixedWorkerScheduleCommand command) {
+		if (command.recurrenceType() == null) {
+			if (command.weekOfMonth() != null || command.startDate() != null || command.endDate() != null) {
+				throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "반복 방식과 적용 기간을 함께 입력해야 합니다.");
+			}
+			WorkspaceWorkerSchedule candidate = create(workspaceWorker, new FixedWorkerScheduleCommand(
+				command.startDayOfWeek(), command.startTime(), command.endDayOfWeek(), command.endTime(),
+				null, null, null, null
+			));
+			candidate.recurrenceType = recurrenceType;
+			candidate.weekOfMonth = weekOfMonth;
+			candidate.startDate = startDate;
+			candidate.endDate = endDate;
+			return candidate;
+		}
+		return create(workspaceWorker, command);
+	}
 
-		validTime();
+	public void update(FixedWorkerScheduleCommand command) {
+		WorkspaceWorkerSchedule candidate = updatedSchedule(command);
+		this.startDayOfWeek = candidate.startDayOfWeek;
+		this.startTime = candidate.startTime;
+		this.endDayOfWeek = candidate.endDayOfWeek;
+		this.endTime = candidate.endTime;
+		this.recurrenceType = candidate.recurrenceType;
+		this.weekOfMonth = candidate.weekOfMonth;
+		this.startDate = candidate.startDate;
+		this.endDate = candidate.endDate;
 	}
 
 	public void validTime() {
-		if (toWeekMinutes(this.startDayOfWeek, this.startTime) >= toWeekMinutes(this.endDayOfWeek, this.endTime))
-			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "시작 시간은 종료 시간보다 늦을 수 없습니다.");
+		int dayOffset = Math.floorMod(endDayOfWeek.getValue() - startDayOfWeek.getValue(), 7);
+		Duration duration = Duration.between(startTime, endTime).plusDays(dayOffset);
+		if (duration.isZero() || duration.isNegative() || duration.compareTo(Duration.ofDays(7)) >= 0)
+			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "근무 시간은 0시간 초과, 7일 미만이어야 합니다.");
 	}
 
-	public void validOverlappingTime(DayOfWeek newStartDay, LocalTime newStart, DayOfWeek newEndDay, LocalTime newEnd) {
-		long thisStartMinutes = toWeekMinutes(this.startDayOfWeek, this.startTime);
-		long thisEndMinutes = toWeekMinutes(this.endDayOfWeek, this.endTime);
-		long newStartMinutes = toWeekMinutes(newStartDay, newStart);
-		long newEndMinutes = toWeekMinutes(newEndDay, newEnd);
-
-		if (newStartMinutes < thisEndMinutes && newEndMinutes > thisStartMinutes)
+	public void validOverlappingTime(WorkspaceWorkerSchedule candidate) {
+		if (FixedWorkerScheduleCalculator.overlaps(this, candidate))
 			throw new CustomException(ErrorCode.CONFLICT, "겹치는 근무 시간이 존재합니다.");
 	}
 
-	/**
-	 * 요일과 시간을 주 시작(월요일 00:00) 기준 분 단위로 변환
-	 * 예: 월요일 09:00 → 540분, 화요일 18:30 → 2550분
-	 */
-	private long toWeekMinutes(DayOfWeek dayOfWeek, LocalTime time) {
-		return (long) (dayOfWeek.getValue() - 1) * 24 * 60 + time.getHour() * 60 + time.getMinute();
+	private void validRecurrence(boolean explicitRecurrence) {
+		if (explicitRecurrence && startDate == null)
+			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "적용 시작일은 필수입니다.");
+		if (endDate != null && (startDate == null || endDate.isBefore(startDate)))
+			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "적용 종료일은 시작일보다 빠를 수 없습니다.");
+		if (recurrenceType == WorkspaceWorkerScheduleRecurrenceType.MONTHLY) {
+			if (weekOfMonth == null || weekOfMonth < 1 || weekOfMonth > 5)
+				throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "매월 반복은 1~5번째 요일을 지정해야 합니다.");
+		} else if (weekOfMonth != null) {
+			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "매주 반복에는 월별 주차를 지정할 수 없습니다.");
+		}
 	}
 
 	public void delete() {

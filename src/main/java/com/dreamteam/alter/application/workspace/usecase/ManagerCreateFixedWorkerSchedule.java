@@ -1,12 +1,12 @@
 package com.dreamteam.alter.application.workspace.usecase;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dreamteam.alter.adapter.inbound.manager.schedule.dto.WorkerScheduleDto;
-import com.dreamteam.alter.adapter.inbound.manager.workspace.dto.CreateWorkerScheduleRequestDto;
+import com.dreamteam.alter.domain.workspace.command.CreateFixedWorkerScheduleCommand;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.user.context.ManagerActor;
@@ -31,26 +31,20 @@ public class ManagerCreateFixedWorkerSchedule implements ManagerCreateFixedWorke
 	private final WorkspaceWorkerScheduleQueryRepository workspaceWorkerScheduleQueryRepository;
 
 	@Override
-	public void execute(ManagerActor actor, Long workspaceId, CreateWorkerScheduleRequestDto request) {
+	public void execute(ManagerActor actor, Long workspaceId, CreateFixedWorkerScheduleCommand command) {
 		if (!workspaceQueryRepository.existsByIdAndManagerUser(workspaceId, actor.getManagerUser()))
 			throw new CustomException(ErrorCode.WORKSPACE_NOT_FOUND);
 
-		WorkspaceWorker workspaceWorker = workspaceWorkerQueryRepository.findById(request.getWorkspaceWorkerId())
+		WorkspaceWorker workspaceWorker = workspaceWorkerQueryRepository.findById(command.workspaceWorkerId())
 			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 업장에 근무하는 사용자가 아닙니다."));
 
-		validOverlappingTime(workspaceWorker, request.getSchedules());
+		if (!workspaceWorker.getWorkspace().getId().equals(workspaceId))
+			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "해당 업장의 근무자가 아닙니다.");
 
-		workspaceWorkerScheduleRepository.saveAll(
-			request.getSchedules().stream()
-				.map(r -> WorkspaceWorkerSchedule.create(
-					workspaceWorker,
-					r.getStartDayOfWeek(),
-					r.getStartTime(),
-					r.getEndDayOfWeek(),
-					r.getEndTime()
-				))
-				.toList()
-		);
+		List<WorkspaceWorkerSchedule> newSchedules = command.schedules().stream()
+			.map(schedule -> WorkspaceWorkerSchedule.create(workspaceWorker, schedule)).toList();
+		validOverlappingTime(workspaceWorker, newSchedules);
+		workspaceWorkerScheduleRepository.saveAll(newSchedules);
 	}
 
 	/**
@@ -58,18 +52,15 @@ public class ManagerCreateFixedWorkerSchedule implements ManagerCreateFixedWorke
 	 * @param workspaceWorker 해당 근무자
 	 * @param newSchedules 새로 생성할 스케줄 목록
 	 */
-	private void validOverlappingTime(WorkspaceWorker workspaceWorker, List<WorkerScheduleDto> newSchedules) {
-		List<WorkspaceWorkerSchedule> existingSchedules = workspaceWorkerScheduleQueryRepository.getByWorkspaceWorker(workspaceWorker);
-
-		for (WorkspaceWorkerSchedule existingSchedule : existingSchedules) {
-			for (WorkerScheduleDto newSchedule : newSchedules) {
-				existingSchedule.validOverlappingTime(
-					newSchedule.getStartDayOfWeek(),
-					newSchedule.getStartTime(),
-					newSchedule.getEndDayOfWeek(),
-					newSchedule.getEndTime()
-				);
+	private void validOverlappingTime(WorkspaceWorker workspaceWorker, List<WorkspaceWorkerSchedule> newSchedules) {
+		List<WorkspaceWorkerSchedule> existingSchedules = new ArrayList<>(
+			workspaceWorkerScheduleQueryRepository.getByWorkspaceWorker(workspaceWorker)
+		);
+		for (WorkspaceWorkerSchedule newSchedule : newSchedules) {
+			for (WorkspaceWorkerSchedule existingSchedule : existingSchedules) {
+				existingSchedule.validOverlappingTime(newSchedule);
 			}
+			existingSchedules.add(newSchedule);
 		}
 	}
 }
