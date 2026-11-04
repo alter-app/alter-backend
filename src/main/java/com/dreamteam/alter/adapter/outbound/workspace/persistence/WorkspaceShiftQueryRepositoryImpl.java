@@ -12,6 +12,8 @@ import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceShiftQueryRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -29,7 +31,24 @@ import static com.dreamteam.alter.domain.workspace.entity.QWorkspaceWorker.works
 @RequiredArgsConstructor
 public class WorkspaceShiftQueryRepositoryImpl implements WorkspaceShiftQueryRepository {
 
+    /**
+     * PostgreSQL 은 FOR UPDATE 에 대기 시간 문법이 없어 jakarta.persistence.lock.timeout 힌트가 무시된다.
+     * 트랜잭션 로컬 lock_timeout 으로 5초 상한을 강제한다. (H2 에서는 동작하지 않는 구문)
+     */
+    private static final String LOCK_TIMEOUT_STATEMENT = "SET LOCAL lock_timeout = '5s'";
+
     private final JPAQueryFactory queryFactory;
+    private final EntityManager entityManager;
+
+    @Override
+    public Optional<WorkspaceShift> findByIdWithPessimisticLock(Long id) {
+        entityManager.createNativeQuery(LOCK_TIMEOUT_STATEMENT).executeUpdate();
+        WorkspaceShift result = queryFactory.selectFrom(workspaceShift)
+            .where(workspaceShift.id.eq(id))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetchOne();
+        return Optional.ofNullable(result);
+    }
 
     @Override
     public List<WorkspaceShiftTodayResponse> getTodayShiftList(

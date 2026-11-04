@@ -12,6 +12,8 @@ import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.user.type.UserStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -23,7 +25,24 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class UserQueryRepositoryImpl implements UserQueryRepository {
 
+    /**
+     * PostgreSQL 은 FOR UPDATE 에 대기 시간 문법이 없어 jakarta.persistence.lock.timeout 힌트가 무시된다.
+     * 트랜잭션 로컬 lock_timeout 으로 5초 상한을 강제한다. (H2 에서는 동작하지 않는 구문)
+     */
+    private static final String LOCK_TIMEOUT_STATEMENT = "SET LOCAL lock_timeout = '5s'";
+
     private final JPAQueryFactory queryFactory;
+    private final EntityManager entityManager;
+
+    @Override
+    public List<User> findAllByIdWithPessimisticLock(List<Long> ids) {
+        entityManager.createNativeQuery(LOCK_TIMEOUT_STATEMENT).executeUpdate();
+        return queryFactory.selectFrom(QUser.user)
+            .where(QUser.user.id.in(ids))
+            .orderBy(QUser.user.id.asc())
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetch();
+    }
 
     @Override
     public Optional<User> findById(Long id) {
