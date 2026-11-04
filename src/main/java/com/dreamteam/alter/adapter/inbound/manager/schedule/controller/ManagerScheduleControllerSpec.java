@@ -74,6 +74,10 @@ public interface ManagerScheduleControllerSpec {
                     @ExampleObject(
                         name = "잘못된 요청",
                         value = "{\"code\" : \"B001\"}"
+                    ),
+                    @ExampleObject(
+                        name = "해당 근무자가 이미 같은 시간대에 배정된 스케줄이 있음",
+                        value = "{\"code\" : \"B001\"}"
                     )
                 })),
         @ApiResponse(responseCode = "404", description = "실패 케이스",
@@ -84,6 +88,16 @@ public interface ManagerScheduleControllerSpec {
                     @ExampleObject(
                         name = "요청한 리소스를 찾을 수 없음",
                         value = "{\"code\" : \"B020\"}"
+                    )
+                })),
+        @ApiResponse(responseCode = "429", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "같은 근무자 동시 요청으로 잠금 대기 시간 초과",
+                        value = "{\"code\" : \"E001\"}"
                     )
                 }))
     })
@@ -123,6 +137,10 @@ public interface ManagerScheduleControllerSpec {
                     @ExampleObject(
                         name = "존재하지 않는 사용자",
                         value = "{\"code\" : \"B011\"}"
+                    ),
+                    @ExampleObject(
+                        name = "해당 근무자가 이미 같은 시간대에 배정된 스케줄이 있음",
+                        value = "{\"code\" : \"B001\"}"
                     )
                 })),
         @ApiResponse(responseCode = "404", description = "실패 케이스",
@@ -133,6 +151,26 @@ public interface ManagerScheduleControllerSpec {
                     @ExampleObject(
                         name = "요청한 리소스를 찾을 수 없음",
                         value = "{\"code\" : \"B020\"}"
+                    )
+                })),
+        @ApiResponse(responseCode = "409", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "이미 근무자가 배정된 스케줄",
+                        value = "{\"code\" : \"B020\"}"
+                    )
+                })),
+        @ApiResponse(responseCode = "429", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "같은 근무자 동시 요청으로 잠금 대기 시간 초과",
+                        value = "{\"code\" : \"E001\"}"
                     )
                 }))
     })
@@ -152,6 +190,10 @@ public interface ManagerScheduleControllerSpec {
                 examples = {
                     @ExampleObject(
                         name = "잘못된 요청",
+                        value = "{\"code\" : \"B001\"}"
+                    ),
+                    @ExampleObject(
+                        name = "해당 근무자가 이미 같은 시간대에 배정된 스케줄이 있음",
                         value = "{\"code\" : \"B001\"}"
                     )
                 })),
@@ -173,6 +215,16 @@ public interface ManagerScheduleControllerSpec {
                     @ExampleObject(
                         name = "요청한 리소스를 찾을 수 없음",
                         value = "{\"code\" : \"B020\"}"
+                    )
+                })),
+        @ApiResponse(responseCode = "429", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "같은 근무자 동시 요청으로 잠금 대기 시간 초과",
+                        value = "{\"code\" : \"E001\"}"
                     )
                 }))
     })

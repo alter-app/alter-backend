@@ -87,6 +87,16 @@ public interface ManagerSubstituteRequestControllerSpec {
                         name = "존재하지 않는 요청",
                         value = "{\"code\" : \"B020\"}"
                     )
+                })),
+        @ApiResponse(responseCode = "429", description = "실패 케이스",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "같은 근무자 동시 요청으로 잠금 대기 시간 초과",
+                        value = "{\"code\" : \"E001\"}"
+                    )
                 }))
     })
     ResponseEntity<CommonApiResponse<Void>> approveRequest(
