@@ -38,7 +38,7 @@ public interface UserScheduleControllerSpec {
         WorkScheduleInquiryRequestDto request
     );
 
-    @Operation(summary = "업장별 근무 스케줄 조회", description = "year, month 값을 모두 포함해야합니다. 응답에는 나의 총 근무 시간과 예상 급여가 포함됩니다.")
+    @Operation(summary = "업장별 근무 스케줄 조회", description = "year, month 값을 모두 포함해야합니다. 나에게 배정된 확정 근무만 반환하며, 응답에는 나의 총 근무 시간과 예상 급여가 포함됩니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "스케줄 조회 성공"),
         @ApiResponse(responseCode = "400", description = "실패 케이스",

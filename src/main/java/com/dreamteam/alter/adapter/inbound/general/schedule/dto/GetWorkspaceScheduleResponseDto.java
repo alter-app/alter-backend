@@ -22,7 +22,7 @@ public class GetWorkspaceScheduleResponseDto {
     @Schema(description = "나의 예상 급여 (최저시급 기준)", example = "206400")
     private Long estimatedSalary;
 
-    @Schema(description = "업장 전체 스케줄 목록")
+    @Schema(description = "나에게 배정된 확정 근무 목록")
     private List<WorkspaceScheduleResponseDto> schedules;
 
     public static GetWorkspaceScheduleResponseDto of(
