@@ -56,7 +56,7 @@ public class UserWorkspaceRequestController implements UserWorkspaceRequestContr
         @RequestBody @Valid CreateWorkspaceRequestDto request
     ) {
         AppActor actor = AppActionContext.getInstance().getActor();
-        createWorkspaceRequest.execute(actor.getUser(), request);
+        createWorkspaceRequest.execute(request.toCommand(actor.getUser()));
         return ResponseEntity.ok(CommonApiResponse.empty());
     }
 

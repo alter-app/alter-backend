@@ -1,8 +1,7 @@
 package com.dreamteam.alter.domain.workspace.port.inbound;
 
-import com.dreamteam.alter.adapter.inbound.general.workspace.dto.CreateWorkspaceRequestDto;
-import com.dreamteam.alter.domain.user.entity.User;
+import com.dreamteam.alter.domain.workspace.command.CreateWorkspaceRequestCommand;
 
 public interface CreateWorkspaceRequestUseCase {
-	void execute(User user, CreateWorkspaceRequestDto request);
+	void execute(CreateWorkspaceRequestCommand command);
 }
