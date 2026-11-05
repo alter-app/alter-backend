@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,9 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Set;
 
+@Slf4j
 @Component
 public class AppleAuthClientImpl implements AppleAuthClient {
 
@@ -63,6 +66,11 @@ public class AppleAuthClientImpl implements AppleAuthClient {
     private static final String VALUE_ALG = "ES256";
     private static final String APPLE_AUDIENCE = "https://appleid.apple.com";
     private static final long CLIENT_SECRET_EXPIRATION_TIME = 15552000;
+
+    private static final Set<String> APPLE_ERROR_CODES = Set.of(
+        "invalid_request", "invalid_client", "invalid_grant", "unauthorized_client",
+        "unsupported_grant_type", "invalid_scope"
+    );
 
     private static final String KF_ALGORITHM = "EC";
     private static final String SPACING_REGEX = "\\s";
@@ -120,7 +128,24 @@ public class AppleAuthClientImpl implements AppleAuthClient {
                 jsonNode.get(KEY_ID_TOKEN).asText()
             );
         } catch (HttpClientErrorException e) {
-            throw new CustomException(ErrorCode.SOCIAL_AUTH_CODE_EXPIRED);
+            String providerErrorCode = "unknown";
+            try {
+                JsonNode error = objectMapper.readTree(e.getResponseBodyAsString());
+                if (error != null) {
+                    String code = error.path("error").asText();
+                    if (APPLE_ERROR_CODES.contains(code)) {
+                        providerErrorCode = code;
+                    }
+                }
+            } catch (JsonProcessingException ignored) {
+                // 오류 본문이 JSON이 아니면 제공자 코드를 알 수 없다.
+            }
+            log.warn("Social auth error provider=APPLE stage=token httpStatus={} providerErrorCode={}",
+                e.getStatusCode().value(), providerErrorCode);
+            if ("invalid_grant".equals(providerErrorCode)) {
+                throw new CustomException(ErrorCode.SOCIAL_AUTH_CODE_EXPIRED);
+            }
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "소셜 계정 인증 처리 중 오류가 발생했습니다.");
         } catch (JsonProcessingException e) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
