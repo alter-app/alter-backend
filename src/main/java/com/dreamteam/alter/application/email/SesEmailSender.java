@@ -5,6 +5,7 @@ import com.dreamteam.alter.common.exception.ErrorCode;
 import com.dreamteam.alter.domain.email.port.outbound.EmailClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.ses.SesClient;
@@ -19,6 +20,9 @@ public class SesEmailSender implements EmailClient {
 
     @Value("${alter.email.from}")
     private String from;
+
+    @Value("${aws.region}")
+    private String region;
 
     @Override
     public void sendVerificationCode(String toEmail, String code) {
@@ -40,10 +44,15 @@ public class SesEmailSender implements EmailClient {
             sesClient.sendEmail(request);
 
         } catch (SesException e) {
-            log.error("Failed to send SES email to {}: {}", toEmail, e.awsErrorDetails().errorMessage());
+            log.error("SES 이메일 발송 실패. region={}, status={}, awsErrorCode={}, errorType={}",
+                region, e.statusCode(), e.awsErrorDetails() == null ? "UNKNOWN" : e.awsErrorDetails().errorCode(),
+                e.getClass().getSimpleName());
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "이메일 전송에 실패했습니다.");
         } catch (Exception e) {
-            log.error("Unexpected error sending email to {}: {}", toEmail, e.getMessage());
+            Throwable rootCause = ExceptionUtils.getRootCause(e);
+            log.error("SES 이메일 발송 실패. region={}, errorType={}, rootCauseType={}",
+                region, e.getClass().getSimpleName(),
+                rootCause == null ? "NONE" : rootCause.getClass().getSimpleName());
             throw new CustomException(ErrorCode.EXTERNAL_API_ERROR, "이메일 전송에 실패했습니다.");
         }
     }

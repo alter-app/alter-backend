@@ -10,6 +10,7 @@ import com.dreamteam.alter.domain.email.port.inbound.SendEmailVerificationCodeUs
 import com.dreamteam.alter.domain.email.port.outbound.EmailSendLogRepository;
 import com.dreamteam.alter.domain.email.port.outbound.EmailVerificationSessionStoreRepository;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
+import com.dreamteam.alter.common.util.EmailUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -38,7 +39,7 @@ public class SendEmailVerificationCode implements SendEmailVerificationCodeUseCa
 
     @Override
     public void execute(SendEmailVerificationCodeCommand command) {
-        String email = command.email();
+        String email = EmailUtil.normalize(command.email());
 
         // 이메일 중복 확인
         if (userQueryRepository.findByEmail(email).isPresent()) {
