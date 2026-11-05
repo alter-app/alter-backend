@@ -21,7 +21,7 @@ public class PostingMapListFilterDto {
     @Parameter(description = "지도 우측 하단 좌표")
     private CoordinateDto coordinate2;
 
-    @Parameter(description = "검색 키워드 (공고 제목 또는 업장명)")
+    @Parameter(description = "검색 키워드 (공고 제목 또는 업장명, 대소문자 무시, 앞뒤 공백 제거; 생략하거나 공백만 있으면 전체 조회)")
     private String searchKeyword;
 
     @NotNull
