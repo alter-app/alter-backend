@@ -29,6 +29,7 @@ import com.dreamteam.alter.domain.workspace.type.SubstituteRequestType;
 import com.dreamteam.alter.domain.workspace.type.WorkspaceShiftStatus;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -57,7 +58,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
+@DisabledIfEnvironmentVariable(named = "CI", matches = "true", disabledReason = "Testcontainers 테스트는 개발자 로컬에서만 실행")
 @DataJpaTest(showSql = false, properties = {
     "spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect",
     "spring.jpa.hibernate.ddl-auto=create", "spring.jpa.show-sql=false"

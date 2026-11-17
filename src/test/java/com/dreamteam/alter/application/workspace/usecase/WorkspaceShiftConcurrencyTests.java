@@ -31,6 +31,7 @@ import com.dreamteam.alter.domain.workspace.type.WorkspaceStatus;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -70,7 +71,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
 
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
+@DisabledIfEnvironmentVariable(named = "CI", matches = "true", disabledReason = "Testcontainers 테스트는 개발자 로컬에서만 실행")
 @DataJpaTest(showSql = false, properties = {
     "spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect",
     "spring.jpa.hibernate.ddl-auto=create", "spring.jpa.show-sql=false"

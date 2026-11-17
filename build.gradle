@@ -19,6 +19,8 @@ configurations {
 	}
 }
 
+ext['testcontainers.version'] = '1.21.4'
+
 repositories {
 	mavenCentral()
 }

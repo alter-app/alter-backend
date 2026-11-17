@@ -69,6 +69,13 @@ reviews:
         - Flag any test that starts a Spring context or needs a real DB
           (SpringBootTest, DataJpaTest, WebMvcTest, SpringJUnitConfig,
           Testcontainers, H2, direct JDBC) and any controller test.
+        - Exception: a test that only a real PostgreSQL can verify (DB locks,
+          concurrent requests, PostgreSQL-specific query behavior) may use
+          Testcontainers, but it must run on developer machines only. The class
+          needs both Testcontainers(disabledWithoutDocker = true) and
+          DisabledIfEnvironmentVariable(named = "CI", matches = "true").
+          Flag a Testcontainers test missing either annotation, or one whose
+          check could be done with a unit test instead.
   tools:
     ast-grep:
       essential_rules: true
