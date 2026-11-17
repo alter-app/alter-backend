@@ -30,8 +30,15 @@ public class CreateWorkspaceRequestDto {
 	private String brn;
 
 	@NotBlank
-	@Schema(description = "풀주소", example = "서울특별시 구로구 고척동 123")
+	@Schema(description = "기본 주소 (도로명)", example = "서울특별시 구로구 고척동 123")
 	private String address;
+
+	@Schema(description = "지번 주소", example = "서울특별시 구로구 구로동 3-25")
+	private String jibunAddress;
+
+	@Size(max = 128)
+	@Schema(description = "상세 주소 (동·층·호수)", example = "101동 1203호")
+	private String detailAddress;
 
 	@NotBlank
 	@Schema(description = "시/도", example = "서울특별시")

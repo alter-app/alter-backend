@@ -70,6 +70,12 @@ public class WorkspaceRequest {
 	@Column(name = "full_address", length = Integer.MAX_VALUE, nullable = false)
 	private String fullAddress;
 
+	@Column(name = "jibun_address", length = Integer.MAX_VALUE, nullable = true)
+	private String jibunAddress;
+
+	@Column(name = "detail_address", length = 128, nullable = true)
+	private String detailAddress;
+
 	@Column(name = "province", length = 64, nullable = false)
 	private String province;
 
@@ -101,6 +107,8 @@ public class WorkspaceRequest {
 		String rawBusinessTypeDetail,
 		String contact,
 		String address,
+		String jibunAddress,
+		String detailAddress,
 		String province,
 		String district,
 		String town,
@@ -117,6 +125,8 @@ public class WorkspaceRequest {
 			.businessTypeDetail(businessType.resolveDetail(rawBusinessTypeDetail))
 			.contact(contact)
 			.fullAddress(address)
+			.jibunAddress(jibunAddress)
+			.detailAddress(detailAddress)
 			.province(province)
 			.district(district)
 			.town(town)

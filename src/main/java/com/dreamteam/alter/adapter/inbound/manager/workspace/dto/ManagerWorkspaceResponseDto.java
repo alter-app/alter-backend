@@ -52,8 +52,14 @@ public class ManagerWorkspaceResponseDto {
     private DescribedEnumDto<WorkspaceStatus> status;
 
     @NotBlank
-    @Schema(description = "업장 전체 주소", example = "서울특별시 강남구 테헤란로 123")
+    @Schema(description = "업장 기본 주소 (도로명)", example = "서울특별시 강남구 테헤란로 123")
     private String fullAddress;
+
+    @Schema(description = "업장 지번 주소", example = "서울특별시 강남구 역삼동 737")
+    private String jibunAddress;
+
+    @Schema(description = "업장 상세 주소 (동·층·호수)", example = "10층 1001호")
+    private String detailAddress;
 
     @NotNull
     @Schema(description = "업장 위도", example = "37.5665")
@@ -90,6 +96,8 @@ public class ManagerWorkspaceResponseDto {
             .description(entity.getDescription())
             .status(DescribedEnumDto.of(entity.getStatus(), WorkspaceStatus.describe()))
             .fullAddress(entity.getFullAddress())
+            .jibunAddress(entity.getJibunAddress())
+            .detailAddress(entity.getDetailAddress())
             .latitude(entity.getLatitude())
             .longitude(entity.getLongitude())
             .nextMonthShiftGenDay(entity.getNextMonthShiftGenDay())

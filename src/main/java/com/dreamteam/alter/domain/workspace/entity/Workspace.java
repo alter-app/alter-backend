@@ -56,6 +56,12 @@ public class Workspace {
     @Column(name = "full_address", length = Integer.MAX_VALUE, nullable = false)
     private String fullAddress;
 
+    @Column(name = "jibun_address", length = Integer.MAX_VALUE, nullable = true)
+    private String jibunAddress;
+
+    @Column(name = "detail_address", length = 128, nullable = true)
+    private String detailAddress;
+
     @Column(name = "province", length = 64, nullable = false)
     private String province;
 
@@ -94,6 +100,8 @@ public class Workspace {
         String description,
         WorkspaceStatus status,
         String fullAddress,
+        String jibunAddress,
+        String detailAddress,
         String province,
         String district,
         String town,
@@ -110,6 +118,8 @@ public class Workspace {
             .description(description)
             .status(status)
             .fullAddress(fullAddress)
+            .jibunAddress(jibunAddress)
+            .detailAddress(detailAddress)
             .province(province)
             .district(district)
             .town(town)

@@ -49,6 +49,8 @@ public class CreateWorkspaceRequest implements CreateWorkspaceRequestUseCase {
 			request.getBusinessTypeDetail(),
 			request.getContact(),
 			request.getAddress(),
+			request.getJibunAddress(),
+			request.getDetailAddress(),
 			request.getProvince(),
 			request.getDistrict(),
 			request.getTown(),
