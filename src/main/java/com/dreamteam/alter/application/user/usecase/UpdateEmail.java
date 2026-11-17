@@ -30,7 +30,7 @@ public class UpdateEmail implements UpdateEmailUseCase {
         User user = command.user();
 
         // 현재 이메일과 동일하면 변경 불필요
-        if (verifiedEmail.equals(user.getEmail())) {
+        if (verifiedEmail.equalsIgnoreCase(user.getEmail())) {
             throw new CustomException(ErrorCode.CONFLICT, "현재 등록된 이메일과 동일합니다.");
         }
 

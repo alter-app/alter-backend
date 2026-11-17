@@ -2,6 +2,7 @@ package com.dreamteam.alter.application.user.usecase;
 
 import com.dreamteam.alter.adapter.inbound.general.user.dto.CheckEmailDuplicationRequestDto;
 import com.dreamteam.alter.adapter.inbound.general.user.dto.CheckEmailDuplicationResponseDto;
+import com.dreamteam.alter.common.util.EmailUtil;
 import com.dreamteam.alter.domain.user.port.inbound.CheckEmailDuplicationUseCase;
 import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class CheckEmailDuplication implements CheckEmailDuplicationUseCase {
     
     @Override
     public CheckEmailDuplicationResponseDto execute(CheckEmailDuplicationRequestDto request) {
-        boolean isDuplicated = ObjectUtils.isNotEmpty(userQueryRepository.findByEmail(request.getEmail()));
+        boolean isDuplicated = ObjectUtils.isNotEmpty(userQueryRepository.findByEmail(EmailUtil.normalize(request.getEmail())));
 
         return CheckEmailDuplicationResponseDto.of(request.getEmail(), isDuplicated);
     }
