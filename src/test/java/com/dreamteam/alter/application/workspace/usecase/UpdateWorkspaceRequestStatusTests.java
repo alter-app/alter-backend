@@ -424,7 +424,7 @@ class UpdateWorkspaceRequestStatusTests {
             // given
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             given(request.getContact()).willReturn(contact);
-            given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(10L)).willReturn(Optional.of(request));
 
             // when & then
             assertThatThrownBy(() -> updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.ACTIVATED))
@@ -443,7 +443,7 @@ class UpdateWorkspaceRequestStatusTests {
         void execute_잘못된_기존_연락처_반려() {
             // given
             WorkspaceRequest request = mock(WorkspaceRequest.class);
-            given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(10L)).willReturn(Optional.of(request));
 
             // when
             updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.REVOKED);
@@ -460,7 +460,7 @@ class UpdateWorkspaceRequestStatusTests {
             // given
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             willThrow(new CustomException(ErrorCode.CONFLICT, "이미 승인된 요청입니다.")).given(request).approve();
-            given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(10L)).willReturn(Optional.of(request));
 
             // when & then
             assertThatThrownBy(() -> updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.ACTIVATED))
