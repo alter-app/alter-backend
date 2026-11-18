@@ -12,6 +12,7 @@ import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.entity.User;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserRepository;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.workspace.entity.BusinessType;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceImage;
@@ -31,6 +32,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -46,6 +48,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -64,6 +67,9 @@ class UpdateWorkspaceRequestStatusTests {
 
     @Mock
     private ManagerUserRepository managerUserRepository;
+
+    @Mock
+    private UserQueryRepository userQueryRepository;
 
     @Mock
     private WorkspaceImageRepository workspaceImageRepository;
@@ -103,7 +109,7 @@ class UpdateWorkspaceRequestStatusTests {
             assertThatThrownBy(() -> updateWorkspaceRequestStatus.execute(1L, WorkspaceRequestStatus.PENDING))
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
-            then(workspaceRequestQueryRepository).should(never()).findByIdWithUser(any());
+            then(workspaceRequestQueryRepository).should(never()).findByIdWithPessimisticLock(any());
         }
 
         @Test
@@ -119,7 +125,7 @@ class UpdateWorkspaceRequestStatusTests {
         @DisplayName("존재하지 않는 신청이면 NOT_FOUND 예외가 발생한다")
         void execute_존재하지않음_예외발생() {
             // given
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.empty());
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> updateWorkspaceRequestStatus.execute(1L, WorkspaceRequestStatus.ACTIVATED))
@@ -142,7 +148,7 @@ class UpdateWorkspaceRequestStatusTests {
             given(user.getId()).willReturn(1L);
             given(managerUser.getUser()).willReturn(managerUnderlyingUser);
             given(managerUnderlyingUser.getId()).willReturn(2L);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(request));
             given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
             given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
             given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
@@ -169,7 +175,7 @@ class UpdateWorkspaceRequestStatusTests {
             given(request.getUser()).willReturn(user);
             given(user.getId()).willReturn(1L);
             given(newManagerUser.getUser()).willReturn(user);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(request));
             given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.empty());
             given(managerUserRepository.save(any(ManagerUser.class))).willReturn(newManagerUser);
             given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
@@ -187,6 +193,49 @@ class UpdateWorkspaceRequestStatusTests {
         }
 
         @Test
+        @DisplayName("승인은 신청자 User 행을 잠근 뒤에 ManagerUser 를 조회하고 생성한다")
+        void execute_ACTIVATED_사용자잠금후_매니저조회생성() {
+            // given
+            User user = mock(User.class);
+            WorkspaceRequest request = mock(WorkspaceRequest.class);
+            ManagerUser newManagerUser = mock(ManagerUser.class);
+            given(request.getContact()).willReturn("01012345678");
+            given(request.getUser()).willReturn(user);
+            given(user.getId()).willReturn(1L);
+            given(newManagerUser.getUser()).willReturn(user);
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(request));
+            given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.empty());
+            given(managerUserRepository.save(any(ManagerUser.class))).willReturn(newManagerUser);
+            given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
+            given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
+                .willReturn(Optional.empty());
+
+            // when
+            updateWorkspaceRequestStatus.execute(1L, WorkspaceRequestStatus.ACTIVATED);
+
+            // then
+            InOrder inOrder = inOrder(userQueryRepository, managerUserQueryRepository, managerUserRepository);
+            inOrder.verify(userQueryRepository).lockByIdWithPessimisticLock(1L);
+            inOrder.verify(managerUserQueryRepository).findByUserId(1L);
+            inOrder.verify(managerUserRepository).save(any(ManagerUser.class));
+        }
+
+        @Test
+        @DisplayName("REVOKED 는 User 행을 잠그지 않는다")
+        void execute_REVOKED_사용자잠금없음() {
+            // given
+            WorkspaceRequest request = mock(WorkspaceRequest.class);
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(request));
+
+            // when
+            updateWorkspaceRequestStatus.execute(1L, WorkspaceRequestStatus.REVOKED);
+
+            // then
+            then(request).should().reject();
+            then(userQueryRepository).shouldHaveNoInteractions();
+        }
+
+        @Test
         @DisplayName("승인 시 신청의 업종 FK 와 상세를 업장으로 복사한다")
         void execute_ACTIVATED_업종복사() {
             // given
@@ -200,7 +249,7 @@ class UpdateWorkspaceRequestStatusTests {
             given(managerUser.getUser()).willReturn(user);
             given(request.getBusinessType()).willReturn(businessType);
             given(request.getBusinessTypeDetail()).willReturn("떡볶이 전문점");
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(request));
             given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
             given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
             given(fileQueryRepository.findByTargetTypeAndTargetId(any(), any())).willReturn(Optional.empty());
@@ -249,7 +298,7 @@ class UpdateWorkspaceRequestStatusTests {
             given(user.getId()).willReturn(1L);
             given(managerUser.getUser()).willReturn(managerUnderlyingUser);
             given(managerUnderlyingUser.getId()).willReturn(42L);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(request));
             given(managerUserQueryRepository.findByUserId(1L)).willReturn(Optional.of(managerUser));
             given(workspaceRequestImageQueryRepository.findAllByWorkspaceRequestId(1L)).willReturn(List.of());
             given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
@@ -272,7 +321,7 @@ class UpdateWorkspaceRequestStatusTests {
         void execute_REVOKED_반려() {
             // given
             WorkspaceRequest request = mock(WorkspaceRequest.class);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(1L)).willReturn(Optional.of(request));
 
             // when
             updateWorkspaceRequestStatus.execute(1L, WorkspaceRequestStatus.REVOKED);
@@ -375,7 +424,7 @@ class UpdateWorkspaceRequestStatusTests {
             // given
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             given(request.getContact()).willReturn(contact);
-            given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(10L)).willReturn(Optional.of(request));
 
             // when & then
             assertThatThrownBy(() -> updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.ACTIVATED))
@@ -394,7 +443,7 @@ class UpdateWorkspaceRequestStatusTests {
         void execute_잘못된_기존_연락처_반려() {
             // given
             WorkspaceRequest request = mock(WorkspaceRequest.class);
-            given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(10L)).willReturn(Optional.of(request));
 
             // when
             updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.REVOKED);
@@ -411,7 +460,7 @@ class UpdateWorkspaceRequestStatusTests {
             // given
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             willThrow(new CustomException(ErrorCode.CONFLICT, "이미 승인된 요청입니다.")).given(request).approve();
-            given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(10L)).willReturn(Optional.of(request));
 
             // when & then
             assertThatThrownBy(() -> updateWorkspaceRequestStatus.execute(10L, WorkspaceRequestStatus.ACTIVATED))
@@ -428,7 +477,7 @@ class UpdateWorkspaceRequestStatusTests {
         given(user.getId()).willReturn(1L);
         given(request.getContact()).willReturn("01012345678");
         given(request.getUser()).willReturn(user);
-        given(workspaceRequestQueryRepository.findByIdWithUser(10L)).willReturn(Optional.of(request));
+        given(workspaceRequestQueryRepository.findByIdWithPessimisticLock(10L)).willReturn(Optional.of(request));
         ManagerUser managerUser = mock(ManagerUser.class);
         User managerUnderlyingUser = mock(User.class);
         given(managerUser.getUser()).willReturn(managerUnderlyingUser);

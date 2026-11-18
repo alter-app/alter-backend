@@ -56,8 +56,7 @@ class CancelWorkspaceRequestTests {
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             File identityFile = mock(File.class);
             given(user.getId()).willReturn(1L);
-            given(request.getUser()).willReturn(user);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdAndUserIdWithPessimisticLock(1L, 1L)).willReturn(Optional.of(request));
             given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
                 .willReturn(Optional.of(identityFile));
 
@@ -76,8 +75,7 @@ class CancelWorkspaceRequestTests {
             User user = mock(User.class);
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             given(user.getId()).willReturn(1L);
-            given(request.getUser()).willReturn(user);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdAndUserIdWithPessimisticLock(1L, 1L)).willReturn(Optional.of(request));
             given(fileQueryRepository.findByTargetTypeAndTargetId(FileTargetType.WORKSPACE_OWN_IDENTITY, "1"))
                 .willReturn(Optional.empty());
 
@@ -94,7 +92,8 @@ class CancelWorkspaceRequestTests {
         void execute_존재하지않음_예외발생() {
             // given
             User user = mock(User.class);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.empty());
+            given(user.getId()).willReturn(1L);
+            given(workspaceRequestQueryRepository.findByIdAndUserIdWithPessimisticLock(1L, 1L)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> cancelWorkspaceRequest.execute(user, 1L))
@@ -104,22 +103,18 @@ class CancelWorkspaceRequestTests {
         }
 
         @Test
-        @DisplayName("본인 신청이 아니면 NOT_FOUND 예외가 발생한다")
+        @DisplayName("본인 신청이 아니면 잠금 조회 결과가 비어 NOT_FOUND 예외가 발생하고 취소하지 않는다")
         void execute_비소유자_예외발생() {
             // given
             User requester = mock(User.class);
-            User owner = mock(User.class);
-            WorkspaceRequest request = mock(WorkspaceRequest.class);
-            given(requester.getId()).willReturn(1L);
-            given(owner.getId()).willReturn(2L);
-            given(request.getUser()).willReturn(owner);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(requester.getId()).willReturn(2L);
+            given(workspaceRequestQueryRepository.findByIdAndUserIdWithPessimisticLock(1L, 2L)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> cancelWorkspaceRequest.execute(requester, 1L))
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND));
-            then(request).should(never()).cancel();
+            then(workspaceRequestQueryRepository).should(never()).findByIdWithPessimisticLock(any());
             then(fileDeleteService).should(never()).delete(any());
         }
 
@@ -130,8 +125,7 @@ class CancelWorkspaceRequestTests {
             User user = mock(User.class);
             WorkspaceRequest request = mock(WorkspaceRequest.class);
             given(user.getId()).willReturn(1L);
-            given(request.getUser()).willReturn(user);
-            given(workspaceRequestQueryRepository.findByIdWithUser(1L)).willReturn(Optional.of(request));
+            given(workspaceRequestQueryRepository.findByIdAndUserIdWithPessimisticLock(1L, 1L)).willReturn(Optional.of(request));
             willThrow(new CustomException(ErrorCode.CONFLICT, "취소할 수 없는 상태입니다.")).given(request).cancel();
 
             // when & then

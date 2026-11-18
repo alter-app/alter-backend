@@ -156,4 +156,14 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
             )
             .fetch();
     }
+
+    @Override
+    public void lockByIdWithPessimisticLock(Long id) {
+        QUser qUser = QUser.user;
+        queryFactory.select(qUser.id)
+            .from(qUser)
+            .where(qUser.id.eq(id))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetch();
+    }
 }
