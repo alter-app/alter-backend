@@ -15,6 +15,7 @@ import com.dreamteam.alter.application.chat.event.ChatMembershipJoinedEvent;
 import com.dreamteam.alter.application.file.FileDeleteService;
 import com.dreamteam.alter.common.exception.CustomException;
 import com.dreamteam.alter.common.exception.ErrorCode;
+import com.dreamteam.alter.common.util.PhoneNumberUtil;
 import com.dreamteam.alter.domain.auth.type.TokenScope;
 import com.dreamteam.alter.domain.file.entity.File;
 import com.dreamteam.alter.domain.file.port.outbound.FileQueryRepository;
@@ -22,6 +23,7 @@ import com.dreamteam.alter.domain.file.type.FileTargetType;
 import com.dreamteam.alter.domain.user.entity.ManagerUser;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserQueryRepository;
 import com.dreamteam.alter.domain.user.port.outbound.ManagerUserRepository;
+import com.dreamteam.alter.domain.user.port.outbound.UserQueryRepository;
 import com.dreamteam.alter.domain.user.type.ManagerUserStatus;
 import com.dreamteam.alter.domain.workspace.entity.Workspace;
 import com.dreamteam.alter.domain.workspace.entity.WorkspaceImage;
@@ -48,6 +50,7 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 	private final WorkspaceRepository workspaceRepository;
 	private final ManagerUserQueryRepository managerUserQueryRepository;
 	private final ManagerUserRepository managerUserRepository;
+	private final UserQueryRepository userQueryRepository;
 	private final WorkspaceImageRepository workspaceImageRepository;
 	private final WorkspaceRequestImageQueryRepository workspaceRequestImageQueryRepository;
 	private final FileQueryRepository fileQueryRepository;
@@ -60,7 +63,7 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 			throw new CustomException(ErrorCode.ILLEGAL_ARGUMENT, "ACTIVATED 또는 REVOKED 만 설정 가능합니다.");
 		}
 
-		WorkspaceRequest workspaceRequest = workspaceRequestQueryRepository.findByIdWithUser(workspaceRequestId)
+		WorkspaceRequest workspaceRequest = workspaceRequestQueryRepository.findByIdWithPessimisticLock(workspaceRequestId)
 			.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 업장 등록 신청을 찾을 수 없습니다."));
 
 		if (status == WorkspaceRequestStatus.ACTIVATED) {
@@ -72,7 +75,10 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 
 	private void approve(WorkspaceRequest workspaceRequest, Long workspaceRequestId) {
 		workspaceRequest.approve();
+		String contact = PhoneNumberUtil.normalizeLocalNumber(workspaceRequest.getContact());
 
+		// manager_users.user_id 에 유니크 제약이 없어 같은 사용자의 다른 신청이 동시에 승인되면 중복 생성될 수 있으므로 User 행으로 직렬화
+		userQueryRepository.lockByIdWithPessimisticLock(workspaceRequest.getUser().getId());
 		ManagerUser managerUser = managerUserQueryRepository.findByUserId(workspaceRequest.getUser().getId())
 			.orElseGet(() -> managerUserRepository.save(ManagerUser.create(workspaceRequest.getUser(), ManagerUserStatus.ACTIVATED)));
 
@@ -82,7 +88,7 @@ public class UpdateWorkspaceRequestStatus implements UpdateWorkspaceRequestStatu
 			workspaceRequest.getBusinessName(),
 			workspaceRequest.getBusinessType(),
 			workspaceRequest.getBusinessTypeDetail(),
-			workspaceRequest.getContact(),
+			contact,
 			null,
 			WorkspaceStatus.ACTIVATED,
 			workspaceRequest.getFullAddress(),

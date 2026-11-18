@@ -13,6 +13,8 @@ import com.dreamteam.alter.domain.workspace.entity.WorkspaceRequest;
 import com.dreamteam.alter.domain.workspace.port.outbound.WorkspaceRequestQueryRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,7 +22,30 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WorkspaceRequestQueryRepositoryImpl implements WorkspaceRequestQueryRepository {
 
+	private static final String LOCK_TIMEOUT_STATEMENT = "SET LOCAL lock_timeout = '5s'";
+
 	private final JPAQueryFactory queryFactory;
+	private final EntityManager entityManager;
+
+	@Override
+	public Optional<WorkspaceRequest> findByIdWithPessimisticLock(Long workspaceRequestId) {
+		entityManager.createNativeQuery(LOCK_TIMEOUT_STATEMENT).executeUpdate();
+		QWorkspaceRequest request = QWorkspaceRequest.workspaceRequest;
+		return Optional.ofNullable(queryFactory.selectFrom(request)
+			.where(request.id.eq(workspaceRequestId))
+			.setLockMode(LockModeType.PESSIMISTIC_WRITE)
+			.fetchOne());
+	}
+
+	@Override
+	public Optional<WorkspaceRequest> findByIdAndUserIdWithPessimisticLock(Long workspaceRequestId, Long userId) {
+		entityManager.createNativeQuery(LOCK_TIMEOUT_STATEMENT).executeUpdate();
+		QWorkspaceRequest request = QWorkspaceRequest.workspaceRequest;
+		return Optional.ofNullable(queryFactory.selectFrom(request)
+			.where(request.id.eq(workspaceRequestId), request.user.id.eq(userId))
+			.setLockMode(LockModeType.PESSIMISTIC_WRITE)
+			.fetchOne());
+	}
 
 	@Override
 	public boolean existsByIdAndUserId(Long workspaceRequestId, Long userId) {

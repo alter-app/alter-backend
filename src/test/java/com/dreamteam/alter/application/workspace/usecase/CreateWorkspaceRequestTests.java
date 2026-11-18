@@ -18,6 +18,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -26,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -41,6 +45,37 @@ import static org.mockito.Mockito.never;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CreateWorkspaceRequest 테스트")
 class CreateWorkspaceRequestTests {
+
+    @ParameterizedTest
+    @CsvSource({"010-1234-5678,01012345678", "02-123-4567,021234567", "099-1234-5678,09912345678", "07012345678,07012345678"})
+    void 신청_연락처를_숫자로_저장한다(String contact, String expected) {
+        User user = mock(User.class);
+        given(user.getId()).willReturn(100L);
+        given(businessTypeRepository.findById(1L)).willReturn(Optional.of(BusinessTypeFixture.of(false)));
+        given(workspaceRequestRepository.save(any())).willReturn(1L);
+        CreateWorkspaceRequestDto request = baseRequest();
+        request.setContact(contact);
+
+        createWorkspaceRequest.execute(request.toCommand(user));
+
+        then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
+        assertThat(workspaceRequestCaptor.getValue().getContact()).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", " 01012345678", "010--1234-5678", "010.1234.5678", "123456789", "012345678901", "01012345678\n"})
+    void 잘못된_연락처는_저장_전에_거부한다(String contact) {
+        User user = mock(User.class);
+        given(businessTypeRepository.findById(1L)).willReturn(Optional.of(BusinessTypeFixture.of(false)));
+        CreateWorkspaceRequestDto request = baseRequest();
+        request.setContact(contact);
+
+        assertThatThrownBy(() -> createWorkspaceRequest.execute(request.toCommand(user)))
+            .isInstanceOfSatisfying(CustomException.class,
+                ex -> assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
+        then(workspaceRequestRepository).should(never()).save(any());
+        then(attachFiles).shouldHaveNoInteractions();
+    }
 
     @Mock
     private WorkspaceRequestRepository workspaceRequestRepository;
@@ -96,7 +131,7 @@ class CreateWorkspaceRequestTests {
             given(workspaceRequestRepository.save(any())).willReturn(1L);
 
             // when
-            createWorkspaceRequest.execute(user, baseRequest());
+            createWorkspaceRequest.execute(baseRequest().toCommand(user));
 
             // then
             then(attachFiles).should().executeMap(any(), eq("1"), eq(100L));
@@ -122,7 +157,7 @@ class CreateWorkspaceRequestTests {
             dto.setRepresentativeImages(images);
 
             // when
-            createWorkspaceRequest.execute(user, dto);
+            createWorkspaceRequest.execute(dto.toCommand(user));
 
             // then
             then(attachFiles).should().execute(
@@ -158,7 +193,7 @@ class CreateWorkspaceRequestTests {
             dto.setRepresentativeImages(images);
 
             // when & then
-            assertThatThrownBy(() -> createWorkspaceRequest.execute(user, dto))
+            assertThatThrownBy(() -> createWorkspaceRequest.execute(dto.toCommand(user)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
             then(workspaceRequestImageRepository).should(never()).saveAll(any());
@@ -174,7 +209,7 @@ class CreateWorkspaceRequestTests {
             given(businessTypeRepository.findById(99L)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> createWorkspaceRequest.execute(user, dto))
+            assertThatThrownBy(() -> createWorkspaceRequest.execute(dto.toCommand(user)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
             then(workspaceRequestRepository).should(never()).save(any());
@@ -191,7 +226,7 @@ class CreateWorkspaceRequestTests {
             given(businessTypeRepository.findById(1L)).willReturn(Optional.of(businessType));
 
             // when & then
-            assertThatThrownBy(() -> createWorkspaceRequest.execute(user, dto))
+            assertThatThrownBy(() -> createWorkspaceRequest.execute(dto.toCommand(user)))
                 .isInstanceOf(CustomException.class)
                 .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
             then(workspaceRequestRepository).should(never()).save(any());
@@ -211,7 +246,7 @@ class CreateWorkspaceRequestTests {
             dto.setBusinessTypeDetail("  떡볶이 전문점  ");
 
             // when
-            createWorkspaceRequest.execute(user, dto);
+            createWorkspaceRequest.execute(dto.toCommand(user));
 
             // then
             then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
@@ -233,7 +268,7 @@ class CreateWorkspaceRequestTests {
             dto.setBusinessTypeDetail("무시되어야 함");
 
             // when
-            createWorkspaceRequest.execute(user, dto);
+            createWorkspaceRequest.execute(dto.toCommand(user));
 
             // then
             then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
@@ -255,7 +290,7 @@ class CreateWorkspaceRequestTests {
             dto.setDetailAddress("101동 1203호");
 
             // when
-            createWorkspaceRequest.execute(user, dto);
+            createWorkspaceRequest.execute(dto.toCommand(user));
 
             // then
             then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
@@ -276,7 +311,7 @@ class CreateWorkspaceRequestTests {
             given(workspaceRequestRepository.save(any())).willReturn(1L);
 
             // when
-            createWorkspaceRequest.execute(user, baseRequest());
+            createWorkspaceRequest.execute(baseRequest().toCommand(user));
 
             // then
             then(workspaceRequestRepository).should().save(workspaceRequestCaptor.capture());
@@ -284,6 +319,54 @@ class CreateWorkspaceRequestTests {
             assertThat(saved.getFullAddress()).isEqualTo("서울특별시 구로구 고척동 123");
             assertThat(saved.getJibunAddress()).isNull();
             assertThat(saved.getDetailAddress()).isNull();
+        }
+
+        @ParameterizedTest(name = "cert={0}, identity={1}, warrant={2}")
+        @CsvSource({
+            "same-file, same-file, ",
+            "same-file, identity-file, same-file",
+            "cert-file, same-file, same-file",
+            "same-file, same-file, same-file"
+        })
+        @DisplayName("증빙 역할끼리 같은 파일이면 ILLEGAL_ARGUMENT 예외가 발생하고 신청·파일 연결을 하지 않는다")
+        void execute_증빙역할중복_예외(String certFileId, String identityFileId, String warrantFileId) {
+            // given
+            User user = mock(User.class);
+            CreateWorkspaceRequestDto dto = baseRequest();
+            dto.setWorkspaceCertFileId(certFileId);
+            dto.setWorkspaceOwnIdentityFileId(identityFileId);
+            dto.setWorkspaceWarrantFileId(warrantFileId);
+
+            // when & then
+            // 업종 조회 실패도 ILLEGAL_ARGUMENT라 메시지까지 확인해야 중복 검증이 빠진 코드에서 이 테스트가 실패한다
+            assertThatThrownBy(() -> createWorkspaceRequest.execute(dto.toCommand(user)))
+                .isInstanceOf(CustomException.class)
+                .hasMessage("증빙 서류는 역할별로 서로 다른 파일을 첨부해야 합니다.")
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.ILLEGAL_ARGUMENT));
+            then(workspaceRequestRepository).should(never()).save(any());
+            then(attachFiles).should(never()).executeMap(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("증빙 역할마다 다른 파일이면 위임장까지 각 역할로 연결한다")
+        void execute_증빙역할모두다름_정상() {
+            // given
+            User user = mock(User.class);
+            given(user.getId()).willReturn(100L);
+            given(businessTypeRepository.findById(1L)).willReturn(Optional.of(BusinessTypeFixture.of(false)));
+            given(workspaceRequestRepository.save(any())).willReturn(1L);
+            CreateWorkspaceRequestDto dto = baseRequest();
+            dto.setWorkspaceWarrantFileId("warrant-file");
+
+            // when
+            createWorkspaceRequest.execute(dto.toCommand(user));
+
+            // then
+            then(attachFiles).should().executeMap(eq(Map.of(
+                "cert-file", FileTargetType.WORKSPACE_CERTIFICATE,
+                "identity-file", FileTargetType.WORKSPACE_OWN_IDENTITY,
+                "warrant-file", FileTargetType.WORKSPACE_WARRANT
+            )), eq("1"), eq(100L));
         }
     }
 }

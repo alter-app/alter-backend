@@ -21,10 +21,10 @@ import jakarta.validation.Valid;
 @Tag(name = "MANAGER - 업장 등록 API")
 public interface ManagerWorkspaceRequestControllerSpec {
 
-    @Operation(summary = "매니저 - 업장 등록 신청")
+    @Operation(summary = "매니저 - 업장 등록 신청", description = "연락처는 0으로 시작하는 9~11자리 숫자 또는 2~3자리-3~4자리-4자리 하이픈 형식을 허용하며, 검증 후 하이픈을 제거하여 저장합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "업장 등록 신청 성공"),
-        @ApiResponse(responseCode = "400", description = "유효하지 않은 파일입니다. (INVALID_FILE)"),
+        @ApiResponse(responseCode = "400", description = "잘못된 연락처 형식, 등록증·신분증·위임장에 같은 파일 ID 중복 첨부 등 요청 값 오류 (ILLEGAL_ARGUMENT) 또는 유효하지 않은 파일 (INVALID_FILE)"),
         @ApiResponse(responseCode = "403", description = "접근 권한이 없습니다. (FORBIDDEN)"),
         @ApiResponse(responseCode = "404", description = "존재하지 않는 파일입니다. (FILE_NOT_FOUND)"),
         @ApiResponse(responseCode = "409", description = "이미 연결된 파일입니다. (FILE_ALREADY_ATTACHED)")
@@ -59,7 +59,8 @@ public interface ManagerWorkspaceRequestControllerSpec {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "업장 등록 신청 취소 성공"),
         @ApiResponse(responseCode = "404", description = "등록 신청한 업장을 찾을 수 없습니다. (NOT_FOUND)"),
-        @ApiResponse(responseCode = "409", description = "취소할 수 없는 상태입니다. (CONFLICT)")
+        @ApiResponse(responseCode = "409", description = "취소할 수 없는 상태입니다. (CONFLICT)"),
+        @ApiResponse(responseCode = "429", description = "신청 잠금 획득 시간 초과 (TOO_MANY_REQUESTS / E001)")
     })
     ResponseEntity<CommonApiResponse<Void>> cancelWorkspaceRequest(
         @PathVariable Long workspaceRequestId
