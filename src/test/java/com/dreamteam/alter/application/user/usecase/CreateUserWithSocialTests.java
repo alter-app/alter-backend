@@ -177,6 +177,29 @@ class CreateUserWithSocialTests {
         }
 
         @Test
+        @DisplayName("소셜 인증이 실패하면 예외를 그대로 전파하고 사용자 저장·세션 삭제를 하지 않는다")
+        void execute_socialAuthFails_throwsWithoutSavingUserOrDeletingSession() {
+            // given
+            given(cacheRepository.get("SIGNUP:PENDING:signup-session-id")).willReturn("01012345678");
+            given(userQueryRepository.findByNickname("유땡땡")).willReturn(Optional.empty());
+            given(userQueryRepository.findByContact("01012345678")).willReturn(Optional.empty());
+            given(termsAgreementValidator.validateAndResolve(any())).willReturn(List.of());
+            willThrow(new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "소셜 계정 인증 처리 중 오류가 발생했습니다."))
+                .given(socialAuthenticationManager).authenticate(any());
+
+            // when & then
+            assertThatThrownBy(() -> createUserWithSocial.execute(request))
+                .isInstanceOfSatisfying(CustomException.class, ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INTERNAL_SERVER_ERROR);
+                    assertThat(ex.getMessage()).isEqualTo("소셜 계정 인증 처리 중 오류가 발생했습니다.");
+                });
+
+            then(userSocialQueryRepository).shouldHaveNoInteractions();
+            then(createUserWithSocialTx).shouldHaveNoInteractions();
+            then(cacheRepository).should(never()).deleteAll(anyList());
+        }
+
+        @Test
         @DisplayName("소셜 계정 이메일이 이미 가입된 경우 EMAIL_DUPLICATED 예외 발생")
         void execute_socialEmailAlreadyExists_throwsEmailDuplicated() {
             // given

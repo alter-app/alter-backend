@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -216,6 +217,25 @@ class LoginWithSocialTests {
             // then
             assertThat(result).isNotNull();
             then(authService).should().generateAuthorization(user, TokenScope.MANAGER);
+        }
+
+        @Test
+        @DisplayName("소셜 인증이 실패하면 예외를 그대로 전파하고 사용자 조회·토큰 발급을 하지 않는다")
+        void execute_socialAuthFails_throwsAndSkipsTokenIssuance() {
+            // given
+            willThrow(new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "소셜 계정 인증 처리 중 오류가 발생했습니다."))
+                .given(socialAuthenticationManager).authenticate(any(SocialAuthRequest.class));
+
+            // when & then
+            assertThatThrownBy(() -> loginWithSocial.execute(request))
+                .isInstanceOfSatisfying(CustomException.class, ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INTERNAL_SERVER_ERROR);
+                    assertThat(ex.getMessage()).isEqualTo("소셜 계정 인증 처리 중 오류가 발생했습니다.");
+                });
+
+            then(userSocialQueryRepository).shouldHaveNoInteractions();
+            then(authService).shouldHaveNoInteractions();
+            then(authLogRepository).shouldHaveNoInteractions();
         }
     }
 }
