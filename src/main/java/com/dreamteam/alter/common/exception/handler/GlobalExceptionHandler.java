@@ -17,6 +17,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.List;
@@ -108,6 +109,13 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.ILLEGAL_ARGUMENT;
         return ResponseEntity.status(errorCode.getStatus())
             .body(ErrorResponse.of(errorCode, "파라미터가 누락됐습니다."));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        ErrorCode errorCode = ErrorCode.FILE_SIZE_EXCEEDED;
+        return ResponseEntity.status(errorCode.getStatus())
+            .body(ErrorResponse.of(errorCode));
     }
 
     /**
